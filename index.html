@@ -126,6 +126,17 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .as-guide li{list-style:none;padding-left:14px;position:relative;margin-bottom:4px;}
 .as-guide li::before{content:"·";position:absolute;left:0;color:var(--teal);}
 
+/* ── 관리자 피드백 ── */
+.feedback-box{margin-top:12px;border-top:1px solid #ede9e0;padding-top:12px;}
+.feedback-label{font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin-bottom:6px;}
+.feedback-content{font-size:13px;color:#333;line-height:1.6;background:#fffbf0;border-radius:8px;padding:10px 12px;border-left:3px solid var(--orange);min-height:40px;}
+.feedback-empty{font-size:12px;color:#bbb;font-style:italic;}
+.feedback-textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.6;min-height:80px;}
+.feedback-textarea:focus{border-color:var(--orange);}
+.feedback-save-btn{margin-top:8px;width:100%;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.feedback-save-btn:active{opacity:0.85;}
+.feedback-saved{font-size:11px;color:var(--green);margin-top:4px;text-align:right;min-height:16px;}
+
 /* ── 범례 ── */
 .legend{margin:0 12px 16px;background:var(--white);border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
 .legend-title{font-size:11px;font-weight:700;color:#888;margin-bottom:8px;letter-spacing:0.5px;}
@@ -638,6 +649,26 @@ function buildCL(activeSec, dateKey){
     }catch(e){ct.textContent='불러오기 실패';}
   }
   loadChecks();
+
+  // 직원용 피드백 읽기 박스
+  const fbBox=document.createElement('div');fbBox.className='feedback-box';
+  fbBox.innerHTML=`<div class="feedback-label">📋 관리자 피드백</div>
+    <div class="feedback-content" id="fb-read-${siOffset}"><span class="feedback-empty">피드백 없음</span></div>`;
+  wrap.appendChild(fbBox);
+
+  // Firebase에서 피드백 실시간 로드
+  const fbRef=doc(db,`feedback/${curStore.id}/${dateKey}/comment`);
+  onSnapshot(fbRef,(snap)=>{
+    const el=document.getElementById(`fb-read-${siOffset}`);
+    if(!el)return;
+    if(snap.exists()&&snap.data().text){
+      el.innerHTML=`<span>${snap.data().text.replace(/\n/g,'<br>')}</span>
+        <div style="font-size:10px;color:#bbb;margin-top:6px">${snap.data().updatedAt||''}</div>`;
+    } else {
+      el.innerHTML='<span class="feedback-empty">피드백 없음</span>';
+    }
+  });
+
   return wrap;
 }
 
@@ -734,7 +765,44 @@ async function renderDashboard(){
     });
 
     card.appendChild(nameDiv);card.appendChild(pbWrap);card.appendChild(statsEl);card.appendChild(itemsWrap);
+
+    // 관리자 피드백 입력 영역
+    const fbAdminWrap=document.createElement('div');fbAdminWrap.className='feedback-box';
+    const fbSavedEl=document.createElement('div');fbSavedEl.className='feedback-saved';
+    fbAdminWrap.innerHTML=`<div class="feedback-label">✏️ 피드백 작성</div>`;
+    const fbTextarea=document.createElement('textarea');
+    fbTextarea.className='feedback-textarea';
+    fbTextarea.placeholder='직원들에게 전달할 피드백을 입력하세요...';
+    fbTextarea.rows=3;
+    const fbSaveBtn=document.createElement('button');
+    fbSaveBtn.className='feedback-save-btn';
+    fbSaveBtn.textContent='💾 저장하기';
+    fbAdminWrap.appendChild(fbTextarea);
+    fbAdminWrap.appendChild(fbSaveBtn);
+    fbAdminWrap.appendChild(fbSavedEl);
+    card.appendChild(fbAdminWrap);
     wrap.appendChild(card);
+
+    // 기존 피드백 로드
+    const fbRef=doc(db,`feedback/${store.id}/${tKey}/comment`);
+    getDoc(fbRef).then(snap=>{
+      if(snap.exists()&&snap.data().text){
+        fbTextarea.value=snap.data().text;
+      }
+    });
+
+    // 저장 버튼
+    fbSaveBtn.onclick=async()=>{
+      const text=fbTextarea.value.trim();
+      fbSavedEl.textContent='저장 중...';
+      try{
+        const now=new Date();
+        const ts=`${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+        await setDoc(fbRef,{text,updatedAt:ts});
+        fbSavedEl.textContent='✓ 저장됨';
+        setTimeout(()=>fbSavedEl.textContent='',2000);
+      }catch(e){fbSavedEl.textContent='⚠ 저장 실패';}
+    };
 
     // 실시간 리스닝
     const unsub=onSnapshot(docRef,(snap)=>{
