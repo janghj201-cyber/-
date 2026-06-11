@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>위베이프 일정표</title>
+<meta name="theme-color" content="#0f7a6b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="위베이프 일정">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --green:#0f7a6b;--green-light:#e6f4f1;
+  --blue:#1a6fb5;--blue-light:#e8f2fb;
+  --orange:#c97a1a;--orange-light:#fdf3e3;
+  --purple:#6b3fa0;--purple-light:#f1ecfa;
+  --red:#c0392b;--red-light:#fdecea;
+  --pink:#b5186a;--pink-light:#fce8f3;
+  --teal:#0e7490;--teal-light:#e0f5f9;
+  --bg:#f4f1ea;--white:#fff;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;background:var(--bg);color:#222;min-height:100dvh;padding-top:var(--safe-top);}
+
+/* ── 공통 헤더 ── */
+.header{background:var(--green);color:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header-title{font-size:17px;font-weight:700;}
+.header-sub{font-size:11px;opacity:0.8;margin-top:1px;}
+.nav-btns{display:flex;gap:6px;align-items:center;}
+.nav-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:6px 10px;font-size:14px;cursor:pointer;font-family:inherit;}
+.today-btn{font-size:12px;background:rgba(255,255,255,0.3);}
+.back-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+.admin-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;}
+
+/* ── 화면 전환 ── */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── 지점 선택 화면 ── */
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
+.store-card{background:var(--white);border-radius:16px;padding:20px 14px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform 0.15s,box-shadow 0.15s;border:2px solid transparent;}
+.store-card:active{transform:scale(0.97);}
+.store-card:hover{box-shadow:0 4px 16px rgba(15,122,107,0.15);border-color:var(--green-light);}
+.store-icon{font-size:28px;margin-bottom:8px;}
+.store-name{font-size:14px;font-weight:700;color:#222;line-height:1.3;}
+.store-area{font-size:11px;color:#888;margin-top:3px;}
+.store-today{margin-top:8px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block;}
+.today-done{background:var(--green-light);color:var(--green);}
+.today-pending{background:#fef3c7;color:#92400e;}
+.today-none{background:#f3f4f6;color:#9ca3af;}
+
+/* ── 달력 ── */
+.cal-wrap{background:var(--white);margin:12px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.weekday-row{display:grid;grid-template-columns:repeat(7,1fr);background:#f9f8f5;}
+.wd{text-align:center;font-size:11px;font-weight:600;padding:8px 0;color:#666;}
+.wd:first-child{color:var(--red);}
+.wd:last-child{color:var(--blue);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.day{min-height:62px;padding:5px 4px 4px;border-top:0.5px solid #ede9e0;cursor:pointer;transition:background 0.12s;}
+.day:hover{background:#f7f5f0;}
+.day.selected{background:var(--green-light);}
+.day.today .day-num{background:var(--green);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px;}
+.day-num{font-size:13px;font-weight:500;text-align:center;margin-bottom:3px;line-height:1;}
+.day.other-month .day-num{color:#bbb;}
+.day.sun .day-num{color:var(--red);}
+.day.sat .day-num{color:var(--blue);}
+.day.today.sun .day-num,.day.today.sat .day-num{color:#fff;}
+.badges{display:flex;flex-direction:column;gap:2px;}
+.badge{font-size:9px;font-weight:600;border-radius:3px;padding:1px 3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.b-blue{background:var(--blue-light);color:var(--blue);}
+.b-orange{background:var(--orange-light);color:var(--orange);}
+.b-purple{background:var(--purple-light);color:var(--purple);}
+.b-red{background:var(--red-light);color:var(--red);}
+.b-green{background:var(--green-light);color:var(--green);}
+.b-pink{background:var(--pink-light);color:var(--pink);}
+.b-teal{background:var(--teal-light);color:var(--teal);}
+.b-teal2{background:var(--teal);color:#fff;}
+
+/* ── 상세 패널 ── */
+.detail{margin:0 12px 12px;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.detail-header{padding:14px 16px 10px;border-bottom:1px solid #ede9e0;}
+.detail-date{font-size:16px;font-weight:700;}
+.detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.dtag{font-size:11px;font-weight:600;border-radius:20px;padding:3px 10px;}
+.task-list{padding:8px 0;}
+.task{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;cursor:pointer;}
+.task:hover{background:#f9f8f5;}
+.task-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.c-green{background:var(--green);}
+.c-blue{background:var(--blue);}
+.c-orange{background:var(--orange);}
+.c-purple{background:var(--purple);}
+.c-pink{background:var(--pink);}
+.c-teal{background:var(--teal);}
+.task-name{font-size:14px;font-weight:600;line-height:1.3;}
+.task-meta{font-size:12px;color:#888;margin-top:2px;line-height:1.4;}
+.task-expand{margin-left:auto;font-size:18px;color:#bbb;flex-shrink:0;}
+
+/* ── 체크리스트 ── */
+.checklist-wrap{background:#f9f8f5;border-top:1px solid #ede9e0;padding:12px 16px;}
+.checklist-section{margin-bottom:14px;}
+.section-title{font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;padding:4px 8px;background:var(--green-light);border-radius:6px;display:inline-block;}
+.section-title.active-section{background:var(--green);color:#fff;}
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid #ede9e0;}
+.check-item:last-child{border-bottom:none;}
+.check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);margin-top:1px;flex-shrink:0;cursor:pointer;}
+.check-item label{font-size:13px;color:#333;line-height:1.4;cursor:pointer;}
+.check-item input:checked+label{text-decoration:line-through;color:#aaa;}
+.checklist-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #ddd;margin-top:4px;}
+.check-count{font-size:13px;font-weight:600;color:var(--green);}
+.reset-btn{font-size:12px;color:#888;background:none;border:0.5px solid #ccc;border-radius:6px;padding:4px 10px;cursor:pointer;}
+.sync-status{font-size:11px;color:#aaa;margin-top:6px;text-align:right;}
+
+/* ── 패널들 ── */
+.report-wrap{background:#fff5f9;border-top:1px solid #ede9e0;padding:12px 16px;}
+.report-title{font-size:13px;font-weight:700;color:var(--pink);margin-bottom:8px;}
+.report-guide{font-size:12px;color:#555;line-height:1.7;padding-left:0;}
+.report-guide li{list-style:none;padding-left:14px;position:relative;margin-bottom:4px;}
+.report-guide li::before{content:"·";position:absolute;left:0;color:var(--pink);}
+.as-wrap{background:#e8f8fb;border-top:1px solid #ede9e0;padding:12px 16px;}
+.as-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:8px;}
+.as-guide{font-size:12px;color:#555;line-height:1.7;padding-left:0;}
+.as-guide li{list-style:none;padding-left:14px;position:relative;margin-bottom:4px;}
+.as-guide li::before{content:"·";position:absolute;left:0;color:var(--teal);}
+
+/* ── 범례 ── */
+.legend{margin:0 12px 16px;background:var(--white);border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.legend-title{font-size:11px;font-weight:700;color:#888;margin-bottom:8px;letter-spacing:0.5px;}
+.legend-items{display:flex;flex-wrap:wrap;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#555;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── 관리자 대시보드 ── */
+.dash-wrap{padding:12px;}
+.dash-date{font-size:13px;color:#888;margin-bottom:12px;padding:0 4px;}
+.dash-card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.dash-store-name{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.dash-store-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.progress-bar{background:#f0f0ee;border-radius:999px;height:10px;overflow:hidden;margin-bottom:6px;}
+.progress-fill{height:100%;border-radius:999px;transition:width 0.5s ease;background:var(--green);}
+.progress-fill.warn{background:var(--orange);}
+.progress-fill.empty{background:#e5e7eb;}
+.dash-stats{display:flex;justify-content:space-between;font-size:12px;color:#888;}
+.dash-items{margin-top:10px;display:flex;flex-direction:column;gap:4px;}
+.dash-item{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:0.5px solid #f0eeea;}
+.dash-item:last-child{border-bottom:none;}
+.dash-check{width:16px;height:16px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.dash-check.done{background:var(--green);color:#fff;}
+.dash-check.undone{background:#f0f0ee;color:#ccc;}
+.dash-item-name{color:#444;}
+.dash-item-name.done{text-decoration:line-through;color:#bbb;}
+.no-clean{font-size:12px;color:#bbb;padding:6px 0;}
+.dash-refresh{display:block;margin:8px auto 0;background:none;border:0.5px solid #ccc;border-radius:8px;padding:6px 16px;font-size:12px;color:#888;cursor:pointer;font-family:inherit;}
+
+/* ── 비밀번호 모달 ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;}
+.modal{background:#fff;border-radius:20px;padding:28px 24px;width:280px;text-align:center;}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:6px;}
+.modal p{font-size:13px;color:#888;margin-bottom:16px;}
+.modal input{width:100%;border:1.5px solid #ddd;border-radius:10px;padding:10px 14px;font-size:16px;text-align:center;letter-spacing:4px;font-family:inherit;outline:none;}
+.modal input:focus{border-color:var(--green);}
+.modal-btns{display:flex;gap:8px;margin-top:14px;}
+.modal-btn{flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.modal-btn.cancel{background:#f3f4f6;color:#666;}
+.modal-btn.confirm{background:var(--green);color:#fff;}
+.modal-err{font-size:12px;color:var(--red);margin-top:8px;min-height:16px;}
+
+/* ── 설치 배너 ── */
+.install-banner{background:var(--green);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;line-height:1.5;}
+.install-banner .ibtn{background:rgba(255,255,255,0.25);border:none;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.install-banner .xbtn{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;cursor:pointer;padding:0 2px;}
+.pb{height:calc(20px + var(--safe-bot));}
+</style>
+</head>
+<body>
+
+<!-- 설치 배너 -->
+<div id="ibanner" class="install-banner" style="display:none">
+  <span id="imsg"></span>
+  <button class="ibtn" id="ibtn" style="display:none">홈 화면에 추가</button>
+  <button class="xbtn" onclick="document.getElementById('ibanner').style.display='none'">×</button>
+</div>
+
+<!-- 비밀번호 모달 -->
+<div class="modal-bg" id="pw-modal" style="display:none">
+  <div class="modal">
+    <h3>🔐 관리자 모드</h3>
+    <p>비밀번호를 입력하세요</p>
+    <input type="password" id="pw-input" maxlength="20" placeholder="••••••">
+    <div class="modal-err" id="pw-err"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closePwModal()">취소</button>
+      <button class="modal-btn confirm" onclick="checkPw()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ① 지점 선택 화면 -->
+<div class="screen active" id="screen-home">
+  <div class="header">
+    <div><div class="header-title">📋 위베이프 일정표</div><div class="header-sub">지점을 선택하세요</div></div>
+    <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
+  </div>
+  <div class="store-grid" id="store-grid"></div>
+  <div class="pb"></div>
+</div>
+
+<!-- ② 캘린더 화면 -->
+<div class="screen" id="screen-cal">
+  <div class="header">
+    <div><div class="header-title" id="cal-store-title"></div><div class="header-sub" id="hsub"></div></div>
+    <div class="nav-btns">
+      <button class="back-btn" onclick="goHome()">← 지점</button>
+      <button class="nav-btn" onclick="chg(-1)">‹</button>
+      <button class="nav-btn today-btn" onclick="goToday()">오늘</button>
+      <button class="nav-btn" onclick="chg(1)">›</button>
+    </div>
+  </div>
+  <div class="cal-wrap">
+    <div class="weekday-row">
+      <div class="wd">일</div><div class="wd">월</div><div class="wd">화</div>
+      <div class="wd">수</div><div class="wd">목</div><div class="wd">금</div><div class="wd">토</div>
+    </div>
+    <div class="cal-grid" id="grid"></div>
+  </div>
+  <div class="detail" id="detail" style="display:none">
+    <div class="detail-header">
+      <div class="detail-date" id="ddate"></div>
+      <div class="detail-tags" id="dtags"></div>
+    </div>
+    <div class="task-list" id="tlist"></div>
+  </div>
+  <div class="legend">
+    <div class="legend-title">범례</div>
+    <div class="legend-items">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>전체주문(월)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>재고실사</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>기기점검</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>대청소</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>월간보고마감</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>AS접수마감</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal);border:2px solid var(--teal)"></div>AS발송일</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>공휴일</div>
+    </div>
+  </div>
+  <div class="pb"></div>
+</div>
+
+<!-- ③ 관리자 대시보드 화면 -->
+<div class="screen" id="screen-admin">
+  <div class="header">
+    <div><div class="header-title">📊 관리자 대시보드</div><div class="header-sub" id="dash-sub"></div></div>
+    <button class="back-btn" onclick="goHome();isAdmin=false;">← 나가기</button>
+  </div>
+  <div class="dash-wrap" id="dash-wrap"></div>
+  <div class="pb"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ══════════════════════════════════════
+// Firebase 설정
+// ══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyANA3vXVU9D6jGVVJHRpi5b_7qCsIeUj7I",
+  authDomain: "wevape-schedule.firebaseapp.com",
+  projectId: "wevape-schedule",
+  storageBucket: "wevape-schedule.firebasestorage.app",
+  messagingSenderId: "995918566365",
+  appId: "1:995918566365:web:d74a1208bb29203bd25c34"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ══════════════════════════════════════
+// ★ 여기만 고치면 됩니다
+// ══════════════════════════════════════
+const ADMIN_PW = "682879";
+
+const STORES = [
+  { id:"yeonsu",     name:"인천 연수점",       icon:"🏪", area:"인천" },
+  { id:"nonhyeon",   name:"인천 논현점",       icon:"🏬", area:"인천" },
+  { id:"rodeo",      name:"구월 로데오점",     icon:"🎯", area:"인천" },
+  { id:"gilbyeong",  name:"구월 길병원점",     icon:"🏥", area:"인천" },
+  { id:"airport",    name:"인천공항점",        icon:"✈️", area:"인천" },
+  { id:"geomdan",    name:"검단점",           icon:"🌱", area:"인천" },
+  { id:"gyesan",     name:"계산점",           icon:"🏙️", area:"인천" },
+  { id:"sangdong",   name:"부천 상동점",       icon:"🌿", area:"부천" },
+  { id:"sijungdong", name:"부천 신중동점",     icon:"⭐", area:"부천" },
+];
+
+const DAILY=[
+  {task:"청소 및 매장 정리",meta:"바닥·진열대·시연대 정리, 전원 점검",col:"c-green",clean:true},
+  {task:"오픈 준비 / 재고 확인",meta:"베스트셀러·일회용 진열 보충, POS 점검",col:"c-blue"},
+  {task:"오전 회의 및 업무 점검",meta:"당일 입고·프로모션·전달사항 공유",col:"c-blue"},
+  {task:"마감 청소 및 정산",meta:"시재 정산, 마감 보고, 진열 정리",col:"c-green"},
+];
+const SPECIALS={
+  order:{task:"전체 주문 (주간)",meta:"전 품목 발주 · 본사 재고 연동 확인",col:"c-blue"},
+  stock:{task:"재고 실사",meta:"전 품목 실사 · 본사 직영 재고 대조",col:"c-orange"},
+  pod:{task:"팟형 기기 진열 점검",meta:"팟형 전시 기기 작동·외관 점검",col:"c-purple"},
+  aio:{task:"일체형 기기 진열 점검",meta:"일체형 전시 기기 작동·외관 점검",col:"c-purple"},
+  report:{task:"📊 월간 보고 마감",meta:"매장 현황 보고서 입력 마감 (매출·재고·직원의견)",col:"c-pink",report:true},
+  as_deadline:{task:"📦 A/S 접수 마감",meta:"각 매장 고객 A/S 접수 마감일 (오늘까지 접수)",col:"c-teal"},
+  as_send:{task:"🚚 A/S 택배 발송일",meta:"전 지점 A/S 물품 → 로데오점으로 발송",col:"c-teal",asSend:true},
+};
+const HOLIDAYS={
+  "2026-01-01":"신정","2026-01-28":"설연휴","2026-01-29":"설날","2026-01-30":"설연휴",
+  "2026-03-01":"삼일절","2026-05-05":"어린이날","2026-05-25":"부처님오신날",
+  "2026-06-06":"현충일","2026-08-15":"광복절",
+  "2026-09-24":"추석연휴","2026-09-25":"추석","2026-09-26":"추석연휴",
+  "2026-10-03":"개천절","2026-10-09":"한글날","2026-12-25":"크리스마스"
+};
+const CSECTIONS=[
+  {title:"대청소 1구역 — 외부·내부",items:["유리창 닦기(안팎)","자판기 외면 청소","바닥 쓸기·걸레질","입간판 정리","바닥 타일 줄눈 청소","몰딩·사각지대 먼지 제거"]},
+  {title:"대청소 2구역 — 시연대·응대존",items:["시연대 손님쪽 표면 닦기","시연대 직원쪽 표면 닦기","응대존 카운터 소독","포인트 진열 정리·먼지 제거"]},
+  {title:"대청소 3구역 — 진열장",items:["외부 진열장 유리 닦기","진열장 내부 선반 닦기","하부 서랍장 정리·먼지 제거","진열 상품 정렬"]},
+  {title:"대청소 4구역 — 데스크·창고",items:["컴퓨터 주변 먼지 제거","본체·프린터 외면 닦기","창고 바닥 청소","창고 재고 박스 정리"]},
+];
+
+// ══════════════════════════════════════
+// 상태
+// ══════════════════════════════════════
+const today = new Date();
+let cy=today.getFullYear(), cm=today.getMonth(), sel=null;
+let curStore = null;
+let isAdmin = false;
+let dashUnsub = null;
+
+// ══════════════════════════════════════
+// 유틸
+// ══════════════════════════════════════
+function pad(n){return String(n).padStart(2,'0');}
+function dk(y,m,d){return `${y}-${pad(m+1)}-${pad(d)}`;}
+function todayKey(){return dk(today.getFullYear(),today.getMonth(),today.getDate());}
+function sundays(y,m){let s=[],d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()===0)s.push(d.getDate());d.setDate(d.getDate()+1);}return s;}
+
+function getAsSendDate(y,m){
+  let d=16;
+  while(d>=1){
+    const dow=new Date(y,m,d).getDay();
+    const key=dk(y,m,d);
+    if(dow!==0&&dow!==6&&!HOLIDAYS[key])return d;
+    d--;
+  }
+  return 16;
+}
+
+function getEvs(y,m,d){
+  const ev=[],dow=new Date(y,m,d).getDay(),key=dk(y,m,d);
+  if(HOLIDAYS[key])ev.push({t:'holiday',label:HOLIDAYS[key]});
+  if(dow===1)ev.push({t:'order'});
+  if(d===1||d===2)ev.push({t:'stock'});
+  if(d===8)ev.push({t:'pod'});
+  if(d===22)ev.push({t:'aio'});
+  if(d===25)ev.push({t:'report'});
+  if(d===15)ev.push({t:'as_deadline'});
+  if(d===getAsSendDate(y,m))ev.push({t:'as_send'});
+  if(dow===0){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&i<4)ev.push({t:'clean',sec:i+1});}
+  return ev;
+}
+
+// 오늘 대청소 섹션 번호 (-1이면 오늘은 대청소 없음)
+function getTodayCleanSec(){
+  const d=today.getDate(),m=today.getMonth(),y=today.getFullYear();
+  const dow=today.getDay();
+  if(dow!==0)return -1;
+  const ss=sundays(y,m);
+  const i=ss.indexOf(d);
+  return (i>=0&&i<4)?i+1:-1;
+}
+
+// Firebase 체크 데이터 키
+function fbKey(storeId, dateKey, itemKey){
+  return `checks/${storeId}/${dateKey}/${itemKey}`;
+}
+
+// ══════════════════════════════════════
+// 화면 전환
+// ══════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+window.goHome = function(){
+  if(dashUnsub){dashUnsub();dashUnsub=null;}
+  showScreen('screen-home');
+  renderStoreGrid();
+};
+
+// ══════════════════════════════════════
+// 지점 선택 화면
+// ══════════════════════════════════════
+async function renderStoreGrid(){
+  const grid=document.getElementById('store-grid');
+  grid.innerHTML='';
+  const sec=getTodayCleanSec();
+  const tKey=todayKey();
+
+  for(const store of STORES){
+    const card=document.createElement('div');
+    card.className='store-card';
+    const statusId=`status-${store.id}`;
+
+    // 카드 먼저 즉시 렌더
+    card.innerHTML=`
+      <div class="store-icon">${store.icon}</div>
+      <div class="store-name">${store.name}</div>
+      <div class="store-area">${store.area}</div>
+      <span class="store-today today-none" id="${statusId}">${sec>0?'확인중...':'오늘 대청소 없음'}</span>
+    `;
+    card.onclick=()=>enterStore(store);
+    grid.appendChild(card);
+
+    // 상태는 비동기로 업데이트
+    if(sec>0){
+      const secIdx=sec-1;
+      const total=CSECTIONS[secIdx].items.length;
+      getDoc(doc(db,`checks/${store.id}/${tKey}/section_${secIdx}`))
+        .then(snap=>{
+          const data=snap.exists()?snap.data():{};
+          const done=Object.values(data).filter(Boolean).length;
+          const el=document.getElementById(statusId);
+          if(!el)return;
+          if(done>=total){
+            el.className='store-today today-done';el.textContent=`✅ 완료 ${done}/${total}`;
+          } else if(done>0){
+            el.className='store-today today-pending';el.textContent=`🟡 진행중 ${done}/${total}`;
+          } else {
+            el.className='store-today today-pending';el.textContent=`⬜ 미완료 0/${total}`;
+          }
+        })
+        .catch(()=>{
+          const el=document.getElementById(statusId);
+          if(el){el.className='store-today today-none';el.textContent='상태 확인 불가';}
+        });
+    }
+  }
+}
+
+function enterStore(store){
+  curStore=store;
+  cy=today.getFullYear();cm=today.getMonth();sel=null;
+  document.getElementById('cal-store-title').textContent=`${store.icon} ${store.name}`;
+  showScreen('screen-cal');
+  renderCal();
+  document.getElementById('detail').style.display='none';
+}
+
+// ══════════════════════════════════════
+// 달력
+// ══════════════════════════════════════
+function renderCal(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  const fd=new Date(cy,cm,1).getDay(),dim=new Date(cy,cm+1,0).getDate(),dp=new Date(cy,cm,0).getDate();
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('hsub').textContent=`${cy}년 ${mns[cm]}`;
+  let cells=[];
+  for(let i=fd-1;i>=0;i--)cells.push({d:dp-i,o:true,m:cm===0?11:cm-1,y:cm===0?cy-1:cy});
+  for(let d=1;d<=dim;d++)cells.push({d,o:false,m:cm,y:cy});
+  const rem=42-cells.length;
+  for(let d=1;d<=rem;d++)cells.push({d,o:true,m:cm===11?0:cm+1,y:cm===11?cy+1:cy});
+  cells.forEach(c=>{
+    const div=document.createElement('div');div.className='day';
+    const dow=new Date(c.y,c.m,c.d).getDay();
+    if(c.o)div.classList.add('other-month');
+    if(dow===0)div.classList.add('sun');
+    if(dow===6)div.classList.add('sat');
+    const isTod=!c.o&&c.y===today.getFullYear()&&c.m===today.getMonth()&&c.d===today.getDate();
+    if(isTod)div.classList.add('today');
+    if(sel&&!c.o&&sel.y===c.y&&sel.m===c.m&&sel.d===c.d)div.classList.add('selected');
+    const nd=document.createElement('div');nd.className='day-num';nd.textContent=c.d;div.appendChild(nd);
+    if(!c.o){
+      const evs=getEvs(c.y,c.m,c.d);
+      const bd=document.createElement('div');bd.className='badges';
+      evs.forEach(e=>{
+        const b=document.createElement('div');b.className='badge';
+        if(e.t==='holiday'){b.className+=' b-red';b.textContent=e.label.slice(0,4);}
+        else if(e.t==='order'){b.className+=' b-blue';b.textContent='전체주문';}
+        else if(e.t==='stock'){b.className+=' b-orange';b.textContent='재고실사';}
+        else if(e.t==='pod'){b.className+=' b-purple';b.textContent='팟점검';}
+        else if(e.t==='aio'){b.className+=' b-purple';b.textContent='일체형점검';}
+        else if(e.t==='report'){b.className+=' b-pink';b.textContent='보고마감';}
+        else if(e.t==='as_deadline'){b.className+=' b-teal';b.textContent='AS접수마감';}
+        else if(e.t==='as_send'){b.className+=' b-teal2';b.textContent='AS발송일';}
+        else if(e.t==='clean'){b.className+=' b-green';b.textContent='대청소'+e.sec;}
+        bd.appendChild(b);
+      });
+      div.appendChild(bd);
+      div.onclick=()=>selDay(c.y,c.m,c.d);
+    }
+    g.appendChild(div);
+  });
+}
+
+function selDay(y,m,d){sel={y,m,d};renderCal();showDetail(y,m,d);}
+
+function showDetail(y,m,d){
+  const det=document.getElementById('detail');
+  const dows=['일','월','화','수','목','금','토'];
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dow=new Date(y,m,d).getDay();
+  document.getElementById('ddate').textContent=`${y}년 ${mns[m]} ${d}일 (${dows[dow]})`;
+  const evs=getEvs(y,m,d);
+  const tg=document.getElementById('dtags');tg.innerHTML='';
+  evs.forEach(e=>{
+    const t=document.createElement('div');t.className='dtag';
+    if(e.t==='holiday'){t.style.cssText='background:var(--red-light);color:var(--red)';t.textContent=e.label;}
+    else if(e.t==='order'){t.style.cssText='background:var(--blue-light);color:var(--blue)';t.textContent='전체주문일';}
+    else if(e.t==='stock'){t.style.cssText='background:var(--orange-light);color:var(--orange)';t.textContent='재고실사';}
+    else if(e.t==='pod'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='팟형기기점검';}
+    else if(e.t==='aio'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='일체형기기점검';}
+    else if(e.t==='report'){t.style.cssText='background:var(--pink-light);color:var(--pink)';t.textContent='📊 월간보고 마감일';}
+    else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='📦 A/S 접수 마감일';}
+    else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일 (→로데오점)';}
+    else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
+    tg.appendChild(t);
+  });
+  const tl=document.getElementById('tlist');tl.innerHTML='';
+  const specs=[];
+  evs.forEach(e=>{if(SPECIALS[e.t])specs.push({...SPECIALS[e.t]});});
+  const cleanEv=evs.find(e=>e.t==='clean');
+  [...specs,...DAILY].forEach(t=>{
+    const row=document.createElement('div');row.className='task';
+    row.innerHTML=`<div class="task-dot ${t.col}"></div>
+      <div style="flex:1"><div class="task-name">${t.task}</div>${t.meta?`<div class="task-meta">${t.meta}</div>`:''}</div>
+      ${(t.clean||t.report||t.asSend)?'<div class="task-expand">›</div>':''}`;
+    if(t.clean){
+      let open=false;
+      row.onclick=()=>{
+        open=!open;
+        const ex=document.getElementById('cpanel');if(ex)ex.remove();
+        if(open){row.insertAdjacentElement('afterend',buildCL(cleanEv?cleanEv.sec:null,dk(y,m,d)));}
+        row.querySelector('.task-expand').textContent=open?'↓':'›';
+      };
+    }
+    if(t.report){
+      let open=false;
+      row.onclick=()=>{
+        open=!open;
+        const ex=document.getElementById('rpanel');if(ex)ex.remove();
+        if(open){row.insertAdjacentElement('afterend',buildRP());}
+        row.querySelector('.task-expand').textContent=open?'↓':'›';
+      };
+    }
+    if(t.asSend){
+      let open=false;
+      row.onclick=()=>{
+        open=!open;
+        const ex=document.getElementById('aspanel');if(ex)ex.remove();
+        if(open){row.insertAdjacentElement('afterend',buildAS(y,m));}
+        row.querySelector('.task-expand').textContent=open?'↓':'›';
+      };
+    }
+    tl.appendChild(row);
+  });
+  det.style.display='block';
+  setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+
+// ══════════════════════════════════════
+// 대청소 체크리스트 (Firebase 연동)
+// ══════════════════════════════════════
+function buildCL(activeSec, dateKey){
+  const wrap=document.createElement('div');wrap.className='checklist-wrap';wrap.id='cpanel';
+  const secIdx=activeSec?activeSec-1:null;
+  const sectionsToShow=secIdx!==null?[CSECTIONS[secIdx]]:CSECTIONS;
+  const siOffset=secIdx!==null?secIdx:0;
+  const syncEl=document.createElement('div');syncEl.className='sync-status';syncEl.textContent='';
+  let total=0;
+
+  // Firebase 실시간 리스닝
+  const docPath=`checks/${curStore.id}/${dateKey}/section_${siOffset}`;
+  const docRef=doc(db,docPath);
+
+  sectionsToShow.forEach((sec,i)=>{
+    const si=siOffset+i;
+    const sd=document.createElement('div');sd.className='checklist-section';
+    const tl=document.createElement('div');tl.className='section-title active-section';
+    tl.textContent=sec.title;sd.appendChild(tl);
+    sec.items.forEach((item,ii)=>{
+      total++;
+      const key=`item_${ii}`;
+      const row=document.createElement('div');row.className='check-item';
+      const cb=document.createElement('input');cb.type='checkbox';cb.id=`cb_${si}_${ii}`;
+      const lb=document.createElement('label');lb.htmlFor=`cb_${si}_${ii}`;lb.textContent=item;
+      cb.onchange=async()=>{
+        syncEl.textContent='저장 중...';
+        try{
+          const snap=await getDoc(docRef);
+          const cur=snap.exists()?snap.data():{};
+          cur[key]=cb.checked;
+          await setDoc(docRef,cur);
+          syncEl.textContent='✓ 저장됨';
+          setTimeout(()=>syncEl.textContent='',2000);
+        }catch(e){syncEl.textContent='⚠ 저장 실패';}
+        updateCount();
+      };
+      row.appendChild(cb);row.appendChild(lb);sd.appendChild(row);
+    });
+    wrap.appendChild(sd);
+  });
+
+  const ft=document.createElement('div');ft.className='checklist-footer';
+  const ct=document.createElement('div');ct.className='check-count';ct.id='ccount';ct.textContent='불러오는 중...';
+  const rb=document.createElement('button');rb.className='reset-btn';rb.textContent='초기화';
+  rb.onclick=async()=>{
+    if(!confirm('체크 내용을 모두 초기화할까요?'))return;
+    await setDoc(docRef,{});
+    loadChecks();
+  };
+  ft.appendChild(ct);ft.appendChild(rb);wrap.appendChild(ft);
+  wrap.appendChild(syncEl);
+
+  function updateCount(){
+    const cbs=wrap.querySelectorAll('input[type=checkbox]');
+    const done=[...cbs].filter(c=>c.checked).length;
+    ct.textContent=`${done} / ${total} 완료`;
+  }
+
+  async function loadChecks(){
+    try{
+      const snap=await getDoc(docRef);
+      const data=snap.exists()?snap.data():{};
+      const cbs=wrap.querySelectorAll('input[type=checkbox]');
+      cbs.forEach((cb,idx)=>{
+        const key=`item_${idx}`;
+        cb.checked=!!data[key];
+      });
+      updateCount();
+    }catch(e){ct.textContent='불러오기 실패';}
+  }
+  loadChecks();
+  return wrap;
+}
+
+// ══════════════════════════════════════
+// 패널 빌더들
+// ══════════════════════════════════════
+function buildRP(){
+  const wrap=document.createElement('div');wrap.className='report-wrap';wrap.id='rpanel';
+  wrap.innerHTML=`<div class="report-title">📊 월간 보고서 작성 가이드</div>
+  <ul class="report-guide">
+    <li><strong>매출 추이</strong> — 오늘 기준 달성액 + 목표 대비 % 적기</li>
+    <li><strong>고객 유입</strong> — 일 평균 방문객 수, 전월 대비 변화</li>
+    <li><strong>주력 제품 TOP3</strong> — 이번 달 가장 많이 나간 액상·일회용 순서대로</li>
+    <li><strong>직원 현장 의견</strong> — 재고 부족, 손님 문의 많은 제품, 개선 건의 솔직하게</li>
+    <li><strong>매출 증대 방안</strong> — 이달 해봤거나 다음 달 시도하고 싶은 것</li>
+    <li><strong>특이사항</strong> — 주변 행사·공사·날씨 등 외부 요인</li>
+    <li style="margin-top:8px;color:var(--pink);font-weight:700">⏰ 마감: 매월 25일 자정까지</li>
+  </ul>
+  <a href="https://docs.google.com/spreadsheets/d/1qvk7CmUcpjg6Ww8LxRiyzTbJJyWlKhKRawo5-2KDmHs/edit?gid=543600037#gid=543600037"
+     target="_blank"
+     style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:10px;background:var(--pink);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">
+    📝 월간 보고서 입력하러 가기 ↗
+  </a>`;
+  return wrap;
+}
+
+function buildAS(y,m){
+  const sendDate=getAsSendDate(y,m);
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const wrap=document.createElement('div');wrap.className='as-wrap';wrap.id='aspanel';
+  wrap.innerHTML=`<div class="as-title">🚚 A/S 발송 안내</div>
+  <ul class="as-guide">
+    <li>발송 대상: <strong>전 지점 → 로데오점</strong></li>
+    <li>발송 기준일: 매월 <strong>16일</strong> (토·일·공휴일이면 직전 평일로 자동 조정)</li>
+    <li>${mns[m]} 실제 발송일: <strong style="color:var(--teal)">${m+1}월 ${sendDate}일</strong></li>
+    <li>발송 전 A/S 현황 시트에서 물품 목록 더블체크 필수</li>
+    <li style="margin-top:8px;color:var(--teal);font-weight:700">📋 발송 전 반드시 시트 작성 후 발송</li>
+  </ul>
+  <a href="https://docs.google.com/spreadsheets/d/17DVk5ITSC04N3Nrb2tz-PjN1H4xQLW7Yplp5KK7YiM4/edit?gid=0#gid=0"
+     target="_blank"
+     style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:10px;background:var(--teal);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">
+    📋 전 지점 A/S 현황 시트 열기 ↗
+  </a>`;
+  return wrap;
+}
+
+// ══════════════════════════════════════
+// 관리자 대시보드
+// ══════════════════════════════════════
+async function renderDashboard(){
+  const wrap=document.getElementById('dash-wrap');wrap.innerHTML='';
+  const sec=getTodayCleanSec();
+  const tKey=todayKey();
+  const dows=['일','월','화','수','목','금','토'];
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dow=today.getDay();
+  document.getElementById('dash-sub').textContent=
+    `${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[dow]}) 기준`;
+
+  const dateEl=document.createElement('div');dateEl.className='dash-date';
+  dateEl.textContent=sec>0?`오늘은 대청소 ${sec}구역 날입니다`:'오늘은 대청소 없는 날입니다';
+  wrap.appendChild(dateEl);
+
+  for(const store of STORES){
+    const card=document.createElement('div');card.className='dash-card';
+
+    if(sec<1){
+      card.innerHTML=`<div class="dash-store-name">${store.icon} ${store.name}</div>
+        <div class="no-clean">오늘은 대청소 없음</div>`;
+      wrap.appendChild(card);
+      continue;
+    }
+
+    const secIdx=sec-1;
+    const items=CSECTIONS[secIdx].items;
+    const total=items.length;
+    const docRef=doc(db,`checks/${store.id}/${tKey}/section_${secIdx}`);
+
+    // 실시간 구독
+    const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
+    nameDiv.innerHTML=`${store.icon} ${store.name} <span class="dash-store-badge" id="badge-${store.id}"></span>`;
+    const pbWrap=document.createElement('div');pbWrap.className='progress-bar';
+    const pbFill=document.createElement('div');pbFill.className='progress-fill';pbFill.style.width='0%';
+    pbWrap.appendChild(pbFill);
+    const statsEl=document.createElement('div');statsEl.className='dash-stats';
+    statsEl.innerHTML=`<span id="stat-${store.id}">불러오는 중...</span><span>${CSECTIONS[secIdx].title}</span>`;
+    const itemsWrap=document.createElement('div');itemsWrap.className='dash-items';
+    items.forEach((item,ii)=>{
+      const row=document.createElement('div');row.className='dash-item';
+      row.id=`ditem-${store.id}-${ii}`;
+      row.innerHTML=`<div class="dash-check undone" id="dck-${store.id}-${ii}">✓</div>
+        <span class="dash-item-name" id="dname-${store.id}-${ii}">${item}</span>`;
+      itemsWrap.appendChild(row);
+    });
+
+    card.appendChild(nameDiv);card.appendChild(pbWrap);card.appendChild(statsEl);card.appendChild(itemsWrap);
+    wrap.appendChild(card);
+
+    // 실시간 리스닝
+    const unsub=onSnapshot(docRef,(snap)=>{
+      const data=snap.exists()?snap.data():{};
+      let done=0;
+      items.forEach((item,ii)=>{
+        const checked=!!data[`item_${ii}`];
+        if(checked)done++;
+        const ck=document.getElementById(`dck-${store.id}-${ii}`);
+        const nm=document.getElementById(`dname-${store.id}-${ii}`);
+        if(ck){ck.className='dash-check '+(checked?'done':'undone');}
+        if(nm){nm.className='dash-item-name '+(checked?'done':'');}
+      });
+      const pct=Math.round(done/total*100);
+      pbFill.style.width=pct+'%';
+      pbFill.className='progress-fill'+(done===0?' empty':done<total?' warn':'');
+      const statEl=document.getElementById(`stat-${store.id}`);
+      if(statEl)statEl.textContent=`${done} / ${total} 완료 (${pct}%)`;
+      const badge=document.getElementById(`badge-${store.id}`);
+      if(badge){
+        if(done>=total){badge.style.cssText='background:var(--green-light);color:var(--green)';badge.textContent='✅ 완료';}
+        else if(done>0){badge.style.cssText='background:#fef3c7;color:#92400e';badge.textContent='🟡 진행중';}
+        else{badge.style.cssText='background:#f3f4f6;color:#9ca3af';badge.textContent='⬜ 미완료';}
+      }
+    });
+    // unsub 나중에 해제용 (goHome에서 처리)
+  }
+
+  const refreshBtn=document.createElement('button');
+  refreshBtn.className='dash-refresh';
+  refreshBtn.textContent='🔄 새로고침';
+  refreshBtn.onclick=()=>{wrap.innerHTML='';renderDashboard();};
+  wrap.appendChild(refreshBtn);
+}
+
+// ══════════════════════════════════════
+// 비밀번호 모달
+// ══════════════════════════════════════
+window.openPwModal=function(){
+  document.getElementById('pw-modal').style.display='flex';
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-err').textContent='';
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+};
+window.closePwModal=function(){
+  document.getElementById('pw-modal').style.display='none';
+};
+window.checkPw=function(){
+  const val=document.getElementById('pw-input').value;
+  if(val===ADMIN_PW){
+    document.getElementById('pw-modal').style.display='none';
+    isAdmin=true;
+    showScreen('screen-admin');
+    renderDashboard();
+  } else {
+    document.getElementById('pw-err').textContent='비밀번호가 틀렸습니다';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+};
+document.getElementById('pw-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')window.checkPw();
+});
+
+// ══════════════════════════════════════
+// 달력 네비게이션
+// ══════════════════════════════════════
+window.chg=function(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}sel=null;document.getElementById('detail').style.display='none';renderCal();};
+window.goToday=function(){cy=today.getFullYear();cm=today.getMonth();sel=null;document.getElementById('detail').style.display='none';renderCal();};
+
+// ══════════════════════════════════════
+// PWA 설치 배너
+// ══════════════════════════════════════
+let dp=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();dp=e;
+  document.getElementById('imsg').textContent='홈 화면에 추가하면 앱처럼 사용할 수 있어요';
+  const ib=document.getElementById('ibtn');ib.style.display='inline-block';
+  ib.onclick=()=>{dp.prompt();document.getElementById('ibanner').style.display='none';};
+  document.getElementById('ibanner').style.display='flex';
+});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
+  document.getElementById('ibanner').style.display='flex';
+  document.getElementById('imsg').textContent='Safari → 공유 버튼 → "홈 화면에 추가"를 탭하세요';
+}
+
+// ══════════════════════════════════════
+// 초기 실행
+// ══════════════════════════════════════
+renderStoreGrid();
+</script>
+</body>
+</html>
