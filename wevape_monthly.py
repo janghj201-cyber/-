@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# v1.1 - GitHub 자동 배포 훅 테스트
 """
 위베이프 월간 목표 설정 Google Sheets 자동화
 매월 실행하면 현재 월 컬럼이 각 매장 시트에 자동 추가되고
