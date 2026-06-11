@@ -32,5 +32,5 @@ p = subprocess.Popen(
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
 )
 out, _ = p.communicate(payload.encode("utf-8"))
-print(out.decode("utf-8", errors="replace"))
-print("Exit code:", p.returncode)
+sys.stdout.buffer.write(out)
+sys.stdout.buffer.write(b"\nExit code: " + str(p.returncode).encode())
