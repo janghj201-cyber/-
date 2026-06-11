@@ -1,0 +1,11 @@
+# 서비스 계정 JSON 키 (보안 상 절대 커밋 금지)
+*.json
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+
+# 환경
+.env
+*.log
