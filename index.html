@@ -196,6 +196,9 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .todo-bulk-btns{display:flex;gap:6px;margin-top:6px;}
 .todo-bulk-btns .todo-add-btn{flex:1;}
 .todo-error{font-size:12px;color:var(--red);padding:8px 0;text-align:center;}
+.todo-whoami{font-size:11px;color:#999;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.todo-whoami b{color:#555;}
+.todo-change-name{background:none;border:none;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;}
 
 /* ── 관리자 탭/날짜네비/월간통계 ── */
 .dash-tabs{display:flex;gap:6px;padding:0 12px 12px;}
@@ -777,6 +780,18 @@ function buildTodoSection(y,m,d){
     <div class="todo-list" id="todo-list-box">불러오는 중...</div>`;
 
   if(!locked){
+    // 현재 작성자 표시 + 변경
+    const whoami=document.createElement('div');whoami.className='todo-whoami';
+    const curName=getUsername();
+    whoami.innerHTML=`작성자: <b id="todo-whoami-name">${curName||'(미설정)'}</b> <button class="todo-change-name" id="todo-change-name">변경</button>`;
+    wrap.appendChild(whoami);
+    whoami.querySelector('#todo-change-name').onclick=()=>{
+      openNameModal((newName)=>{
+        const nameEl=whoami.querySelector('#todo-whoami-name');
+        if(nameEl)nameEl.textContent=newName;
+      });
+    };
+
     // 한 개씩 입력
     const inputRow=document.createElement('div');inputRow.className='todo-input-row';
     inputRow.innerHTML=`<input type="text" class="todo-input" placeholder="할 일을 입력하세요" id="todo-input-box">
