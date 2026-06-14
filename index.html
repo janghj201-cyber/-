@@ -163,6 +163,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .dash-check.undone{background:#f0f0ee;color:#ccc;}
 .dash-item-name{color:#444;}
 .dash-item-name.done{text-decoration:line-through;color:#bbb;}
+.dash-toggle{display:block;width:100%;margin-top:10px;background:#f9f8f5;border:none;border-radius:8px;padding:8px;font-size:12px;color:#888;font-weight:600;cursor:pointer;font-family:inherit;}
+.dash-detail{display:none;margin-top:10px;border-top:1px solid #ede9e0;padding-top:10px;}
+.dash-detail.open{display:block;}
+.dash-detail-title{font-size:11px;font-weight:700;color:#888;margin:8px 0 4px;}
 .no-clean{font-size:12px;color:#bbb;padding:6px 0;}
 .dash-refresh{display:block;margin:8px auto 0;background:none;border:0.5px solid #ccc;border-radius:8px;padding:6px 16px;font-size:12px;color:#888;cursor:pointer;font-family:inherit;}
 
@@ -1115,6 +1119,33 @@ async function renderTodayTab(content){
     todoStats.textContent='📝 오늘의 업무 불러오는 중...';
     card.appendChild(todoStats);
 
+    // 상세보기 토글 + 상세 영역
+    const toggleBtn=document.createElement('button');toggleBtn.className='dash-toggle';toggleBtn.id=`toggle-${store.id}`;
+    toggleBtn.textContent='🔍 상세보기 (항목별 현황)';
+    card.appendChild(toggleBtn);
+
+    const detailWrap=document.createElement('div');detailWrap.className='dash-detail';detailWrap.id=`detail-${store.id}`;
+    detailWrap.innerHTML=`<div class="dash-detail-title">${cleanLabel}</div>
+      <div class="dash-items" id="cleanitems-${store.id}"></div>
+      <div class="dash-detail-title">📝 오늘의 업무</div>
+      <div class="dash-todo-list" id="todoitems-${store.id}"><div class="no-clean">불러오는 중...</div></div>`;
+    card.appendChild(detailWrap);
+
+    toggleBtn.onclick=()=>{
+      const open=detailWrap.classList.toggle('open');
+      toggleBtn.textContent=open?'🔼 상세 닫기':'🔍 상세보기 (항목별 현황)';
+    };
+
+    // 청소 항목 (기본청소 6 + 대청소일이면 구역항목) 뼈대 렌더
+    const cleanItemList=cleanEv?[...CLEAN_BASE,...CSECTIONS[cleanEv.sec-1].items]:[...CLEAN_BASE];
+    const cleanItemsWrap=detailWrap.querySelector(`#cleanitems-${store.id}`);
+    cleanItemList.forEach((item,ii)=>{
+      const row=document.createElement('div');row.className='dash-item';
+      row.innerHTML=`<div class="dash-check undone" id="dck-${store.id}-${ii}">✓</div>
+        <span class="dash-item-name" id="dname-${store.id}-${ii}">${item}</span>`;
+      cleanItemsWrap.appendChild(row);
+    });
+
     // 관리자 피드백 입력 영역
     const fbAdminWrap=document.createElement('div');fbAdminWrap.className='feedback-box';
     const fbSavedEl=document.createElement('div');fbSavedEl.className='feedback-saved';
@@ -1169,6 +1200,14 @@ async function renderTodayTab(content){
         else if(done>0){badge.style.cssText='background:#fef3c7;color:#92400e';badge.textContent='🟡 진행중';}
         else{badge.style.cssText='background:#f3f4f6;color:#9ca3af';badge.textContent='⬜ 미완료';}
       }
+      // 항목별 상세
+      cleanItemList.forEach((item,ii)=>{
+        const checked=!!data[`item_${ii}`];
+        const ck=document.getElementById(`dck-${store.id}-${ii}`);
+        const nm=document.getElementById(`dname-${store.id}-${ii}`);
+        if(ck)ck.className='dash-check '+(checked?'done':'undone');
+        if(nm)nm.className='dash-item-name '+(checked?'done':'');
+      });
     });
     dashUnsubs.push(unsub1);
 
@@ -1179,6 +1218,21 @@ async function renderTodayTab(content){
       const done=items.filter(i=>i.done).length;
       const el=document.getElementById(`todostat-${store.id}`);
       if(el)el.textContent=`📝 오늘의 업무: ${done} / ${items.length} 완료`;
+      // 항목별 상세
+      const todoItemsWrap=document.getElementById(`todoitems-${store.id}`);
+      if(todoItemsWrap){
+        if(items.length===0){
+          todoItemsWrap.innerHTML='<div class="no-clean">등록된 업무 없음</div>';
+        }else{
+          todoItemsWrap.innerHTML='';
+          items.forEach(it=>{
+            const carry=(it.fromDate&&it.fromDate!==tKey)?` <span style="color:var(--orange)">[${it.fromDate.slice(5)} 이월]</span>`:'';
+            const row=document.createElement('div');row.className='dash-todo-item'+(it.done?' done':'');
+            row.innerHTML=`<span class="ico">${it.done?'✅':'⬜'}</span><span class="txt">${it.text} <span style="color:#bbb">(${it.author||'익명'})</span>${carry}</span>`;
+            todoItemsWrap.appendChild(row);
+          });
+        }
+      }
     });
     dashUnsubs.push(unsub2);
   }
