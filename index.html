@@ -166,47 +166,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .no-clean{font-size:12px;color:#bbb;padding:6px 0;}
 .dash-refresh{display:block;margin:8px auto 0;background:none;border:0.5px solid #ccc;border-radius:8px;padding:6px 16px;font-size:12px;color:#888;cursor:pointer;font-family:inherit;}
 
-/* ── 오늘의 업무 ── */
-.todo-section{border-top:1px solid #ede9e0;padding:14px 16px;background:#fafaf8;}
-.todo-header{font-size:13px;font-weight:700;color:#444;margin-bottom:10px;}
-.lock-badge{font-size:10px;font-weight:600;background:#f0f0ee;color:#999;padding:2px 8px;border-radius:10px;margin-left:6px;}
-.todo-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
-.todo-empty{font-size:12px;color:#bbb;padding:8px 0;text-align:center;}
-.todo-item{display:flex;align-items:flex-start;gap:8px;background:#fff;border-radius:8px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,0.04);}
-.todo-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);margin-top:1px;flex-shrink:0;cursor:pointer;}
-.todo-text-wrap{flex:1;}
-.todo-text{font-size:13px;color:#333;line-height:1.4;}
-.todo-item.done .todo-text{text-decoration:line-through;color:#bbb;}
-.todo-author{font-size:11px;color:#999;margin-top:2px;}
-.todo-carry{font-size:10px;color:var(--orange);background:var(--orange-light);padding:1px 6px;border-radius:8px;margin-left:6px;}
-.todo-input-row{display:flex;gap:6px;}
-.todo-input{flex:1;border:1.5px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;}
-.todo-input:focus{border-color:var(--green);}
-.todo-add-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
-.todo-add-btn:active{opacity:0.85;}
-.todo-locked-msg{font-size:12px;color:#999;text-align:center;padding:8px;background:#f0f0ee;border-radius:8px;}
-
-/* ── 관리자 탭/날짜네비/월간통계 ── */
-.dash-tabs{display:flex;gap:6px;padding:0 12px 12px;}
-.dash-tab{flex:1;padding:9px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#f0f0ee;color:#888;}
-.dash-tab.active{background:var(--green);color:#fff;}
-.dash-datenav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;}
-.dash-datenav button{background:var(--white);border:1px solid #ddd;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;}
-.dash-datenav button:disabled{opacity:0.3;cursor:default;}
-.dash-datenav-label{font-size:13px;font-weight:700;color:#444;min-width:130px;text-align:center;}
-.dash-section-title{font-size:12px;font-weight:700;color:#888;margin:14px 0 6px 2px;}
-.dash-workers{font-size:12px;color:#666;margin-bottom:8px;}
-.dash-todo-summary{font-size:12px;color:#888;margin-top:6px;}
-.dash-todo-list{margin-top:6px;display:flex;flex-direction:column;gap:4px;}
-.dash-todo-item{display:flex;align-items:flex-start;gap:6px;font-size:12px;padding:3px 0;}
-.dash-todo-item .ico{flex-shrink:0;margin-top:1px;}
-.dash-todo-item.done .txt{text-decoration:line-through;color:#bbb;}
-.monthly-table{width:100%;border-collapse:collapse;margin-top:8px;background:var(--white);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
-.monthly-table th,.monthly-table td{padding:10px 8px;font-size:12px;text-align:center;border-bottom:1px solid #f0eeea;}
-.monthly-table th{color:#888;font-weight:600;background:#f9f8f5;}
-.monthly-table td:first-child,.monthly-table th:first-child{text-align:left;}
-.monthly-loading{text-align:center;font-size:12px;color:#999;padding:30px 0;}
-
 /* ── 비밀번호 모달 ── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;}
 .modal{background:#fff;border-radius:20px;padding:28px 24px;width:280px;text-align:center;}
@@ -250,18 +209,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 </div>
 
-<!-- 이름 입력 모달 -->
-<div class="modal-bg" id="name-modal" style="display:none">
-  <div class="modal">
-    <h3>👤 이름 입력</h3>
-    <p>업무 등록 시 표시될 이름을 입력해 주세요</p>
-    <input type="text" id="name-input" maxlength="10" placeholder="예: 김민지" style="letter-spacing:normal;text-align:center;">
-    <div class="modal-btns">
-      <button class="modal-btn confirm" style="flex:1" onclick="confirmName()">확인</button>
-    </div>
-  </div>
-</div>
-
 <!-- ① 지점 선택 화면 -->
 <div class="screen active" id="screen-home">
   <div class="header">
@@ -296,7 +243,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <div class="detail-tags" id="dtags"></div>
     </div>
     <div class="task-list" id="tlist"></div>
-    <div id="todo-container"></div>
   </div>
   <div class="legend">
     <div class="legend-title">범례</div>
@@ -360,18 +306,10 @@ const STORES = [
 ];
 
 const DAILY=[
+  {task:"청소 및 매장 정리",meta:"바닥·진열대·시연대 정리, 전원 점검",col:"c-green",clean:true},
   {task:"오픈 준비 / 재고 확인",meta:"베스트셀러·일회용 진열 보충, POS 점검",col:"c-blue"},
   {task:"오전 회의 및 업무 점검",meta:"당일 입고·프로모션·전달사항 공유",col:"c-blue"},
   {task:"마감 청소 및 정산",meta:"시재 정산, 마감 보고, 진열 정리",col:"c-green"},
-];
-// 기본 청소 (매일 공통, 평일/대청소일 모두 포함)
-const CLEAN_BASE=[
-  "매장 정/후문 유리창 얼룩 제거",
-  "자판기 먼지 및 하부 청소",
-  "매장 내/외부 바닥 정리",
-  "천장 및 바닥 사각지대 틈 청소",
-  "액상 및 기기 앞정렬",
-  "시연 제품 먼지/얼룩 제거 (+진열 박스)"
 ];
 const SPECIALS={
   order:{task:"전체 주문 (주간)",meta:"전 품목 발주 · 본사 재고 연동 확인",col:"c-blue"},
@@ -403,10 +341,7 @@ const today = new Date();
 let cy=today.getFullYear(), cm=today.getMonth(), sel=null;
 let curStore = null;
 let isAdmin = false;
-let dashUnsubs = [];
-let dashTab = 'today';
-let dashViewDate = null;
-function clearDashUnsubs(){dashUnsubs.forEach(u=>u());dashUnsubs=[];}
+let dashUnsub = null;
 
 // ══════════════════════════════════════
 // 유틸
@@ -456,57 +391,6 @@ function fbKey(storeId, dateKey, itemKey){
   return `checks/${storeId}/${dateKey}/${itemKey}`;
 }
 
-// 전날 날짜키
-function prevDateKey(dateKey){
-  const [yy,mm,dd]=dateKey.split('-').map(Number);
-  const dt=new Date(yy,mm-1,dd);
-  dt.setDate(dt.getDate()-1);
-  return dk(dt.getFullYear(),dt.getMonth(),dt.getDate());
-}
-
-// 잠금 여부: 오늘=false, 어제=오늘 10시 이전이면 false / 이후면 true, 그 이전=항상 true
-function isDateLocked(dateKey){
-  const [yy,mm,dd]=dateKey.split('-').map(Number);
-  const viewDate=new Date(yy,mm-1,dd);
-  const todayDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  const diffDays=Math.round((todayDate-viewDate)/86400000);
-  if(diffDays<=0)return false;
-  if(diffDays>=2)return true;
-  return new Date().getHours()>=10;
-}
-
-// 해당 날짜의 청소 체크 항목 총 개수 (대청소일이면 기본+구역, 아니면 기본만)
-function getCleanItemCount(y,m,d){
-  const evs=getEvs(y,m,d);
-  const cleanEv=evs.find(e=>e.t==='clean');
-  return cleanEv?CLEAN_BASE.length+CSECTIONS[cleanEv.sec-1].items.length:CLEAN_BASE.length;
-}
-
-// ══════════════════════════════════════
-// 사용자 이름 (오늘의 업무 작성자)
-// ══════════════════════════════════════
-function getUsername(){return localStorage.getItem('wevape_username')||'';}
-let pendingNameCb=null;
-window.openNameModal=function(cb){
-  pendingNameCb=cb;
-  document.getElementById('name-modal').style.display='flex';
-  document.getElementById('name-input').value=getUsername();
-  setTimeout(()=>document.getElementById('name-input').focus(),100);
-};
-window.confirmName=function(){
-  const val=document.getElementById('name-input').value.trim();
-  if(!val)return;
-  localStorage.setItem('wevape_username',val);
-  document.getElementById('name-modal').style.display='none';
-  if(pendingNameCb)pendingNameCb(val);
-  pendingNameCb=null;
-};
-function ensureUsername(cb){
-  const name=getUsername();
-  if(name){cb(name);return;}
-  openNameModal(cb);
-}
-
 // ══════════════════════════════════════
 // 화면 전환
 // ══════════════════════════════════════
@@ -517,7 +401,7 @@ function showScreen(id){
 }
 
 window.goHome = function(){
-  clearDashUnsubs();
+  if(dashUnsub){dashUnsub();dashUnsub=null;}
   showScreen('screen-home');
   renderStoreGrid();
 };
@@ -528,11 +412,8 @@ window.goHome = function(){
 async function renderStoreGrid(){
   const grid=document.getElementById('store-grid');
   grid.innerHTML='';
-  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
   const sec=getTodayCleanSec();
   const tKey=todayKey();
-  const total=getCleanItemCount(ty,tm,td);
-  const label=sec>0?`대청소 ${sec}구역`:'청소 및 매장 정리';
 
   for(const store of STORES){
     const card=document.createElement('div');
@@ -544,30 +425,34 @@ async function renderStoreGrid(){
       <div class="store-icon">${store.icon}</div>
       <div class="store-name">${store.name}</div>
       <div class="store-area">${store.area}</div>
-      <span class="store-today today-none" id="${statusId}">확인중...</span>
+      <span class="store-today today-none" id="${statusId}">${sec>0?'확인중...':'오늘 대청소 없음'}</span>
     `;
     card.onclick=()=>enterStore(store);
     grid.appendChild(card);
 
     // 상태는 비동기로 업데이트
-    getDoc(doc(db,`checks/${store.id}/${tKey}/clean`))
-      .then(snap=>{
-        const data=snap.exists()?snap.data():{};
-        const done=Object.values(data).filter(Boolean).length;
-        const el=document.getElementById(statusId);
-        if(!el)return;
-        if(done>=total&&total>0){
-          el.className='store-today today-done';el.textContent=`✅ ${label} 완료`;
-        } else if(done>0){
-          el.className='store-today today-pending';el.textContent=`🟡 ${label} ${done}/${total}`;
-        } else {
-          el.className='store-today today-pending';el.textContent=`⬜ ${label} 0/${total}`;
-        }
-      })
-      .catch(()=>{
-        const el=document.getElementById(statusId);
-        if(el){el.className='store-today today-none';el.textContent='상태 확인 불가';}
-      });
+    if(sec>0){
+      const secIdx=sec-1;
+      const total=CSECTIONS[secIdx].items.length;
+      getDoc(doc(db,`checks/${store.id}/${tKey}/section_${secIdx}`))
+        .then(snap=>{
+          const data=snap.exists()?snap.data():{};
+          const done=Object.values(data).filter(Boolean).length;
+          const el=document.getElementById(statusId);
+          if(!el)return;
+          if(done>=total){
+            el.className='store-today today-done';el.textContent=`✅ 완료 ${done}/${total}`;
+          } else if(done>0){
+            el.className='store-today today-pending';el.textContent=`🟡 진행중 ${done}/${total}`;
+          } else {
+            el.className='store-today today-pending';el.textContent=`⬜ 미완료 0/${total}`;
+          }
+        })
+        .catch(()=>{
+          const el=document.getElementById(statusId);
+          if(el){el.className='store-today today-none';el.textContent='상태 확인 불가';}
+        });
+    }
   }
 }
 
@@ -653,21 +538,17 @@ function showDetail(y,m,d){
   const specs=[];
   evs.forEach(e=>{if(SPECIALS[e.t])specs.push({...SPECIALS[e.t]});});
   const cleanEv=evs.find(e=>e.t==='clean');
-  // 청소 항목: 대청소일이면 "🧹 대청소 N구역"(기본+구역 합본), 그 외엔 "청소 및 매장 정리"(기본만)
-  const cleanTaskObj=cleanEv
-    ? {task:`🧹 대청소 ${cleanEv.sec}구역`,meta:`기본 청소 6항목 + ${cleanEv.sec}구역 추가 청소`,col:"c-green",cleanTask:true,mode:'combined',secIdx:cleanEv.sec-1}
-    : {task:"청소 및 매장 정리",meta:"기본 청소 6항목 체크리스트",col:"c-green",cleanTask:true,mode:'base',secIdx:null};
-  [...specs,cleanTaskObj,...DAILY].forEach(t=>{
+  [...specs,...DAILY].forEach(t=>{
     const row=document.createElement('div');row.className='task';
     row.innerHTML=`<div class="task-dot ${t.col}"></div>
       <div style="flex:1"><div class="task-name">${t.task}</div>${t.meta?`<div class="task-meta">${t.meta}</div>`:''}</div>
-      ${(t.cleanTask||t.report||t.asSend)?'<div class="task-expand">›</div>':''}`;
-    if(t.cleanTask){
+      ${(t.clean||t.report||t.asSend)?'<div class="task-expand">›</div>':''}`;
+    if(t.clean){
       let open=false;
       row.onclick=()=>{
         open=!open;
         const ex=document.getElementById('cpanel');if(ex)ex.remove();
-        if(open){row.insertAdjacentElement('afterend',buildCL(t.mode,t.secIdx,dk(y,m,d)));}
+        if(open){row.insertAdjacentElement('afterend',buildCL(cleanEv?cleanEv.sec:null,dk(y,m,d)));}
         row.querySelector('.task-expand').textContent=open?'↓':'›';
       };
     }
@@ -691,145 +572,36 @@ function showDetail(y,m,d){
     }
     tl.appendChild(row);
   });
-
-  // 오늘의 업무 섹션
-  const todoContainer=document.getElementById('todo-container');
-  todoContainer.innerHTML='';
-  todoContainer.appendChild(buildTodoSection(y,m,d));
-
   det.style.display='block';
   setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'start'}),50);
 }
 
 // ══════════════════════════════════════
-// 오늘의 업무 (직원 자유 입력 + 이월)
-// ══════════════════════════════════════
-async function loadTodoItems(storeId,dateKey){
-  const ref=doc(db,`todos/${storeId}/${dateKey}`);
-  const snap=await getDoc(ref);
-  let items=snap.exists()?(snap.data().items||[]):[];
-  // 오늘 날짜를 볼 때만 전날 미완료 항목을 이월시켜 병합
-  if(dateKey===todayKey()){
-    const prevKey=prevDateKey(dateKey);
-    try{
-      const prevSnap=await getDoc(doc(db,`todos/${storeId}/${prevKey}`));
-      if(prevSnap.exists()){
-        const prevItems=prevSnap.data().items||[];
-        const undone=prevItems.filter(it=>!it.done);
-        let changed=false;
-        undone.forEach(it=>{
-          if(!items.find(x=>x.id===it.id)){
-            items.push({...it,fromDate:it.fromDate||prevKey});
-            changed=true;
-          }
-        });
-        if(changed)await setDoc(ref,{items});
-      }
-    }catch(e){}
-  }
-  return items;
-}
-
-async function addTodoItem(storeId,dateKey,text,author){
-  const ref=doc(db,`todos/${storeId}/${dateKey}`);
-  const snap=await getDoc(ref);
-  const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,done:false,fromDate:null});
-  await setDoc(ref,{items});
-}
-
-async function toggleTodoItem(storeId,dateKey,itemId,doneVal){
-  const ref=doc(db,`todos/${storeId}/${dateKey}`);
-  const snap=await getDoc(ref);
-  const items=snap.exists()?(snap.data().items||[]):[];
-  const item=items.find(x=>x.id===itemId);
-  if(item)item.done=doneVal;
-  await setDoc(ref,{items});
-}
-
-function buildTodoSection(y,m,d){
-  const dateKey=dk(y,m,d);
-  const locked=isDateLocked(dateKey);
-  const wrap=document.createElement('div');wrap.className='todo-section';
-  wrap.innerHTML=`<div class="todo-header">📝 오늘의 업무${locked?'<span class="lock-badge">🔒 마감됨</span>':''}</div>
-    <div class="todo-list" id="todo-list-box">불러오는 중...</div>`;
-
-  if(!locked){
-    const inputRow=document.createElement('div');inputRow.className='todo-input-row';
-    inputRow.innerHTML=`<input type="text" class="todo-input" placeholder="할 일을 입력하세요" id="todo-input-box">
-      <button class="todo-add-btn" id="todo-add-box">+ 추가</button>`;
-    wrap.appendChild(inputRow);
-  }
-
-  async function render(){
-    const items=await loadTodoItems(curStore.id,dateKey);
-    const listEl=wrap.querySelector('#todo-list-box');
-    if(!listEl)return;
-    if(items.length===0){
-      listEl.innerHTML='<div class="todo-empty">등록된 업무가 없습니다</div>';
-      return;
-    }
-    listEl.innerHTML='';
-    items.forEach(item=>{
-      const row=document.createElement('div');row.className='todo-item'+(item.done?' done':'');
-      const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
-      row.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ${locked?'disabled':''}>
-        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>`;
-      if(!locked){
-        row.querySelector('input').onchange=async(e)=>{
-          await toggleTodoItem(curStore.id,dateKey,item.id,e.target.checked);
-          row.className='todo-item'+(e.target.checked?' done':'');
-        };
-      }
-      listEl.appendChild(row);
-    });
-  }
-  render();
-
-  if(!locked){
-    const addBtn=wrap.querySelector('#todo-add-box');
-    const input=wrap.querySelector('#todo-input-box');
-    const doAdd=()=>{
-      const text=input.value.trim();
-      if(!text)return;
-      ensureUsername(async(author)=>{
-        await addTodoItem(curStore.id,dateKey,text,author);
-        input.value='';
-        render();
-      });
-    };
-    addBtn.onclick=doAdd;
-    input.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
-  }
-
-  return wrap;
-}
-
-// ══════════════════════════════════════
 // 대청소 체크리스트 (Firebase 연동)
 // ══════════════════════════════════════
-function buildCL(mode,secIdx,dateKey){
+function buildCL(activeSec, dateKey){
   const wrap=document.createElement('div');wrap.className='checklist-wrap';wrap.id='cpanel';
-  const locked=isDateLocked(dateKey);
-  const groups=[{title:'기본 청소',items:CLEAN_BASE}];
-  if(mode==='combined')groups.push({title:CSECTIONS[secIdx].title,items:CSECTIONS[secIdx].items});
-  const totalItems=groups.reduce((a,g)=>a+g.items.length,0);
+  const secIdx=activeSec?activeSec-1:null;
+  const sectionsToShow=secIdx!==null?[CSECTIONS[secIdx]]:CSECTIONS;
+  const siOffset=secIdx!==null?secIdx:0;
   const syncEl=document.createElement('div');syncEl.className='sync-status';syncEl.textContent='';
+  let total=0;
 
-  const docRef=doc(db,`checks/${curStore.id}/${dateKey}/clean`);
+  // Firebase 실시간 리스닝
+  const docPath=`checks/${curStore.id}/${dateKey}/section_${siOffset}`;
+  const docRef=doc(db,docPath);
 
-  let runningIdx=0;
-  groups.forEach(g=>{
+  sectionsToShow.forEach((sec,i)=>{
+    const si=siOffset+i;
     const sd=document.createElement('div');sd.className='checklist-section';
     const tl=document.createElement('div');tl.className='section-title active-section';
-    tl.textContent=g.title;sd.appendChild(tl);
-    g.items.forEach(item=>{
-      const idx=runningIdx++;
-      const key=`item_${idx}`;
+    tl.textContent=sec.title;sd.appendChild(tl);
+    sec.items.forEach((item,ii)=>{
+      total++;
+      const key=`item_${ii}`;
       const row=document.createElement('div');row.className='check-item';
-      const cb=document.createElement('input');cb.type='checkbox';cb.id=`cb_clean_${idx}`;
-      if(locked)cb.disabled=true;
-      const lb=document.createElement('label');lb.htmlFor=`cb_clean_${idx}`;lb.textContent=item;
+      const cb=document.createElement('input');cb.type='checkbox';cb.id=`cb_${si}_${ii}`;
+      const lb=document.createElement('label');lb.htmlFor=`cb_${si}_${ii}`;lb.textContent=item;
       cb.onchange=async()=>{
         syncEl.textContent='저장 중...';
         try{
@@ -849,23 +621,19 @@ function buildCL(mode,secIdx,dateKey){
 
   const ft=document.createElement('div');ft.className='checklist-footer';
   const ct=document.createElement('div');ct.className='check-count';ct.id='ccount';ct.textContent='불러오는 중...';
-  ft.appendChild(ct);
-  if(!locked){
-    const rb=document.createElement('button');rb.className='reset-btn';rb.textContent='초기화';
-    rb.onclick=async()=>{
-      if(!confirm('체크 내용을 모두 초기화할까요?'))return;
-      await setDoc(docRef,{});
-      loadChecks();
-    };
-    ft.appendChild(rb);
-  }
-  wrap.appendChild(ft);
+  const rb=document.createElement('button');rb.className='reset-btn';rb.textContent='초기화';
+  rb.onclick=async()=>{
+    if(!confirm('체크 내용을 모두 초기화할까요?'))return;
+    await setDoc(docRef,{});
+    loadChecks();
+  };
+  ft.appendChild(ct);ft.appendChild(rb);wrap.appendChild(ft);
   wrap.appendChild(syncEl);
 
   function updateCount(){
     const cbs=wrap.querySelectorAll('input[type=checkbox]');
     const done=[...cbs].filter(c=>c.checked).length;
-    ct.textContent=`${done} / ${totalItems} 완료`;
+    ct.textContent=`${done} / ${total} 완료`;
   }
 
   async function loadChecks(){
@@ -882,22 +650,16 @@ function buildCL(mode,secIdx,dateKey){
   }
   loadChecks();
 
-  if(locked){
-    const lockMsg=document.createElement('div');lockMsg.className='todo-locked-msg';lockMsg.style.marginTop='10px';
-    lockMsg.textContent='🔒 이 날짜는 마감되어 체크를 변경할 수 없습니다';
-    wrap.appendChild(lockMsg);
-  }
-
   // 직원용 피드백 읽기 박스
   const fbBox=document.createElement('div');fbBox.className='feedback-box';
   fbBox.innerHTML=`<div class="feedback-label">📋 관리자 피드백</div>
-    <div class="feedback-content" id="fb-read-clean"><span class="feedback-empty">피드백 없음</span></div>`;
+    <div class="feedback-content" id="fb-read-${siOffset}"><span class="feedback-empty">피드백 없음</span></div>`;
   wrap.appendChild(fbBox);
 
   // Firebase에서 피드백 실시간 로드
   const fbRef=doc(db,`feedback/${curStore.id}/${dateKey}/comment`);
   onSnapshot(fbRef,(snap)=>{
-    const el=document.getElementById('fb-read-clean');
+    const el=document.getElementById(`fb-read-${siOffset}`);
     if(!el)return;
     if(snap.exists()&&snap.data().text){
       el.innerHTML=`<span>${snap.data().text.replace(/\n/g,'<br>')}</span>
@@ -957,77 +719,52 @@ function buildAS(y,m){
 // 관리자 대시보드
 // ══════════════════════════════════════
 async function renderDashboard(){
-  clearDashUnsubs();
   const wrap=document.getElementById('dash-wrap');wrap.innerHTML='';
-
-  const tabs=document.createElement('div');tabs.className='dash-tabs';
-  const tabDefs=[
-    {id:'today',label:'📍 오늘 현황'},
-    {id:'report',label:'📋 일일 보고'},
-    {id:'monthly',label:'📊 월간 통계'}
-  ];
-  tabDefs.forEach(td=>{
-    const b=document.createElement('button');
-    b.className='dash-tab'+(dashTab===td.id?' active':'');
-    b.textContent=td.label;
-    b.onclick=()=>{dashTab=td.id;renderDashboard();};
-    tabs.appendChild(b);
-  });
-  wrap.appendChild(tabs);
-
-  const content=document.createElement('div');content.id='dash-content';
-  wrap.appendChild(content);
-
-  if(dashTab==='today')await renderTodayTab(content);
-  else if(dashTab==='report')await renderReportTab(content);
-  else await renderMonthlyTab(content);
-
-  if(dashTab!=='monthly'){
-    const refreshBtn=document.createElement('button');
-    refreshBtn.className='dash-refresh';
-    refreshBtn.textContent='🔄 새로고침';
-    refreshBtn.onclick=()=>renderDashboard();
-    wrap.appendChild(refreshBtn);
-  }
-}
-
-// ── 탭 1: 오늘 현황 (실시간) ──
-async function renderTodayTab(content){
+  const sec=getTodayCleanSec();
   const tKey=todayKey();
   const dows=['일','월','화','수','목','금','토'];
   const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dow=today.getDay();
   document.getElementById('dash-sub').textContent=
-    `${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[today.getDay()]}) · 실시간`;
-
-  const totalClean=getCleanItemCount(today.getFullYear(),today.getMonth(),today.getDate());
-  const evs=getEvs(today.getFullYear(),today.getMonth(),today.getDate());
-  const cleanEv=evs.find(e=>e.t==='clean');
-  const cleanLabel=cleanEv?`🧹 대청소 ${cleanEv.sec}구역 (기본+구역)`:'청소 및 매장 정리 (기본 6항목)';
+    `${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[dow]}) 기준`;
 
   const dateEl=document.createElement('div');dateEl.className='dash-date';
-  dateEl.textContent=cleanEv?`오늘은 대청소 ${cleanEv.sec}구역 날입니다`:'오늘은 기본 청소만 진행하는 날입니다';
-  content.appendChild(dateEl);
+  dateEl.textContent=sec>0?`오늘은 대청소 ${sec}구역 날입니다`:'오늘은 대청소 없는 날입니다';
+  wrap.appendChild(dateEl);
 
   for(const store of STORES){
     const card=document.createElement('div');card.className='dash-card';
 
+    if(sec<1){
+      card.innerHTML=`<div class="dash-store-name">${store.icon} ${store.name}</div>
+        <div class="no-clean">오늘은 대청소 없음</div>`;
+      wrap.appendChild(card);
+      continue;
+    }
+
+    const secIdx=sec-1;
+    const items=CSECTIONS[secIdx].items;
+    const total=items.length;
+    const docRef=doc(db,`checks/${store.id}/${tKey}/section_${secIdx}`);
+
+    // 실시간 구독
     const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
     nameDiv.innerHTML=`${store.icon} ${store.name} <span class="dash-store-badge" id="badge-${store.id}"></span>`;
-    card.appendChild(nameDiv);
-
-    // 청소 진행률
     const pbWrap=document.createElement('div');pbWrap.className='progress-bar';
     const pbFill=document.createElement('div');pbFill.className='progress-fill';pbFill.style.width='0%';
     pbWrap.appendChild(pbFill);
     const statsEl=document.createElement('div');statsEl.className='dash-stats';
-    statsEl.innerHTML=`<span id="stat-${store.id}">불러오는 중...</span><span>${cleanLabel}</span>`;
-    card.appendChild(pbWrap);card.appendChild(statsEl);
+    statsEl.innerHTML=`<span id="stat-${store.id}">불러오는 중...</span><span>${CSECTIONS[secIdx].title}</span>`;
+    const itemsWrap=document.createElement('div');itemsWrap.className='dash-items';
+    items.forEach((item,ii)=>{
+      const row=document.createElement('div');row.className='dash-item';
+      row.id=`ditem-${store.id}-${ii}`;
+      row.innerHTML=`<div class="dash-check undone" id="dck-${store.id}-${ii}">✓</div>
+        <span class="dash-item-name" id="dname-${store.id}-${ii}">${item}</span>`;
+      itemsWrap.appendChild(row);
+    });
 
-    // 오늘의 업무 진행률
-    const todoStats=document.createElement('div');todoStats.className='dash-todo-summary';
-    todoStats.id=`todostat-${store.id}`;
-    todoStats.textContent='📝 오늘의 업무 불러오는 중...';
-    card.appendChild(todoStats);
+    card.appendChild(nameDiv);card.appendChild(pbWrap);card.appendChild(statsEl);card.appendChild(itemsWrap);
 
     // 관리자 피드백 입력 영역
     const fbAdminWrap=document.createElement('div');fbAdminWrap.className='feedback-box';
@@ -1044,8 +781,7 @@ async function renderTodayTab(content){
     fbAdminWrap.appendChild(fbSaveBtn);
     fbAdminWrap.appendChild(fbSavedEl);
     card.appendChild(fbAdminWrap);
-
-    content.appendChild(card);
+    wrap.appendChild(card);
 
     // 기존 피드백 로드
     const fbRef=doc(db,`feedback/${store.id}/${tKey}/comment`);
@@ -1055,6 +791,7 @@ async function renderTodayTab(content){
       }
     });
 
+    // 저장 버튼
     fbSaveBtn.onclick=async()=>{
       const text=fbTextarea.value.trim();
       fbSavedEl.textContent='저장 중...';
@@ -1067,163 +804,38 @@ async function renderTodayTab(content){
       }catch(e){fbSavedEl.textContent='⚠ 저장 실패';}
     };
 
-    // 청소 실시간 리스닝
-    const cleanRef=doc(db,`checks/${store.id}/${tKey}/clean`);
-    const unsub1=onSnapshot(cleanRef,(snap)=>{
+    // 실시간 리스닝
+    const unsub=onSnapshot(docRef,(snap)=>{
       const data=snap.exists()?snap.data():{};
-      const done=Object.values(data).filter(Boolean).length;
-      const pct=totalClean>0?Math.round(done/totalClean*100):0;
+      let done=0;
+      items.forEach((item,ii)=>{
+        const checked=!!data[`item_${ii}`];
+        if(checked)done++;
+        const ck=document.getElementById(`dck-${store.id}-${ii}`);
+        const nm=document.getElementById(`dname-${store.id}-${ii}`);
+        if(ck){ck.className='dash-check '+(checked?'done':'undone');}
+        if(nm){nm.className='dash-item-name '+(checked?'done':'');}
+      });
+      const pct=Math.round(done/total*100);
       pbFill.style.width=pct+'%';
-      pbFill.className='progress-fill'+(done===0?' empty':done<totalClean?' warn':'');
+      pbFill.className='progress-fill'+(done===0?' empty':done<total?' warn':'');
       const statEl=document.getElementById(`stat-${store.id}`);
-      if(statEl)statEl.textContent=`${done} / ${totalClean} 완료 (${pct}%)`;
+      if(statEl)statEl.textContent=`${done} / ${total} 완료 (${pct}%)`;
       const badge=document.getElementById(`badge-${store.id}`);
       if(badge){
-        if(done>=totalClean&&totalClean>0){badge.style.cssText='background:var(--green-light);color:var(--green)';badge.textContent='✅ 완료';}
+        if(done>=total){badge.style.cssText='background:var(--green-light);color:var(--green)';badge.textContent='✅ 완료';}
         else if(done>0){badge.style.cssText='background:#fef3c7;color:#92400e';badge.textContent='🟡 진행중';}
         else{badge.style.cssText='background:#f3f4f6;color:#9ca3af';badge.textContent='⬜ 미완료';}
       }
     });
-    dashUnsubs.push(unsub1);
-
-    // 오늘의 업무 실시간 리스닝
-    const todoRef=doc(db,`todos/${store.id}/${tKey}`);
-    const unsub2=onSnapshot(todoRef,(snap)=>{
-      const items=snap.exists()?(snap.data().items||[]):[];
-      const done=items.filter(i=>i.done).length;
-      const el=document.getElementById(`todostat-${store.id}`);
-      if(el)el.textContent=`📝 오늘의 업무: ${done} / ${items.length} 완료`;
-    });
-    dashUnsubs.push(unsub2);
-  }
-}
-
-// ── 탭 2: 일일 보고 (날짜 이동, 전날 기본값, 어제 10시 이후 잠금 확정) ──
-async function renderReportTab(content){
-  if(!dashViewDate){
-    const yest=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1);
-    dashViewDate={y:yest.getFullYear(),m:yest.getMonth(),d:yest.getDate()};
-  }
-  const {y,m,d}=dashViewDate;
-  const dateKey=dk(y,m,d);
-  const dows=['일','월','화','수','목','금','토'];
-  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const dow=new Date(y,m,d).getDay();
-
-  document.getElementById('dash-sub').textContent='지점별 일일 업무 보고';
-
-  const nav=document.createElement('div');nav.className='dash-datenav';
-  const todayDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  const viewDate=new Date(y,m,d);
-  const nextDate=new Date(y,m,d+1);
-  const isYesterday=Math.round((todayDate-viewDate)/86400000)===1;
-  nav.innerHTML=`<button id="rep-prev">‹</button>
-    <span class="dash-datenav-label">${y}년 ${mns[m]} ${d}일 (${dows[dow]})${isYesterday?' · 어제':''}</span>
-    <button id="rep-next" ${nextDate>=todayDate?'disabled':''}>›</button>`;
-  content.appendChild(nav);
-  nav.querySelector('#rep-prev').onclick=()=>{
-    const nd=new Date(y,m,d-1);
-    dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
-    renderDashboard();
-  };
-  const nextBtn=nav.querySelector('#rep-next');
-  if(!nextBtn.disabled){
-    nextBtn.onclick=()=>{
-      const nd=new Date(y,m,d+1);
-      dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
-      renderDashboard();
-    };
+    // unsub 나중에 해제용 (goHome에서 처리)
   }
 
-  if(isYesterday&&new Date().getHours()<10){
-    const noticeEl=document.createElement('div');noticeEl.className='dash-date';
-    noticeEl.textContent='⏰ 오전 10시 이후 전일 데이터가 최종 확정됩니다 (그 전까지는 직원이 수정 가능)';
-    content.appendChild(noticeEl);
-  }
-
-  const totalClean=getCleanItemCount(y,m,d);
-  const evs=getEvs(y,m,d);
-  const cleanEv=evs.find(e=>e.t==='clean');
-  const cleanLabel=cleanEv?`🧹 대청소 ${cleanEv.sec}구역`:'청소 및 매장 정리';
-
-  for(const store of STORES){
-    const card=document.createElement('div');card.className='dash-card';
-
-    const cleanSnap=await getDoc(doc(db,`checks/${store.id}/${dateKey}/clean`));
-    const cleanData=cleanSnap.exists()?cleanSnap.data():{};
-    const cleanDone=Object.values(cleanData).filter(Boolean).length;
-
-    const todoSnap=await getDoc(doc(db,`todos/${store.id}/${dateKey}`));
-    const items=todoSnap.exists()?(todoSnap.data().items||[]):[];
-    const todoDone=items.filter(i=>i.done).length;
-    const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
-
-    let html=`<div class="dash-store-name">${store.icon} ${store.name}</div>`;
-    html+=`<div class="dash-workers">👤 근무자: ${authors.length?authors.join(', '):'기록 없음'}</div>`;
-    html+=`<div class="dash-section-title">${cleanLabel}</div>`;
-    const cleanIcon=(totalClean>0&&cleanDone>=totalClean)?'✅':(cleanDone>0?'🟡':'⬜');
-    html+=`<div class="dash-stats" style="margin-bottom:4px"><span>${cleanDone} / ${totalClean} 완료</span><span>${cleanIcon}</span></div>`;
-    html+=`<div class="dash-section-title">📝 오늘의 업무 (${todoDone}/${items.length})</div>`;
-    if(items.length===0){
-      html+=`<div class="no-clean">등록된 업무 없음</div>`;
-    }else{
-      html+=`<div class="dash-todo-list">`;
-      items.forEach(it=>{
-        const carry=(it.fromDate&&it.fromDate!==dateKey)?` <span style="color:var(--orange)">[${it.fromDate.slice(5)} 이월]</span>`:'';
-        html+=`<div class="dash-todo-item${it.done?' done':''}"><span class="ico">${it.done?'✅':'⬜'}</span><span class="txt">${it.text} <span style="color:#bbb">(${it.author||'익명'})</span>${carry}</span></div>`;
-      });
-      html+=`</div>`;
-    }
-    card.innerHTML=html;
-    content.appendChild(card);
-  }
-}
-
-// ── 탭 3: 월간 통계 (이번 달 누적) ──
-async function renderMonthlyTab(content){
-  document.getElementById('dash-sub').textContent='이번 달 지점별 누적 통계';
-  const y=today.getFullYear(),m=today.getMonth();
-  const lastDay=Math.min(today.getDate()-1,new Date(y,m+1,0).getDate());
-  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
-  if(lastDay<1){
-    content.innerHTML=`<div class="monthly-loading">아직 누적된 데이터가 없습니다 (월초)</div>`;
-    return;
-  }
-
-  content.innerHTML=`<div class="monthly-loading">데이터 집계 중... (1~${lastDay}일)</div>`;
-
-  const results=[];
-  for(const store of STORES){
-    let cleanDone=0,cleanTotal=0,todoDone=0,todoTotal=0;
-    for(let d=1;d<=lastDay;d++){
-      const dateKey=dk(y,m,d);
-      cleanTotal+=getCleanItemCount(y,m,d);
-      try{
-        const cSnap=await getDoc(doc(db,`checks/${store.id}/${dateKey}/clean`));
-        if(cSnap.exists())cleanDone+=Object.values(cSnap.data()).filter(Boolean).length;
-      }catch(e){}
-      try{
-        const tSnap=await getDoc(doc(db,`todos/${store.id}/${dateKey}`));
-        if(tSnap.exists()){
-          const items=tSnap.data().items||[];
-          todoTotal+=items.length;
-          todoDone+=items.filter(i=>i.done).length;
-        }
-      }catch(e){}
-    }
-    results.push({store,cleanDone,cleanTotal,todoDone,todoTotal});
-  }
-
-  let html=`<div class="dash-date">${mns[m]} 1일 ~ ${lastDay}일 누적</div>`;
-  html+=`<table class="monthly-table"><tr><th>지점</th><th>청소</th><th>오늘의 업무</th></tr>`;
-  results.forEach(r=>{
-    const cleanPct=r.cleanTotal>0?Math.round(r.cleanDone/r.cleanTotal*100):0;
-    const todoPct=r.todoTotal>0?Math.round(r.todoDone/r.todoTotal*100):0;
-    html+=`<tr><td>${r.store.icon} ${r.store.name}</td><td>${r.cleanDone}/${r.cleanTotal} (${cleanPct}%)</td><td>${r.todoTotal>0?`${r.todoDone}/${r.todoTotal} (${todoPct}%)`:'-'}</td></tr>`;
-  });
-  html+=`</table>`;
-  content.innerHTML=html;
+  const refreshBtn=document.createElement('button');
+  refreshBtn.className='dash-refresh';
+  refreshBtn.textContent='🔄 새로고침';
+  refreshBtn.onclick=()=>{wrap.innerHTML='';renderDashboard();};
+  wrap.appendChild(refreshBtn);
 }
 
 // ══════════════════════════════════════
@@ -1243,8 +855,6 @@ window.checkPw=function(){
   if(val===ADMIN_PW){
     document.getElementById('pw-modal').style.display='none';
     isAdmin=true;
-    dashTab='today';
-    dashViewDate=null;
     showScreen('screen-admin');
     renderDashboard();
   } else {
@@ -1255,9 +865,6 @@ window.checkPw=function(){
 };
 document.getElementById('pw-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')window.checkPw();
-});
-document.getElementById('name-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter')window.confirmName();
 });
 
 // ══════════════════════════════════════
