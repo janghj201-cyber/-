@@ -200,6 +200,30 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .todo-whoami b{color:#555;}
 .todo-change-name{background:none;border:none;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;}
 
+/* 오늘의 업무 - 수정/삭제 */
+.todo-actions{display:flex;gap:2px;flex-shrink:0;}
+.todo-action-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:2px 5px;color:#bbb;border-radius:6px;}
+.todo-action-btn:active{background:#f0f0ee;}
+.todo-edit-row{display:flex;gap:6px;width:100%;align-items:center;}
+.todo-edit-input{flex:1;border:1.5px solid var(--green);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;outline:none;}
+.todo-edit-btns{display:flex;gap:4px;flex-shrink:0;}
+.todo-edit-btns button{font-size:12px;padding:6px 10px;border-radius:6px;border:none;font-family:inherit;cursor:pointer;}
+.todo-edit-save{background:var(--green);color:#fff;font-weight:700;}
+.todo-edit-cancel{background:#f0f0ee;color:#888;}
+
+/* 인수인계 / 매장정보 */
+.handover-section{border-top:1px solid #ede9e0;padding:14px 16px;background:#f7f6f2;}
+.handover-header{font-size:13px;font-weight:700;color:#444;margin-bottom:10px;}
+.storeinfo-box{margin-bottom:14px;padding:12px;background:#fff;border-radius:10px;border:1px dashed #ddd;}
+.storeinfo-label{font-size:12px;font-weight:700;color:#888;margin-bottom:6px;}
+.storeinfo-textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;outline:none;line-height:1.6;min-height:70px;}
+.storeinfo-textarea:focus{border-color:var(--green);}
+.storeinfo-save-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.storeinfo-save-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.storeinfo-saved{font-size:11px;color:var(--green);}
+.handover-sub{font-size:12px;font-weight:700;color:#888;margin:4px 0 8px;}
+.confirm-tag{font-size:10px;color:var(--green);background:var(--green-light);padding:1px 6px;border-radius:8px;margin-left:6px;}
+
 /* ── 관리자 탭/날짜네비/월간통계 ── */
 .dash-tabs{display:flex;gap:6px;padding:0 12px 12px;}
 .dash-tab{flex:1;padding:9px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#f0f0ee;color:#888;}
@@ -311,6 +335,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     </div>
     <div class="task-list" id="tlist"></div>
     <div id="todo-container"></div>
+    <div id="handover-container"></div>
   </div>
   <div class="legend">
     <div class="legend-title">범례</div>
@@ -711,6 +736,11 @@ function showDetail(y,m,d){
   todoContainer.innerHTML='';
   todoContainer.appendChild(buildTodoSection(y,m,d));
 
+  // 인수인계 섹션
+  const handoverContainer=document.getElementById('handover-container');
+  handoverContainer.innerHTML='';
+  handoverContainer.appendChild(buildHandoverSection(y,m,d));
+
   det.style.display='block';
   setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'start'}),50);
 }
@@ -772,6 +802,23 @@ async function toggleTodoItem(storeId,dateKey,itemId,doneVal){
   await setDoc(ref,{items});
 }
 
+async function editTodoItem(storeId,dateKey,itemId,newText){
+  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item)item.text=newText;
+  await setDoc(ref,{items});
+}
+
+async function deleteTodoItem(storeId,dateKey,itemId){
+  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  items=items.filter(x=>x.id!==itemId);
+  await setDoc(ref,{items});
+}
+
 function buildTodoSection(y,m,d){
   const dateKey=dk(y,m,d);
   const locked=isDateLocked(dateKey);
@@ -826,6 +873,8 @@ function buildTodoSection(y,m,d){
     };
   }
 
+  let editingId=null;
+
   async function render(){
     const listEl=wrap.querySelector('#todo-list-box');
     if(!listEl)return;
@@ -838,9 +887,41 @@ function buildTodoSection(y,m,d){
       listEl.innerHTML='';
       items.forEach(item=>{
         const row=document.createElement('div');row.className='todo-item'+(item.done?' done':'');
+
+        if(!locked&&editingId===item.id){
+          row.innerHTML=`<div class="todo-edit-row">
+            <input type="text" class="todo-edit-input" id="edit-input-${item.id}">
+            <div class="todo-edit-btns">
+              <button class="todo-edit-save">저장</button>
+              <button class="todo-edit-cancel">취소</button>
+            </div>
+          </div>`;
+          const editInput=row.querySelector('.todo-edit-input');
+          editInput.value=item.text;
+          const doSave=async()=>{
+            const newText=editInput.value.trim();
+            if(!newText)return;
+            try{
+              await editTodoItem(curStore.id,dateKey,item.id,newText);
+              editingId=null;
+              await render();
+            }catch(err){alert('수정에 실패했습니다. 인터넷 연결을 확인해주세요.');}
+          };
+          row.querySelector('.todo-edit-save').onclick=doSave;
+          row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
+          editInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSave();});
+          listEl.appendChild(row);
+          setTimeout(()=>editInput.focus(),0);
+          return;
+        }
+
         const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
         row.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ${locked?'disabled':''}>
-          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>`;
+          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>
+          ${!locked?`<div class="todo-actions">
+            <button class="todo-action-btn" data-act="edit" title="수정">✏️</button>
+            <button class="todo-action-btn" data-act="del" title="삭제">🗑️</button>
+          </div>`:''}`;
         if(!locked){
           row.querySelector('input').onchange=async(e)=>{
             try{
@@ -850,6 +931,14 @@ function buildTodoSection(y,m,d){
               e.target.checked=!e.target.checked;
               alert('저장에 실패했습니다. 인터넷 연결을 확인해주세요.');
             }
+          };
+          row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
+          row.querySelector('[data-act="del"]').onclick=async()=>{
+            if(!confirm('이 업무를 삭제할까요?'))return;
+            try{
+              await deleteTodoItem(curStore.id,dateKey,item.id);
+              await render();
+            }catch(err){alert('삭제에 실패했습니다. 인터넷 연결을 확인해주세요.');}
           };
         }
         listEl.appendChild(row);
@@ -905,6 +994,222 @@ function buildTodoSection(y,m,d){
         bulkSubmit.disabled=false;
       });
     };
+  }
+
+  return wrap;
+}
+
+// ══════════════════════════════════════
+// 매장 정보 (고정, 날짜와 무관)
+// ══════════════════════════════════════
+async function loadStoreInfo(storeId){
+  const ref=doc(db,`storeinfo/${storeId}`);
+  const snap=await getDoc(ref);
+  return snap.exists()?(snap.data().text||''):'';
+}
+async function saveStoreInfo(storeId,text){
+  const ref=doc(db,`storeinfo/${storeId}`);
+  await setDoc(ref,{text});
+}
+
+// ══════════════════════════════════════
+// 인수인계 메모 (날짜별, 미확인 항목 다음날 이월)
+// ══════════════════════════════════════
+async function loadHandoverItems(storeId,dateKey){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  if(dateKey===todayKey()){
+    const prevKey=prevDateKey(dateKey);
+    try{
+      const prevSnap=await getDoc(doc(db,`handover/${storeId}_${prevKey}`));
+      if(prevSnap.exists()){
+        const prevItems=prevSnap.data().items||[];
+        const unconfirmed=prevItems.filter(it=>!it.confirmed);
+        let changed=false;
+        unconfirmed.forEach(it=>{
+          if(!items.find(x=>x.id===it.id)){
+            items.push({...it,fromDate:it.fromDate||prevKey});
+            changed=true;
+          }
+        });
+        if(changed)await setDoc(ref,{items});
+      }
+    }catch(e){}
+  }
+  return items;
+}
+async function addHandoverItem(storeId,dateKey,text,author){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null});
+  await setDoc(ref,{items});
+}
+async function toggleHandoverItem(storeId,dateKey,itemId,val){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item)item.confirmed=val;
+  await setDoc(ref,{items});
+}
+async function editHandoverItem(storeId,dateKey,itemId,newText){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item)item.text=newText;
+  await setDoc(ref,{items});
+}
+async function deleteHandoverItem(storeId,dateKey,itemId){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  items=items.filter(x=>x.id!==itemId);
+  await setDoc(ref,{items});
+}
+
+function buildHandoverSection(y,m,d){
+  const dateKey=dk(y,m,d);
+  const locked=isDateLocked(dateKey);
+  const wrap=document.createElement('div');wrap.className='handover-section';
+  wrap.innerHTML=`<div class="handover-header">🔄 인수인계${locked?'<span class="lock-badge">🔒 마감됨</span>':''}</div>`;
+
+  // 📌 매장 정보 (고정, 날짜 무관)
+  const infoBox=document.createElement('div');infoBox.className='storeinfo-box';
+  infoBox.innerHTML=`<div class="storeinfo-label">📌 매장 정보 (와이파이·도어락·POS 등 고정 정보 — 모든 날짜 공통)</div>
+    <textarea class="storeinfo-textarea" id="storeinfo-textarea" placeholder="예) 와이파이: WeVape_5G / 비밀번호: ...${'\n'}도어락 번호: ...${'\n'}POS 로그인 정보: ..."></textarea>
+    <div class="storeinfo-save-row">
+      <button class="storeinfo-save-btn" id="storeinfo-save-btn">💾 저장</button>
+      <span class="storeinfo-saved" id="storeinfo-saved"></span>
+    </div>`;
+  wrap.appendChild(infoBox);
+
+  const infoTextarea=infoBox.querySelector('#storeinfo-textarea');
+  const infoSaveBtn=infoBox.querySelector('#storeinfo-save-btn');
+  const infoSaved=infoBox.querySelector('#storeinfo-saved');
+  infoTextarea.value='불러오는 중...';
+  loadStoreInfo(curStore.id).then(text=>{infoTextarea.value=text;}).catch(()=>{infoTextarea.value='';});
+  infoSaveBtn.onclick=async()=>{
+    infoSaved.textContent='저장 중...';
+    try{
+      await saveStoreInfo(curStore.id,infoTextarea.value);
+      infoSaved.textContent='✓ 저장됨';
+      setTimeout(()=>infoSaved.textContent='',2000);
+    }catch(e){infoSaved.textContent='⚠ 저장 실패';}
+  };
+
+  // 📝 인수인계 메모 (날짜별, 이월)
+  const sub=document.createElement('div');sub.className='handover-sub';sub.textContent='📝 인수인계 메모 (다음 근무자 확인 필요)';
+  wrap.appendChild(sub);
+
+  const listEl=document.createElement('div');listEl.className='todo-list';listEl.id='handover-list-box';
+  listEl.textContent='불러오는 중...';
+  wrap.appendChild(listEl);
+
+  if(!locked){
+    const inputRow=document.createElement('div');inputRow.className='todo-input-row';
+    inputRow.innerHTML=`<input type="text" class="todo-input" placeholder="인수인계 내용을 입력하세요" id="handover-input-box">
+      <button class="todo-add-btn" id="handover-add-box">+ 추가</button>`;
+    wrap.appendChild(inputRow);
+  }
+
+  let editingId=null;
+
+  async function render(){
+    try{
+      const items=await loadHandoverItems(curStore.id,dateKey);
+      if(items.length===0){
+        listEl.innerHTML='<div class="todo-empty">등록된 인수인계 메모가 없습니다</div>';
+        return;
+      }
+      listEl.innerHTML='';
+      items.forEach(item=>{
+        const row=document.createElement('div');row.className='todo-item'+(item.confirmed?' done':'');
+
+        if(!locked&&editingId===item.id){
+          row.innerHTML=`<div class="todo-edit-row">
+            <input type="text" class="todo-edit-input">
+            <div class="todo-edit-btns">
+              <button class="todo-edit-save">저장</button>
+              <button class="todo-edit-cancel">취소</button>
+            </div>
+          </div>`;
+          const editInput=row.querySelector('.todo-edit-input');
+          editInput.value=item.text;
+          const doSave=async()=>{
+            const newText=editInput.value.trim();
+            if(!newText)return;
+            try{
+              await editHandoverItem(curStore.id,dateKey,item.id,newText);
+              editingId=null;
+              await render();
+            }catch(err){alert('수정에 실패했습니다. 인터넷 연결을 확인해주세요.');}
+          };
+          row.querySelector('.todo-edit-save').onclick=doSave;
+          row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
+          editInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSave();});
+          listEl.appendChild(row);
+          setTimeout(()=>editInput.focus(),0);
+          return;
+        }
+
+        const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
+        const confirmTag=item.confirmed?`<span class="confirm-tag">확인됨</span>`:'';
+        row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
+          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmTag}<div class="todo-author">${item.author||'익명'}</div></div>
+          ${!locked?`<div class="todo-actions">
+            <button class="todo-action-btn" data-act="edit" title="수정">✏️</button>
+            <button class="todo-action-btn" data-act="del" title="삭제">🗑️</button>
+          </div>`:''}`;
+        if(!locked){
+          row.querySelector('input').onchange=async(e)=>{
+            try{
+              await toggleHandoverItem(curStore.id,dateKey,item.id,e.target.checked);
+              row.className='todo-item'+(e.target.checked?' done':'');
+            }catch(err){
+              e.target.checked=!e.target.checked;
+              alert('저장에 실패했습니다. 인터넷 연결을 확인해주세요.');
+            }
+          };
+          row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
+          row.querySelector('[data-act="del"]').onclick=async()=>{
+            if(!confirm('이 메모를 삭제할까요?'))return;
+            try{
+              await deleteHandoverItem(curStore.id,dateKey,item.id);
+              await render();
+            }catch(err){alert('삭제에 실패했습니다. 인터넷 연결을 확인해주세요.');}
+          };
+        }
+        listEl.appendChild(row);
+      });
+    }catch(err){
+      listEl.innerHTML='<div class="todo-error">⚠ 불러오기에 실패했습니다. 새로고침 후 다시 시도해주세요.</div>';
+    }
+  }
+  render();
+
+  if(!locked){
+    const addBtn=wrap.querySelector('#handover-add-box');
+    const input=wrap.querySelector('#handover-input-box');
+    const doAdd=()=>{
+      const text=input.value.trim();
+      if(!text)return;
+      ensureUsername(async(author)=>{
+        addBtn.disabled=true;
+        try{
+          await addHandoverItem(curStore.id,dateKey,text,author);
+          input.value='';
+          await render();
+        }catch(err){
+          alert('추가에 실패했습니다. 인터넷 연결을 확인해주세요.');
+        }
+        addBtn.disabled=false;
+      });
+    };
+    addBtn.onclick=doAdd;
+    input.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
   }
 
   return wrap;
