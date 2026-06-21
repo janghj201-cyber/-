@@ -5,41 +5,114 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>위베이프 통합 프로그램</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #15140f;
+    --ink-soft: #4a4840;
+    --paper: #f7f5ef;
+    --panel: #ffffff;
+    --line: #e7e3d6;
+    --amber: #f4b400;
+    --amber-deep: #c98f00;
+    --good: #1d7a4c;
+    --bad: #b3361f;
+    --radius: 10px;
+  }
+
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; margin: 0; background: #f4f4f2; color: #1a1a1a; }
-  input, select, button { font-family: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
-  button { background: #1a1a1a; color: #fff; border: none; cursor: pointer; }
-  button:hover { opacity: 0.85; }
-  button.secondary { background: #fff; color: #1a1a1a; border: 1px solid #ccc; }
-  .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; border: 1px solid #e5e5e0; }
+  body {
+    font-family: 'Manrope', -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    margin: 0; background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased;
+  }
+  input, select, button {
+    font-family: inherit; font-size: 14px; padding: 9px 11px;
+    border: 1.5px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--ink); }
+  button {
+    background: var(--ink); color: #fdfaf0; border: 1.5px solid var(--ink);
+    cursor: pointer; font-weight: 600; letter-spacing: 0.01em; transition: transform .08s ease, opacity .12s ease;
+  }
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+  button.secondary { background: #fff; color: var(--ink); border: 1.5px solid var(--line); font-weight: 500; }
+
+  .card { background: var(--panel); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; border: 1px solid var(--line); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .muted { color: #777; font-size: 13px; }
+  .muted { color: var(--ink-soft); font-size: 13px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #eee; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
 
-  #loginView { max-width: 360px; margin: 80px auto; padding: 0 16px; }
-  #loginView h1 { font-size: 20px; margin-bottom: 24px; }
-  #loginView input { width: 100%; margin-bottom: 10px; }
-  #loginView button { width: 100%; padding: 10px; }
-  #loginError { color: #c0392b; font-size: 13px; margin-top: 8px; }
+  /* 로그인 */
+  #loginView {
+    max-width: 380px; margin: 0; padding: 48px 40px;
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    background: var(--ink); color: #fdfaf0;
+  }
+  #loginView .eyebrow {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em;
+    color: var(--amber); text-transform: uppercase; margin-bottom: 10px;
+  }
+  #loginView h1 { font-size: 26px; font-weight: 800; margin: 0 0 36px; letter-spacing: -0.01em; }
+  #loginView input {
+    width: 100%; margin-bottom: 12px; background: #1f1d16; border: 1.5px solid #34311f; color: #fdfaf0; padding: 12px;
+  }
+  #loginView input::placeholder { color: #8a8674; }
+  #loginView input:focus { border-color: var(--amber); }
+  #loginView button {
+    width: 100%; padding: 13px; background: var(--amber); border-color: var(--amber); color: #1a1300; font-weight: 700;
+  }
+  #loginView button:hover { background: var(--amber-deep); border-color: var(--amber-deep); opacity: 1; }
+  #loginError { color: #ff8a73; font-size: 13px; margin-top: 10px; min-height: 18px; }
 
+  /* 앱 셸 — 좌측 고정 사이드바 */
   #appView { display: none; }
-  header { background: #fff; border-bottom: 1px solid #e5e5e0; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-  header .brand { font-weight: 700; }
-  nav { display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e5e5e0; }
-  nav button { white-space: nowrap; background: #fff; color: #555; border: 1px solid transparent; }
-  nav button.active { background: #1a1a1a; color: #fff; }
-  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  .shell { display: flex; min-height: 100vh; }
+  aside.sidebar {
+    width: 220px; flex-shrink: 0; background: var(--ink); color: #fdfaf0;
+    display: flex; flex-direction: column; padding: 22px 14px; position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar .brand { display: flex; align-items: baseline; gap: 6px; padding: 0 8px 24px; }
+  .sidebar .brand .mark { color: var(--amber); font-weight: 800; font-size: 17px; }
+  .sidebar .brand .name { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  nav#navBar { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  nav#navBar button {
+    text-align: left; background: transparent; color: #c9c6b6; border: none; border-radius: 7px;
+    padding: 10px 12px; font-weight: 500; font-size: 13.5px;
+  }
+  nav#navBar button:hover { background: #211e15; color: #fdfaf0; }
+  nav#navBar button.active { background: var(--amber); color: #1a1300; font-weight: 700; }
+  #logoutBtn {
+    background: transparent; color: #8a8674; border: 1.5px solid #34311f; font-size: 12.5px; font-weight: 500; padding: 8px 10px;
+  }
+  #logoutBtn:hover { color: #fdfaf0; border-color: #4a4840; }
+
+  main { flex: 1; max-width: 760px; margin: 0; padding: 32px 36px; }
   .panel { display: none; }
   .panel.active { display: block; }
-  .cartRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
-  .resultRow { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-  .resultRow:hover { background: #fafaf8; }
+  .panel h2.pageTitle {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 18px;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 500;
+  }
+
+  .cartRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .resultRow { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; }
+  .resultRow:hover { background: #faf7ec; }
+
+  @media (max-width: 760px) {
+    .shell { flex-direction: column; }
+    aside.sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: 12px 14px; }
+    .sidebar .brand { padding: 0 12px 0 0; }
+    nav#navBar { flex-direction: row; overflow-x: auto; flex: 1; }
+    main { padding: 18px; }
+  }
 </style>
 </head>
 <body>
 
 <div id="loginView">
+  <div class="eyebrow">WeVape Internal</div>
   <h1>위베이프 통합 프로그램</h1>
   <input id="loginEmail" type="email" placeholder="이메일" />
   <input id="loginPassword" type="password" placeholder="비밀번호" />
@@ -48,28 +121,30 @@
 </div>
 
 <div id="appView">
-  <header>
-    <span class="brand">위베이프 POS</span>
-    <button class="secondary" id="logoutBtn">로그아웃</button>
-  </header>
-  <nav id="navBar">
-    <button data-tab="orders" class="active">주문입력</button>
-    <button data-tab="purchases">입고</button>
-    <button data-tab="transfer">이동/조정</button>
-    <button data-tab="refund">환불</button>
-    <button data-tab="closing">마감</button>
-    <button data-tab="customers">고객조회</button>
-    <button data-tab="dashboard">대시보드</button>
-  </nav>
-  <main>
-    <div id="panel-orders" class="panel active"></div>
-    <div id="panel-purchases" class="panel"></div>
-    <div id="panel-transfer" class="panel"></div>
-    <div id="panel-refund" class="panel"></div>
-    <div id="panel-closing" class="panel"></div>
-    <div id="panel-customers" class="panel"></div>
-    <div id="panel-dashboard" class="panel"></div>
-  </main>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark">●</span><span class="name">위베이프 POS</span></div>
+      <nav id="navBar">
+        <button data-tab="orders" class="active">주문입력</button>
+        <button data-tab="purchases">입고</button>
+        <button data-tab="transfer">이동/조정</button>
+        <button data-tab="refund">환불</button>
+        <button data-tab="closing">마감</button>
+        <button data-tab="customers">고객조회</button>
+        <button data-tab="dashboard">대시보드</button>
+      </nav>
+      <button class="secondary" id="logoutBtn">로그아웃</button>
+    </aside>
+    <main>
+      <div id="panel-orders" class="panel active"></div>
+      <div id="panel-purchases" class="panel"></div>
+      <div id="panel-transfer" class="panel"></div>
+      <div id="panel-refund" class="panel"></div>
+      <div id="panel-closing" class="panel"></div>
+      <div id="panel-customers" class="panel"></div>
+      <div id="panel-dashboard" class="panel"></div>
+    </main>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
