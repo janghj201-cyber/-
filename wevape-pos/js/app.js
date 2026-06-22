@@ -5,7 +5,11 @@ const modules = {
   refund: RefundModule,
   closing: ClosingModule,
   customers: CustomersModule,
-  dashboard: DashboardModule
+  dashboard: DashboardModule,
+  inventory: InventoryModule,
+  revisit: RevisitModule,
+  products: ProductsAdminModule,
+  export: ExportModule
 };
 const renderedTabs = new Set();
 

@@ -51,6 +51,15 @@ async function sbPatch(path, body) {
   return res.json().catch(() => null);
 }
 
+async function sbDelete(path) {
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+    method: "DELETE",
+    headers: authHeaders()
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json().catch(() => null);
+}
+
 function fmtWon(n) {
   return Math.round(n || 0).toLocaleString() + "원";
 }
