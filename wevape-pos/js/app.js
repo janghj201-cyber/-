@@ -3,6 +3,7 @@ const modules = {
   sales: SalesHistoryModule,
   purchases: PurchasesModule,
   transfer: TransferModule,
+  stocktaking: StocktakingModule,
   refund: RefundModule,
   closing: ClosingModule,
   customers: CustomersModule,
