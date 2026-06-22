@@ -1,5 +1,7 @@
 const InventoryModule = (() => {
   let tenantId = null;
+  let lastStockData = [];
+  let urgentOnly = false;
 
   function render() {
     const el = document.getElementById("panel-inventory");
@@ -11,10 +13,11 @@ const InventoryModule = (() => {
 
       <div id="inv_panelStock">
         <div class="card">
-          <div class="row">
+          <div class="row" style="margin-bottom:8px">
             <select id="inv_store" style="flex:1"><option value="">매장 선택</option></select>
             <button id="inv_loadStockBtn">조회</button>
           </div>
+          <button id="inv_urgentToggle" class="secondary" style="width:100%">긴급/발주필요 상품만 보기</button>
         </div>
         <div id="inv_stockBox"></div>
         <div class="muted" id="inv_stockStatus" style="margin-top:10px"></div>
@@ -40,6 +43,7 @@ const InventoryModule = (() => {
     document.getElementById("inv_tabStock").addEventListener("click", () => switchTab("stock"));
     document.getElementById("inv_tabHistory").addEventListener("click", () => switchTab("history"));
     document.getElementById("inv_loadStockBtn").addEventListener("click", loadStock);
+    document.getElementById("inv_urgentToggle").addEventListener("click", toggleUrgentOnly);
     document.getElementById("inv_search").addEventListener("input", (e) => {
       clearTimeout(window._invT);
       window._invT = setTimeout(() => searchProducts(e.target.value), 250);
@@ -71,26 +75,48 @@ const InventoryModule = (() => {
     if (!storeId) { statusEl.textContent = "매장을 선택해주세요."; return; }
     statusEl.textContent = "불러오는 중...";
     try {
-      const data = await sbRpc("get_product_stock_analysis", { p_store_id: storeId });
-      box.innerHTML = `
-        <div class="card">
-          <table>
-            <tr><th>상품</th><th>분류</th><th style="text-align:right">재고수량</th></tr>
-            ${data.map(r => `
-              <tr>
-                <td>${r.name}</td>
-                <td class="muted">${r.category || "-"}${r.line ? " · " + r.line : ""}</td>
-                <td style="text-align:right;${r.qty_on_hand <= 5 ? "color:var(--bad);font-weight:700" : ""}">${r.qty_on_hand}</td>
-              </tr>
-            `).join("")}
-          </table>
-        </div>
-      ` || "";
-      statusEl.textContent = data.length ? data.length + "개 품목" : "재고 데이터가 없습니다.";
+      lastStockData = await sbRpc("get_product_stock_analysis", { p_store_id: storeId });
+      renderStockTable();
+      statusEl.textContent = lastStockData.length ? lastStockData.length + "개 품목" : "재고 데이터가 없습니다.";
     } catch (err) {
       box.innerHTML = "";
       statusEl.textContent = "오류: " + err.message;
     }
+  }
+
+  function classifyStock(r) {
+    if (r.qty_on_hand <= 0) return { html: `<span style="color:var(--bad);font-weight:700">품절</span>`, urgent: true };
+    if (r.days_left !== null && r.days_left !== undefined) {
+      if (r.days_left <= 3) return { html: `<span style="color:var(--bad);font-weight:700">🔴 긴급발주 (${r.days_left}일)</span>`, urgent: true };
+      if (r.days_left <= 7) return { html: `<span style="color:#a87b00;font-weight:700">🟡 발주필요 (${r.days_left}일)</span>`, urgent: true };
+    }
+    return { html: `<span class="muted">재고 ${r.qty_on_hand}개</span>`, urgent: false };
+  }
+
+  function renderStockTable() {
+    const box = document.getElementById("inv_stockBox");
+    const rows = urgentOnly ? lastStockData.filter(r => classifyStock(r).urgent) : lastStockData;
+    box.innerHTML = rows.length ? `
+      <div class="card">
+        <table>
+          <tr><th>상품</th><th>분류</th><th style="text-align:right">상태</th></tr>
+          ${rows.map(r => `
+            <tr>
+              <td>${r.name}</td>
+              <td class="muted">${r.category || "-"}${r.line ? " · " + r.line : ""}</td>
+              <td style="text-align:right">${classifyStock(r).html}</td>
+            </tr>
+          `).join("")}
+        </table>
+      </div>
+    ` : `<div class="muted">${urgentOnly ? "긴급/발주필요 상품이 없습니다." : "재고 데이터가 없습니다."}</div>`;
+  }
+
+  function toggleUrgentOnly() {
+    urgentOnly = !urgentOnly;
+    document.getElementById("inv_urgentToggle").className = urgentOnly ? "" : "secondary";
+    document.getElementById("inv_urgentToggle").textContent = urgentOnly ? "전체 상품 보기" : "긴급/발주필요 상품만 보기";
+    renderStockTable();
   }
 
   let selectedProductId = null;

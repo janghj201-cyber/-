@@ -122,16 +122,52 @@ const OrdersModule = (() => {
     const box = document.getElementById("ord_results");
     if (!q) { box.style.display = "none"; return; }
     box.style.display = "block";
+    const storeId = document.getElementById("ord_store").value;
     try {
       const data = await sbGet("products?select=product_id,code,name,price,category,line&name=ilike.*" + encodeURIComponent(q) + "*&limit=20");
-      box.innerHTML = data.map(p => `
-        <div class="resultRow" data-id="${p.product_id}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price || 0}">
+      const stockMap = {};
+      const salesMap = {};
+      if (storeId && data.length) {
+        try {
+          const stockData = await sbRpc("get_product_stock_analysis", { p_store_id: storeId });
+          stockData.forEach(r => { stockMap[r.product_id] = r.qty_on_hand; });
+        } catch (err) {}
+        try {
+          const ids = data.map(p => p.product_id).join(",");
+          const since = new Date(Date.now() - 30 * 86400000).toISOString();
+          const salesData = await sbGet("order_items?select=product_id,qty,orders(order_datetime,store_id)&product_id=in.(" + ids + ")");
+          salesData.forEach(s => {
+            if (s.orders?.store_id === storeId && s.orders?.order_datetime >= since) {
+              salesMap[s.product_id] = (salesMap[s.product_id] || 0) + s.qty;
+            }
+          });
+        } catch (err) {}
+      }
+
+      box.innerHTML = data.map(p => {
+        const badge = buildStockBadge(stockMap[p.product_id], salesMap[p.product_id]);
+        return `
+        <div class="resultRow" data-id="${p.product_id}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price || 0}" data-soldout="${badge.disabled}" style="${badge.disabled ? "opacity:0.5" : ""}">
           <div><div>${p.name}</div><div class="muted">${p.category}${p.line ? " · " + p.line : ""} · 정가 ${fmtWon(p.price)}</div></div>
-          <span>+</span>
+          <div style="text-align:right">${badge.html}<span style="margin-left:6px">${badge.disabled ? "✕" : "+"}</span></div>
         </div>
-      `).join("") || `<div class="muted">검색 결과 없음</div>`;
-      box.querySelectorAll(".resultRow").forEach(row => row.addEventListener("click", () => addToCart(row.dataset.id, row.dataset.name, parseFloat(row.dataset.price) || 0)));
+      `;
+      }).join("") || `<div class="muted">검색 결과 없음</div>`;
+      box.querySelectorAll(".resultRow").forEach(row => row.addEventListener("click", () => {
+        if (row.dataset.soldout === "true") return;
+        addToCart(row.dataset.id, row.dataset.name, parseFloat(row.dataset.price) || 0);
+      }));
     } catch (err) {}
+  }
+
+  function buildStockBadge(stock, sales30) {
+    if (stock === undefined || stock === null) return { html: "", disabled: false };
+    if (stock <= 0) return { html: `<span style="color:var(--bad);font-weight:700;font-size:12px">품절</span>`, disabled: true };
+    if (!sales30) return { html: `<span class="muted" style="font-size:12px">재고 ${stock}개</span>`, disabled: false };
+    const daysLeft = Math.round(stock / (sales30 / 30));
+    if (daysLeft <= 3) return { html: `<span style="color:var(--bad);font-weight:700;font-size:12px">🔴 긴급발주 (${daysLeft}일)</span>`, disabled: false };
+    if (daysLeft <= 7) return { html: `<span style="color:#a87b00;font-weight:700;font-size:12px">🟡 발주필요 (${daysLeft}일)</span>`, disabled: false };
+    return { html: `<span class="muted" style="font-size:12px">재고 ${stock}개</span>`, disabled: false };
   }
 
   function addToCart(id, name, price) {
