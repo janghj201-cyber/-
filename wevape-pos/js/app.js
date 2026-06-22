@@ -1,5 +1,6 @@
 const modules = {
   orders: OrdersModule,
+  sales: SalesHistoryModule,
   purchases: PurchasesModule,
   transfer: TransferModule,
   refund: RefundModule,
