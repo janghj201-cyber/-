@@ -29,7 +29,7 @@ function showTab(tab) {
 function initApp() {
   document.getElementById("loginView").style.display = "none";
   document.getElementById("appView").style.display = "block";
-  document.querySelectorAll("#navBar button").forEach(btn => {
+  document.querySelectorAll("#navBar button[data-tab]").forEach(btn => {
     btn.addEventListener("click", () => showTab(btn.dataset.tab));
   });
   showTab("orders");
