@@ -97,8 +97,8 @@ const StockHistoryModule = (() => {
   }
 
   async function loadPurchases(storeId, from, to) {
-    let path = "purchases?select=purchase_date,store_id,suppliers(name),purchase_items(qty,unit_cost,products(name))"
-      + "&purchase_date=gte." + from + "&purchase_date=lte." + to;
+    let path = "purchases?select=purchase_datetime,store_id,suppliers(name),purchase_items(qty,unit_cost,products(name))"
+      + "&purchase_datetime=gte." + from + "&purchase_datetime=lte." + to + "T23:59:59";
     if (storeId) path += "&store_id=eq." + storeId;
     const data = await sbGet(path);
     const entries = [];
@@ -106,7 +106,7 @@ const StockHistoryModule = (() => {
       (p.purchase_items || []).forEach(it => {
         entries.push({
           type: "purchase", icon: "🟢", label: "입고",
-          datetime: p.purchase_date,
+          datetime: p.purchase_datetime,
           product: it.products?.name || "?",
           qty: it.qty || 0,
           extra: `${p.suppliers?.name || "-"} · ${fmtWon(it.unit_cost)}`
@@ -117,8 +117,8 @@ const StockHistoryModule = (() => {
   }
 
   async function loadTransfers(storeId, from, to) {
-    let path = "stock_transfers?select=created_at,note,from_store:stores!from_store_id(name),to_store:stores!to_store_id(name),from_store_id,to_store_id,stock_transfer_items(qty,products(name))"
-      + "&created_at=gte." + from + "&created_at=lte." + to + "T23:59:59";
+    let path = "stock_transfers?select=transfer_datetime,note,from_store:stores!from_store_id(name),to_store:stores!to_store_id(name),from_store_id,to_store_id,stock_transfer_items(qty,products(name))"
+      + "&transfer_datetime=gte." + from + "&transfer_datetime=lte." + to + "T23:59:59";
     if (storeId) path += "&or=(from_store_id.eq." + storeId + ",to_store_id.eq." + storeId + ")";
     const data = await sbGet(path);
     const entries = [];
@@ -126,10 +126,10 @@ const StockHistoryModule = (() => {
       const route = `${t.from_store?.name || "-"} → ${t.to_store?.name || "-"}`;
       (t.stock_transfer_items || []).forEach(it => {
         if (!storeId || t.from_store_id === storeId) {
-          entries.push({ type: "transfer", icon: "🔵", label: "이동출고", datetime: t.created_at, product: it.products?.name || "?", qty: -(it.qty || 0), extra: route });
+          entries.push({ type: "transfer", icon: "🔵", label: "이동출고", datetime: t.transfer_datetime, product: it.products?.name || "?", qty: -(it.qty || 0), extra: route });
         }
         if (!storeId || t.to_store_id === storeId) {
-          entries.push({ type: "transfer", icon: "🔵", label: "이동입고", datetime: t.created_at, product: it.products?.name || "?", qty: it.qty || 0, extra: route });
+          entries.push({ type: "transfer", icon: "🔵", label: "이동입고", datetime: t.transfer_datetime, product: it.products?.name || "?", qty: it.qty || 0, extra: route });
         }
       });
     });
@@ -137,8 +137,8 @@ const StockHistoryModule = (() => {
   }
 
   async function loadRefunds(storeId, from, to) {
-    let path = "refunds?select=created_at,order_id,store_id,refund_items(qty,products(name))"
-      + "&created_at=gte." + from + "&created_at=lte." + to + "T23:59:59";
+    let path = "refunds?select=refund_datetime,order_id,store_id,refund_items(qty,products(name))"
+      + "&refund_datetime=gte." + from + "&refund_datetime=lte." + to + "T23:59:59";
     if (storeId) path += "&store_id=eq." + storeId;
     const data = await sbGet(path);
     const entries = [];
@@ -146,7 +146,7 @@ const StockHistoryModule = (() => {
       (r.refund_items || []).forEach(it => {
         entries.push({
           type: "refund", icon: "🟡", label: "환불",
-          datetime: r.created_at,
+          datetime: r.refund_datetime,
           product: it.products?.name || "?",
           qty: it.qty || 0,
           extra: "원주문 " + (r.order_id ? String(r.order_id).slice(0, 8) : "-")
@@ -157,8 +157,8 @@ const StockHistoryModule = (() => {
   }
 
   async function loadAdjustments(storeId, from, to) {
-    let path = "stock_adjustments?select=created_at,reason,store_id,stock_adjustment_items(qty_before,qty_after,products(name))"
-      + "&created_at=gte." + from + "&created_at=lte." + to + "T23:59:59";
+    let path = "stock_adjustments?select=adjustment_datetime,reason,store_id,stock_adjustment_items(qty_before,qty_after,products(name))"
+      + "&adjustment_datetime=gte." + from + "&adjustment_datetime=lte." + to + "T23:59:59";
     if (storeId) path += "&store_id=eq." + storeId;
     const data = await sbGet(path);
     const entries = [];
@@ -167,7 +167,7 @@ const StockHistoryModule = (() => {
         const diff = (it.qty_after || 0) - (it.qty_before || 0);
         entries.push({
           type: "adjustment", icon: "⚪", label: "실사조정",
-          datetime: a.created_at,
+          datetime: a.adjustment_datetime,
           product: it.products?.name || "?",
           qty: diff,
           extra: a.reason || "-"
