@@ -4,6 +4,7 @@ const modules = {
   purchases: PurchasesModule,
   transfer: TransferModule,
   stocktaking: StocktakingModule,
+  stockhistory: StockHistoryModule,
   refund: RefundModule,
   closing: ClosingModule,
   customers: CustomersModule,
