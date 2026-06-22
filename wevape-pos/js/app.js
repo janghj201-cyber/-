@@ -35,8 +35,11 @@ function initApp() {
   showTab("orders");
 }
 
-if (isLoggedIn()) {
-  initApp();
-} else {
-  document.getElementById("loginView").style.display = "block";
-}
+(async () => {
+  if (await isLoggedIn()) {
+    initApp();
+    scheduleTokenRefresh();
+  } else {
+    document.getElementById("loginView").style.display = "block";
+  }
+})();
