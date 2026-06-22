@@ -270,10 +270,15 @@ const OrdersModule = (() => {
     const grid = document.getElementById("ord_grid");
     grid.innerHTML = products.map(p => {
       const badge = buildStockBadge(stockMap[p.product_id], salesMap[p.product_id]);
+      const cardStyle = badge.disabled
+        ? "background:#f0f0f0;border:1px solid #e7e3d6"
+        : "background:#ffffff;border:1px solid #e7e3d6";
+      const nameStyle = badge.disabled ? "color:#aaaaaa;font-weight:600" : "color:#15140f;font-weight:600";
+      const priceStyle = badge.disabled ? "color:#aaaaaa" : "color:#4a4840";
       return `
-        <button type="button" class="prodCard${badge.disabled ? " soldout" : ""}" data-id="${p.product_id}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price || 0}" ${badge.disabled ? "disabled" : ""}>
-          <div class="pName">${p.name}</div>
-          <div class="pPrice">${fmtWon(p.price)}</div>
+        <button type="button" class="prodCard${badge.disabled ? " soldout" : ""}" style="${cardStyle}" data-id="${p.product_id}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price || 0}" ${badge.disabled ? "disabled" : ""}>
+          <div class="pName" style="${nameStyle}">${p.name}</div>
+          <div class="pPrice" style="${priceStyle}">${fmtWon(p.price)}</div>
           <div class="pBadge">${badge.html}</div>
         </button>
       `;
