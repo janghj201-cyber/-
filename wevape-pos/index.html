@@ -100,7 +100,33 @@
   .resultRow { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; }
   .resultRow:hover { background: #faf7ec; }
 
+  /* 주문입력 POS 레이아웃 */
+  main:has(#panel-orders.active) { max-width: 1320px; }
+  .posLayout { display: flex; gap: 20px; align-items: flex-start; }
+  .posLeft { flex: 2; min-width: 0; }
+  .posRight { flex: 1; min-width: 300px; position: sticky; top: 32px; }
+  .custTabs, .catTabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .custTabs button, .catTabs button { padding: 8px 12px; font-size: 13px; }
+  .custTabs button.active, .catTabs button.active { background: var(--amber); color: #1a1300; border-color: var(--amber); }
+  .prodGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (min-width: 1100px) { .prodGrid { grid-template-columns: repeat(4, 1fr); } }
+  .prodCard {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px;
+    text-align: left; min-height: 92px; background: #fff;
+  }
+  .prodCard .pName {
+    font-size: 13px; font-weight: 600; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .prodCard .pPrice { font-size: 13px; color: var(--ink-soft); }
+  .prodCard.soldout { opacity: 0.4; cursor: not-allowed; }
+  .payGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .payGrid button { padding: 18px; font-size: 15px; }
+
   @media (max-width: 760px) {
+    .posLayout { flex-direction: column; }
+    .posRight { position: relative; top: 0; width: 100%; }
+    .prodGrid { grid-template-columns: repeat(2, 1fr); }
     .shell { flex-direction: column; }
     aside.sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: 12px 14px; }
     .sidebar .brand { padding: 0 12px 0 0; }
