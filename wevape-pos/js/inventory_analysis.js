@@ -22,25 +22,18 @@ const InventoryModule = (() => {
 
       <div id="inv_panelHistory" style="display:none">
         <div class="card">
+          <select id="inv_historyStore" style="width:100%;margin-bottom:8px"><option value="">매장 선택</option></select>
           <input id="inv_search" type="text" placeholder="상품명 검색" style="width:100%" />
         </div>
         <div id="inv_results" class="card" style="display:none;max-height:180px;overflow-y:auto"></div>
         <div id="inv_selectedProduct" class="muted" style="margin-bottom:8px"></div>
-        <div class="row" style="margin-bottom:12px">
-          <input id="inv_from" type="date" style="flex:1" />
-          <span class="muted">~</span>
-          <input id="inv_to" type="date" style="flex:1" />
-          <button id="inv_loadHistoryBtn">조회</button>
-        </div>
+        <button id="inv_loadHistoryBtn" style="width:100%;margin-bottom:12px">조회</button>
         <div id="inv_historyBox"></div>
         <div class="muted" id="inv_historyStatus" style="margin-top:10px"></div>
       </div>
     `;
     bind();
     loadStores();
-    const today = new Date().toISOString().slice(0, 10);
-    document.getElementById("inv_from").value = today;
-    document.getElementById("inv_to").value = today;
   }
 
   function bind() {
@@ -65,7 +58,9 @@ const InventoryModule = (() => {
     try {
       const data = await sbGet("stores?select=store_id,name,tenant_id&order=name");
       tenantId = data[0]?.tenant_id;
-      document.getElementById("inv_store").innerHTML = `<option value="">매장 선택</option>` + data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      const opts = `<option value="">매장 선택</option>` + data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      document.getElementById("inv_store").innerHTML = opts;
+      document.getElementById("inv_historyStore").innerHTML = opts;
     } catch (err) {}
   }
 
@@ -123,24 +118,19 @@ const InventoryModule = (() => {
   async function loadHistory() {
     const statusEl = document.getElementById("inv_historyStatus");
     const box = document.getElementById("inv_historyBox");
-    const from = document.getElementById("inv_from").value;
-    const to = document.getElementById("inv_to").value;
+    const storeId = document.getElementById("inv_historyStore").value;
     if (!selectedProductId) { statusEl.textContent = "상품을 먼저 검색하여 선택해주세요."; return; }
+    if (!storeId) { statusEl.textContent = "매장을 선택해주세요."; return; }
     statusEl.textContent = "불러오는 중...";
     try {
-      const data = await sbGet("purchase_items?select=qty,unit_cost,purchases(purchase_date,stores(name),suppliers(name))&product_id=eq." + selectedProductId + "&order=purchases(purchase_date).desc");
-      const filtered = data.filter(d => {
-        const date = d.purchases?.purchase_date;
-        if (!date) return true;
-        return (!from || date >= from) && (!to || date <= to);
-      });
-      box.innerHTML = `<div class="card">` + (filtered.map(d => `
+      const data = await sbRpc("get_product_purchase_history", { p_product_id: selectedProductId, p_store_id: storeId });
+      box.innerHTML = `<div class="card">` + (data.map(d => `
         <div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0">
-          <span class="muted">${d.purchases?.purchase_date || "-"} · ${d.purchases?.stores?.name || "-"} · ${d.purchases?.suppliers?.name || "거래처없음"}</span>
+          <span class="muted">${d.purchase_date || "-"} · ${d.store_name || "-"} · ${d.supplier_name || "거래처없음"}</span>
           <span>${d.qty}개 × ${fmtWon(d.unit_cost)}</span>
         </div>
       `).join("") || `<div class="muted">구매 이력이 없습니다.</div>`) + `</div>`;
-      statusEl.textContent = filtered.length + "건의 입고 이력";
+      statusEl.textContent = data.length + "건의 입고 이력";
     } catch (err) {
       box.innerHTML = "";
       statusEl.textContent = "오류: " + err.message;
