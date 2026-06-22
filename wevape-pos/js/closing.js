@@ -15,7 +15,7 @@ const ClosingModule = (() => {
   let openingCash = 0;
   let businessStarted = false;
   let businessStartAt = null;
-  let movementType = "입금";
+  let movementType = "in";
   let cashMovements = [];
   let summary = null;
   let actualCash = 0;
@@ -106,8 +106,8 @@ const ClosingModule = (() => {
     document.getElementById("cl_date").addEventListener("change", checkStatus);
     document.querySelectorAll(".cl-key").forEach(b => b.addEventListener("click", () => onKeypadPress(b.dataset.k)));
     document.getElementById("cl_startBtn").addEventListener("click", startBusiness);
-    document.getElementById("cl_movIn").addEventListener("click", () => selectMovementType("입금"));
-    document.getElementById("cl_movOut").addEventListener("click", () => selectMovementType("출금"));
+    document.getElementById("cl_movIn").addEventListener("click", () => selectMovementType("in"));
+    document.getElementById("cl_movOut").addEventListener("click", () => selectMovementType("out"));
     document.getElementById("cl_movSubmit").addEventListener("click", submitMovement);
     document.getElementById("cl_summaryBtn").addEventListener("click", loadSummary);
     document.querySelectorAll(".cl-denomInput").forEach(inp => inp.addEventListener("input", recalcCash));
@@ -190,8 +190,8 @@ const ClosingModule = (() => {
 
   function selectMovementType(type) {
     movementType = type;
-    document.getElementById("cl_movIn").className = type === "입금" ? "" : "secondary";
-    document.getElementById("cl_movOut").className = type === "출금" ? "" : "secondary";
+    document.getElementById("cl_movIn").className = type === "in" ? "" : "secondary";
+    document.getElementById("cl_movOut").className = type === "out" ? "" : "secondary";
   }
 
   async function submitMovement() {
@@ -204,7 +204,7 @@ const ClosingModule = (() => {
     try {
       await sbPost("cash_movements", {
         tenant_id: tenantId, store_id: storeId, movement_date: closingDate,
-        type: movementType, amount, reason: reason || null
+        movement_type: movementType, amount, reason: reason || null
       }, { "Prefer": "return=representation" });
       document.getElementById("cl_movAmount").value = "";
       document.getElementById("cl_movReason").value = "";
@@ -225,18 +225,18 @@ const ClosingModule = (() => {
     const list = document.getElementById("cl_movList");
     list.innerHTML = cashMovements.map(m => `
       <div class="row" style="justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)">
-        <span>${m.type} · ${m.reason || "-"}</span>
-        <span style="font-weight:700;${m.type === "출금" ? "color:var(--bad)" : "color:var(--good)"}">${m.type === "출금" ? "-" : "+"}${fmtWon(m.amount)}</span>
+        <span>${m.movement_type === "in" ? "입금" : "출금"} · ${m.reason || "-"}</span>
+        <span style="font-weight:700;${m.movement_type === "out" ? "color:var(--bad)" : "color:var(--good)"}">${m.movement_type === "out" ? "-" : "+"}${fmtWon(m.amount)}</span>
       </div>
     `).join("") || `<div class="muted">입출금 내역이 없습니다.</div>`;
     document.getElementById("cl_movTotals").textContent = fmtWon(movementsTotalIn()) + " / " + fmtWon(movementsTotalOut());
   }
 
   function movementsTotalIn() {
-    return cashMovements.filter(m => m.type === "입금").reduce((s, m) => s + (m.amount || 0), 0);
+    return cashMovements.filter(m => m.movement_type === "in").reduce((s, m) => s + (m.amount || 0), 0);
   }
   function movementsTotalOut() {
-    return cashMovements.filter(m => m.type === "출금").reduce((s, m) => s + (m.amount || 0), 0);
+    return cashMovements.filter(m => m.movement_type === "out").reduce((s, m) => s + (m.amount || 0), 0);
   }
   function movementsNet() {
     return movementsTotalIn() - movementsTotalOut();
@@ -259,26 +259,26 @@ const ClosingModule = (() => {
     const box = document.getElementById("cl_summaryBox");
     if (!summary) { box.innerHTML = ""; return; }
     const s = summary;
-    const avgSpend = s.customer_count ? Math.round((s.net_sales || 0) / s.customer_count) : 0;
     box.innerHTML = `
       <div style="text-align:center;margin-bottom:14px">
         <div class="muted">매출 총액</div>
-        <div style="font-size:30px;font-weight:800">${fmtWon(s.gross_sales)}</div>
+        <div style="font-size:30px;font-weight:800">${fmtWon(s.total_sales)}</div>
       </div>
       <table>
         <tr><th>결제수단</th><th style="text-align:right">건수</th><th style="text-align:right">금액</th></tr>
-        <tr><td>현금</td><td style="text-align:right">${s.cash_count || 0}건</td><td style="text-align:right">${fmtWon(s.cash_amount)}</td></tr>
-        <tr><td>카드</td><td style="text-align:right">${s.card_count || 0}건</td><td style="text-align:right">${fmtWon(s.card_amount)}</td></tr>
-        <tr><td>이체</td><td style="text-align:right">${s.transfer_count || 0}건</td><td style="text-align:right">${fmtWon(s.transfer_amount)}</td></tr>
-        <tr><td>Alipay</td><td style="text-align:right">${s.alipay_count || 0}건</td><td style="text-align:right">${fmtWon(s.alipay_amount)}</td></tr>
-        <tr><td>기타</td><td style="text-align:right">${s.etc_count || 0}건</td><td style="text-align:right">${fmtWon(s.etc_amount)}</td></tr>
+        <tr><td>현금</td><td style="text-align:right">${s.cash_count || 0}건</td><td style="text-align:right">${fmtWon(s.cash_sales)}</td></tr>
+        <tr><td>카드</td><td style="text-align:right">${s.card_count || 0}건</td><td style="text-align:right">${fmtWon(s.card_sales)}</td></tr>
+        <tr><td>이체</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.transfer_sales)}</td></tr>
+        <tr><td>Alipay</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.alipay_sales)}</td></tr>
+        <tr><td>기타</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.other_sales)}</td></tr>
       </table>
       <table style="margin-top:10px">
+        <tr><td>주문 건수</td><td style="text-align:right">${s.order_count || 0}건</td></tr>
         <tr><td>환불 건수</td><td style="text-align:right">${s.refund_count || 0}건</td></tr>
         <tr><td>환불 금액</td><td style="text-align:right;color:var(--bad)">-${fmtWon(s.refund_amount)}</td></tr>
         <tr><td style="font-weight:700">순매출액</td><td style="text-align:right;font-weight:700">${fmtWon(s.net_sales)}</td></tr>
         <tr><td>고객 수</td><td style="text-align:right">${s.customer_count || 0}명</td></tr>
-        <tr><td>객단가</td><td style="text-align:right">${fmtWon(avgSpend)}</td></tr>
+        <tr><td>객단가</td><td style="text-align:right">${fmtWon(s.avg_order_value)}</td></tr>
         <tr><td>영업 준비금</td><td style="text-align:right">${fmtWon(openingCash)}</td></tr>
         <tr><td>시재 입출금 합계</td><td style="text-align:right">${fmtWon(movementsNet())}</td></tr>
       </table>
@@ -298,7 +298,7 @@ const ClosingModule = (() => {
     actualCash = total;
     document.getElementById("cl_actualCashTotal").textContent = fmtWon(total);
 
-    const cashSales = summary ? (summary.cash_amount || 0) : 0;
+    const cashSales = summary ? (summary.cash_sales || 0) : 0;
     expectedCash = openingCash + cashSales + movementsNet();
     document.getElementById("cl_expectedCash").textContent = fmtWon(expectedCash);
 
@@ -320,14 +320,16 @@ const ClosingModule = (() => {
       const payload = {
         tenant_id: tenantId, store_id: storeId, closing_date: closingDate,
         opening_cash: openingCash, business_start: businessStartAt, business_end: new Date().toISOString(),
-        gross_sales: summary.gross_sales || 0,
-        cash_amount: summary.cash_amount || 0, cash_count: summary.cash_count || 0,
-        card_amount: summary.card_amount || 0, card_count: summary.card_count || 0,
-        transfer_amount: summary.transfer_amount || 0, transfer_count: summary.transfer_count || 0,
-        alipay_amount: summary.alipay_amount || 0, alipay_count: summary.alipay_count || 0,
-        etc_amount: summary.etc_amount || 0, etc_count: summary.etc_count || 0,
+        total_sales: summary.total_sales || 0,
+        cash_sales: summary.cash_sales || 0, cash_count: summary.cash_count || 0,
+        card_sales: summary.card_sales || 0, card_count: summary.card_count || 0,
+        transfer_sales: summary.transfer_sales || 0,
+        alipay_sales: summary.alipay_sales || 0,
+        other_sales: summary.other_sales || 0,
+        order_count: summary.order_count || 0,
         refund_count: summary.refund_count || 0, refund_amount: summary.refund_amount || 0,
         net_sales: summary.net_sales || 0, customer_count: summary.customer_count || 0,
+        avg_order_value: summary.avg_order_value || 0,
         cash_movement_total: movementsNet(),
         expected_cash: expectedCash, actual_cash: actualCash, variance,
         note: document.getElementById("cl_note").value || null
@@ -344,7 +346,7 @@ const ClosingModule = (() => {
     box.innerHTML = `
       <div class="card">
         <div style="font-weight:700;margin-bottom:8px">마감 완료 리포트 (${closingDate})</div>
-        <div class="row" style="justify-content:space-between"><span class="muted">매출 총액</span><span>${fmtWon(row.gross_sales)}</span></div>
+        <div class="row" style="justify-content:space-between"><span class="muted">매출 총액</span><span>${fmtWon(row.total_sales)}</span></div>
         <div class="row" style="justify-content:space-between"><span class="muted">순매출액</span><span>${fmtWon(row.net_sales)}</span></div>
         <div class="row" style="justify-content:space-between"><span class="muted">실제현금 / 예상현금</span><span>${fmtWon(row.actual_cash)} / ${fmtWon(row.expected_cash)}</span></div>
         <div class="row" style="justify-content:space-between"><span class="muted">차액</span><span style="font-weight:700;color:${color}">${variance >= 0 ? "+" : ""}${fmtWon(variance)}</span></div>
