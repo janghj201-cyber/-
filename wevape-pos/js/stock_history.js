@@ -157,19 +157,18 @@ const StockHistoryModule = (() => {
   }
 
   async function loadAdjustments(storeId, from, to) {
-    let path = "stock_adjustments?select=adjustment_datetime,reason,store_id,stock_adjustment_items(qty_before,qty_after,products(name))"
+    let path = "stock_adjustments?select=adjustment_datetime,reason,store_id,stock_adjustment_items(qty_diff,products(name))"
       + "&adjustment_datetime=gte." + from + "&adjustment_datetime=lte." + to + "T23:59:59";
     if (storeId) path += "&store_id=eq." + storeId;
     const data = await sbGet(path);
     const entries = [];
     data.forEach(a => {
       (a.stock_adjustment_items || []).forEach(it => {
-        const diff = (it.qty_after || 0) - (it.qty_before || 0);
         entries.push({
           type: "adjustment", icon: "⚪", label: "실사조정",
           datetime: a.adjustment_datetime,
           product: it.products?.name || "?",
-          qty: diff,
+          qty: it.qty_diff || 0,
           extra: a.reason || "-"
         });
       });
