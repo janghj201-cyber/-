@@ -76,7 +76,7 @@ const InventoryModule = (() => {
     if (!storeId) { statusEl.textContent = "매장을 선택해주세요."; return; }
     statusEl.textContent = "불러오는 중...";
     try {
-      const data = await sbRpc("get_inventory_status", { p_store_id: storeId });
+      const data = await sbRpc("get_product_stock_analysis", { p_store_id: storeId });
       box.innerHTML = `
         <div class="card">
           <table>
