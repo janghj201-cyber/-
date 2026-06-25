@@ -28,6 +28,8 @@ const OrdersModule = (() => {
   let products = [];
   let stockMap = {};
   let salesMap = {};
+  let discountType = "amount";
+  let discountValue = 0;
 
   function render() {
     const el = document.getElementById("panel-orders");
@@ -80,6 +82,21 @@ const OrdersModule = (() => {
               <span>합계</span>
               <span style="font-size:24px;font-weight:800" id="ord_total">0원</span>
             </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+              <div class="muted" style="margin-bottom:6px">할인 적용</div>
+              <div class="row" style="margin-bottom:6px">
+                <button type="button" id="ord_discAmount" class="secondary" style="flex:1">금액할인</button>
+                <button type="button" id="ord_discPercent" class="secondary" style="flex:1">퍼센트할인</button>
+              </div>
+              <input id="ord_discValue" type="number" min="0" value="0" placeholder="할인 금액 또는 %" style="width:100%;margin-bottom:6px" />
+              <div class="row" style="justify-content:space-between">
+                <span class="muted">할인액</span><span id="ord_discAmountDisplay" class="muted">0원</span>
+              </div>
+              <div class="row" style="justify-content:space-between;margin-top:4px">
+                <span style="font-weight:700">최종 결제금액</span>
+                <span style="font-weight:800;font-size:18px" id="ord_finalTotal">0원</span>
+              </div>
+            </div>
           </div>
           <div class="payGrid" id="ord_payGrid">
             <button data-method="현금">현금</button>
@@ -94,6 +111,7 @@ const OrdersModule = (() => {
     `;
     bind();
     selectCustomerType(activeCustomerKey);
+    updateDiscountButtons();
     loadStores();
     handleTossRedirect();
   }
@@ -124,6 +142,7 @@ const OrdersModule = (() => {
       });
       statusEl.textContent = "카드 결제 완료" + (pending.customerId ? " (고객 연결됨)" : " (비회원)");
       cart = [];
+      resetDiscount();
       renderCart();
       await loadStockAndSales(pending.storeId);
       if (activeCategoryKey !== "search") renderGrid();
@@ -145,6 +164,56 @@ const OrdersModule = (() => {
       window._ordSearchT = setTimeout(() => searchProducts(e.target.value), 250);
     });
     document.querySelectorAll("#ord_payGrid button").forEach(b => b.addEventListener("click", () => submitOrder(b.dataset.method)));
+    document.getElementById("ord_discAmount").addEventListener("click", () => selectDiscountType("amount"));
+    document.getElementById("ord_discPercent").addEventListener("click", () => selectDiscountType("percent"));
+    document.getElementById("ord_discValue").addEventListener("input", (e) => {
+      discountValue = parseFloat(e.target.value) || 0;
+      renderCart();
+    });
+  }
+
+  function updateDiscountButtons() {
+    document.getElementById("ord_discAmount").classList.toggle("active", discountType === "amount");
+    document.getElementById("ord_discAmount").classList.toggle("secondary", discountType !== "amount");
+    document.getElementById("ord_discPercent").classList.toggle("active", discountType === "percent");
+    document.getElementById("ord_discPercent").classList.toggle("secondary", discountType !== "percent");
+  }
+
+  function selectDiscountType(type) {
+    discountType = type;
+    updateDiscountButtons();
+    renderCart();
+  }
+
+  function cartSubtotal() {
+    return cart.reduce((s, c) => s + c.price * c.qty, 0);
+  }
+
+  function computeDiscountAmount() {
+    const subtotal = cartSubtotal();
+    if (!subtotal || !discountValue) return 0;
+    const raw = discountType === "percent" ? subtotal * (discountValue / 100) : discountValue;
+    return Math.round(Math.max(0, Math.min(raw, subtotal)));
+  }
+
+  function cartFinalTotal() {
+    return cartSubtotal() - computeDiscountAmount();
+  }
+
+  // 할인을 각 품목 unit_price에 비율로 반영해 order_items에 그대로 저장할 수 있게 한다.
+  function buildDiscountedItems() {
+    const subtotal = cartSubtotal();
+    const discountAmount = computeDiscountAmount();
+    if (!discountAmount) return cart.map(c => ({ product_id: c.id, qty: c.qty, unit_price: c.price }));
+    const ratio = (subtotal - discountAmount) / subtotal;
+    return cart.map(c => ({ product_id: c.id, qty: c.qty, unit_price: Math.round(c.price * ratio) }));
+  }
+
+  function resetDiscount() {
+    discountType = "amount";
+    discountValue = 0;
+    document.getElementById("ord_discValue").value = "0";
+    updateDiscountButtons();
   }
 
   async function loadStores() {
@@ -353,7 +422,9 @@ const OrdersModule = (() => {
     `).join("");
     list.querySelectorAll(".qBtn").forEach(b => b.addEventListener("click", () => changeQty(b.dataset.id, parseInt(b.dataset.d))));
     list.querySelectorAll(".pInput").forEach(i => i.addEventListener("change", () => changePrice(i.dataset.id, parseFloat(i.value))));
-    document.getElementById("ord_total").textContent = fmtWon(cart.reduce((s, c) => s + c.price * c.qty, 0));
+    document.getElementById("ord_total").textContent = fmtWon(cartSubtotal());
+    document.getElementById("ord_discAmountDisplay").textContent = fmtWon(computeDiscountAmount());
+    document.getElementById("ord_finalTotal").textContent = fmtWon(cartFinalTotal());
   }
 
   async function submitOrder(paymentMethod) {
@@ -370,13 +441,14 @@ const OrdersModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       const customerId = await ensureCustomer(storeId);
-      const items = cart.map(c => ({ product_id: c.id, qty: c.qty, unit_price: c.price }));
+      const items = buildDiscountedItems();
       await sbRpc("register_order", {
         p_tenant_id: tenantId, p_store_id: storeId, p_customer_id: customerId,
         p_staff_id: null, p_payment_method: paymentMethod, p_items: items
       });
       statusEl.textContent = paymentMethod + " 결제 완료" + (customerId ? " (고객 연결됨)" : " (비회원)");
       cart = [];
+      resetDiscount();
       renderCart();
       if (activeCustomerKey === "member") {
         activeCustomerId = null;
@@ -394,8 +466,8 @@ const OrdersModule = (() => {
     statusEl.textContent = "결제창 호출 중...";
     try {
       const customerId = await ensureCustomer(storeId);
-      const items = cart.map(c => ({ product_id: c.id, qty: c.qty, unit_price: c.price }));
-      const amount = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      const items = buildDiscountedItems();
+      const amount = cartFinalTotal();
       const orderName = cart.length === 1 ? cart[0].name : `${cart[0].name} 외 ${cart.length - 1}건`;
       await PaymentModule.requestPayment(amount, orderName, undefined, {
         tenantId, storeId, customerId, items

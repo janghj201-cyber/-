@@ -16,6 +16,7 @@ const ClosingModule = (() => {
   let businessStarted = false;
   let businessStartAt = null;
   let movementType = "in";
+  let movementAmountBuffer = "";
   let cashMovements = [];
   let summary = null;
   let actualCash = 0;
@@ -47,8 +48,11 @@ const ClosingModule = (() => {
             <button type="button" id="cl_movIn" style="flex:1">입금</button>
             <button type="button" id="cl_movOut" class="secondary" style="flex:1">출금</button>
           </div>
+          <div id="cl_movAmountDisplay" style="font-size:24px;font-weight:800;margin-bottom:8px">0원</div>
+          <div id="cl_movKeypad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px">
+            ${["1", "2", "3", "4", "5", "6", "7", "8", "9", "000", "0", "back"].map(k => `<button type="button" class="secondary cl-movKey" data-k="${k}" style="padding:14px;font-size:16px">${k === "back" ? "⌫" : k}</button>`).join("")}
+          </div>
           <div class="row" style="margin-bottom:8px">
-            <input id="cl_movAmount" type="number" placeholder="금액" style="flex:1" />
             <input id="cl_movReason" type="text" placeholder="사유" style="flex:1" />
             <button id="cl_movSubmit">등록</button>
           </div>
@@ -108,6 +112,7 @@ const ClosingModule = (() => {
     document.getElementById("cl_startBtn").addEventListener("click", startBusiness);
     document.getElementById("cl_movIn").addEventListener("click", () => selectMovementType("in"));
     document.getElementById("cl_movOut").addEventListener("click", () => selectMovementType("out"));
+    document.querySelectorAll(".cl-movKey").forEach(b => b.addEventListener("click", () => onMovKeypadPress(b.dataset.k)));
     document.getElementById("cl_movSubmit").addEventListener("click", submitMovement);
     document.getElementById("cl_summaryBtn").addEventListener("click", loadSummary);
     document.querySelectorAll(".cl-denomInput").forEach(inp => inp.addEventListener("input", recalcCash));
@@ -127,6 +132,12 @@ const ClosingModule = (() => {
     if (key === "back") openingCashBuffer = openingCashBuffer.slice(0, -1);
     else openingCashBuffer = (openingCashBuffer + key).slice(0, 9);
     document.getElementById("cl_openingDisplay").textContent = fmtWon(parseInt(openingCashBuffer || "0", 10));
+  }
+
+  function onMovKeypadPress(key) {
+    if (key === "back") movementAmountBuffer = movementAmountBuffer.slice(0, -1);
+    else movementAmountBuffer = (movementAmountBuffer + key).slice(0, 9);
+    document.getElementById("cl_movAmountDisplay").textContent = fmtWon(parseInt(movementAmountBuffer || "0", 10));
   }
 
   async function checkStatus() {
@@ -196,7 +207,7 @@ const ClosingModule = (() => {
 
   async function submitMovement() {
     const statusEl = document.getElementById("cl_status");
-    const amount = parseFloat(document.getElementById("cl_movAmount").value);
+    const amount = parseInt(movementAmountBuffer || "0", 10);
     const reason = document.getElementById("cl_movReason").value.trim();
     if (!businessStarted) { statusEl.textContent = "먼저 영업을 시작해주세요."; return; }
     if (!amount) { statusEl.textContent = "금액을 입력해주세요."; return; }
@@ -206,7 +217,8 @@ const ClosingModule = (() => {
         tenant_id: tenantId, store_id: storeId, movement_date: closingDate,
         movement_type: movementType, amount, reason: reason || null
       }, { "Prefer": "return=representation" });
-      document.getElementById("cl_movAmount").value = "";
+      movementAmountBuffer = "";
+      document.getElementById("cl_movAmountDisplay").textContent = "0원";
       document.getElementById("cl_movReason").value = "";
       statusEl.textContent = "등록 완료";
       await loadMovements();
@@ -260,27 +272,33 @@ const ClosingModule = (() => {
     if (!summary) { box.innerHTML = ""; return; }
     const s = summary;
     box.innerHTML = `
-      <div style="text-align:center;margin-bottom:14px">
-        <div class="muted">매출 총액</div>
-        <div style="font-size:30px;font-weight:800">${fmtWon(s.total_sales)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div>
+          <div class="muted">매출 총액</div>
+          <div style="font-size:30px;font-weight:800;margin-bottom:10px">${fmtWon(s.total_sales)}</div>
+          <div class="row" style="justify-content:space-between;padding:4px 0;border-top:1px solid var(--line)">
+            <span class="muted">순매출액</span><span style="font-weight:700">${fmtWon(s.net_sales)}</span>
+          </div>
+          <div class="row" style="justify-content:space-between;padding:4px 0">
+            <span class="muted">환불금액</span><span style="color:var(--bad)">-${fmtWon(s.refund_amount)} (${s.refund_count || 0}건)</span>
+          </div>
+        </div>
+        <div>
+          <table>
+            <tr><td>현금</td><td style="text-align:right">${fmtWon(s.cash_sales)}</td><td style="text-align:right" class="muted">${s.cash_count || 0}건</td></tr>
+            <tr><td>카드</td><td style="text-align:right">${fmtWon(s.card_sales)}</td><td style="text-align:right" class="muted">${s.card_count || 0}건</td></tr>
+            <tr><td>이체</td><td style="text-align:right">${fmtWon(s.transfer_sales)}</td><td></td></tr>
+            <tr><td>Alipay</td><td style="text-align:right">${fmtWon(s.alipay_sales)}</td><td></td></tr>
+            <tr><td>기타</td><td style="text-align:right">${fmtWon(s.other_sales)}</td><td></td></tr>
+          </table>
+        </div>
       </div>
-      <table>
-        <tr><th>결제수단</th><th style="text-align:right">건수</th><th style="text-align:right">금액</th></tr>
-        <tr><td>현금</td><td style="text-align:right">${s.cash_count || 0}건</td><td style="text-align:right">${fmtWon(s.cash_sales)}</td></tr>
-        <tr><td>카드</td><td style="text-align:right">${s.card_count || 0}건</td><td style="text-align:right">${fmtWon(s.card_sales)}</td></tr>
-        <tr><td>이체</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.transfer_sales)}</td></tr>
-        <tr><td>Alipay</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.alipay_sales)}</td></tr>
-        <tr><td>기타</td><td style="text-align:right">-</td><td style="text-align:right">${fmtWon(s.other_sales)}</td></tr>
-      </table>
-      <table style="margin-top:10px">
-        <tr><td>주문 건수</td><td style="text-align:right">${s.order_count || 0}건</td></tr>
-        <tr><td>환불 건수</td><td style="text-align:right">${s.refund_count || 0}건</td></tr>
-        <tr><td>환불 금액</td><td style="text-align:right;color:var(--bad)">-${fmtWon(s.refund_amount)}</td></tr>
-        <tr><td style="font-weight:700">순매출액</td><td style="text-align:right;font-weight:700">${fmtWon(s.net_sales)}</td></tr>
-        <tr><td>고객 수</td><td style="text-align:right">${s.customer_count || 0}명</td></tr>
+      <table style="margin-top:14px;border-top:1px solid var(--line);padding-top:8px">
+        <tr><td>고객수</td><td style="text-align:right">${s.customer_count || 0}명</td></tr>
         <tr><td>객단가</td><td style="text-align:right">${fmtWon(s.avg_order_value)}</td></tr>
-        <tr><td>영업 준비금</td><td style="text-align:right">${fmtWon(openingCash)}</td></tr>
-        <tr><td>시재 입출금 합계</td><td style="text-align:right">${fmtWon(movementsNet())}</td></tr>
+        <tr><td>총주문건수</td><td style="text-align:right">${s.order_count || 0}건</td></tr>
+        <tr><td>영업준비금</td><td style="text-align:right">${fmtWon(openingCash)}</td></tr>
+        <tr><td>시재입출금합계</td><td style="text-align:right">${fmtWon(movementsNet())}</td></tr>
       </table>
     `;
   }
