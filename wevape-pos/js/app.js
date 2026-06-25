@@ -1,6 +1,7 @@
 const modules = {
   orders: OrdersModule,
   sales: SalesHistoryModule,
+  "sales-summary": SalesSummaryModule,
   purchases: PurchasesModule,
   transfer: TransferModule,
   stocktaking: StocktakingModule,

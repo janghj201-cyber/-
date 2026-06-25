@@ -1,12 +1,4 @@
 const OrdersModule = (() => {
-  const CUSTOMER_TABS = [
-    { key: "kr", label: "한국인", nationality: "한국" },
-    { key: "cn", label: "중국인(따이공)", nationality: "중국" },
-    { key: "jp", label: "일본인", nationality: "일본" },
-    { key: "etc", label: "기타외국인", nationality: "기타" },
-    { key: "member", label: "회원조회", nationality: null }
-  ];
-
   const CATEGORY_TABS = [
     { key: "graffitiC", label: "그래피티C", filter: { line: "그래피티C" } },
     { key: "graffiti2", label: "그래피티2", filter: { line: "그래피티2" } },
@@ -20,16 +12,30 @@ const OrdersModule = (() => {
     { key: "search", label: "전체검색", filter: null }
   ];
 
+  const GENDER_OPTIONS = [
+    { v: "남", label: "남" },
+    { v: "여", label: "여" },
+    { v: "미입력", label: "미입력" }
+  ];
+
+  const NATIONALITY_OPTIONS = [
+    { v: "한국", label: "내국인" },
+    { v: "중국", label: "중국인" },
+    { v: "일본", label: "일본인" },
+    { v: "기타", label: "기타외국인" }
+  ];
+
   let cart = [];
   let tenantId = null;
-  let activeCustomerId = null;
-  let activeCustomerKey = "kr";
   let activeCategoryKey = CATEGORY_TABS[0].key;
   let products = [];
   let stockMap = {};
   let salesMap = {};
   let discountType = "amount";
   let discountValue = 0;
+  let selectedCustomer = null;
+  let newGender = "미입력";
+  let newNationality = "한국";
 
   function render() {
     const el = document.getElementById("panel-orders");
@@ -40,28 +46,52 @@ const OrdersModule = (() => {
       </div>
 
       <div class="card" style="margin-bottom:12px">
-        <div class="custTabs" id="ord_custTabs">
-          ${CUSTOMER_TABS.map(t => `<button class="secondary" data-key="${t.key}">${t.label}</button>`).join("")}
-        </div>
-        <div id="ord_memberBox" style="display:none">
-          <div class="row" style="margin-bottom:8px">
-            <input id="ord_phone" type="text" placeholder="전화번호" style="flex:1" />
-            <button id="ord_lookupBtn">조회</button>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div id="ord_custSummary" class="muted">비회원으로 진행 중</div>
+          <div class="row">
+            <button type="button" id="ord_custClearBtn" class="secondary" style="display:none">해제</button>
+            <button type="button" id="ord_custBtn" class="secondary">고객 조회</button>
           </div>
-          <div id="ord_customerForm" style="display:none">
-            <div class="row" style="margin-bottom:8px">
-              <input id="ord_custName" type="text" placeholder="이름" style="flex:1" />
-              <select id="ord_custNationality" style="flex:1">
-                <option value="한국">한국</option><option value="중국">중국</option><option value="일본">일본</option><option value="기타">기타</option>
-              </select>
+        </div>
+      </div>
+
+      <div id="ord_custModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center" class="row">
+        <div class="card" style="width:480px;max-width:92vw;max-height:86vh;overflow:auto;background:#fff">
+          <div id="ord_custModalSearch">
+            <div style="font-weight:700;margin-bottom:10px">고객 조회</div>
+            <div class="row" style="margin-bottom:10px">
+              <input id="ord_custSearchInput" type="text" placeholder="이름 또는 전화번호" style="flex:1" />
+              <button id="ord_custSearchBtn">검색</button>
             </div>
-            <select id="ord_custChannel" style="width:100%">
-              <option value="">유입경로 선택 (신규 고객만)</option>
-              <option value="QR">QR</option><option value="네이버">네이버</option><option value="지인소개">지인소개</option><option value="워크인">워크인</option>
-            </select>
+            <div id="ord_custResults"></div>
+            <div class="row" style="justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--line)">
+              <button type="button" id="ord_custNewBtn" class="secondary">신규 고객 등록</button>
+              <button type="button" id="ord_custCloseBtn" class="secondary">닫기</button>
+            </div>
+          </div>
+          <div id="ord_custModalNew" style="display:none">
+            <div style="font-weight:700;margin-bottom:10px">신규 고객 등록</div>
+            <div class="row" style="margin-bottom:8px">
+              <input id="ord_newName" type="text" placeholder="이름" style="flex:1" />
+              <input id="ord_newPhone" type="text" placeholder="전화번호" style="flex:1" />
+            </div>
+            <input id="ord_newBirth" type="date" style="width:100%;margin-bottom:8px" />
+            <div class="row" style="margin-bottom:8px;align-items:center">
+              <span class="muted" style="width:64px">성별</span>
+              ${GENDER_OPTIONS.map(g => `<button type="button" class="secondary ord-genderBtn" data-v="${g.v}">${g.label}</button>`).join("")}
+            </div>
+            <div class="row" style="margin-bottom:8px;flex-wrap:wrap;align-items:center">
+              <span class="muted" style="width:64px">고객유형</span>
+              ${NATIONALITY_OPTIONS.map(n => `<button type="button" class="secondary ord-natBtn" data-v="${n.v}">${n.label}</button>`).join("")}
+            </div>
+            <input id="ord_newMemo" type="text" placeholder="특이사항" style="width:100%;margin-bottom:10px" />
+            <div class="row" style="justify-content:space-between">
+              <button id="ord_newSaveBtn">저장 후 선택</button>
+              <button type="button" id="ord_newCancelBtn" class="secondary">취소</button>
+            </div>
+            <div class="muted" id="ord_newStatus" style="margin-top:8px"></div>
           </div>
         </div>
-        <div class="muted" id="ord_customerStatus" style="margin-top:6px"></div>
       </div>
 
       <div class="posLayout">
@@ -110,8 +140,10 @@ const OrdersModule = (() => {
       </div>
     `;
     bind();
-    selectCustomerType(activeCustomerKey);
     updateDiscountButtons();
+    renderCustomerSummary();
+    updateGenderButtons();
+    updateNatButtons();
     loadStores();
     handleTossRedirect();
   }
@@ -140,6 +172,7 @@ const OrdersModule = (() => {
         p_tenant_id: pending.tenantId, p_store_id: pending.storeId, p_customer_id: pending.customerId,
         p_staff_id: null, p_payment_method: "카드", p_items: pending.items
       });
+      await bumpCustomerStats(pending.customerId, pending.amount);
       statusEl.textContent = "카드 결제 완료" + (pending.customerId ? " (고객 연결됨)" : " (비회원)");
       cart = [];
       resetDiscount();
@@ -156,9 +189,7 @@ const OrdersModule = (() => {
       await loadStockAndSales(e.target.value);
       renderGrid();
     });
-    document.querySelectorAll("#ord_custTabs button").forEach(b => b.addEventListener("click", () => selectCustomerType(b.dataset.key)));
     document.querySelectorAll("#ord_catTabs button").forEach(b => b.addEventListener("click", () => selectCategory(b.dataset.key)));
-    document.getElementById("ord_lookupBtn").addEventListener("click", lookupCustomer);
     document.getElementById("ord_search").addEventListener("input", (e) => {
       clearTimeout(window._ordSearchT);
       window._ordSearchT = setTimeout(() => searchProducts(e.target.value), 250);
@@ -170,6 +201,17 @@ const OrdersModule = (() => {
       discountValue = parseFloat(e.target.value) || 0;
       renderCart();
     });
+
+    document.getElementById("ord_custBtn").addEventListener("click", openCustomerModal);
+    document.getElementById("ord_custClearBtn").addEventListener("click", clearCustomer);
+    document.getElementById("ord_custSearchBtn").addEventListener("click", searchCustomers);
+    document.getElementById("ord_custSearchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") searchCustomers(); });
+    document.getElementById("ord_custNewBtn").addEventListener("click", showCustNewView);
+    document.getElementById("ord_custCloseBtn").addEventListener("click", closeCustomerModal);
+    document.getElementById("ord_newCancelBtn").addEventListener("click", showCustSearchView);
+    document.getElementById("ord_newSaveBtn").addEventListener("click", saveNewCustomer);
+    document.querySelectorAll(".ord-genderBtn").forEach(b => b.addEventListener("click", () => { newGender = b.dataset.v; updateGenderButtons(); }));
+    document.querySelectorAll(".ord-natBtn").forEach(b => b.addEventListener("click", () => { newNationality = b.dataset.v; updateNatButtons(); }));
   }
 
   function updateDiscountButtons() {
@@ -229,75 +271,143 @@ const OrdersModule = (() => {
     } catch (err) { statusEl.textContent = "매장 로드 실패: " + err.message; }
   }
 
-  function selectCustomerType(key) {
-    activeCustomerKey = key;
-    activeCustomerId = null;
-    document.querySelectorAll("#ord_custTabs button").forEach(b => {
-      const isActive = b.dataset.key === key;
+  function openCustomerModal() {
+    document.getElementById("ord_custModal").style.display = "flex";
+    document.getElementById("ord_custSearchInput").value = "";
+    document.getElementById("ord_custResults").innerHTML = "";
+    showCustSearchView();
+  }
+
+  function closeCustomerModal() {
+    document.getElementById("ord_custModal").style.display = "none";
+  }
+
+  function showCustSearchView() {
+    document.getElementById("ord_custModalSearch").style.display = "block";
+    document.getElementById("ord_custModalNew").style.display = "none";
+  }
+
+  function showCustNewView() {
+    document.getElementById("ord_custModalSearch").style.display = "none";
+    document.getElementById("ord_custModalNew").style.display = "block";
+    document.getElementById("ord_newName").value = "";
+    document.getElementById("ord_newPhone").value = "";
+    document.getElementById("ord_newBirth").value = "";
+    document.getElementById("ord_newMemo").value = "";
+    document.getElementById("ord_newStatus").textContent = "";
+    newGender = "미입력";
+    newNationality = "한국";
+    updateGenderButtons();
+    updateNatButtons();
+  }
+
+  function updateGenderButtons() {
+    document.querySelectorAll(".ord-genderBtn").forEach(b => {
+      const isActive = b.dataset.v === newGender;
       b.classList.toggle("active", isActive);
       b.classList.toggle("secondary", !isActive);
     });
-    const memberBox = document.getElementById("ord_memberBox");
-    const statusEl = document.getElementById("ord_customerStatus");
-    if (key === "member") {
-      memberBox.style.display = "block";
-      statusEl.textContent = "";
-    } else {
-      memberBox.style.display = "none";
-      document.getElementById("ord_phone").value = "";
-      document.getElementById("ord_customerForm").style.display = "none";
-      const tab = CUSTOMER_TABS.find(t => t.key === key);
-      statusEl.textContent = tab.label + " 고객으로 자동 기록됩니다.";
-    }
   }
 
-  async function lookupCustomer() {
-    const phone = document.getElementById("ord_phone").value.trim();
-    const statusEl = document.getElementById("ord_customerStatus");
-    const form = document.getElementById("ord_customerForm");
-    activeCustomerId = null;
-    if (!phone) { statusEl.textContent = ""; form.style.display = "none"; return; }
-    statusEl.textContent = "조회 중...";
+  function updateNatButtons() {
+    document.querySelectorAll(".ord-natBtn").forEach(b => {
+      const isActive = b.dataset.v === newNationality;
+      b.classList.toggle("active", isActive);
+      b.classList.toggle("secondary", !isActive);
+    });
+  }
+
+  function calcAge(birthDate) {
+    if (!birthDate) return null;
+    const b = new Date(birthDate);
+    const now = new Date();
+    let age = now.getFullYear() - b.getFullYear();
+    if (now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())) age--;
+    return age;
+  }
+
+  async function searchCustomers() {
+    const q = document.getElementById("ord_custSearchInput").value.trim();
+    const box = document.getElementById("ord_custResults");
+    if (!q) { box.innerHTML = `<div class="muted">검색어를 입력해주세요.</div>`; return; }
+    box.innerHTML = `<div class="muted">검색 중...</div>`;
     try {
-      const data = await sbGet("customers?select=customer_id,name,nationality&phone=eq." + encodeURIComponent(phone));
-      form.style.display = "block";
-      if (data.length) {
-        activeCustomerId = data[0].customer_id;
-        document.getElementById("ord_custName").value = data[0].name || "";
-        document.getElementById("ord_custNationality").value = data[0].nationality || "한국";
-        document.getElementById("ord_custChannel").style.display = "none";
-        statusEl.textContent = "기존 고객 — " + (data[0].name || "이름없음") + " 님 연결됨";
-      } else {
-        document.getElementById("ord_custChannel").style.display = "block";
-        statusEl.textContent = "신규 고객입니다.";
-      }
-    } catch (err) { statusEl.textContent = "조회 실패: " + err.message; }
+      const data = await sbGet("customers?select=customer_id,name,phone,birth_date,nationality,gender&or=(name.ilike.*" + encodeURIComponent(q) + "*,phone.ilike.*" + encodeURIComponent(q) + "*)&limit=20");
+      if (!data.length) { box.innerHTML = `<div class="muted">검색 결과가 없습니다.</div>`; return; }
+      box.innerHTML = data.map(c => {
+        const age = calcAge(c.birth_date);
+        return `
+          <div class="resultRow">
+            <div>${c.name || "이름없음"} · ${c.phone || "-"}${age !== null ? " · " + age + "세" : ""}</div>
+            <button type="button" class="secondary ord-custSelectBtn" data-id="${c.customer_id}">선택</button>
+          </div>
+        `;
+      }).join("");
+      box.querySelectorAll(".ord-custSelectBtn").forEach(btn => btn.addEventListener("click", () => {
+        const c = data.find(x => x.customer_id === btn.dataset.id);
+        selectCustomer(c);
+      }));
+    } catch (err) { box.innerHTML = `<div class="muted">오류: ${err.message}</div>`; }
   }
 
-  async function ensureCustomer(storeId) {
-    if (activeCustomerKey === "member") {
-      const phone = document.getElementById("ord_phone").value.trim();
-      if (!phone) return null;
-      if (activeCustomerId) return activeCustomerId;
-      const created = await sbPost("customers", {
-        tenant_id: tenantId, phone,
-        name: document.getElementById("ord_custName").value.trim() || null,
-        nationality: document.getElementById("ord_custNationality").value,
-        acquisition_channel: document.getElementById("ord_custChannel").value || null,
-        first_visit_store: storeId || null,
-        first_visit_date: new Date().toISOString().slice(0, 10)
-      }, { "Prefer": "return=representation" });
-      return created[0].customer_id;
+  function selectCustomer(c) {
+    selectedCustomer = c;
+    closeCustomerModal();
+    renderCustomerSummary();
+  }
+
+  function clearCustomer() {
+    selectedCustomer = null;
+    renderCustomerSummary();
+  }
+
+  function renderCustomerSummary() {
+    const el = document.getElementById("ord_custSummary");
+    const clearBtn = document.getElementById("ord_custClearBtn");
+    if (!selectedCustomer) {
+      el.textContent = "비회원으로 진행 중";
+      clearBtn.style.display = "none";
+    } else {
+      el.textContent = (selectedCustomer.name || "이름없음") + " · " + (selectedCustomer.phone || "-") + " 고객 선택됨";
+      clearBtn.style.display = "inline-block";
     }
-    const tab = CUSTOMER_TABS.find(t => t.key === activeCustomerKey);
-    if (!tab || !tab.nationality) return null;
-    const created = await sbPost("customers", {
-      tenant_id: tenantId, phone: null, name: null,
-      nationality: tab.nationality, acquisition_channel: null,
-      first_visit_store: storeId || null,
-      first_visit_date: new Date().toISOString().slice(0, 10)
-    }, { "Prefer": "return=representation" });
-    return created[0].customer_id;
+  }
+
+  async function saveNewCustomer() {
+    const statusEl = document.getElementById("ord_newStatus");
+    const name = document.getElementById("ord_newName").value.trim();
+    const phone = document.getElementById("ord_newPhone").value.trim();
+    const birth = document.getElementById("ord_newBirth").value || null;
+    const memo = document.getElementById("ord_newMemo").value.trim() || null;
+    if (!phone) { statusEl.textContent = "전화번호를 입력해주세요."; return; }
+    statusEl.textContent = "저장 중...";
+    try {
+      const storeId = document.getElementById("ord_store").value;
+      const nowIso = new Date().toISOString();
+      const created = await sbPost("customers", {
+        tenant_id: tenantId, phone, name: name || null,
+        birth_date: birth, gender: newGender, nationality: newNationality, memo,
+        first_visit_store: storeId || null,
+        first_visit_date: nowIso.slice(0, 10),
+        first_visit_at: nowIso
+      }, { "Prefer": "return=representation" });
+      selectCustomer(created[0]);
+    } catch (err) { statusEl.textContent = "저장 실패: " + err.message; }
+  }
+
+  async function bumpCustomerStats(customerId, amount) {
+    if (!customerId) return;
+    try {
+      const rows = await sbGet("customers?select=total_visits,total_amount,first_visit_at&customer_id=eq." + customerId);
+      const cur = rows[0] || {};
+      const nowIso = new Date().toISOString();
+      await sbPatch("customers?customer_id=eq." + customerId, {
+        total_visits: (cur.total_visits || 0) + 1,
+        total_amount: (cur.total_amount || 0) + (amount || 0),
+        last_visit_at: nowIso,
+        first_visit_at: cur.first_visit_at || nowIso
+      });
+    } catch (err) {}
   }
 
   function selectCategory(key) {
@@ -440,22 +550,19 @@ const OrdersModule = (() => {
 
     statusEl.textContent = "등록 중...";
     try {
-      const customerId = await ensureCustomer(storeId);
+      const customerId = selectedCustomer ? selectedCustomer.customer_id : null;
       const items = buildDiscountedItems();
+      const amount = cartFinalTotal();
       await sbRpc("register_order", {
         p_tenant_id: tenantId, p_store_id: storeId, p_customer_id: customerId,
         p_staff_id: null, p_payment_method: paymentMethod, p_items: items
       });
+      await bumpCustomerStats(customerId, amount);
       statusEl.textContent = paymentMethod + " 결제 완료" + (customerId ? " (고객 연결됨)" : " (비회원)");
       cart = [];
       resetDiscount();
+      clearCustomer();
       renderCart();
-      if (activeCustomerKey === "member") {
-        activeCustomerId = null;
-        document.getElementById("ord_phone").value = "";
-        document.getElementById("ord_customerForm").style.display = "none";
-        document.getElementById("ord_customerStatus").textContent = "";
-      }
       await loadStockAndSales(storeId);
       if (activeCategoryKey !== "search") renderGrid();
     } catch (err) { statusEl.textContent = "오류: " + err.message; }
@@ -465,12 +572,12 @@ const OrdersModule = (() => {
     const statusEl = document.getElementById("ord_status");
     statusEl.textContent = "결제창 호출 중...";
     try {
-      const customerId = await ensureCustomer(storeId);
+      const customerId = selectedCustomer ? selectedCustomer.customer_id : null;
       const items = buildDiscountedItems();
       const amount = cartFinalTotal();
       const orderName = cart.length === 1 ? cart[0].name : `${cart[0].name} 외 ${cart.length - 1}건`;
-      await PaymentModule.requestPayment(amount, orderName, undefined, {
-        tenantId, storeId, customerId, items
+      await PaymentModule.requestPayment(amount, orderName, selectedCustomer ? selectedCustomer.name : undefined, {
+        tenantId, storeId, customerId, items, amount
       });
     } catch (err) { statusEl.textContent = "결제 요청 오류: " + err.message; }
   }

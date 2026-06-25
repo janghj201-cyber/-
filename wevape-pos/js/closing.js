@@ -8,6 +8,40 @@ const ClosingModule = (() => {
     { value: 100, label: "100원" }
   ];
 
+  // 일회용(category) 내 line → 세부 분류 매핑. orders.js/sales-summary.js와 동일 기준.
+  const DISPOSABLE_LINE_MAP = {
+    "그래피티C": "그래피티C",
+    "그래피티2": "그래피티2",
+    "그래피티(시즌1)": "그래피티1",
+    "PA15": "3% 한정판",
+    "PA22": "3% 한정판",
+    "와카": "기타 일회용",
+    "네스티바": "기타 일회용",
+    "네스티블랙유니콘": "기타 일회용",
+    "네스티원": "기타 일회용",
+    "버블몬비어": "기타 일회용",
+    "월드다이나믹": "기타 일회용",
+    "릴렉스프로2": "RELX",
+    "릴렉스(기타)": "RELX",
+    "릴렉스포켓": "RELX",
+    "릴렉스디바": "RELX",
+    "릴렉스더블": "RELX",
+    "릴렉스후노즈": "RELX",
+    "릴렉스인피니티2": "RELX",
+    "릴렉스에센셜2": "RELX",
+    "릴렉스아티잔": "RELX",
+    "말론바": "RELX"
+  };
+  const DISPOSABLE_KEYS = ["그래피티C", "그래피티2", "그래피티1", "3% 한정판", "RELX", "기타 일회용"];
+  const LIQUID_KEYS = ["기성액상", "모드액상"];
+  const OTHER_KEYS = ["파츠", "디바이스", "기타소모품"];
+
+  function classify(p) {
+    if (!p) return "기타소모품";
+    if (p.category === "일회용") return DISPOSABLE_LINE_MAP[p.line] || "기타 일회용";
+    return p.category || "기타소모품";
+  }
+
   let tenantId = null;
   let storeId = "";
   let closingDate = "";
@@ -19,12 +53,15 @@ const ClosingModule = (() => {
   let movementAmountBuffer = "";
   let cashMovements = [];
   let summary = null;
+  let categorySummary = {};
+  let custStats = { total: 0, new: 0, revisit: 0 };
   let actualCash = 0;
   let expectedCash = 0;
 
   function render() {
     const el = document.getElementById("panel-closing");
     el.innerHTML = `
+      <h2 class="pageTitle">🏪 영업 시작 / 마감</h2>
       <div class="card">
         <div class="row" style="margin-bottom:10px">
           <select id="cl_store" style="flex:1"><option value="">매장 선택</option></select>
@@ -72,6 +109,11 @@ const ClosingModule = (() => {
         </div>
 
         <div class="card">
+          <div style="font-weight:700;margin-bottom:8px">분류별 매출 요약</div>
+          <div id="cl_categoryBox"></div>
+        </div>
+
+        <div class="card">
           <div style="font-weight:700;margin-bottom:8px">현금 시재 확인</div>
           <table>
             <tr><th>권종</th><th style="text-align:right">장수</th><th style="text-align:right">금액</th></tr>
@@ -94,7 +136,7 @@ const ClosingModule = (() => {
           </div>
         </div>
 
-        <input id="cl_note" type="text" placeholder="메모 (선택)" style="width:100%;margin-bottom:8px" />
+        <input id="cl_note" type="text" placeholder="특이사항 (일일보고에 포함됩니다)" style="width:100%;margin-bottom:8px" />
         <button id="cl_confirmBtn" style="width:100%">마감 확정</button>
         <div id="cl_reportBox" style="margin-top:12px"></div>
       </div>
@@ -146,12 +188,15 @@ const ClosingModule = (() => {
     const statusEl = document.getElementById("cl_status");
     businessStarted = false;
     summary = null;
+    categorySummary = {};
+    custStats = { total: 0, new: 0, revisit: 0 };
     openingCashBuffer = "";
     document.getElementById("cl_openingDisplay").textContent = "0원";
     document.getElementById("cl_startSection").style.display = "block";
     document.getElementById("cl_startedInfo").style.display = "none";
     document.getElementById("cl_mainSections").style.display = "none";
     document.getElementById("cl_summaryBox").innerHTML = "";
+    document.getElementById("cl_categoryBox").innerHTML = "";
     document.getElementById("cl_reportBox").innerHTML = "";
     if (!storeId || !closingDate) return;
     statusEl.textContent = "영업 상태 확인 중...";
@@ -262,9 +307,97 @@ const ClosingModule = (() => {
       const data = await sbRpc("get_daily_closing_summary", { p_store_id: storeId, p_date: closingDate });
       summary = Array.isArray(data) ? data[0] : data;
       renderSummary();
+      await loadCategorySummary();
+      await loadCustomerStats();
+      renderCategorySummary();
       recalcCash();
       statusEl.textContent = "집계 완료";
     } catch (err) { statusEl.textContent = "오류: " + err.message; }
+  }
+
+  function nextDateStr(dateStr) {
+    return new Date(new Date(dateStr + "T00:00:00").getTime() + 86400000).toISOString().slice(0, 10);
+  }
+
+  async function loadCategorySummary() {
+    try {
+      const items = await sbGet(
+        "order_items?select=qty,unit_price,subtotal,orders!inner(order_datetime,store_id),products(category,line)" +
+        "&orders.store_id=eq." + storeId +
+        "&orders.order_datetime=gte." + closingDate + "T00:00:00" +
+        "&orders.order_datetime=lt." + nextDateStr(closingDate) + "T00:00:00"
+      );
+      const map = {};
+      items.forEach(it => {
+        const bucket = classify(it.products || {});
+        const amt = it.subtotal != null ? it.subtotal : (it.unit_price || 0) * (it.qty || 0);
+        map[bucket] = (map[bucket] || 0) + amt;
+      });
+      categorySummary = map;
+    } catch (err) { categorySummary = {}; }
+  }
+
+  async function loadCustomerStats() {
+    try {
+      const orders = await sbGet(
+        "orders?select=customer_id&store_id=eq." + storeId +
+        "&order_datetime=gte." + closingDate + "T00:00:00" +
+        "&order_datetime=lt." + nextDateStr(closingDate) + "T00:00:00" +
+        "&customer_id=not.is.null"
+      );
+      const ids = [...new Set(orders.map(o => o.customer_id))];
+      let newCount = 0;
+      if (ids.length) {
+        const custs = await sbGet("customers?select=customer_id,first_visit_date&customer_id=in.(" + ids.join(",") + ")");
+        newCount = custs.filter(c => c.first_visit_date === closingDate).length;
+      }
+      custStats = { total: ids.length, new: newCount, revisit: ids.length - newCount };
+    } catch (err) { custStats = { total: 0, new: 0, revisit: 0 }; }
+  }
+
+  function renderCategorySummary() {
+    const box = document.getElementById("cl_categoryBox");
+    const row = (k) => `<div class="row" style="justify-content:space-between;padding:3px 0"><span class="muted">${k}</span><span>${fmtWon(categorySummary[k] || 0)}</span></div>`;
+    const disposableTotal = DISPOSABLE_KEYS.reduce((s, k) => s + (categorySummary[k] || 0), 0);
+    const liquidTotal = LIQUID_KEYS.reduce((s, k) => s + (categorySummary[k] || 0), 0);
+    box.innerHTML = `
+      ${DISPOSABLE_KEYS.map(row).join("")}
+      <div class="row" style="justify-content:space-between;padding:4px 0;border-top:1px solid var(--line);font-weight:700"><span>일회용 소계</span><span>${fmtWon(disposableTotal)}</span></div>
+      <div style="height:8px"></div>
+      ${LIQUID_KEYS.map(row).join("")}
+      <div class="row" style="justify-content:space-between;padding:4px 0;border-top:1px solid var(--line);font-weight:700"><span>액상 소계</span><span>${fmtWon(liquidTotal)}</span></div>
+      <div style="height:8px"></div>
+      ${OTHER_KEYS.map(row).join("")}
+    `;
+  }
+
+  function buildDailyReportText(row, storeLabel) {
+    const disposableTotal = DISPOSABLE_KEYS.reduce((s, k) => s + (categorySummary[k] || 0), 0);
+    const liquidTotal = LIQUID_KEYS.reduce((s, k) => s + (categorySummary[k] || 0), 0);
+    const lines = [];
+    lines.push(`[${storeLabel} 일일보고] ${closingDate}`);
+    lines.push("");
+    lines.push("💰 매출 현황");
+    lines.push(`매출총액: ${fmtWon(row.total_sales)}`);
+    let paymentLine = `현금: ${fmtWon(row.cash_sales)} / 카드: ${fmtWon(row.card_sales)} / 이체: ${fmtWon(row.transfer_sales)} / 알리페이: ${fmtWon(row.alipay_sales)}`;
+    if (row.other_sales) paymentLine += ` / 기타: ${fmtWon(row.other_sales)}`;
+    lines.push(paymentLine);
+    lines.push("");
+    lines.push("📦 분류별 매출");
+    DISPOSABLE_KEYS.forEach(k => { if (categorySummary[k]) lines.push(`${k}: ${fmtWon(categorySummary[k])}`); });
+    lines.push(`━━━━ 일회용 소계: ${fmtWon(disposableTotal)}`);
+    lines.push("");
+    LIQUID_KEYS.forEach(k => { if (categorySummary[k]) lines.push(`${k}: ${fmtWon(categorySummary[k])}`); });
+    lines.push(`━━━━ 액상 소계: ${fmtWon(liquidTotal)}`);
+    lines.push("");
+    OTHER_KEYS.forEach(k => { if (categorySummary[k]) lines.push(`${k}: ${fmtWon(categorySummary[k])}`); });
+    lines.push("");
+    lines.push("👥 고객 현황");
+    lines.push(`총 방문: ${custStats.total}명 / 신규: ${custStats.new}명 / 재방문: ${custStats.revisit}명`);
+    lines.push("");
+    lines.push("📝 특이사항:");
+    lines.push(document.getElementById("cl_note").value.trim() || "(없음)");
+    return lines.join("\n");
   }
 
   function renderSummary() {
@@ -345,12 +478,17 @@ const ClosingModule = (() => {
         alipay_sales: summary.alipay_sales || 0,
         other_sales: summary.other_sales || 0,
         order_count: summary.order_count || 0,
-        refund_count: summary.refund_count || 0, refund_amount: summary.refund_amount || 0,
+        refund_count: summary.refund_count || 0, total_refund: summary.refund_amount || 0,
         net_sales: summary.net_sales || 0, customer_count: summary.customer_count || 0,
         avg_order_value: summary.avg_order_value || 0,
         cash_movement_total: movementsNet(),
         expected_cash: expectedCash, actual_cash: actualCash, variance,
-        note: document.getElementById("cl_note").value || null
+        note: document.getElementById("cl_note").value || null,
+        category_summary: categorySummary,
+        new_customer_count: custStats.new,
+        revisit_customer_count: custStats.revisit,
+        total_customer_count: custStats.total,
+        special_notes: document.getElementById("cl_note").value || null
       };
       const result = await sbPost("daily_closings", payload, { "Prefer": "resolution=merge-duplicates,return=representation" });
       renderReport(result && result[0] ? result[0] : payload, variance);
@@ -361,6 +499,8 @@ const ClosingModule = (() => {
   function renderReport(row, variance) {
     const box = document.getElementById("cl_reportBox");
     const color = variance === 0 ? "" : (variance > 0 ? "var(--good)" : "var(--bad)");
+    const storeLabel = document.querySelector("#cl_store option:checked")?.textContent || "매장";
+    const reportText = buildDailyReportText(row, storeLabel);
     box.innerHTML = `
       <div class="card">
         <div style="font-weight:700;margin-bottom:8px">마감 완료 리포트 (${closingDate})</div>
@@ -368,8 +508,18 @@ const ClosingModule = (() => {
         <div class="row" style="justify-content:space-between"><span class="muted">순매출액</span><span>${fmtWon(row.net_sales)}</span></div>
         <div class="row" style="justify-content:space-between"><span class="muted">실제현금 / 예상현금</span><span>${fmtWon(row.actual_cash)} / ${fmtWon(row.expected_cash)}</span></div>
         <div class="row" style="justify-content:space-between"><span class="muted">차액</span><span style="font-weight:700;color:${color}">${variance >= 0 ? "+" : ""}${fmtWon(variance)}</span></div>
+        <button type="button" id="cl_copyReportBtn" class="secondary" style="width:100%;margin-top:10px">일일보고 복사</button>
       </div>
     `;
+    document.getElementById("cl_copyReportBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("cl_status");
+      try {
+        await navigator.clipboard.writeText(reportText);
+        statusEl.textContent = "일일보고가 클립보드에 복사되었습니다.";
+      } catch (err) {
+        statusEl.textContent = "복사 실패: " + err.message;
+      }
+    });
   }
 
   return { render };
