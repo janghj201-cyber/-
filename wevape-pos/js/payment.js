@@ -30,8 +30,7 @@ const PaymentModule = (() => {
       orderName,
       customerName,
       successUrl: baseUrl + "?payment=success",
-      failUrl: baseUrl + "?payment=fail",
-      card: { useEscrow: false, flatRate: false, useCardPoint: false }
+      failUrl: baseUrl + "?payment=fail"
     });
   }
 
