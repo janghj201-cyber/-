@@ -95,6 +95,41 @@ const OrdersModule = (() => {
     bind();
     selectCustomerType(activeCustomerKey);
     loadStores();
+    handleTossRedirect();
+  }
+
+  async function handleTossRedirect() {
+    const result = PaymentModule.consumePaymentResultFromUrl();
+    if (!result) return;
+    const statusEl = document.getElementById("ord_status");
+
+    if (result.status === "fail") {
+      PaymentModule.takePendingOrder(result.orderId);
+      statusEl.textContent = "카드 결제 실패: " + (result.message || "사용자가 결제를 취소했거나 오류가 발생했습니다.");
+      return;
+    }
+
+    const pending = PaymentModule.takePendingOrder(result.orderId);
+    if (!pending) {
+      statusEl.textContent = "결제 정보를 찾을 수 없습니다. 다시 시도해주세요.";
+      return;
+    }
+
+    statusEl.textContent = "결제 승인 처리 중...";
+    try {
+      await PaymentModule.confirmPayment(result.paymentKey, result.orderId, result.amount);
+      await sbRpc("register_order", {
+        p_tenant_id: pending.tenantId, p_store_id: pending.storeId, p_customer_id: pending.customerId,
+        p_staff_id: null, p_payment_method: "카드", p_items: pending.items
+      });
+      statusEl.textContent = "카드 결제 완료" + (pending.customerId ? " (고객 연결됨)" : " (비회원)");
+      cart = [];
+      renderCart();
+      await loadStockAndSales(pending.storeId);
+      if (activeCategoryKey !== "search") renderGrid();
+    } catch (err) {
+      statusEl.textContent = "결제 승인/주문 등록 오류: " + err.message;
+    }
   }
 
   function bind() {
@@ -326,6 +361,12 @@ const OrdersModule = (() => {
     const storeId = document.getElementById("ord_store").value;
     if (!storeId) { statusEl.textContent = "매장을 선택해주세요."; return; }
     if (!cart.length) { statusEl.textContent = "장바구니가 비어있습니다."; return; }
+
+    if (paymentMethod === "카드") {
+      await submitCardOrder(storeId);
+      return;
+    }
+
     statusEl.textContent = "등록 중...";
     try {
       const customerId = await ensureCustomer(storeId);
@@ -346,6 +387,20 @@ const OrdersModule = (() => {
       await loadStockAndSales(storeId);
       if (activeCategoryKey !== "search") renderGrid();
     } catch (err) { statusEl.textContent = "오류: " + err.message; }
+  }
+
+  async function submitCardOrder(storeId) {
+    const statusEl = document.getElementById("ord_status");
+    statusEl.textContent = "결제창 호출 중...";
+    try {
+      const customerId = await ensureCustomer(storeId);
+      const items = cart.map(c => ({ product_id: c.id, qty: c.qty, unit_price: c.price }));
+      const amount = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      const orderName = cart.length === 1 ? cart[0].name : `${cart[0].name} 외 ${cart.length - 1}건`;
+      await PaymentModule.requestPayment(amount, orderName, undefined, {
+        tenantId, storeId, customerId, items
+      });
+    } catch (err) { statusEl.textContent = "결제 요청 오류: " + err.message; }
   }
 
   return { render };
