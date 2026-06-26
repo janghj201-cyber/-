@@ -166,6 +166,7 @@ const ClosingModule = (() => {
       const data = await sbGet("stores?select=store_id,name,tenant_id&order=name");
       tenantId = data[0]?.tenant_id;
       document.getElementById("cl_store").innerHTML = `<option value="">매장 선택</option>` + data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      applyDefaultStore(document.getElementById("cl_store"));
     } catch (err) {}
   }
 

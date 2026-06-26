@@ -56,6 +56,7 @@ const PurchasesModule = (() => {
       const data = await sbGet("stores?select=store_id,name,tenant_id&order=name");
       tenantId = data[0]?.tenant_id;
       document.getElementById("pu_store").innerHTML = data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      applyDefaultStore(document.getElementById("pu_store"));
       statusEl.textContent = data.length + "개 매장 로드됨";
       loadSuppliers();
     } catch (err) { statusEl.textContent = "매장 로드 실패"; }
@@ -108,6 +109,13 @@ const PurchasesModule = (() => {
     if (it.qty <= 0) cart = cart.filter(c => c.id !== id);
     renderCart();
   }
+  function changeQtyDirect(id, val) {
+    const it = cart.find(c => c.id === id);
+    if (!it) return;
+    it.qty = val;
+    if (it.qty <= 0) cart = cart.filter(c => c.id !== id);
+    renderCart();
+  }
   function changeCost(id, val) {
     const it = cart.find(c => c.id === id);
     if (it) it.cost = isNaN(val) ? 0 : val;
@@ -120,13 +128,26 @@ const PurchasesModule = (() => {
       <div class="cartRow">
         <div style="flex:1">${c.name}</div>
         <button data-id="${c.id}" data-d="-1" class="qBtn secondary" style="width:28px;padding:2px">-</button>
-        <span style="min-width:20px;text-align:center">${c.qty}</span>
+        <input type="number" class="qtyInput" data-id="${c.id}" value="${c.qty}" min="0" max="9999" style="width:60px;text-align:center;padding:3px 4px" />
         <button data-id="${c.id}" data-d="1" class="qBtn secondary" style="width:28px;padding:2px">+</button>
         <input type="number" class="cInput" data-id="${c.id}" value="${c.cost}" placeholder="매입단가" style="width:100px" />
         <span style="min-width:70px;text-align:right">${fmtWon(c.cost * c.qty)}</span>
       </div>
     `).join("");
     list.querySelectorAll(".qBtn").forEach(b => b.addEventListener("click", () => changeQty(b.dataset.id, parseInt(b.dataset.d))));
+    list.querySelectorAll(".qtyInput").forEach(i => {
+      i.addEventListener("click", () => i.select());
+      i.addEventListener("keydown", (e) => {
+        if (!["0","1","2","3","4","5","6","7","8","9","Backspace","Delete","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Tab","Enter"].includes(e.key)) e.preventDefault();
+      });
+      i.addEventListener("change", () => {
+        let v = parseInt(i.value, 10);
+        if (isNaN(v) || v < 0) v = 0;
+        if (v > 9999) v = 9999;
+        i.value = v;
+        changeQtyDirect(i.dataset.id, v);
+      });
+    });
     list.querySelectorAll(".cInput").forEach(i => i.addEventListener("change", () => changeCost(i.dataset.id, parseFloat(i.value))));
     document.getElementById("pu_total").textContent = fmtWon(cart.reduce((s, c) => s + c.cost * c.qty, 0));
   }

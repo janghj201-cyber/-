@@ -72,6 +72,7 @@ const SalesSummaryModule = (() => {
       stores = await sbGet("stores?select=store_id,name&order=name");
       document.getElementById("ss_store").innerHTML =
         `<option value="">전체 매장</option>` + stores.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      applyDefaultStore(document.getElementById("ss_store"));
     } catch (err) {}
     await loadSummary();
   }

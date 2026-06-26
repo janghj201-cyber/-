@@ -29,11 +29,27 @@ const CustomersModule = (() => {
         </div>
         <div class="muted" id="cu_countStatus" style="margin-bottom:8px"></div>
         <div class="card" style="overflow-x:auto">
-          <table>
-            <tr>
-              <th>이름</th><th>전화번호</th><th>연령대</th><th>성별</th><th>국적</th>
-              <th style="text-align:right">방문횟수</th><th style="text-align:right">총구매금액</th><th>최근방문</th>
-            </tr>
+          <table style="table-layout:fixed;width:100%">
+            <colgroup>
+              <col style="width:80px"><col style="width:130px">
+              <col class="cu-col-age" style="width:70px">
+              <col class="cu-col-gender" style="width:60px">
+              <col class="cu-col-nat" style="width:80px">
+              <col style="width:80px"><col style="width:110px">
+              <col class="cu-col-lastvisit" style="width:90px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">이름</th>
+                <th style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">전화번호</th>
+                <th class="cu-col-age" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">연령대</th>
+                <th class="cu-col-gender" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">성별</th>
+                <th class="cu-col-nat" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">국적</th>
+                <th style="text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">방문횟수</th>
+                <th style="text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">총구매금액</th>
+                <th class="cu-col-lastvisit" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">최근방문</th>
+              </tr>
+            </thead>
             <tbody id="cu_tableBody"></tbody>
           </table>
         </div>
@@ -128,14 +144,14 @@ const CustomersModule = (() => {
       const age = ageBucket(c.birth_date);
       return `
         <tr class="resultRow" data-id="${c.customer_id}" style="cursor:pointer">
-          <td>${c.name || "이름없음"}</td>
-          <td>${c.phone || "-"}</td>
-          <td>${age !== null ? age + "대" : "-"}</td>
-          <td>${c.gender || "-"}</td>
-          <td>${c.nationality || "-"}</td>
+          <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name || "이름없음"}</td>
+          <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.phone || "-"}</td>
+          <td class="cu-col-age">${age !== null ? age + "대" : "-"}</td>
+          <td class="cu-col-gender">${c.gender || "-"}</td>
+          <td class="cu-col-nat" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nationality || "-"}</td>
           <td style="text-align:right">${c.total_visits || 0}회</td>
-          <td style="text-align:right">${fmtWon(c.total_amount)}</td>
-          <td>${fmtDateShort(c.last_visit_at)}</td>
+          <td style="text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fmtWon(c.total_amount)}</td>
+          <td class="cu-col-lastvisit">${fmtDateShort(c.last_visit_at)}</td>
         </tr>
       `;
     }).join("") || `<tr><td colspan="8" class="muted">조회된 고객이 없습니다.</td></tr>`;

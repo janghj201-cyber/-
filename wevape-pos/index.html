@@ -45,6 +45,11 @@
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
 
+  /* 고객관리 테이블 모바일 컬럼 숨김 */
+  @media (max-width: 768px) {
+    .cu-col-age, .cu-col-gender, .cu-col-nat, .cu-col-lastvisit { display: none; }
+  }
+
   /* 로그인 */
   #loginView {
     max-width: 380px; margin: 0; padding: 48px 40px;
@@ -84,6 +89,8 @@
   }
   nav#navBar button:hover { background: #211e15; color: #fdfaf0; }
   nav#navBar button.active { background: var(--amber); color: #1a1300; font-weight: 700; }
+  nav#navBar button .navIcon { margin-right: 2px; }
+  nav#navBar button .navText { }
 
   /* 사이드바 아코디언 그룹 */
   .navGroup { display: flex; flex-direction: column; }
@@ -95,10 +102,26 @@
   .navGroupBody { display: flex; flex-direction: column; gap: 3px; padding-left: 4px; margin: 3px 0 6px; }
   .navGroupBody.collapsed { display: none; }
 
-  #logoutBtn {
-    background: transparent; color: #8a8674; border: 1.5px solid #34311f; font-size: 12.5px; font-weight: 500; padding: 8px 10px;
+  /* 사용자 메뉴 */
+  #userMenuWrapper { position: relative; margin-top: 4px; }
+  #userMenuBtn {
+    width: 100%; text-align: left; background: transparent; color: #8a8674;
+    border: 1.5px solid #34311f; font-size: 12.5px; font-weight: 500; padding: 8px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    border-radius: 7px;
   }
-  #logoutBtn:hover { color: #fdfaf0; border-color: #4a4840; }
+  #userMenuBtn:hover { color: #fdfaf0; border-color: #4a4840; }
+  #userMenuDropdown {
+    display: none; position: absolute; bottom: calc(100% + 4px); left: 0; right: 0;
+    background: #1f1d16; border: 1px solid #34311f; border-radius: 8px; padding: 6px; z-index: 100;
+  }
+  #userMenuDropdown .um-email { font-size: 11px; padding: 4px 6px; color: #8a8674; display: block; }
+  #userMenuDropdown hr { border: none; border-top: 1px solid #34311f; margin: 4px 0; }
+  #userMenuDropdown button {
+    width: 100%; text-align: left; background: transparent; color: #c9c6b6; border: none;
+    border-radius: 6px; padding: 8px 10px; font-size: 13px; cursor: pointer;
+  }
+  #userMenuDropdown button:hover { background: #2a2719; color: #fdfaf0; }
 
   main { flex: 1; max-width: 760px; margin: 0; padding: 32px 36px; }
   .panel { display: none; }
@@ -135,15 +158,77 @@
   .payGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .payGrid button { padding: 18px; font-size: 15px; }
 
-  @media (max-width: 760px) {
-    .posLayout { flex-direction: column; }
-    .posRight { position: relative; top: 0; width: 100%; }
-    .prodGrid { grid-template-columns: repeat(2, 1fr); }
+  /* 태블릿 (768px–1023px): 아이콘만 표시 */
+  @media (max-width: 1023px) and (min-width: 768px) {
+    aside.sidebar { width: 64px; padding: 16px 6px; overflow: hidden; }
+    .sidebar .brand { padding: 0 4px 20px; justify-content: center; }
+    .sidebar .brand .name { display: none; }
+    .sidebar .brand .mark { font-size: 22px; }
+    nav#navBar button { padding: 10px 4px; justify-content: center; display: flex; }
+    nav#navBar button .navText { display: none; }
+    nav#navBar button .navIcon { font-size: 18px; }
+    .navGroupBody { display: none !important; }
+    #userMenuWrapper { display: none; }
+  }
+
+  /* 모바일 (≤767px): 하단 퀵메뉴 */
+  @media (max-width: 767px) {
     .shell { flex-direction: column; }
-    aside.sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: 12px 14px; }
-    .sidebar .brand { padding: 0 12px 0 0; }
-    nav#navBar { flex-direction: row; overflow-x: auto; flex: 1; }
-    main { padding: 18px; }
+    aside.sidebar { display: none; }
+    main { padding: 16px 14px; padding-bottom: 76px; max-width: 100%; }
+    #bottomNav { display: flex !important; }
+    .posLayout { flex-direction: column; }
+    .posRight { position: relative; top: 0; width: 100%; min-width: 0; }
+    .prodGrid { grid-template-columns: repeat(2, 1fr); }
+    .prodCard { min-height: 80px; }
+    input, select, button { min-height: 48px; }
+    .catTabs button, .custTabs button { min-height: 48px; }
+    .payGrid button { min-height: 64px; }
+    body { font-size: 14px; }
+  }
+
+  /* 하단 퀵메뉴 바 */
+  #bottomNav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+    background: var(--ink); border-top: 1px solid #34311f;
+    z-index: 100; flex-direction: row; align-items: stretch;
+  }
+  #bottomNav .bn-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; background: transparent; color: #c9c6b6; border: none; border-radius: 0;
+    font-size: 10px; padding: 4px 2px; min-height: 48px; cursor: pointer; letter-spacing: 0;
+  }
+  #bottomNav .bn-item .bn-icon { font-size: 20px; line-height: 1.2; }
+  #bottomNav .bn-item.active { color: var(--amber); }
+  #bottomNav .bn-item:hover { color: #fdfaf0; opacity: 1; }
+
+  /* 더보기 슬라이드업 패널 */
+  #morePanel {
+    display: none; position: fixed; bottom: 64px; left: 0; right: 0;
+    background: var(--panel); border-top: 2px solid var(--line);
+    border-radius: 16px 16px 0 0; padding: 20px 16px;
+    z-index: 99; max-height: 60vh; overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.12);
+  }
+  #morePanel .mp-title {
+    font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 14px;
+  }
+  #morePanel .mp-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .bn-more-item {
+    background: #fff; color: var(--ink); border: 1.5px solid var(--line);
+    border-radius: 10px; padding: 14px 4px; font-size: 13px; min-height: 52px;
+    width: 100%; text-align: center; font-weight: 600; cursor: pointer;
+  }
+  .bn-more-item:hover { background: #faf7ec; }
+
+  /* 기본 매장 모달 */
+  #defaultStoreModal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 200; align-items: center; justify-content: center;
   }
 </style>
 </head>
@@ -163,9 +248,9 @@
     <aside class="sidebar">
       <div class="brand"><span class="mark">●</span><span class="name">위베이프 POS</span></div>
       <nav id="navBar">
-        <button data-tab="closing">🏪 영업 시작 / 마감</button>
+        <button data-tab="closing"><span class="navIcon">🏪</span><span class="navText"> 영업 시작 / 마감</span></button>
         <div class="navGroup" data-group="sales">
-          <button type="button" class="navGroupHeader" data-group-toggle="sales">판매</button>
+          <button type="button" class="navGroupHeader" data-group-toggle="sales"><span class="navIcon">🛒</span><span class="navText">판매</span></button>
           <div class="navGroupBody" id="navGroupBody-sales">
             <button data-tab="orders" class="active">주문입력</button>
             <button data-tab="sales">판매내역</button>
@@ -174,7 +259,7 @@
           </div>
         </div>
         <div class="navGroup" data-group="inventory">
-          <button type="button" class="navGroupHeader" data-group-toggle="inventory">재고관리</button>
+          <button type="button" class="navGroupHeader" data-group-toggle="inventory"><span class="navIcon">📦</span><span class="navText">재고관리</span></button>
           <div class="navGroupBody collapsed" id="navGroupBody-inventory">
             <button data-tab="purchases">입고</button>
             <button data-tab="transfer">이동/조정</button>
@@ -185,14 +270,14 @@
           </div>
         </div>
         <div class="navGroup" data-group="customer">
-          <button type="button" class="navGroupHeader" data-group-toggle="customer">고객</button>
+          <button type="button" class="navGroupHeader" data-group-toggle="customer"><span class="navIcon">👥</span><span class="navText">고객</span></button>
           <div class="navGroupBody collapsed" id="navGroupBody-customer">
             <button data-tab="customers">고객 관리</button>
             <button data-tab="revisit">재방문분석</button>
           </div>
         </div>
         <div class="navGroup" data-group="report">
-          <button type="button" class="navGroupHeader" data-group-toggle="report">리포트</button>
+          <button type="button" class="navGroupHeader" data-group-toggle="report"><span class="navIcon">📊</span><span class="navText">리포트</span></button>
           <div class="navGroupBody collapsed" id="navGroupBody-report">
             <button data-tab="dashboard">대시보드</button>
             <button data-tab="hourly-stats">시간대별 분석</button>
@@ -202,13 +287,24 @@
           </div>
         </div>
         <div class="navGroup" data-group="settings">
-          <button type="button" class="navGroupHeader" data-group-toggle="settings">설정</button>
+          <button type="button" class="navGroupHeader" data-group-toggle="settings"><span class="navIcon">⚙️</span><span class="navText">설정</span></button>
           <div class="navGroupBody collapsed" id="navGroupBody-settings">
             <button data-tab="products">상품관리</button>
           </div>
         </div>
       </nav>
-      <button class="secondary" id="logoutBtn">로그아웃</button>
+      <div id="userMenuWrapper">
+        <button id="userMenuBtn">
+          <span>👤 <span id="userMenuLabel">...</span></span>
+          <span style="font-size:10px;opacity:.6">▲</span>
+        </button>
+        <div id="userMenuDropdown">
+          <span class="um-email" id="userMenuEmail"></span>
+          <hr />
+          <button id="changeStoreBtn">🏪 내 매장 변경</button>
+          <button id="logoutBtn">로그아웃</button>
+        </div>
+      </div>
     </aside>
     <main>
       <div id="panel-orders" class="panel active"></div>
@@ -234,11 +330,58 @@
   </div>
 </div>
 
+<!-- 하단 퀵메뉴 -->
+<nav id="bottomNav">
+  <button class="bn-item" data-tab="closing"><span class="bn-icon">🏪</span>영업마감</button>
+  <button class="bn-item active" data-tab="orders"><span class="bn-icon">🛒</span>판매</button>
+  <button class="bn-item" data-tab="stocktaking"><span class="bn-icon">📦</span>재고관리</button>
+  <button class="bn-item" data-tab="customers"><span class="bn-icon">👥</span>고객관리</button>
+  <button class="bn-item" id="moreBtn"><span class="bn-icon">⋯</span>더보기</button>
+</nav>
+
+<!-- 더보기 슬라이드업 패널 -->
+<div id="morePanel">
+  <div class="mp-title">메뉴</div>
+  <div class="mp-grid">
+    <button class="bn-more-item" data-tab="refund">환불</button>
+    <button class="bn-more-item" data-tab="sales">판매내역</button>
+    <button class="bn-more-item" data-tab="sales-summary">분류별집계</button>
+    <button class="bn-more-item" data-tab="purchases">입고</button>
+    <button class="bn-more-item" data-tab="inventory">재고분석</button>
+    <button class="bn-more-item" data-tab="reorder-report">발주알림</button>
+    <button class="bn-more-item" data-tab="dashboard">리포트</button>
+    <button class="bn-more-item" data-tab="products">상품관리</button>
+    <button class="bn-more-item" data-tab="export">엑셀내보내기</button>
+  </div>
+</div>
+
+<!-- 기본 매장 설정 모달 -->
+<div id="defaultStoreModal" class="row">
+  <div class="card" style="width:360px;max-width:92vw;background:#fff">
+    <div style="font-weight:700;margin-bottom:12px">🏪 기본 매장 설정</div>
+    <div class="muted" style="margin-bottom:10px;font-size:12px">로그인 후 자동으로 선택될 매장입니다.</div>
+    <select id="defaultStoreSelect" style="width:100%;margin-bottom:14px"><option value="">불러오는 중...</option></select>
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <button id="defaultStoreSaveBtn">저장</button>
+      <button id="defaultStoreCancelBtn" class="secondary">취소</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  const groupDefaultTabs = {
+    sales: "orders", inventory: "purchases", customer: "customers",
+    report: "dashboard", settings: "products"
+  };
   document.querySelectorAll(".navGroupHeader").forEach(header => {
     header.addEventListener("click", () => {
-      const body = document.getElementById("navGroupBody-" + header.dataset.groupToggle);
-      if (body) body.classList.toggle("collapsed");
+      if (window.innerWidth < 1024) {
+        const tab = groupDefaultTabs[header.dataset.groupToggle];
+        if (tab && typeof showTab !== "undefined") showTab(tab);
+      } else {
+        const body = document.getElementById("navGroupBody-" + header.dataset.groupToggle);
+        if (body) body.classList.toggle("collapsed");
+      }
     });
   });
 </script>
