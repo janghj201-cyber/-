@@ -1,5 +1,4 @@
 const ProductTrendModule = (() => {
-  // sales-summary.js / closing.js 와 동일한 분류 기준
   const DISPOSABLE_LINE_MAP = {
     "그래피티C": "그래피티C",
     "그래피티2": "그래피티2",
@@ -25,6 +24,8 @@ const ProductTrendModule = (() => {
   };
   const CATEGORY_ORDER = ["그래피티C", "그래피티2", "그래피티1", "3% 한정판", "RELX", "기타 일회용", "기성액상", "모드액상", "파츠", "디바이스", "기타소모품"];
 
+  const renderedSubTabs = new Set();
+
   function classify(p) {
     if (!p) return "기타소모품";
     if (p.category === "일회용") return DISPOSABLE_LINE_MAP[p.line] || "기타 일회용";
@@ -34,31 +35,65 @@ const ProductTrendModule = (() => {
   function render() {
     const el = document.getElementById("panel-product-trend");
     el.innerHTML = `
-      <h2 class="pageTitle">상품별 판매 추이</h2>
-      <div class="card" style="margin-bottom:12px">
-        <div class="row" style="flex-wrap:wrap">
-          <select id="pt_store" style="flex:1"><option value="">전체 매장</option></select>
-          <select id="pt_period">
-            <option value="today">오늘</option>
-            <option value="week">이번주</option>
-            <option value="month" selected>이번달</option>
-            <option value="custom">직접입력</option>
-          </select>
-          <input id="pt_from" type="date" style="display:none" />
-          <input id="pt_to" type="date" style="display:none" />
-          <select id="pt_category"><option value="">전체 카테고리</option>${CATEGORY_ORDER.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
-          <button id="pt_loadBtn">조회</button>
-        </div>
+      <div class="row" style="margin-bottom:12px">
+        <button id="pt_tabTrend" style="flex:1">📈 상품별 추이</button>
+        <button id="pt_tabAnalysis" class="secondary" style="flex:1">📦 재고분석</button>
+        <button id="pt_tabHistory" class="secondary" style="flex:1">🔄 재고이력</button>
       </div>
-      <div class="card" id="pt_topBox" style="margin-bottom:12px"></div>
-      <div class="card" id="pt_deadBox"></div>
-      <div class="muted" id="pt_status" style="margin-top:10px"></div>
+
+      <div id="pt_trendSection">
+        <div class="card" style="margin-bottom:12px">
+          <div class="row" style="flex-wrap:wrap">
+            <select id="pt_store" style="flex:1"><option value="">전체 매장</option></select>
+            <select id="pt_period">
+              <option value="today">오늘</option>
+              <option value="week">이번주</option>
+              <option value="month" selected>이번달</option>
+              <option value="custom">직접입력</option>
+            </select>
+            <input id="pt_from" type="date" style="display:none" />
+            <input id="pt_to" type="date" style="display:none" />
+            <select id="pt_category"><option value="">전체 카테고리</option>${CATEGORY_ORDER.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+            <button id="pt_loadBtn">조회</button>
+          </div>
+        </div>
+        <div class="card" id="pt_topBox" style="margin-bottom:12px"></div>
+        <div class="card" id="pt_deadBox"></div>
+        <div class="muted" id="pt_status" style="margin-top:10px"></div>
+      </div>
+
+      <div id="pt_inventorySection" style="display:none"></div>
+      <div id="pt_historySection" style="display:none"></div>
     `;
-    bind();
+    bindTabs();
+    bindTrend();
     loadStores();
   }
 
-  function bind() {
+  function bindTabs() {
+    document.getElementById("pt_tabTrend").addEventListener("click", () => switchSubTab("trend"));
+    document.getElementById("pt_tabAnalysis").addEventListener("click", () => switchSubTab("analysis"));
+    document.getElementById("pt_tabHistory").addEventListener("click", () => switchSubTab("history"));
+  }
+
+  function switchSubTab(which) {
+    document.getElementById("pt_trendSection").style.display = which === "trend" ? "block" : "none";
+    document.getElementById("pt_inventorySection").style.display = which === "analysis" ? "block" : "none";
+    document.getElementById("pt_historySection").style.display = which === "history" ? "block" : "none";
+    document.getElementById("pt_tabTrend").className = which === "trend" ? "" : "secondary";
+    document.getElementById("pt_tabAnalysis").className = which === "analysis" ? "" : "secondary";
+    document.getElementById("pt_tabHistory").className = which === "history" ? "" : "secondary";
+    if (which === "analysis" && !renderedSubTabs.has("analysis")) {
+      InventoryModule.render("pt_inventorySection");
+      renderedSubTabs.add("analysis");
+    }
+    if (which === "history" && !renderedSubTabs.has("history")) {
+      StockHistoryModule.render("pt_historySection");
+      renderedSubTabs.add("history");
+    }
+  }
+
+  function bindTrend() {
     document.getElementById("pt_loadBtn").addEventListener("click", loadTrend);
     document.getElementById("pt_period").addEventListener("change", (e) => {
       const isCustom = e.target.value === "custom";
@@ -82,7 +117,7 @@ const ProductTrendModule = (() => {
     const today = new Date();
     if (period === "today") { const s = fmtDate(today); return { from: s, to: s }; }
     if (period === "week") {
-      const dow = (today.getDay() + 6) % 7; // 월요일=0
+      const dow = (today.getDay() + 6) % 7;
       const monday = new Date(today.getTime() - dow * 86400000);
       return { from: fmtDate(monday), to: fmtDate(today) };
     }

@@ -3,8 +3,8 @@ const InventoryModule = (() => {
   let lastStockData = [];
   let urgentOnly = false;
 
-  function render() {
-    const el = document.getElementById("panel-inventory");
+  function render(targetId) {
+    const el = document.getElementById(targetId || "panel-inventory");
     el.innerHTML = `
       <div class="row" style="margin-bottom:12px">
         <button id="inv_tabStock" style="flex:1">재고현황</button>

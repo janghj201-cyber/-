@@ -32,7 +32,8 @@ const modules = {
   inventory: InventoryModule,
   revisit: RevisitModule,
   products: ProductsAdminModule,
-  export: ExportModule
+  export: ExportModule,
+  "staff-accounts": StaffAccountsModule
 };
 const renderedTabs = new Set();
 

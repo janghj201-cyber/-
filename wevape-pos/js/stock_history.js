@@ -1,6 +1,6 @@
 const StockHistoryModule = (() => {
-  function render() {
-    const el = document.getElementById("panel-stockhistory");
+  function render(targetId) {
+    const el = document.getElementById(targetId || "panel-stockhistory");
     el.innerHTML = `
       <div class="card">
         <div class="row" style="margin-bottom:8px">
