@@ -33,6 +33,7 @@ const StockHistoryModule = (() => {
     try {
       const data = await sbGet("stores?select=store_id,name&order=name");
       document.getElementById("sh2_store").innerHTML = `<option value="">전체 매장</option>` + data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
+      applyDefaultStore(document.getElementById("sh2_store"));
     } catch (err) {}
   }
 

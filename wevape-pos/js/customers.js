@@ -143,7 +143,7 @@ const CustomersModule = (() => {
     body.innerHTML = currentList.map(c => {
       const age = ageBucket(c.birth_date);
       return `
-        <tr class="resultRow" data-id="${c.customer_id}" style="cursor:pointer">
+        <tr class="cu-row" data-id="${c.customer_id}">
           <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name || "이름없음"}</td>
           <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.phone || "-"}</td>
           <td class="cu-col-age">${age !== null ? age + "대" : "-"}</td>
@@ -155,7 +155,7 @@ const CustomersModule = (() => {
         </tr>
       `;
     }).join("") || `<tr><td colspan="8" class="muted">조회된 고객이 없습니다.</td></tr>`;
-    body.querySelectorAll("tr[data-id]").forEach(tr => tr.addEventListener("click", () => openDetail(tr.dataset.id)));
+    body.querySelectorAll(".cu-row").forEach(tr => tr.addEventListener("click", () => openDetail(tr.dataset.id)));
   }
 
   function renderDistro(storeId) {

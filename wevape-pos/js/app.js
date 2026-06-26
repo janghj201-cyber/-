@@ -10,8 +10,7 @@ function setDefaultStoreId(id) {
 function applyDefaultStore(selectEl) {
   const id = getDefaultStoreId();
   if (!id || !selectEl) return;
-  const opt = selectEl.querySelector(`option[value="${id}"]`);
-  if (opt) selectEl.value = id;
+  selectEl.value = id;
 }
 
 const modules = {

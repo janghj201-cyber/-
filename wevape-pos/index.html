@@ -45,6 +45,10 @@
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
 
+  /* 고객관리 테이블 행 스타일 (resultRow 클래스 flex 충돌 방지) */
+  tr.cu-row { cursor: pointer; }
+  tr.cu-row:hover td { background: #faf7ec; }
+
   /* 고객관리 테이블 모바일 컬럼 숨김 */
   @media (max-width: 768px) {
     .cu-col-age, .cu-col-gender, .cu-col-nat, .cu-col-lastvisit { display: none; }

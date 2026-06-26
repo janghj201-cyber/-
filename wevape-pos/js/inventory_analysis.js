@@ -65,6 +65,8 @@ const InventoryModule = (() => {
       const opts = `<option value="">매장 선택</option>` + data.map(s => `<option value="${s.store_id}">${s.name}</option>`).join("");
       document.getElementById("inv_store").innerHTML = opts;
       document.getElementById("inv_historyStore").innerHTML = opts;
+      applyDefaultStore(document.getElementById("inv_store"));
+      applyDefaultStore(document.getElementById("inv_historyStore"));
     } catch (err) {}
   }
 

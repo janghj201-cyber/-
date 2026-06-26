@@ -82,6 +82,8 @@ const TransferModule = (() => {
       document.getElementById("tr_from").innerHTML = `<option value="">출발 매장</option>` + opts;
       document.getElementById("tr_to").innerHTML = `<option value="">도착 매장</option>` + opts;
       document.getElementById("adj_store").innerHTML = `<option value="">매장 선택</option>` + opts;
+      applyDefaultStore(document.getElementById("tr_from"));
+      applyDefaultStore(document.getElementById("adj_store"));
     } catch (err) {}
   }
 
