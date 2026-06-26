@@ -9,13 +9,20 @@ const USER_STORE_KEY = "wevape_user_store_id";
 let refreshTimer = null;
 
 function storeSession(data, email) {
-  localStorage.setItem(TOKEN_KEY, data.access_token);
-  localStorage.setItem(REFRESH_KEY, data.refresh_token);
-  localStorage.setItem(EXPIRES_KEY, String(Date.now() + (data.expires_in || 3600) * 1000));
+  // 신형 Supabase(sb_publishable_* 키)는 { session: { access_token, ... }, user: {...} } 형태로 응답
+  // 구형 또는 표준 응답은 { access_token, ... } 형태
+  const s = data?.session ?? data;
+  localStorage.setItem(TOKEN_KEY,   s.access_token  || "");
+  localStorage.setItem(REFRESH_KEY, s.refresh_token || "");
+  localStorage.setItem(EXPIRES_KEY, String(Date.now() + ((s.expires_in || 3600) * 1000)));
   if (email) localStorage.setItem(EMAIL_KEY, email);
+  if (!s.access_token) console.error("[auth] access_token 없음 — 응답 구조:", JSON.stringify(data).slice(0, 200));
 }
 
 async function loadStaffAccount(email) {
+  const token = getAccessToken();
+  if (!token) throw new Error("인증 토큰 저장 실패. 페이지를 새로고침 후 다시 로그인해주세요.");
+
   const rows = await sbGet(
     "staff_accounts?select=name,role,store_id,is_active" +
     "&email=eq." + encodeURIComponent(email) +
