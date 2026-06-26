@@ -89,7 +89,7 @@ const StaffAccountsModule = (() => {
     try {
       const [accounts, stores] = await Promise.all([
         sbGet(
-          "staff_accounts?select=id,name,email,role,store_id,is_active,stores(name)" +
+          "staff_accounts?select=id,name,email,role,store_id,is_active" +
           "&tenant_id=eq." + TENANT_ID + "&order=name"
         ),
         sbGet("stores?select=store_id,name&order=name")
