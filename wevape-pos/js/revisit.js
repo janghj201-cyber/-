@@ -49,7 +49,7 @@ const RevisitModule = (() => {
     if (!from || !to) { statusEl.textContent = "기간을 선택해주세요."; return; }
     statusEl.textContent = "불러오는 중...";
     try {
-      let path = "orders?select=customer_id,order_datetime&customer_id=not.is.null&order_datetime=gte." + from + "&order_datetime=lte." + to + "T23:59:59&order=order_datetime.asc";
+      let path = "orders?select=customer_id,order_datetime&tenant_id=eq." + TENANT_ID + "&customer_id=not.is.null&order_datetime=gte." + from + "&order_datetime=lte." + to + "T23:59:59&order=order_datetime.asc";
       if (storeId) path += "&store_id=eq." + storeId;
       const orders = await sbGet(path);
 

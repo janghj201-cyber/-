@@ -137,7 +137,7 @@ const TransferModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       const items = transferCart.map(c => ({ product_id: c.id, qty: c.qty }));
-      await sbRpc("register_transfer", { p_tenant_id: tenantId, p_from_store: from, p_to_store: to, p_note: document.getElementById("tr_note").value || null, p_items: items });
+      await sbRpc("register_transfer", { p_tenant_id: TENANT_ID, p_from_store: from, p_to_store: to, p_note: document.getElementById("tr_note").value || null, p_items: items });
       statusEl.textContent = "이동 등록 완료";
       transferCart = [];
       renderTransferCart();
@@ -176,7 +176,7 @@ const TransferModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       const items = adjustCart.map(c => ({ product_id: c.id, qty_after: c.qty_after }));
-      await sbRpc("register_adjustment", { p_tenant_id: tenantId, p_store_id: store, p_reason: document.getElementById("adj_reason").value, p_items: items });
+      await sbRpc("register_adjustment", { p_tenant_id: TENANT_ID, p_store_id: store, p_reason: document.getElementById("adj_reason").value, p_items: items });
       statusEl.textContent = "조정 등록 완료";
       adjustCart = [];
       renderAdjustCart();

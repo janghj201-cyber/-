@@ -108,7 +108,7 @@ const ExportModule = (() => {
     const statusEl = document.getElementById("ex_status");
     statusEl.textContent = "내보내는 중...";
     try {
-      const data = await sbGet("customers?select=name,phone,nationality,acquisition_channel,first_visit_date,stores(name)&order=first_visit_date.desc");
+      const data = await sbGet("customers?select=name,phone,nationality,acquisition_channel,first_visit_date,stores(name)&tenant_id=eq." + TENANT_ID + "&order=first_visit_date.desc");
       const rows = data.map(c => [c.name || "", c.phone || "", c.nationality || "", c.acquisition_channel || "", c.first_visit_date || "", c.stores?.name || ""]);
       downloadCSV("고객목록.csv", toCSV(["이름", "전화번호", "국적", "유입경로", "첫방문일", "첫방문매장"], rows));
       statusEl.textContent = rows.length + "명 내보내기 완료";

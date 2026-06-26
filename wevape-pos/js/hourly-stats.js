@@ -50,7 +50,7 @@ const HourlyStatsModule = (() => {
     statusEl.textContent = "집계 중...";
     try {
       const orders = await sbGet(
-        "orders?select=order_datetime,total_amount&store_id=eq." + storeId +
+        "orders?select=order_datetime,total_amount&tenant_id=eq." + TENANT_ID + "&store_id=eq." + storeId +
         "&order_datetime=gte." + from + "T00:00:00" +
         "&order_datetime=lt." + nextDateStr(to) + "T00:00:00"
       );

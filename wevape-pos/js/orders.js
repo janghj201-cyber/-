@@ -169,7 +169,7 @@ const OrdersModule = (() => {
     try {
       await PaymentModule.confirmPayment(result.paymentKey, result.orderId, result.amount);
       await sbRpc("register_order", {
-        p_tenant_id: pending.tenantId, p_store_id: pending.storeId, p_customer_id: pending.customerId,
+        p_tenant_id: TENANT_ID, p_store_id: pending.storeId, p_customer_id: pending.customerId,
         p_staff_id: null, p_payment_method: "카드", p_items: pending.items
       });
       await bumpCustomerStats(pending.customerId, pending.amount);
@@ -333,7 +333,7 @@ const OrdersModule = (() => {
     if (!q) { box.innerHTML = `<div class="muted">검색어를 입력해주세요.</div>`; return; }
     box.innerHTML = `<div class="muted">검색 중...</div>`;
     try {
-      const data = await sbGet("customers?select=customer_id,name,phone,birth_date,nationality,gender,points&or=(name.ilike.*" + encodeURIComponent(q) + "*,phone.ilike.*" + encodeURIComponent(q) + "*)&limit=20");
+      const data = await sbGet("customers?select=customer_id,name,phone,birth_date,nationality,gender,points&tenant_id=eq." + TENANT_ID + "&or=(name.ilike.*" + encodeURIComponent(q) + "*,phone.ilike.*" + encodeURIComponent(q) + "*)&limit=20");
       if (!data.length) { box.innerHTML = `<div class="muted">검색 결과가 없습니다.</div>`; return; }
       box.innerHTML = data.map(c => {
         const age = calcAge(c.birth_date);
@@ -389,7 +389,7 @@ const OrdersModule = (() => {
       const storeId = document.getElementById("ord_store").value;
       const nowIso = new Date().toISOString();
       const created = await sbPost("customers", {
-        tenant_id: tenantId, phone, name: name || null,
+        tenant_id: TENANT_ID, phone, name: name || null,
         birth_date: birth, gender: newGender, nationality: newNationality, memo,
         first_visit_store: storeId || null,
         first_visit_date: nowIso.slice(0, 10),
@@ -402,7 +402,7 @@ const OrdersModule = (() => {
   async function bumpCustomerStats(customerId, amount) {
     if (!customerId) return;
     try {
-      const rows = await sbGet("customers?select=total_visits,total_amount,first_visit_at,points&customer_id=eq." + customerId);
+      const rows = await sbGet("customers?select=total_visits,total_amount,first_visit_at,points&tenant_id=eq." + TENANT_ID + "&customer_id=eq." + customerId);
       const cur = rows[0] || {};
       const nowIso = new Date().toISOString();
       const earnedPoints = Math.floor((amount || 0) * 0.01);
@@ -560,7 +560,7 @@ const OrdersModule = (() => {
       const items = buildDiscountedItems();
       const amount = cartFinalTotal();
       await sbRpc("register_order", {
-        p_tenant_id: tenantId, p_store_id: storeId, p_customer_id: customerId,
+        p_tenant_id: TENANT_ID, p_store_id: storeId, p_customer_id: customerId,
         p_staff_id: null, p_payment_method: paymentMethod, p_items: items
       });
       await bumpCustomerStats(customerId, amount);

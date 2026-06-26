@@ -61,6 +61,7 @@ const SalesHistoryModule = (() => {
     statusEl.textContent = "불러오는 중...";
     try {
       let path = "orders?select=order_id,order_datetime,payment_method,total_amount,stores(name),customers(name),order_items(qty,unit_price,products(name))"
+        + "&tenant_id=eq." + TENANT_ID
         + "&order_datetime=gte." + from + "&order_datetime=lte." + to + "T23:59:59"
         + "&order=order_datetime.desc";
       if (storeId) path += "&store_id=eq." + storeId;

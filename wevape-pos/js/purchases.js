@@ -74,7 +74,7 @@ const PurchasesModule = (() => {
     const statusEl = document.getElementById("pu_supplierStatus");
     if (!name) { statusEl.textContent = "거래처명을 입력해주세요."; return; }
     try {
-      const created = await sbPost("suppliers", { tenant_id: tenantId, name }, { "Prefer": "return=representation" });
+      const created = await sbPost("suppliers", { tenant_id: TENANT_ID, name }, { "Prefer": "return=representation" });
       await loadSuppliers();
       document.getElementById("pu_supplier").value = created[0].supplier_id;
       document.getElementById("pu_newSupplier").value = "";
@@ -161,7 +161,7 @@ const PurchasesModule = (() => {
     try {
       const items = cart.map(c => ({ product_id: c.id, qty: c.qty, unit_cost: c.cost }));
       await sbRpc("register_purchase", {
-        p_tenant_id: tenantId, p_store_id: storeId,
+        p_tenant_id: TENANT_ID, p_store_id: storeId,
         p_supplier_id: document.getElementById("pu_supplier").value || null, p_items: items
       });
       statusEl.textContent = "입고 등록 완료";

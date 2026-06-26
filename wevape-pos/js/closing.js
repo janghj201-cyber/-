@@ -202,7 +202,7 @@ const ClosingModule = (() => {
     if (!storeId || !closingDate) return;
     statusEl.textContent = "영업 상태 확인 중...";
     try {
-      const rows = await sbGet("daily_closings?select=*&store_id=eq." + storeId + "&closing_date=eq." + closingDate);
+      const rows = await sbGet("daily_closings?select=*&tenant_id=eq." + TENANT_ID + "&store_id=eq." + storeId + "&closing_date=eq." + closingDate);
       const row = rows[0];
       if (row && row.business_start) {
         businessStarted = true;
@@ -230,7 +230,7 @@ const ClosingModule = (() => {
     try {
       businessStartAt = new Date().toISOString();
       await sbPost("daily_closings", {
-        tenant_id: tenantId, store_id: storeId, closing_date: closingDate,
+        tenant_id: TENANT_ID, store_id: storeId, closing_date: closingDate,
         opening_cash: amount, business_start: businessStartAt
       }, { "Prefer": "resolution=merge-duplicates,return=representation" });
       openingCash = amount;
@@ -260,7 +260,7 @@ const ClosingModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       await sbPost("cash_movements", {
-        tenant_id: tenantId, store_id: storeId, movement_date: closingDate,
+        tenant_id: TENANT_ID, store_id: storeId, movement_date: closingDate,
         movement_type: movementType, amount, reason: reason || null
       }, { "Prefer": "return=representation" });
       movementAmountBuffer = "";
@@ -341,7 +341,8 @@ const ClosingModule = (() => {
   async function loadCustomerStats() {
     try {
       const orders = await sbGet(
-        "orders?select=customer_id&store_id=eq." + storeId +
+        "orders?select=customer_id&tenant_id=eq." + TENANT_ID +
+        "&store_id=eq." + storeId +
         "&order_datetime=gte." + closingDate + "T00:00:00" +
         "&order_datetime=lt." + nextDateStr(closingDate) + "T00:00:00" +
         "&customer_id=not.is.null"
@@ -349,7 +350,7 @@ const ClosingModule = (() => {
       const ids = [...new Set(orders.map(o => o.customer_id))];
       let newCount = 0;
       if (ids.length) {
-        const custs = await sbGet("customers?select=customer_id,first_visit_date&customer_id=in.(" + ids.join(",") + ")");
+        const custs = await sbGet("customers?select=customer_id,first_visit_date&tenant_id=eq." + TENANT_ID + "&customer_id=in.(" + ids.join(",") + ")");
         newCount = custs.filter(c => c.first_visit_date === closingDate).length;
       }
       custStats = { total: ids.length, new: newCount, revisit: ids.length - newCount };
@@ -470,7 +471,7 @@ const ClosingModule = (() => {
     statusEl.textContent = "마감 확정 중...";
     try {
       const payload = {
-        tenant_id: tenantId, store_id: storeId, closing_date: closingDate,
+        tenant_id: TENANT_ID, store_id: storeId, closing_date: closingDate,
         opening_cash: openingCash, business_start: businessStartAt, business_end: new Date().toISOString(),
         total_sales: summary.total_sales || 0,
         cash_sales: summary.cash_sales || 0, cash_count: summary.cash_count || 0,

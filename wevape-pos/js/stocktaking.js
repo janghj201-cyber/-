@@ -190,7 +190,7 @@ const StocktakingModule = (() => {
     try {
       const items = countedItems.map(it => ({ product_id: it.product_id, qty_after: it.actual_qty }));
       await sbRpc("register_adjustment", {
-        p_tenant_id: tenantId, p_store_id: storeId,
+        p_tenant_id: TENANT_ID, p_store_id: storeId,
         p_reason: "월간실사-" + staffName, p_items: items
       });
       renderReport(countedItems);

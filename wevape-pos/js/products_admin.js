@@ -91,7 +91,7 @@ const ProductsAdminModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       await sbPost("products", {
-        tenant_id: tenantId,
+        tenant_id: TENANT_ID,
         code: document.getElementById("pa_code").value.trim() || null,
         name,
         category: document.getElementById("pa_category").value.trim() || null,

@@ -55,6 +55,7 @@ const RefundModule = (() => {
     try {
       const orders = await sbGet(
         "orders?select=order_id,order_datetime,payment_method,total_amount,customer_id,customers(name),order_items(qty,products(name))" +
+        "&tenant_id=eq." + TENANT_ID +
         "&store_id=eq." + storeId +
         "&order_datetime=gte." + date + "T00:00:00" +
         "&order_datetime=lt." + nextDateStr(date) + "T00:00:00" +
@@ -101,7 +102,7 @@ const RefundModule = (() => {
       const orderItems = await sbGet("order_items?select=order_item_id,product_id,qty,unit_price&order_id=eq." + orderId);
       const items = orderItems.map(it => ({ order_item_id: it.order_item_id, product_id: it.product_id, qty: it.qty, unit_price: it.unit_price }));
       await sbRpc("register_refund", {
-        p_tenant_id: tenantId, p_order_id: orderId, p_store_id: storeId, p_reason: "전체 환불", p_items: items
+        p_tenant_id: TENANT_ID, p_order_id: orderId, p_store_id: storeId, p_reason: "전체 환불", p_items: items
       });
       statusEl.textContent = "환불 등록 완료 (재고 복원됨)";
       await loadOrders();

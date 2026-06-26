@@ -117,7 +117,7 @@ const CustomersModule = (() => {
 
     statusEl.textContent = "불러오는 중...";
     try {
-      let path = "customers?select=customer_id,name,phone,birth_date,gender,nationality,total_visits,total_amount,last_visit_at,first_visit_store,created_at&order=last_visit_at.desc.nullslast&limit=500";
+      let path = "customers?select=customer_id,name,phone,birth_date,gender,nationality,total_visits,total_amount,last_visit_at,first_visit_store,created_at&tenant_id=eq." + TENANT_ID + "&order=last_visit_at.desc.nullslast&limit=500";
       if (storeId) path += "&first_visit_store=eq." + storeId;
       if (gender) path += "&gender=eq." + encodeURIComponent(gender);
       if (nationality) path += "&nationality=eq." + encodeURIComponent(nationality);
@@ -204,10 +204,10 @@ const CustomersModule = (() => {
     const statusEl = document.getElementById("cu_status");
     statusEl.textContent = "불러오는 중...";
     try {
-      const rows = await sbGet("customers?select=*&customer_id=eq." + customerId);
+      const rows = await sbGet("customers?select=*&tenant_id=eq." + TENANT_ID + "&customer_id=eq." + customerId);
       const cust = rows[0];
       const orders = await sbGet(
-        "orders?select=order_id,order_datetime,payment_method,total_amount,store_id,order_items(qty,products(name))&customer_id=eq." + customerId + "&order=order_datetime.desc&limit=50"
+        "orders?select=order_id,order_datetime,payment_method,total_amount,store_id,order_items(qty,products(name))&tenant_id=eq." + TENANT_ID + "&customer_id=eq." + customerId + "&order=order_datetime.desc&limit=50"
       );
       const mainStoreId = mostFrequentStore(orders) || cust.first_visit_store;
       renderDetail(cust, orders.slice(0, 10), mainStoreId);

@@ -56,7 +56,7 @@ const ReorderReportModule = (() => {
 
       // 최근 7일치 데이터가 없는 신규 매장은 영업 시작일 이후 실제 경과일로 나눈다.
       let divisor = 7;
-      const firstOrderRows = await sbGet("orders?select=order_datetime&store_id=eq." + storeId + "&order=order_datetime.asc&limit=1");
+      const firstOrderRows = await sbGet("orders?select=order_datetime&tenant_id=eq." + TENANT_ID + "&store_id=eq." + storeId + "&order=order_datetime.asc&limit=1");
       if (firstOrderRows.length) {
         const daysSince = Math.floor((Date.now() - new Date(firstOrderRows[0].order_datetime).getTime()) / 86400000) + 1;
         divisor = Math.max(1, Math.min(7, daysSince));

@@ -1,6 +1,7 @@
 // Supabase 프로젝트 연결 정보
 const SUPABASE_URL = "https://tzloiuzblkkrdvljyrdv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_He7HIvKcn0FqwX22B7AGcg_Vbc-oFU-";
+const TENANT_ID = "d17327a2-6b94-4d09-a3b8-7014630ddd14";
 
 function getAccessToken() {
   return localStorage.getItem("wevape_access_token");

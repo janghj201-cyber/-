@@ -71,14 +71,14 @@ const StoreCompareModule = (() => {
         let newCustomers = 0, revisitRate = 0;
         try {
           const orders = await sbGet(
-            "orders?select=customer_id&store_id=eq." + store.store_id +
+            "orders?select=customer_id&tenant_id=eq." + TENANT_ID + "&store_id=eq." + store.store_id +
             "&order_datetime=gte." + from + "T00:00:00" +
             "&order_datetime=lt." + nextDateStr(to) + "T00:00:00" +
             "&customer_id=not.is.null"
           );
           const ids = [...new Set(orders.map(o => o.customer_id))];
           if (ids.length) {
-            const custs = await sbGet("customers?select=customer_id,first_visit_date,total_visits&customer_id=in.(" + ids.join(",") + ")");
+            const custs = await sbGet("customers?select=customer_id,first_visit_date,total_visits&tenant_id=eq." + TENANT_ID + "&customer_id=in.(" + ids.join(",") + ")");
             newCustomers = custs.filter(c => c.first_visit_date >= from && c.first_visit_date <= to).length;
             const revisitCount = custs.filter(c => (c.total_visits || 0) > 1).length;
             revisitRate = Math.round((revisitCount / ids.length) * 100);
