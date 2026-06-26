@@ -549,6 +549,30 @@ const OrdersModule = (() => {
     if (!storeId) { statusEl.textContent = "매장을 선택해주세요."; return; }
     if (!cart.length) { statusEl.textContent = "장바구니가 비어있습니다."; return; }
 
+    // 오프라인 처리: 카드 결제는 온라인 필요, 나머지는 IndexedDB 임시저장
+    if (!navigator.onLine) {
+      if (paymentMethod === "카드") {
+        statusEl.textContent = "카드 결제는 온라인 상태에서만 가능합니다.";
+        return;
+      }
+      const customerId = selectedCustomer ? selectedCustomer.customer_id : null;
+      const items = buildDiscountedItems();
+      try {
+        await offlineSaveOrder({
+          p_tenant_id: TENANT_ID, p_store_id: storeId, p_customer_id: customerId,
+          p_staff_id: null, p_payment_method: paymentMethod, p_items: items
+        });
+        statusEl.textContent = `[오프라인] ${paymentMethod} 주문 임시저장 완료 — 온라인 복귀 시 자동 업로드`;
+        cart = [];
+        resetDiscount();
+        clearCustomer();
+        renderCart();
+      } catch (e) {
+        statusEl.textContent = "임시저장 오류: " + e.message;
+      }
+      return;
+    }
+
     if (paymentMethod === "카드") {
       await submitCardOrder(storeId);
       return;

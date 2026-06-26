@@ -1,0 +1,18 @@
+{
+  "name": "위베이프 POS",
+  "short_name": "위베이프",
+  "description": "위베이프 통합 POS 시스템",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#15140f",
+  "theme_color": "#f4b400",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -4,6 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>위베이프 통합 프로그램</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#f4b400" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="위베이프 POS" />
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -238,6 +243,10 @@
 </head>
 <body>
 
+<div id="offlineBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#b3361f;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;letter-spacing:.01em">
+  🔴 오프라인 모드 — 주문은 임시저장됩니다 (재연결 시 자동 업로드)
+</div>
+
 <div id="loginView">
   <div class="eyebrow">WeVape Internal</div>
   <h1>위베이프 통합 프로그램</h1>
@@ -417,6 +426,16 @@
 <script src="js/export.js"></script>
 <script src="js/staff-accounts.js"></script>
 <script src="js/notices.js"></script>
+<script src="js/offline.js"></script>
 <script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('[SW] 등록 실패:', err));
+  });
+}
+initOffline();
+</script>
 </body>
 </html>
