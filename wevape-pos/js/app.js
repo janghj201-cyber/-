@@ -26,6 +26,7 @@ const TAB_PERMISSIONS = {
   "store-compare":  ["admin"],
   products:         ["admin"],
   "staff-accounts": ["admin"],
+  notices:          ["admin"],
   export:           ["admin"],
 };
 
@@ -92,6 +93,7 @@ const modules = {
   products:         ProductsAdminModule,
   export:           ExportModule,
   "staff-accounts": StaffAccountsModule,
+  notices:          NoticesModule,
 };
 const renderedTabs = new Set();
 
@@ -146,6 +148,8 @@ function initApp() {
   initUserMenu();
   initBottomNav();
   showTab("orders");
+  // 공지사항 팝업 — UI 렌더 완료 후 체크
+  setTimeout(checkAndShowNotices, 800);
 }
 
 // ── 사용자 메뉴 ───────────────────────────────────────────────────────────────

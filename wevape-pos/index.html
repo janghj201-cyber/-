@@ -286,6 +286,7 @@
           <div class="navGroupBody collapsed" id="navGroupBody-settings">
             <button data-tab="products">상품관리</button>
             <button data-tab="staff-accounts">직원 계정 관리</button>
+            <button data-tab="notices">공지사항 발송</button>
           </div>
         </div>
       </nav>
@@ -323,6 +324,7 @@
       <div id="panel-products" class="panel"></div>
       <div id="panel-export" class="panel"></div>
       <div id="panel-staff-accounts" class="panel"></div>
+      <div id="panel-notices" class="panel"></div>
     </main>
   </div>
 </div>
@@ -348,6 +350,15 @@
     <button class="bn-more-item" data-tab="dashboard">매출현황</button>
     <button class="bn-more-item" data-tab="product-trend">상품별추이</button>
     <button class="bn-more-item" data-tab="products">상품관리</button>
+  </div>
+</div>
+
+<!-- 공지사항 팝업 모달 -->
+<div id="noticeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:480px;width:92vw;max-height:75vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+    <div style="font-weight:800;font-size:17px;margin-bottom:16px">📢 새 공지사항</div>
+    <div id="noticeModalItems"></div>
+    <button id="noticeModalClose" style="width:100%;margin-top:20px">확인</button>
   </div>
 </div>
 
@@ -405,6 +416,7 @@
 <script src="js/products_admin.js"></script>
 <script src="js/export.js"></script>
 <script src="js/staff-accounts.js"></script>
+<script src="js/notices.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
