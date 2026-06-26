@@ -1,5 +1,4 @@
 const DEFAULT_STORE_KEY = "wevape_default_store";
-const ROLE_KEY = "wevape_role";
 const ROLE_LABELS = { staff: "직원", manager: "매니저", admin: "관리자" };
 
 // 탭별 최소 접근 권한
