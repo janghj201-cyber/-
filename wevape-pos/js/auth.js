@@ -23,23 +23,26 @@ async function loadStaffAccount(email) {
   const token = getAccessToken();
   if (!token) throw new Error("인증 토큰 저장 실패. 페이지를 새로고침 후 다시 로그인해주세요.");
 
+  // 이전 세션의 role·store 잔여 데이터를 쿼리 전에 먼저 초기화
+  [ROLE_KEY, USER_NAME_KEY, USER_STORE_KEY, "wevape_default_store"].forEach(k => localStorage.removeItem(k));
+
   const rows = await sbGet(
     "staff_accounts?select=name,role,store_id,is_active" +
-    "&email=eq." + encodeURIComponent(email) +
+    "&email=eq." + encodeURIComponent(email.toLowerCase()) +
     "&tenant_id=eq." + TENANT_ID +
-    "&limit=1"
+    "&order=created_at.desc&limit=1"
   );
   if (!rows.length) throw new Error("등록된 직원 계정이 없습니다. 관리자에게 문의하세요.");
   const acct = rows[0];
   if (!acct.is_active) throw new Error("비활성화된 계정입니다. 관리자에게 문의하세요.");
+
   localStorage.setItem(ROLE_KEY, acct.role);
   localStorage.setItem(USER_NAME_KEY, acct.name);
   if (acct.store_id) {
     localStorage.setItem(USER_STORE_KEY, acct.store_id);
     localStorage.setItem("wevape_default_store", acct.store_id);
-  } else {
-    localStorage.removeItem(USER_STORE_KEY);
   }
+  // store_id가 NULL이면 두 키 모두 이미 위에서 지워진 상태로 유지
   return acct;
 }
 
