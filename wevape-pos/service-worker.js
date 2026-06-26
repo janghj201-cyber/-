@@ -27,6 +27,7 @@ const APP_SHELL = [
   './js/export.js',
   './js/staff-accounts.js',
   './js/notices.js',
+  './js/receipt.js',
   './js/offline.js',
   './js/app.js',
 ];

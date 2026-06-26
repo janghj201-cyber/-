@@ -581,9 +581,22 @@ const OrdersModule = (() => {
     statusEl.textContent = "등록 중...";
     try {
       const customerId = selectedCustomer ? selectedCustomer.customer_id : null;
-      const items = buildDiscountedItems();
-      const amount = cartFinalTotal();
-      await sbRpc("register_order", {
+      const items      = buildDiscountedItems();
+      const amount     = cartFinalTotal();
+
+      // 영수증용 데이터: cart 비우기 전에 캡처
+      const storeEl    = document.getElementById("ord_store");
+      const receiptSnap = {
+        storeName:     storeEl?.selectedOptions?.[0]?.text?.trim() || "",
+        paymentMethod,
+        items:         cart.map(c => ({ name: c.name, qty: c.qty, price: c.price })),
+        discount:      computeDiscountAmount(),
+        total:         amount,
+        customer:      selectedCustomer ? { name: selectedCustomer.name, phone: selectedCustomer.phone } : null,
+        datetime:      new Date()
+      };
+
+      const result = await sbRpc("register_order", {
         p_tenant_id: TENANT_ID, p_store_id: storeId, p_customer_id: customerId,
         p_staff_id: null, p_payment_method: paymentMethod, p_items: items
       });
@@ -595,6 +608,10 @@ const OrdersModule = (() => {
       renderCart();
       await loadStockAndSales(storeId);
       if (activeCategoryKey !== "search") renderGrid();
+
+      // 영수증 모달
+      const orderId = Array.isArray(result) ? result[0]?.order_id : result?.order_id;
+      showReceipt({ ...receiptSnap, orderId });
     } catch (err) { statusEl.textContent = "오류: " + err.message; }
   }
 
