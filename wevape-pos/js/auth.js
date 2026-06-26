@@ -31,10 +31,11 @@ async function loadStaffAccount(email) {
   // 이전 세션의 role·store 잔여 데이터를 쿼리 전에 먼저 초기화
   [ROLE_KEY, USER_NAME_KEY, USER_STORE_KEY, "wevape_default_store"].forEach(k => localStorage.removeItem(k));
 
+  const normalizedEmail = email.toLowerCase().trim();
+  console.log("[auth:loadStaffAccount] 정규화된 email:", normalizedEmail);
   const queryPath =
-    "staff_accounts?select=name,role,store_id,is_active" +
-    "&email=eq." + encodeURIComponent(email.toLowerCase()) +
-    "&tenant_id=eq." + TENANT_ID +
+    "staff_accounts?select=name,role,store_id,is_active,tenant_id" +
+    "&email=eq." + encodeURIComponent(normalizedEmail) +
     "&order=created_at.desc&limit=1";
   const fullUrl = SUPABASE_URL + "/rest/v1/" + queryPath;
   const hdrs = authHeaders();
