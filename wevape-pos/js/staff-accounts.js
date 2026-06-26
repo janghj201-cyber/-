@@ -16,26 +16,29 @@ const StaffAccountsModule = (() => {
       <div id="sa_addForm" class="card" style="display:none;margin-bottom:12px">
         <div style="font-weight:700;margin-bottom:12px">신규 직원 등록</div>
         <div class="row" style="margin-bottom:8px">
-          <input id="sa_name"  type="text"     placeholder="이름 *"    style="flex:1" />
-          <input id="sa_email" type="email"    placeholder="이메일 *"  style="flex:2" />
+          <input id="sa_name"  type="text"  placeholder="이름 *"   style="flex:1" />
+          <input id="sa_email" type="email" placeholder="이메일 *" style="flex:2" />
         </div>
-        <div class="row" style="margin-bottom:8px">
-          <input id="sa_password" type="password" placeholder="초기 비밀번호 * (8자 이상)" style="flex:2" />
+        <div class="row" style="margin-bottom:10px">
           <select id="sa_role" style="flex:1">
             <option value="staff">직원</option>
             <option value="manager">매니저</option>
             <option value="admin">관리자</option>
           </select>
-          <select id="sa_store" style="flex:1"><option value="">매장 없음</option></select>
+          <select id="sa_store" style="flex:2"><option value="">매장 없음</option></select>
         </div>
-        <div class="muted" style="margin-bottom:10px;font-size:12px">
-          ℹ️ 이메일 확인 없이 즉시 로그인 가능하게 하려면 Supabase Dashboard → Authentication → Providers → Email → "Confirm email" OFF
+        <div style="background:#1e1c14;border:1px solid #3a3820;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;line-height:1.7;color:#c8b96a">
+          <div style="font-weight:700;margin-bottom:6px">📋 2단계 등록 절차</div>
+          <div><strong>1단계 (여기서)</strong> — 이름·이메일·권한·매장을 입력하고 등록 버튼 클릭</div>
+          <div><strong>2단계 (Supabase Dashboard)</strong> — Authentication → Users → Add user 에서<br>
+          &nbsp;&nbsp;&nbsp;동일한 이메일 + 초기 비밀번호를 입력해 Auth 계정 생성</div>
+          <div style="margin-top:6px;color:#888">두 이메일이 일치하면 로그인 시 권한·매장이 자동 매핑됩니다.</div>
         </div>
         <div class="row">
-          <button id="sa_saveNewBtn" style="flex:1">등록</button>
+          <button id="sa_saveNewBtn" style="flex:1">1단계: 직원 정보 등록</button>
           <button id="sa_cancelNewBtn" class="secondary" style="flex:1">취소</button>
         </div>
-        <div class="muted" id="sa_addStatus" style="margin-top:8px"></div>
+        <div id="sa_addStatus" style="margin-top:8px;font-size:13px"></div>
       </div>
 
       <div class="card" style="overflow-x:auto">
@@ -151,53 +154,37 @@ const StaffAccountsModule = (() => {
 
   async function saveNew() {
     const statusEl = document.getElementById("sa_addStatus");
-    const name     = document.getElementById("sa_name").value.trim();
-    const email    = document.getElementById("sa_email").value.trim();
-    const password = document.getElementById("sa_password").value;
-    const role     = document.getElementById("sa_role").value;
-    const storeId  = document.getElementById("sa_store").value || null;
+    const name    = document.getElementById("sa_name").value.trim();
+    const email   = document.getElementById("sa_email").value.trim().toLowerCase();
+    const role    = document.getElementById("sa_role").value;
+    const storeId = document.getElementById("sa_store").value || null;
 
-    if (!name || !email || !password) {
-      statusEl.textContent = "이름, 이메일, 비밀번호는 필수입니다.";
-      return;
-    }
-    if (password.length < 8) {
-      statusEl.textContent = "비밀번호는 8자 이상이어야 합니다.";
+    if (!name || !email) {
+      statusEl.style.color = "var(--bad)";
+      statusEl.textContent = "이름과 이메일은 필수입니다.";
       return;
     }
 
+    statusEl.style.color = "";
     statusEl.textContent = "등록 중...";
     document.getElementById("sa_saveNewBtn").disabled = true;
     try {
-      // Supabase Auth 계정 생성 (anon key 사용, 이메일 확인 비활성화 권장)
-      const signupRes = await fetch(SUPABASE_URL + "/auth/v1/signup", {
-        method: "POST",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const signupData = await signupRes.json();
-      if (!signupRes.ok && !signupData.id) {
-        // 이미 존재하는 계정이면 계속 진행 (staff_accounts만 추가)
-        const errMsg = signupData.msg || signupData.error_description || "";
-        if (!errMsg.toLowerCase().includes("already") && !errMsg.toLowerCase().includes("registered")) {
-          throw new Error(errMsg || "Auth 계정 생성 실패");
-        }
-      }
-
-      // staff_accounts 레코드 생성
       await sbPost(
         "staff_accounts",
         { tenant_id: TENANT_ID, email, name, role, store_id: storeId, is_active: true },
         { "Prefer": "return=representation" }
       );
 
-      statusEl.textContent = "✓ 등록 완료";
-      ["sa_name", "sa_email", "sa_password"].forEach(id => {
-        document.getElementById(id).value = "";
-      });
-      document.getElementById("sa_addForm").style.display = "none";
+      statusEl.style.color = "var(--good)";
+      statusEl.innerHTML =
+        `✓ 1단계 완료 — <strong>${email}</strong> 직원 정보가 저장됐습니다.<br>` +
+        `<span style="color:#c8b96a">Supabase Dashboard → Authentication → Users → Add user 에서 동일한 이메일로 Auth 계정을 생성해주세요.</span>`;
+
+      document.getElementById("sa_name").value  = "";
+      document.getElementById("sa_email").value = "";
       await loadAll();
     } catch (err) {
+      statusEl.style.color = "var(--bad)";
       statusEl.textContent = "오류: " + err.message;
     } finally {
       document.getElementById("sa_saveNewBtn").disabled = false;
