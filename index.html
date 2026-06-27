@@ -763,14 +763,12 @@ function showScreen(id){
   window.scrollTo(0,0);
 }
 
-function switchTab(tab){
+window.switchTab = function(tab){
   curTab=tab;
-  // 탭바 활성화
   ['dashboard','monthly','daily'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
-  // 탭바 보이기
   document.getElementById('tab-bar').style.display='flex';
   if(tab==='dashboard'){
     showScreen('screen-dashboard');
@@ -788,30 +786,34 @@ function switchTab(tab){
     renderDailyScreen();
   }
 }
+function switchTab(tab){window.switchTab(tab);}
 
 // 지점 선택 오버레이 열기/닫기
-function openStoreSelect(cb){
+window.openStoreSelect = function(cb){
   storeSelectCallback=cb||null;
   document.getElementById('screen-home').style.display='block';
   renderStoreGrid();
   window.scrollTo(0,0);
 }
-function closeStoreSelect(){
+function openStoreSelect(cb){window.openStoreSelect(cb);}
+
+window.closeStoreSelect = function(){
   document.getElementById('screen-home').style.display='none';
   switchTab(curTab);
 }
+function closeStoreSelect(){window.closeStoreSelect();}
 
 window.goHome=function(){
   clearDashUnsubs();
   switchTab('dashboard');
 };
 
-function exitAdmin(){
+window.exitAdmin = function(){
   clearDashUnsubs();
   isAdmin=false;
-  document.getElementById('tab-bar').style.display='flex';
   switchTab('dashboard');
 }
+function exitAdmin(){window.exitAdmin();}
 
 // ══════════════════════════════════════
 // 지점 선택 화면 (오버레이)
@@ -967,7 +969,7 @@ async function loadBoard(){
   }
 }
 
-function switchBoardTab(tab){
+window.switchBoardTab = function(tab){
   boardTab=tab;
   ['all','notice','share'].forEach(t=>{
     const btn=document.getElementById(`btab-${t}`);
@@ -975,6 +977,7 @@ function switchBoardTab(tab){
   });
   loadBoard();
 }
+function switchBoardTab(tab){window.switchBoardTab(tab);}
 
 // 게시글 작성
 window.openBoardWrite=function(){
@@ -1135,36 +1138,40 @@ function renderDailyScreen(){
   window.scrollTo(0,0);
 }
 
-// 일일 날짜 이동
-function chgDailyDate(dir){
+// 월간 달력에서 날짜 클릭 시 일일 스케줄로 이동
+
+
+window.chgDailyDate = function(dir){
   const next=new Date(dailyDate);
   next.setDate(next.getDate()+dir);
-  // 오늘보다 미래는 안 됨
   const todayMidnight=new Date(today.getFullYear(),today.getMonth(),today.getDate());
   if(next>todayMidnight)return;
   dailyDate=next;
   renderDailyScreen();
 }
+function chgDailyDate(dir){window.chgDailyDate(dir);}
 
-// 월간 달력에서 날짜 클릭 시 일일 스케줄로 이동
-function goToDailyFromCal(y,m,d){
+window.goToDailyFromCal = function(y,m,d){
   dailyDate=new Date(y,m,d);
   switchTab('daily');
 }
+function goToDailyFromCal(y,m,d){window.goToDailyFromCal(y,m,d);}
 
-// 월간/일일 화면에서 지점 이동 (‹›)
-function chgMonthlyStore(dir){
+window.chgMonthlyStore = function(dir){
   const idx=STORES.findIndex(s=>s.id===(curStore||STORES[0]).id);
   curStore=STORES[(idx+dir+STORES.length)%STORES.length];
   document.getElementById('monthly-store-title').textContent=`${curStore.icon} ${curStore.name}`;
   renderCal();
   document.getElementById('detail').style.display='none';
 }
-function chgDailyStore(dir){
+function chgMonthlyStore(dir){window.chgMonthlyStore(dir);}
+
+window.chgDailyStore = function(dir){
   const idx=STORES.findIndex(s=>s.id===(curStore||STORES[0]).id);
   curStore=STORES[(idx+dir+STORES.length)%STORES.length];
   renderDailyScreen();
 }
+function chgDailyStore(dir){window.chgDailyStore(dir);}
 
 // ══════════════════════════════════════
 // 달력
