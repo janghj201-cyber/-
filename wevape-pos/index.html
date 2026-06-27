@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>위베이프 통합 프로그램</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#f4b400" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="위베이프 POS" />
+<script src="https://js.tosspayments.com/v2/standard"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #15140f;
+    --ink-soft: #4a4840;
+    --paper: #f7f5ef;
+    --panel: #ffffff;
+    --line: #e7e3d6;
+    --amber: #f4b400;
+    --amber-deep: #c98f00;
+    --good: #1d7a4c;
+    --bad: #b3361f;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Manrope', -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    margin: 0; background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased;
+  }
+  input, select, button {
+    font-family: inherit; font-size: 14px; padding: 9px 11px;
+    border: 1.5px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--ink); }
+  button {
+    background: var(--ink); color: #fdfaf0; border: 1.5px solid var(--ink);
+    cursor: pointer; font-weight: 600; letter-spacing: 0.01em; transition: transform .08s ease, opacity .12s ease;
+  }
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+  button.secondary { background: #fff; color: var(--ink); border: 1.5px solid var(--line); font-weight: 500; }
+
+  .card { background: var(--panel); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; border: 1px solid var(--line); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .muted { color: var(--ink-soft); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+
+  /* 고객관리 테이블 행 스타일 (resultRow 클래스 flex 충돌 방지) */
+  tr.cu-row { cursor: pointer; }
+  tr.cu-row:hover td { background: #faf7ec; }
+
+  /* 고객관리 테이블 모바일 컬럼 숨김 */
+  @media (max-width: 768px) {
+    .cu-col-age, .cu-col-gender, .cu-col-nat, .cu-col-lastvisit { display: none; }
+  }
+
+  /* 로그인 */
+  #loginView {
+    max-width: 380px; margin: 0; padding: 48px 40px;
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    background: var(--ink); color: #fdfaf0;
+  }
+  #loginView .eyebrow {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em;
+    color: var(--amber); text-transform: uppercase; margin-bottom: 10px;
+  }
+  #loginView h1 { font-size: 26px; font-weight: 800; margin: 0 0 36px; letter-spacing: -0.01em; }
+  #loginView input {
+    width: 100%; margin-bottom: 12px; background: #1f1d16; border: 1.5px solid #34311f; color: #fdfaf0; padding: 12px;
+  }
+  #loginView input::placeholder { color: #8a8674; }
+  #loginView input:focus { border-color: var(--amber); }
+  #loginView button {
+    width: 100%; padding: 13px; background: var(--amber); border-color: var(--amber); color: #1a1300; font-weight: 700;
+  }
+  #loginView button:hover { background: var(--amber-deep); border-color: var(--amber-deep); opacity: 1; }
+  #loginError { color: #ff8a73; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* 앱 셸 — 좌측 고정 사이드바 */
+  #appView { display: none; }
+  .shell { display: flex; min-height: 100vh; }
+  aside.sidebar {
+    width: 220px; flex-shrink: 0; background: var(--ink); color: #fdfaf0;
+    display: flex; flex-direction: column; padding: 22px 14px; position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar .brand { display: flex; align-items: baseline; gap: 6px; padding: 0 8px 24px; }
+  .sidebar .brand .mark { color: var(--amber); font-weight: 800; font-size: 17px; }
+  .sidebar .brand .name { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  nav#navBar { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  nav#navBar button {
+    text-align: left; background: transparent; color: #c9c6b6; border: none; border-radius: 7px;
+    padding: 10px 12px; font-weight: 500; font-size: 13.5px;
+  }
+  nav#navBar button:hover { background: #211e15; color: #fdfaf0; }
+  nav#navBar button.active { background: var(--amber); color: #1a1300; font-weight: 700; }
+  nav#navBar button .navIcon { margin-right: 2px; }
+  nav#navBar button .navText { }
+
+  /* 사이드바 아코디언 그룹 */
+  .navGroup { display: flex; flex-direction: column; }
+  nav#navBar button.navGroupHeader {
+    background: #1f1d16; color: #c9c6b6; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; padding: 9px 10px; border-radius: 6px;
+  }
+  nav#navBar button.navGroupHeader:hover { background: #2a2719; color: #fdfaf0; }
+  .navGroupBody { display: flex; flex-direction: column; gap: 3px; padding-left: 4px; margin: 3px 0 6px; }
+  .navGroupBody.collapsed { display: none; }
+
+  /* 사용자 메뉴 */
+  #userMenuWrapper { position: relative; margin-top: 4px; }
+  #userMenuBtn {
+    width: 100%; text-align: left; background: transparent; color: #8a8674;
+    border: 1.5px solid #34311f; font-size: 12.5px; font-weight: 500; padding: 8px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    border-radius: 7px;
+  }
+  #userMenuBtn:hover { color: #fdfaf0; border-color: #4a4840; }
+  #userMenuDropdown {
+    display: none; position: absolute; bottom: calc(100% + 4px); left: 0; right: 0;
+    background: #1f1d16; border: 1px solid #34311f; border-radius: 8px; padding: 6px; z-index: 100;
+  }
+  #userMenuDropdown .um-email { font-size: 11px; padding: 4px 6px; color: #8a8674; display: block; }
+  #userMenuDropdown hr { border: none; border-top: 1px solid #34311f; margin: 4px 0; }
+  #userMenuDropdown button {
+    width: 100%; text-align: left; background: transparent; color: #c9c6b6; border: none;
+    border-radius: 6px; padding: 8px 10px; font-size: 13px; cursor: pointer;
+  }
+  #userMenuDropdown button:hover { background: #2a2719; color: #fdfaf0; }
+
+  main { flex: 1; max-width: 760px; margin: 0; padding: 32px 36px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel h2.pageTitle {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 18px;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 500;
+  }
+
+  .cartRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .resultRow { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; }
+  .resultRow:hover { background: #faf7ec; }
+
+  /* 주문입력 POS 레이아웃 */
+  main:has(#panel-orders.active) { max-width: 1320px; }
+  .posLayout { display: flex; gap: 20px; align-items: flex-start; }
+  .posLeft { flex: 2; min-width: 0; }
+  .posRight { flex: 1; min-width: 300px; position: sticky; top: 32px; }
+  .custTabs, .catTabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .custTabs button, .catTabs button { padding: 8px 12px; font-size: 13px; }
+  .custTabs button.active, .catTabs button.active { background: var(--amber); color: #1a1300; border-color: var(--amber); }
+  .prodGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (min-width: 1100px) { .prodGrid { grid-template-columns: repeat(4, 1fr); } }
+  .prodCard {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px;
+    text-align: left; min-height: 92px; background: #fff;
+  }
+  .prodCard .pName {
+    font-size: 13px; font-weight: 600; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .prodCard .pPrice { font-size: 13px; color: var(--ink-soft); }
+  .prodCard.soldout { opacity: 0.4; cursor: not-allowed; }
+  .payGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .payGrid button { padding: 18px; font-size: 15px; }
+
+  /* 태블릿 (768px–1023px): 아이콘만 표시 */
+  @media (max-width: 1023px) and (min-width: 768px) {
+    aside.sidebar { width: 64px; padding: 16px 6px; overflow: hidden; }
+    .sidebar .brand { padding: 0 4px 20px; justify-content: center; }
+    .sidebar .brand .name { display: none; }
+    .sidebar .brand .mark { font-size: 22px; }
+    nav#navBar button { padding: 10px 4px; justify-content: center; display: flex; }
+    nav#navBar button .navText { display: none; }
+    nav#navBar button .navIcon { font-size: 18px; }
+    .navGroupBody { display: none !important; }
+    #userMenuWrapper { display: none; }
+  }
+
+  /* 모바일 (≤767px): 하단 퀵메뉴 */
+  @media (max-width: 767px) {
+    .shell { flex-direction: column; }
+    aside.sidebar { display: none; }
+    main { padding: 16px 14px; padding-bottom: 76px; max-width: 100%; }
+    #bottomNav { display: flex !important; }
+    .posLayout { flex-direction: column; }
+    .posRight { position: relative; top: 0; width: 100%; min-width: 0; }
+    .prodGrid { grid-template-columns: repeat(2, 1fr); }
+    .prodCard { min-height: 80px; }
+    input, select, button { min-height: 48px; }
+    .catTabs button, .custTabs button { min-height: 48px; }
+    .payGrid button { min-height: 64px; }
+    body { font-size: 14px; }
+  }
+
+  /* 하단 퀵메뉴 바 */
+  #bottomNav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+    background: var(--ink); border-top: 1px solid #34311f;
+    z-index: 100; flex-direction: row; align-items: stretch;
+  }
+  #bottomNav .bn-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; background: transparent; color: #c9c6b6; border: none; border-radius: 0;
+    font-size: 10px; padding: 4px 2px; min-height: 48px; cursor: pointer; letter-spacing: 0;
+  }
+  #bottomNav .bn-item .bn-icon { font-size: 20px; line-height: 1.2; }
+  #bottomNav .bn-item.active { color: var(--amber); }
+  #bottomNav .bn-item:hover { color: #fdfaf0; opacity: 1; }
+
+  /* 더보기 슬라이드업 패널 */
+  #morePanel {
+    display: none; position: fixed; bottom: 64px; left: 0; right: 0;
+    background: var(--panel); border-top: 2px solid var(--line);
+    border-radius: 16px 16px 0 0; padding: 20px 16px;
+    z-index: 99; max-height: 60vh; overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.12);
+  }
+  #morePanel .mp-title {
+    font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 14px;
+  }
+  #morePanel .mp-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .bn-more-item {
+    background: #fff; color: var(--ink); border: 1.5px solid var(--line);
+    border-radius: 10px; padding: 14px 4px; font-size: 13px; min-height: 52px;
+    width: 100%; text-align: center; font-weight: 600; cursor: pointer;
+  }
+  .bn-more-item:hover { background: #faf7ec; }
+
+  /* 기본 매장 모달 */
+  #defaultStoreModal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+</style>
+<style>
+  /* ── 영수증 인쇄 ─────────────────────────────────────────── */
+  #receiptPrintArea { display: none; }
+  @media print {
+    @page { size: 58mm auto; margin: 2mm; }
+    body > *:not(#receiptPrintArea) { display: none !important; }
+    #receiptPrintArea {
+      display: block !important;
+      width: 54mm;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9pt;
+      line-height: 1.55;
+      color: #000;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="offlineBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#b3361f;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;letter-spacing:.01em">
+  🔴 오프라인 모드 — 주문은 임시저장됩니다 (재연결 시 자동 업로드)
+</div>
+
+<div id="loginView">
+  <div class="eyebrow">WeVape Internal</div>
+  <h1>위베이프 통합 프로그램</h1>
+  <input id="loginEmail" type="email" placeholder="이메일" />
+  <input id="loginPassword" type="password" placeholder="비밀번호" />
+  <button id="loginBtn">로그인</button>
+  <div id="loginError"></div>
+</div>
+
+<div id="appView">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark">●</span><span class="name">위베이프 POS</span></div>
+      <nav id="navBar">
+        <button data-tab="closing"><span class="navIcon">🏪</span><span class="navText"> 영업 시작 / 마감</span></button>
+        <div class="navGroup" data-group="sales">
+          <button type="button" class="navGroupHeader" data-group-toggle="sales"><span class="navIcon">🛒</span><span class="navText">판매</span></button>
+          <div class="navGroupBody" id="navGroupBody-sales">
+            <button data-tab="orders" class="active">주문입력</button>
+            <button data-tab="refund">환불</button>
+            <button data-tab="sales">판매내역</button>
+          </div>
+        </div>
+        <div class="navGroup" data-group="inventory">
+          <button type="button" class="navGroupHeader" data-group-toggle="inventory"><span class="navIcon">📦</span><span class="navText">재고관리</span></button>
+          <div class="navGroupBody collapsed" id="navGroupBody-inventory">
+            <button data-tab="purchases">입고</button>
+            <button data-tab="transfer">재고이동</button>
+            <button data-tab="stocktaking">재고실사</button>
+            <button data-tab="reorder-report">발주 알림</button>
+          </div>
+        </div>
+        <button data-tab="customers"><span class="navIcon">👥</span><span class="navText"> 고객관리</span></button>
+        <div class="navGroup" data-group="report">
+          <button type="button" class="navGroupHeader" data-group-toggle="report"><span class="navIcon">📊</span><span class="navText">리포트</span></button>
+          <div class="navGroupBody collapsed" id="navGroupBody-report">
+            <button data-tab="dashboard">매출 현황</button>
+            <button data-tab="sales-summary">분류별 매출</button>
+            <button data-tab="hourly-stats">시간대별 분석</button>
+            <button data-tab="store-compare">매장별 비교</button>
+            <button data-tab="product-trend">상품별 추이</button>
+          </div>
+        </div>
+        <div class="navGroup" data-group="settings">
+          <button type="button" class="navGroupHeader" data-group-toggle="settings"><span class="navIcon">⚙️</span><span class="navText">설정</span></button>
+          <div class="navGroupBody collapsed" id="navGroupBody-settings">
+            <button data-tab="products">상품관리</button>
+            <button data-tab="staff-accounts">직원 계정 관리</button>
+            <button data-tab="notices">공지사항 발송</button>
+          </div>
+        </div>
+      </nav>
+      <div id="userMenuWrapper">
+        <button id="userMenuBtn">
+          <span>👤 <span id="userMenuLabel">...</span></span>
+          <span style="font-size:10px;opacity:.6">▲</span>
+        </button>
+        <div id="userMenuDropdown">
+          <span class="um-email" id="userMenuEmail"></span>
+          <hr />
+          <button id="changeStoreBtn">🏪 내 매장 변경</button>
+          <button id="logoutBtn">로그아웃</button>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div id="panel-orders" class="panel active"></div>
+      <div id="panel-sales" class="panel"></div>
+      <div id="panel-sales-summary" class="panel"></div>
+      <div id="panel-purchases" class="panel"></div>
+      <div id="panel-transfer" class="panel"></div>
+      <div id="panel-stocktaking" class="panel"></div>
+      <div id="panel-stockhistory" class="panel"></div>
+      <div id="panel-refund" class="panel"></div>
+      <div id="panel-closing" class="panel"></div>
+      <div id="panel-customers" class="panel"></div>
+      <div id="panel-dashboard" class="panel"></div>
+      <div id="panel-hourly-stats" class="panel"></div>
+      <div id="panel-store-compare" class="panel"></div>
+      <div id="panel-product-trend" class="panel"></div>
+      <div id="panel-reorder-report" class="panel"></div>
+      <div id="panel-inventory" class="panel"></div>
+      <div id="panel-revisit" class="panel"></div>
+      <div id="panel-products" class="panel"></div>
+      <div id="panel-export" class="panel"></div>
+      <div id="panel-staff-accounts" class="panel"></div>
+      <div id="panel-notices" class="panel"></div>
+    </main>
+  </div>
+</div>
+
+<!-- 하단 퀵메뉴 -->
+<nav id="bottomNav">
+  <button class="bn-item" data-tab="closing"><span class="bn-icon">🏪</span>영업마감</button>
+  <button class="bn-item active" data-tab="orders"><span class="bn-icon">🛒</span>판매</button>
+  <button class="bn-item" data-tab="stocktaking"><span class="bn-icon">📦</span>재고관리</button>
+  <button class="bn-item" data-tab="customers"><span class="bn-icon">👥</span>고객관리</button>
+  <button class="bn-item" id="moreBtn"><span class="bn-icon">⋯</span>더보기</button>
+</nav>
+
+<!-- 더보기 슬라이드업 패널 -->
+<div id="morePanel">
+  <div class="mp-title">메뉴</div>
+  <div class="mp-grid">
+    <button class="bn-more-item" data-tab="refund">환불</button>
+    <button class="bn-more-item" data-tab="sales">판매내역</button>
+    <button class="bn-more-item" data-tab="sales-summary">분류별매출</button>
+    <button class="bn-more-item" data-tab="transfer">재고이동</button>
+    <button class="bn-more-item" data-tab="reorder-report">발주알림</button>
+    <button class="bn-more-item" data-tab="dashboard">매출현황</button>
+    <button class="bn-more-item" data-tab="product-trend">상품별추이</button>
+    <button class="bn-more-item" data-tab="products">상품관리</button>
+  </div>
+</div>
+
+<!-- 공지사항 팝업 모달 -->
+<div id="noticeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:480px;width:92vw;max-height:75vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+    <div style="font-weight:800;font-size:17px;margin-bottom:16px">📢 새 공지사항</div>
+    <div id="noticeModalItems"></div>
+    <button id="noticeModalClose" style="width:100%;margin-top:20px">확인</button>
+  </div>
+</div>
+
+<!-- 영수증 모달 -->
+<div id="receiptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:20px 20px 16px;max-width:340px;width:90vw;max-height:82vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:10px">🧾 영수증</div>
+    <div id="receiptContent" style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;border:1px dashed var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px;color:#111;background:#fdfaf0"></div>
+    <div class="row" style="gap:8px;margin-bottom:8px">
+      <button id="rc_printBtn" style="flex:1">🖨 인쇄</button>
+      <button id="rc_shareBtn" style="flex:1;background:#FEE500;border-color:#FEE500;color:#391B1B;font-weight:700">💬 카톡 전송</button>
+    </div>
+    <button id="rc_closeBtn" class="secondary" style="width:100%">닫기</button>
+    <div class="muted" id="rc_status" style="margin-top:8px;font-size:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- 인쇄 전용 영역 (평소 숨김, @media print 에서만 표시) -->
+<div id="receiptPrintArea"></div>
+
+<!-- 기본 매장 설정 모달 -->
+<div id="defaultStoreModal" class="row">
+  <div class="card" style="width:360px;max-width:92vw;background:#fff">
+    <div style="font-weight:700;margin-bottom:12px">🏪 기본 매장 설정</div>
+    <div class="muted" style="margin-bottom:10px;font-size:12px">로그인 후 자동으로 선택될 매장입니다.</div>
+    <select id="defaultStoreSelect" style="width:100%;margin-bottom:14px"><option value="">불러오는 중...</option></select>
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <button id="defaultStoreSaveBtn">저장</button>
+      <button id="defaultStoreCancelBtn" class="secondary">취소</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const groupDefaultTabs = {
+    sales: "orders", inventory: "purchases",
+    report: "dashboard", settings: "products"
+  };
+  document.querySelectorAll(".navGroupHeader").forEach(header => {
+    header.addEventListener("click", () => {
+      if (window.innerWidth < 1024) {
+        const tab = groupDefaultTabs[header.dataset.groupToggle];
+        if (tab && typeof showTab !== "undefined") showTab(tab);
+      } else {
+        const body = document.getElementById("navGroupBody-" + header.dataset.groupToggle);
+        if (body) body.classList.toggle("collapsed");
+      }
+    });
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/payment.js"></script>
+<script src="js/orders.js"></script>
+<script src="js/sales_history.js"></script>
+<script src="js/sales-summary.js"></script>
+<script src="js/purchases.js"></script>
+<script src="js/transfer.js"></script>
+<script src="js/stocktaking.js"></script>
+<script src="js/stock_history.js"></script>
+<script src="js/refund.js"></script>
+<script src="js/closing.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/hourly-stats.js"></script>
+<script src="js/store-compare.js"></script>
+<script src="js/product-trend.js"></script>
+<script src="js/reorder-report.js"></script>
+<script src="js/inventory_analysis.js"></script>
+<script src="js/revisit.js"></script>
+<script src="js/products_admin.js"></script>
+<script src="js/export.js"></script>
+<script src="js/staff-accounts.js"></script>
+<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+<script src="js/notices.js"></script>
+<script src="js/receipt.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('[SW] 등록 실패:', err));
+  });
+}
+initOffline();
+</script>
+</body>
+</html>

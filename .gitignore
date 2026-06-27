@@ -1,5 +1,6 @@
 # 서비스 계정 JSON 키 (보안 상 절대 커밋 금지)
 *.json
+!wevape-pos/manifest.json
 
 # Python 캐시
 __pycache__/
