@@ -265,7 +265,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .pb{height:calc(20px + var(--safe-bot));}
 
 /* ── 하단 탭 네비게이션 ── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e3de;display:flex;z-index:200;padding-bottom:var(--safe-bot);}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e3de;display:flex;z-index:400;padding-bottom:var(--safe-bot);}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:inherit;color:#999;transition:color 0.15s;}
 .tab-item.active{color:var(--green);}
 .tab-icon{font-size:20px;margin-bottom:3px;}
@@ -330,7 +330,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .board-empty{font-size:12px;color:#bbb;text-align:center;padding:20px 0;}
 
 /* 게시글 상세 */
-.board-detail-bg{position:fixed;inset:0;background:#fff;z-index:250;overflow-y:auto;display:none;}
+.board-detail-bg{position:fixed;inset:0;background:#fff;z-index:350;overflow-y:auto;display:none;padding-bottom:calc(64px + var(--safe-bot));}
 .board-detail-bg.open{display:block;}
 .board-detail-header{background:var(--green);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;}
 .board-detail-body{padding:16px;}
@@ -529,7 +529,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 </div>
 
 <!-- 지점 선택 화면 (오버레이) -->
-<div class="screen" id="screen-home" style="display:none;position:fixed;inset:0;z-index:150;background:var(--bg);overflow-y:auto;">
+<div class="screen" id="screen-home" style="display:none;position:fixed;inset:0;inset-bottom:calc(64px + var(--safe-bot));z-index:350;background:var(--bg);overflow-y:auto;padding-bottom:calc(64px + var(--safe-bot));">
   <div class="header">
     <div><div class="header-title">📋 지점 선택</div><div class="header-sub">원하는 지점을 선택하세요</div></div>
     <button class="back-btn" onclick="closeStoreSelect()">✕ 닫기</button>
@@ -539,7 +539,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 </div>
 
 <!-- 관리자 대시보드 화면 -->
-<div class="screen" id="screen-admin">
+<div class="screen has-tab-bar" id="screen-admin">
   <div class="header">
     <div><div class="header-title">📊 관리자 대시보드</div><div class="header-sub" id="dash-sub"></div></div>
     <button class="back-btn" onclick="exitAdmin()">← 나가기</button>
@@ -757,12 +757,9 @@ function ensureUsername(cb){
 // 탭 전환 + 화면 관리
 // ══════════════════════════════════════
 function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>{
-    s.classList.remove('active');
-    s.style.display='';
-  });
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);
-  if(el){el.classList.add('active');el.style.display='';}
+  if(el){el.classList.add('active');}
   window.scrollTo(0,0);
 }
 
@@ -795,14 +792,12 @@ function switchTab(tab){
 // 지점 선택 오버레이 열기/닫기
 function openStoreSelect(cb){
   storeSelectCallback=cb||null;
-  document.getElementById('tab-bar').style.display='none';
   document.getElementById('screen-home').style.display='block';
   renderStoreGrid();
   window.scrollTo(0,0);
 }
 function closeStoreSelect(){
   document.getElementById('screen-home').style.display='none';
-  document.getElementById('tab-bar').style.display='flex';
   switchTab(curTab);
 }
 
@@ -1042,11 +1037,9 @@ function openBoardDetail(item,idx){
   const canDel=isAdmin||(item.author===getUsername()&&item.cat!=='notice');
   delBtn.style.display=canDel?'block':'none';
   document.getElementById('board-detail-screen').classList.add('open');
-  document.getElementById('tab-bar').style.display='none';
 }
 window.closeBoardDetail=function(){
   document.getElementById('board-detail-screen').classList.remove('open');
-  document.getElementById('tab-bar').style.display='flex';
 };
 window.deleteBoardPost=async function(){
   if(!boardViewPost||!confirm('이 게시글을 삭제할까요?'))return;
@@ -2292,7 +2285,6 @@ window.checkPw=function(){
     isAdmin=true;
     dashTab='today';
     dashViewDate=null;
-    document.getElementById('tab-bar').style.display='none';
     showScreen('screen-admin');
     renderDashboard();
   } else {
