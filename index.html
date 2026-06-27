@@ -296,16 +296,18 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .notice-item-meta{font-size:10px;color:var(--text-mute);margin-top:4px;}
 .notice-empty{font-size:12px;color:var(--text-mute);text-align:center;padding:16px 0;}
 
-.dashboard-today{margin:0 12px 12px;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(26,35,50,0.08);border:1px solid var(--border);}
-.dashboard-today-header{font-size:14px;font-weight:700;color:var(--text);padding:14px 16px 10px;border-bottom:1px solid var(--border);}
-.dashboard-store-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
-.dashboard-store-row:last-child{border-bottom:none;}
-.dashboard-store-row:active{background:#f8f7f2;}
-.dashboard-store-left{display:flex;align-items:center;gap:8px;}
-.dashboard-store-icon{font-size:18px;}
-.dashboard-store-name{font-size:13px;font-weight:600;color:var(--text);}
-.dashboard-store-stats{font-size:11px;color:var(--text-sub);margin-top:2px;}
-.dashboard-store-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.dashboard-today{margin:0 12px 12px;}
+.dashboard-today-header{font-size:14px;font-weight:700;color:var(--text);padding:4px 2px 10px;}
+.dashboard-store-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dashboard-store-block{background:var(--card);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 4px rgba(26,35,50,0.07);transition:border-color 0.15s,transform 0.12s;}
+.dashboard-store-block:active{transform:scale(0.96);}
+.dashboard-store-block.status-done{border-color:var(--green);}
+.dashboard-store-block.status-pending{border-color:var(--orange);}
+.dashboard-store-block.status-none{border-color:var(--border);}
+.dashboard-store-block .store-icon{font-size:22px;margin-bottom:4px;}
+.dashboard-store-block .store-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px;}
+.dashboard-store-block .store-stats{font-size:10px;color:var(--text-sub);line-height:1.4;}
+.dashboard-store-block .store-status-dot{width:8px;height:8px;border-radius:50%;margin:4px auto 0;}
 
 /* ── 모달 공통 ── */
 .notice-modal-bg{position:fixed;inset:0;background:rgba(26,35,50,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
@@ -459,7 +461,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <!-- 오늘 전체 매장 현황 -->
   <div class="dashboard-today">
     <div class="dashboard-today-header">📍 오늘의 매장 현황</div>
-    <div id="dashboard-store-list"></div>
+    <div class="dashboard-store-grid" id="dashboard-store-list"></div>
   </div>
   <div class="pb"></div>
 </div>
@@ -894,20 +896,20 @@ async function renderDashboardHome(){
   // 게시판 로드
   loadBoard();
 
-  // 오늘의 매장 현황
+  // 오늘의 매장 현황 (3×3 그리드)
   const listEl=document.getElementById('dashboard-store-list');
   if(!listEl)return;
-  listEl.innerHTML='<div style="padding:14px 16px;font-size:12px;color:#bbb;">불러오는 중...</div>';
+  listEl.innerHTML='';
 
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
   const tKey=todayKey();
   const total=getCleanItemCount(ty,tm,td);
   const sec=getTodayCleanSec();
-  const cleanLabel=sec>0?`🧹 대청소 ${sec}구역`:'🧹 청소';
+  const cleanLabel=sec>0?`대청소 ${sec}구`:'청소';
 
-  listEl.innerHTML='';
   for(const store of STORES){
-    const row=document.createElement('div');row.className='dashboard-store-row';
+    const block=document.createElement('div');
+    block.className='dashboard-store-block status-none';
 
     let cleanDone=0,todoDone=0,todoTotal=0;
     try{
@@ -920,21 +922,20 @@ async function renderDashboardHome(){
     }catch(e){}
 
     const cleanOk=total>0&&cleanDone>=total;
-    const badge=cleanOk
-      ?`<span class="dashboard-store-badge" style="background:var(--green-light);color:var(--green)">✅ 완료</span>`
-      :cleanDone>0
-        ?`<span class="dashboard-store-badge" style="background:#fef3c7;color:#92400e">🟡 진행중</span>`
-        :`<span class="dashboard-store-badge" style="background:#f3f4f6;color:#9ca3af">⬜ 미완료</span>`;
+    const statusClass=cleanOk?'status-done':cleanDone>0?'status-pending':'status-none';
+    const dotColor=cleanOk?'var(--green)':cleanDone>0?'var(--orange)':'var(--border)';
+    block.className=`dashboard-store-block ${statusClass}`;
 
-    row.innerHTML=`<div class="dashboard-store-left">
-      <div class="dashboard-store-icon">${store.icon}</div>
-      <div>
-        <div class="dashboard-store-name">${store.name}</div>
-        <div class="dashboard-store-stats">${cleanLabel} ${cleanDone}/${total} · 📝 업무 ${todoDone}/${todoTotal}</div>
-      </div>
-    </div>${badge}`;
-    row.onclick=()=>{curStore=store;switchTab('monthly');};
-    listEl.appendChild(row);
+    // 매장명 줄임 처리
+    const shortName=store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+
+    block.innerHTML=`<div class="store-icon">${store.icon}</div>
+      <div class="store-name">${shortName}</div>
+      <div class="store-stats">${cleanLabel} ${cleanDone}/${total}</div>
+      ${todoTotal>0?`<div class="store-stats">📝 ${todoDone}/${todoTotal}</div>`:''}
+      <div class="store-status-dot" style="background:${dotColor}"></div>`;
+    block.onclick=()=>{curStore=store;switchTab('monthly');};
+    listEl.appendChild(block);
   }
 }
 
@@ -1275,11 +1276,16 @@ function showDetail(y,m,d){
     else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
     tg.appendChild(t);
   });
+  // ① 오늘의 업무 (읽기 전용 — 입력은 일일 스케줄에서)
+  const todoContainer=document.getElementById('todo-container');
+  todoContainer.innerHTML='';
+  todoContainer.appendChild(buildTodoSection(y,m,d,true));
+
+  // ② 청소 체크리스트 + 기본 업무
   const tl=document.getElementById('tlist');tl.innerHTML='';
   const specs=[];
   evs.forEach(e=>{if(SPECIALS[e.t])specs.push({...SPECIALS[e.t]});});
   const cleanEv=evs.find(e=>e.t==='clean');
-  // 청소 항목: 대청소일이면 "🧹 대청소 N구역"(기본+구역 합본), 그 외엔 "청소 및 매장 정리"(기본만)
   const cleanTaskObj=cleanEv
     ? {task:`🧹 대청소 ${cleanEv.sec}구역`,meta:`기본 청소 6항목 + ${cleanEv.sec}구역 추가 청소`,col:"c-green",cleanTask:true,mode:'combined',secIdx:cleanEv.sec-1}
     : {task:"청소 및 매장 정리",meta:"기본 청소 6항목 체크리스트",col:"c-green",cleanTask:true,mode:'base',secIdx:null};
@@ -1318,12 +1324,7 @@ function showDetail(y,m,d){
     tl.appendChild(row);
   });
 
-  // 오늘의 업무 섹션
-  const todoContainer=document.getElementById('todo-container');
-  todoContainer.innerHTML='';
-  todoContainer.appendChild(buildTodoSection(y,m,d));
-
-  // 인수인계 섹션
+  // ③ 인수인계
   const handoverContainer=document.getElementById('handover-container');
   handoverContainer.innerHTML='';
   handoverContainer.appendChild(buildHandoverSection(y,m,d));
@@ -1417,11 +1418,11 @@ async function deleteTodoItem(storeId,dateKey,itemId){
   await setDoc(ref,{items});
 }
 
-function buildTodoSection(y,m,d){
+function buildTodoSection(y,m,d,readOnly=false){
   const dateKey=dk(y,m,d);
-  const locked=isDateLocked(dateKey);
+  const locked=readOnly||isDateLocked(dateKey);
   const wrap=document.createElement('div');wrap.className='todo-section';
-  wrap.innerHTML=`<div class="todo-header">📝 오늘의 업무${locked?'<span class="lock-badge">🔒 마감됨</span>':''}</div>
+  wrap.innerHTML=`<div class="todo-header">📝 오늘의 업무${readOnly?'<span class="lock-badge" style="background:var(--blue-light);color:var(--blue);">👁 보기 전용</span>':locked?'<span class="lock-badge">🔒 마감됨</span>':''}</div>
     <div class="todo-list" id="todo-list-box">불러오는 중...</div>`;
 
   if(!locked){
