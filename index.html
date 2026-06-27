@@ -436,6 +436,12 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="nav-btn" onclick="chgDailyStore(1)">›</button>
     </div>
   </div>
+  <!-- 날짜 이동 바 -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #ede9e0;">
+    <button class="nav-btn" onclick="chgDailyDate(-1)" style="background:#f0f0ee;color:#555;">‹ 전날</button>
+    <span id="daily-nav-label" style="font-size:13px;font-weight:700;color:#333;min-width:120px;text-align:center;"></span>
+    <button class="nav-btn" id="daily-next-btn" onclick="chgDailyDate(1)" style="background:#f0f0ee;color:#555;">다음날 ›</button>
+  </div>
   <div class="detail" id="daily-detail" style="display:block">
     <div class="detail-header">
       <div class="detail-date" id="daily-ddate"></div>
@@ -568,6 +574,7 @@ let dashTab = 'today';
 let dashViewDate = null;
 let curTab = 'dashboard'; // 현재 탭
 let storeSelectCallback = null; // 지점 선택 후 콜백
+let dailyDate = new Date(); // 일일 스케줄 현재 날짜 (기본: 오늘)
 function clearDashUnsubs(){dashUnsubs.forEach(u=>u());dashUnsubs=[];}
 
 // ══════════════════════════════════════
@@ -706,6 +713,7 @@ function switchTab(tab){
   } else if(tab==='daily'){
     showScreen('screen-daily');
     if(!curStore)curStore=STORES[0];
+    dailyDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     renderDailyScreen();
   }
 }
@@ -912,31 +920,48 @@ window.deleteNotice=async function(idx){
 };
 
 // ══════════════════════════════════════
-// 일일 스케줄 화면 (오늘 날짜 고정)
+// 일일 스케줄 화면 (날짜 이동 가능)
 // ══════════════════════════════════════
 function renderDailyScreen(){
-  if(!curStore)return;
-  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
-  document.getElementById('daily-store-title').textContent=`${curStore.icon} ${curStore.name}`;
+  if(!curStore){curStore=STORES[0];}
+  const ty=dailyDate.getFullYear(),tm=dailyDate.getMonth(),td=dailyDate.getDate();
   const dows=['일','월','화','수','목','금','토'];
   const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const isToday=(ty===today.getFullYear()&&tm===today.getMonth()&&td===today.getDate());
+
+  // 헤더
+  document.getElementById('daily-store-title').textContent=`${curStore.icon} ${curStore.name}`;
   document.getElementById('daily-date-sub').textContent=
-    `${ty}년 ${mns[tm]} ${td}일 (${dows[new Date(ty,tm,td).getDay()]}) · 오늘`;
+    `${ty}년 ${mns[tm]} ${td}일 (${dows[new Date(ty,tm,td).getDay()]})${isToday?' · 오늘':''}`;
+
+  // 날짜 네비 레이블
+  const navLabel=document.getElementById('daily-nav-label');
+  if(navLabel)navLabel.textContent=`${mns[tm]} ${td}일 (${dows[new Date(ty,tm,td).getDay()]})${isToday?' 오늘':''}`;
+
+  // 다음날 버튼 — 오늘이면 비활성화
+  const nextBtn=document.getElementById('daily-next-btn');
+  if(nextBtn)nextBtn.disabled=isToday;
 
   const evs=getEvs(ty,tm,td);
   const dateKey=dk(ty,tm,td);
 
-  // 날짜/태그
-  document.getElementById('daily-ddate').textContent=`${tm+1}월 ${td}일 (${dows[new Date(ty,tm,td).getDay()]})`;
+  // 날짜 헤더
+  document.getElementById('daily-ddate').textContent=
+    `${tm+1}월 ${td}일 (${dows[new Date(ty,tm,td).getDay()]})`;
+
+  // 태그
   const tagsEl=document.getElementById('daily-dtags');
   tagsEl.innerHTML='';
   evs.forEach(e=>{
-    if(SPECIALS[e.t]){const sp=SPECIALS[e.t];const t=document.createElement('span');t.className=`detail-tag ${sp.col}`;t.textContent=sp.task;tagsEl.appendChild(t);}
+    if(SPECIALS[e.t]){
+      const sp=SPECIALS[e.t];
+      const t=document.createElement('span');t.className=`detail-tag ${sp.col}`;t.textContent=sp.task;tagsEl.appendChild(t);
+    }
     if(e.t==='holiday'){const t=document.createElement('span');t.className='detail-tag c-red';t.textContent=e.name;tagsEl.appendChild(t);}
     if(e.t==='clean'){const t=document.createElement('span');t.className='detail-tag c-green';t.textContent=`🧹 대청소 ${e.sec}구역`;tagsEl.appendChild(t);}
   });
 
-  // 업무 목록 (월간 showDetail과 동일 로직)
+  // 업무 목록
   const tl=document.getElementById('daily-tlist');tl.innerHTML='';
   const cleanEv=evs.find(e=>e.t==='clean');
   const cleanTaskObj=cleanEv
@@ -972,6 +997,26 @@ function renderDailyScreen(){
   const handoverContainer=document.getElementById('daily-handover-container');
   handoverContainer.innerHTML='';
   handoverContainer.appendChild(buildHandoverSection(ty,tm,td));
+
+  // 스크롤 상단
+  window.scrollTo(0,0);
+}
+
+// 일일 날짜 이동
+function chgDailyDate(dir){
+  const next=new Date(dailyDate);
+  next.setDate(next.getDate()+dir);
+  // 오늘보다 미래는 안 됨
+  const todayMidnight=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  if(next>todayMidnight)return;
+  dailyDate=next;
+  renderDailyScreen();
+}
+
+// 월간 달력에서 날짜 클릭 시 일일 스케줄로 이동
+function goToDailyFromCal(y,m,d){
+  dailyDate=new Date(y,m,d);
+  switchTab('daily');
 }
 
 // 월간/일일 화면에서 지점 이동 (‹›)
@@ -1111,6 +1156,17 @@ function showDetail(y,m,d){
   handoverContainer.appendChild(buildHandoverSection(y,m,d));
 
   det.style.display='block';
+
+  // 일일 스케줄로 이동 버튼
+  let existingBtn=document.getElementById('go-daily-btn');
+  if(existingBtn)existingBtn.remove();
+  const goBtn=document.createElement('button');
+  goBtn.id='go-daily-btn';
+  goBtn.style.cssText='display:block;width:calc(100% - 24px);margin:0 12px 12px;padding:12px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+  goBtn.textContent=`📝 이 날짜 일일 스케줄로 이동`;
+  goBtn.onclick=()=>goToDailyFromCal(y,m,d);
+  det.appendChild(goBtn);
+
   setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'start'}),50);
 }
 
