@@ -307,6 +307,56 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .notice-modal-btns .nm-confirm{background:var(--green);color:#fff;}
 .notice-modal-btns .nm-cancel{background:#f0f0ee;color:#888;}
 .notice-del-btn{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:2px 4px;float:right;}
+
+/* ── 게시판 ── */
+.board-section{margin:12px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.board-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;}
+.board-title{font-size:14px;font-weight:700;color:#333;}
+.board-write-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.board-tabs{display:flex;gap:0;padding:10px 16px 0;}
+.board-tab{flex:1;padding:8px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#999;border-bottom:2px solid transparent;}
+.board-tab.active{color:var(--green);border-bottom:2px solid var(--green);}
+.board-list{padding:8px 0 8px;}
+.board-item{padding:12px 16px;border-bottom:1px solid #f0eeea;cursor:pointer;}
+.board-item:last-child{border-bottom:none;}
+.board-item:active{background:#f9f8f5;}
+.board-item-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.board-cat-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
+.board-cat-notice{background:var(--orange-light);color:var(--orange);}
+.board-cat-share{background:var(--blue-light);color:var(--blue);}
+.board-item-title{font-size:13px;font-weight:700;color:#222;}
+.board-item-preview{font-size:12px;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.board-item-meta{font-size:11px;color:#bbb;margin-top:4px;}
+.board-empty{font-size:12px;color:#bbb;text-align:center;padding:20px 0;}
+
+/* 게시글 상세 */
+.board-detail-bg{position:fixed;inset:0;background:#fff;z-index:250;overflow-y:auto;display:none;}
+.board-detail-bg.open{display:block;}
+.board-detail-header{background:var(--green);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;}
+.board-detail-body{padding:16px;}
+.board-detail-cat{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;display:inline-block;margin-bottom:8px;}
+.board-detail-title{font-size:17px;font-weight:700;color:#222;margin-bottom:6px;}
+.board-detail-meta{font-size:12px;color:#bbb;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0eeea;}
+.board-detail-content{font-size:14px;color:#333;line-height:1.7;white-space:pre-wrap;}
+.board-detail-actions{display:flex;gap:8px;margin-top:20px;}
+.board-detail-del{background:#fff;border:1px solid #eee;color:#bbb;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:inherit;}
+
+/* 게시글 작성 모달 */
+.board-write-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.board-write-modal-bg.open{display:flex;}
+.board-write-modal{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px calc(20px + var(--safe-bot));width:100%;max-width:480px;max-height:85vh;overflow-y:auto;}
+.board-write-modal h3{font-size:16px;font-weight:700;margin-bottom:14px;}
+.board-cat-select{display:flex;gap:8px;margin-bottom:12px;}
+.board-cat-btn{flex:1;padding:9px;border-radius:10px;border:2px solid #eee;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#999;}
+.board-cat-btn.selected{border-color:var(--green);color:var(--green);background:var(--green-light);}
+.board-cat-btn.selected-notice{border-color:var(--orange);color:var(--orange);background:var(--orange-light);}
+.board-write-modal input,.board-write-modal textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;}
+.board-write-modal input:focus,.board-write-modal textarea:focus{border-color:var(--green);}
+.board-write-modal textarea{min-height:100px;resize:vertical;line-height:1.5;}
+.board-write-btns{display:flex;gap:8px;margin-top:4px;}
+.board-write-btns button{flex:1;padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.bw-confirm{background:var(--green);color:#fff;}
+.bw-cancel{background:#f0f0ee;color:#888;}
 </style>
 </head>
 <body>
@@ -344,16 +394,35 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 </div>
 
-<!-- 공지 작성 모달 (관리자 전용) -->
-<div class="notice-modal-bg" id="notice-modal" style="display:none">
-  <div class="notice-modal">
-    <h3>📢 공지사항 작성</h3>
-    <input type="text" id="notice-title-input" placeholder="제목 (예: 이번 주 대청소 일정 안내)">
-    <textarea id="notice-body-input" placeholder="내용을 입력하세요..."></textarea>
-    <div class="notice-modal-btns">
-      <button class="nm-cancel" onclick="closeNoticeModal()">취소</button>
-      <button class="nm-confirm" onclick="submitNotice()">등록</button>
+<!-- 게시글 작성 모달 -->
+<div class="board-write-modal-bg" id="board-write-modal">
+  <div class="board-write-modal">
+    <h3>✏️ 글 작성</h3>
+    <div class="board-cat-select">
+      <button class="board-cat-btn selected-notice selected" id="bcat-notice" onclick="selectBoardCat('notice')">📢 공지</button>
+      <button class="board-cat-btn" id="bcat-share" onclick="selectBoardCat('share')">💬 업무공유</button>
     </div>
+    <input type="text" id="board-title-input" placeholder="제목을 입력하세요">
+    <textarea id="board-body-input" placeholder="내용을 입력하세요..."></textarea>
+    <div class="board-write-btns">
+      <button class="bw-cancel" onclick="closeBoardWrite()">취소</button>
+      <button class="bw-confirm" onclick="submitBoardPost()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 게시글 상세 화면 -->
+<div class="board-detail-bg" id="board-detail-screen">
+  <div class="board-detail-header">
+    <button class="back-btn" onclick="closeBoardDetail()">← 목록</button>
+    <div style="font-size:14px;font-weight:700;">게시글</div>
+    <button class="board-detail-del" id="board-detail-del-btn" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;" onclick="deleteBoardPost()">삭제</button>
+  </div>
+  <div class="board-detail-body">
+    <div class="board-detail-cat" id="board-detail-cat"></div>
+    <div class="board-detail-title" id="board-detail-title"></div>
+    <div class="board-detail-meta" id="board-detail-meta"></div>
+    <div class="board-detail-content" id="board-detail-content"></div>
   </div>
 </div>
 
@@ -363,13 +432,18 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div><div class="header-title">📋 위베이프</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
   </div>
-  <!-- 공지사항 -->
-  <div class="notice-section">
-    <div class="notice-header">
-      <div class="notice-title">📢 공지사항</div>
-      <button class="notice-admin-btn" id="notice-add-btn" style="display:none" onclick="openNoticeModal()">+ 작성</button>
+  <!-- 게시판 -->
+  <div class="board-section">
+    <div class="board-header">
+      <div class="board-title">📋 게시판</div>
+      <button class="board-write-btn" onclick="openBoardWrite()">✏️ 글쓰기</button>
     </div>
-    <div class="notice-list" id="notice-list"><div class="notice-empty">공지사항이 없습니다</div></div>
+    <div class="board-tabs">
+      <button class="board-tab active" id="btab-all" onclick="switchBoardTab('all')">전체</button>
+      <button class="board-tab" id="btab-notice" onclick="switchBoardTab('notice')">📢 공지</button>
+      <button class="board-tab" id="btab-share" onclick="switchBoardTab('share')">💬 업무공유</button>
+    </div>
+    <div class="board-list" id="board-list"><div class="board-empty">불러오는 중...</div></div>
   </div>
   <!-- 오늘 전체 매장 현황 -->
   <div class="dashboard-today">
@@ -741,8 +815,6 @@ function exitAdmin(){
   clearDashUnsubs();
   isAdmin=false;
   document.getElementById('tab-bar').style.display='flex';
-  // 공지 작성 버튼 숨기기
-  document.getElementById('notice-add-btn').style.display='none';
   switchTab('dashboard');
 }
 
@@ -811,8 +883,8 @@ async function renderDashboardHome(){
   const subEl=document.getElementById('dashboard-date-sub');
   if(subEl)subEl.textContent=`${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[today.getDay()]})`;
 
-  // 공지사항 로드
-  loadNotices();
+  // 게시판 로드
+  loadBoard();
 
   // 오늘의 매장 현황
   const listEl=document.getElementById('dashboard-store-list');
@@ -861,62 +933,130 @@ async function renderDashboardHome(){
 // ══════════════════════════════════════
 // 공지사항 CRUD
 // ══════════════════════════════════════
-async function loadNotices(){
-  const listEl=document.getElementById('notice-list');
+// ══════════════════════════════════════
+// 게시판 (공지 + 업무공유)
+// ══════════════════════════════════════
+let boardTab='all'; // 현재 게시판 탭
+let boardWriteCat='notice'; // 작성 중인 카테고리
+let boardViewPost=null; // 현재 보고 있는 게시글
+
+async function loadBoard(){
+  const listEl=document.getElementById('board-list');
   if(!listEl)return;
+  listEl.innerHTML='<div class="board-empty">불러오는 중...</div>';
   try{
-    const snap=await getDoc(doc(db,'notices/global'));
+    const snap=await getDoc(doc(db,'board/posts'));
     const items=snap.exists()?(snap.data().items||[]):[];
-    if(items.length===0){
-      listEl.innerHTML='<div class="notice-empty">등록된 공지사항이 없습니다</div>';
+    const filtered=boardTab==='all'?items:items.filter(i=>i.cat===boardTab);
+    if(filtered.length===0){
+      listEl.innerHTML='<div class="board-empty">게시글이 없습니다</div>';
       return;
     }
     listEl.innerHTML='';
-    [...items].reverse().forEach((item,ri)=>{
-      const realIdx=items.length-1-ri;
-      const div=document.createElement('div');div.className='notice-item';
-      div.innerHTML=`${isAdmin?`<button class="notice-del-btn" onclick="deleteNotice(${realIdx})">🗑️</button>`:''}
-        <div class="notice-item-title">${item.title}</div>
-        <div class="notice-item-body">${item.body.replace(/\n/g,'<br>')}</div>
-        <div class="notice-item-meta">${item.author||'관리자'} · ${item.date||''}</div>`;
+    [...filtered].reverse().forEach((item,ri)=>{
+      const realIdx=items.indexOf(item);
+      const catLabel=item.cat==='notice'?'📢 공지':'💬 업무공유';
+      const catClass=item.cat==='notice'?'board-cat-notice':'board-cat-share';
+      const div=document.createElement('div');div.className='board-item';
+      div.innerHTML=`<div class="board-item-top">
+          <span class="board-cat-badge ${catClass}">${catLabel}</span>
+        </div>
+        <div class="board-item-title">${item.title}</div>
+        <div class="board-item-preview">${item.body}</div>
+        <div class="board-item-meta">${item.author||'익명'} · ${item.date||''}</div>`;
+      div.onclick=()=>openBoardDetail(item,realIdx);
       listEl.appendChild(div);
     });
   }catch(e){
-    listEl.innerHTML='<div class="notice-empty">불러오기 실패</div>';
+    listEl.innerHTML='<div class="board-empty">불러오기 실패</div>';
   }
 }
 
-window.openNoticeModal=function(){
-  document.getElementById('notice-modal').style.display='flex';
-  document.getElementById('notice-title-input').value='';
-  document.getElementById('notice-body-input').value='';
-  setTimeout(()=>document.getElementById('notice-title-input').focus(),100);
+function switchBoardTab(tab){
+  boardTab=tab;
+  ['all','notice','share'].forEach(t=>{
+    const btn=document.getElementById(`btab-${t}`);
+    if(btn)btn.className='board-tab'+(t===tab?' active':'');
+  });
+  loadBoard();
+}
+
+// 게시글 작성
+window.openBoardWrite=function(){
+  // 공지 카테고리는 관리자만
+  boardWriteCat=isAdmin?'notice':'share';
+  selectBoardCat(boardWriteCat);
+  document.getElementById('board-title-input').value='';
+  document.getElementById('board-body-input').value='';
+  document.getElementById('board-write-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('board-title-input').focus(),100);
 };
-window.closeNoticeModal=function(){
-  document.getElementById('notice-modal').style.display='none';
+window.closeBoardWrite=function(){
+  document.getElementById('board-write-modal').classList.remove('open');
 };
-window.submitNotice=async function(){
-  const title=document.getElementById('notice-title-input').value.trim();
-  const body=document.getElementById('notice-body-input').value.trim();
-  if(!title||!body)return;
-  const ref=doc(db,'notices/global');
+window.selectBoardCat=function(cat){
+  boardWriteCat=cat;
+  const nb=document.getElementById('bcat-notice');
+  const sb=document.getElementById('bcat-share');
+  if(cat==='notice'){
+    nb.className='board-cat-btn selected-notice selected';
+    sb.className='board-cat-btn';
+  } else {
+    nb.className='board-cat-btn';
+    sb.className='board-cat-btn selected';
+  }
+  // 공지는 관리자만 선택 가능
+  if(cat==='notice'&&!isAdmin){
+    alert('공지는 관리자만 작성할 수 있습니다');
+    selectBoardCat('share');
+  }
+};
+window.submitBoardPost=async function(){
+  const title=document.getElementById('board-title-input').value.trim();
+  const body=document.getElementById('board-body-input').value.trim();
+  if(!title||!body){alert('제목과 내용을 입력해주세요');return;}
+  const author=isAdmin?'관리자':(getUsername()||'익명');
+  const ref=doc(db,'board/posts');
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
   const now=new Date();
   const date=`${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  items.push({title,body,date,author:'관리자'});
+  items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date});
   await setDoc(ref,{items});
-  closeNoticeModal();
-  loadNotices();
+  closeBoardWrite();
+  loadBoard();
 };
-window.deleteNotice=async function(idx){
-  if(!confirm('이 공지를 삭제할까요?'))return;
-  const ref=doc(db,'notices/global');
+
+// 게시글 상세
+function openBoardDetail(item,idx){
+  boardViewPost={item,idx};
+  const catLabel=item.cat==='notice'?'📢 공지':'💬 업무공유';
+  const catClass=item.cat==='notice'?'board-cat-notice':'board-cat-share';
+  document.getElementById('board-detail-cat').textContent=catLabel;
+  document.getElementById('board-detail-cat').className=`board-detail-cat ${catClass}`;
+  document.getElementById('board-detail-title').textContent=item.title;
+  document.getElementById('board-detail-meta').textContent=`${item.author||'익명'} · ${item.date||''}`;
+  document.getElementById('board-detail-content').textContent=item.body;
+  // 삭제 버튼: 관리자는 모두, 직원은 본인 글만
+  const delBtn=document.getElementById('board-detail-del-btn');
+  const canDel=isAdmin||(item.author===getUsername()&&item.cat!=='notice');
+  delBtn.style.display=canDel?'block':'none';
+  document.getElementById('board-detail-screen').classList.add('open');
+  document.getElementById('tab-bar').style.display='none';
+}
+window.closeBoardDetail=function(){
+  document.getElementById('board-detail-screen').classList.remove('open');
+  document.getElementById('tab-bar').style.display='flex';
+};
+window.deleteBoardPost=async function(){
+  if(!boardViewPost||!confirm('이 게시글을 삭제할까요?'))return;
+  const ref=doc(db,'board/posts');
   const snap=await getDoc(ref);
-  const items=snap.exists()?(snap.data().items||[]):[];
-  items.splice(idx,1);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  items.splice(boardViewPost.idx,1);
   await setDoc(ref,{items});
-  loadNotices();
+  closeBoardDetail();
+  loadBoard();
 };
 
 // ══════════════════════════════════════
@@ -1074,6 +1214,28 @@ function renderCal(){
       });
       div.appendChild(bd);
       div.onclick=()=>selDay(c.y,c.m,c.d);
+
+      // 일일 업무 데이터 비동기 뱃지 (오늘 포함 과거 날짜만)
+      const isPastOrToday=(new Date(c.y,c.m,c.d)<=new Date(today.getFullYear(),today.getMonth(),today.getDate()));
+      if(isPastOrToday&&curStore){
+        const dateKey=dk(c.y,c.m,c.d);
+        getDoc(doc(db,`todos/${curStore.id}_${dateKey}`)).then(snap=>{
+          if(!snap.exists())return;
+          const items=snap.data().items||[];
+          if(items.length===0)return;
+          const done=items.filter(i=>i.done).length;
+          const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
+          const wb=document.createElement('div');wb.className='badge b-blue';
+          wb.textContent=`📝${done}/${items.length}`;
+          bd.appendChild(wb);
+          if(authors.length>0){
+            const ab=document.createElement('div');ab.className='badge';
+            ab.style.cssText='background:#f0f0ee;color:#666;';
+            ab.textContent=authors.slice(0,2).join(',')+(authors.length>2?'..':'');
+            bd.appendChild(ab);
+          }
+        }).catch(()=>{});
+      }
     }
     g.appendChild(div);
   });
@@ -2131,7 +2293,6 @@ window.checkPw=function(){
     dashTab='today';
     dashViewDate=null;
     document.getElementById('tab-bar').style.display='none';
-    document.getElementById('notice-add-btn').style.display='block';
     showScreen('screen-admin');
     renderDashboard();
   } else {
