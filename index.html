@@ -372,11 +372,11 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .board-detail-del{background:var(--card);border:1px solid var(--border);color:var(--text-sub);border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:inherit;}
 
 /* 게시글 작성 모달 */
-.board-write-modal-bg{position:fixed;inset:0;background:rgba(26,35,50,0.6);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.board-write-modal-bg{position:fixed;inset:0;background:rgba(26,35,50,0.6);z-index:450;display:none;align-items:flex-end;justify-content:center;}
 .board-write-modal-bg.open{display:flex;}
-.board-write-modal{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:480px;height:auto;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+.board-write-modal{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:480px;height:auto;max-height:calc(90vh - 64px - var(--safe-bot));display:flex;flex-direction:column;overflow:hidden;}
 .board-write-modal-body{padding:20px 16px 8px;overflow-y:auto;flex:1;min-height:0;}
-.board-write-modal-footer{padding:8px 16px calc(16px + var(--safe-bot));background:var(--card);border-top:1px solid var(--border);flex-shrink:0;}
+.board-write-modal-footer{padding:8px 16px 16px;background:var(--card);border-top:1px solid var(--border);flex-shrink:0;}
 .board-write-modal h3{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--text);}
 .board-cat-select{display:flex;gap:8px;margin-bottom:12px;}
 .board-cat-btn{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-sub);}
