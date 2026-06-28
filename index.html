@@ -403,6 +403,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-stat-box{background:#f8f7f2;border-radius:10px;padding:12px;text-align:center;}
 .my-stat-num{font-size:22px;font-weight:700;color:var(--navy);}
 .my-stat-label{font-size:10px;color:var(--text-sub);margin-top:2px;}
+
+/* 직원 블록 타일 */
+.staff-block{background:var(--card);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);transition:transform 0.12s,border-color 0.15s;}
+.staff-block:active{transform:scale(0.95);}
+.staff-block:hover{border-color:var(--gold);}
+.staff-avatar{width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);margin:0 auto 8px;}
+.staff-name{font-size:13px;font-weight:700;color:var(--text);}
+.staff-add-block{background:var(--gold-light);border:2px dashed var(--gold);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;}
+.staff-add-block:active{transform:scale(0.95);}
 </style>
 </head>
 <body>
@@ -553,23 +562,20 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div class="pb"></div>
 </div>
 
-<!-- ③ 일일 스케줄 화면 -->
-<!-- ③ 내 업무 화면 -->
+<!-- ③ 내 업무 화면 — 직원 선택 -->
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
-    <div><div class="header-title">👤 내 업무</div><div class="header-sub" id="my-date-sub"></div></div>
+    <div><div class="header-title">👤 내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
   </div>
+  <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
+  <div class="pb"></div>
+</div>
 
-  <!-- 프로필 + 이름 설정 -->
-  <div style="background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div id="my-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy);flex-shrink:0;">?</div>
-      <div>
-        <div id="my-name-display" style="font-size:14px;font-weight:700;color:#fff;">이름을 설정해주세요</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.6);">내 업무 페이지</div>
-      </div>
-    </div>
-    <button id="my-name-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;">이름 변경</button>
+<!-- ④ 내 업무 — 업무 입력 화면 -->
+<div class="screen has-tab-bar" id="screen-my-work">
+  <div class="header">
+    <div><div class="header-title" id="my-work-name">-</div><div class="header-sub" id="my-work-sub"></div></div>
+    <button class="back-btn" onclick="backToStaffSelect()">← 직원 선택</button>
   </div>
 
   <!-- 매장 선택 -->
@@ -586,7 +592,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 
   <!-- 이번 달 통계 -->
-  <div class="my-stats-grid" id="my-stats-grid" style="margin:12px 16px 0;">
+  <div class="my-stats-grid" style="margin:12px 16px 0;">
     <div class="my-stat-box"><div class="my-stat-num" id="my-stat-total">-</div><div class="my-stat-label">총 업무</div></div>
     <div class="my-stat-box"><div class="my-stat-num" id="my-stat-done">-</div><div class="my-stat-label">완료</div></div>
     <div class="my-stat-box"><div class="my-stat-num" id="my-stat-carry">-</div><div class="my-stat-label">이월</div></div>
@@ -602,11 +608,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <input type="text" class="my-input" id="my-todo-input" placeholder="할 일을 입력하세요" onkeydown="if(event.key==='Enter')addMyTodo()">
       <button class="my-add-btn" onclick="addMyTodo()">+ 추가</button>
     </div>
-    <!-- 여러 개 입력 -->
     <div style="padding:0 16px 12px;">
       <button onclick="toggleMyBulk()" style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;">📋 여러 개 한번에 입력</button>
       <div id="my-bulk-wrap" style="display:none;margin-top:8px;">
-        <textarea id="my-bulk-textarea" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;min-height:80px;resize:vertical;outline:none;" placeholder="한 줄에 하나씩 입력&#10;예) 재고 확인&#10;청소 완료 체크&#10;인수인계 메모 작성"></textarea>
+        <textarea id="my-bulk-textarea" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;min-height:80px;resize:vertical;outline:none;" placeholder="한 줄에 하나씩 입력&#10;예) 재고 확인&#10;청소 완료 체크"></textarea>
         <div style="display:flex;gap:6px;margin-top:6px;">
           <button onclick="addMyBulk()" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">일괄 추가</button>
           <button onclick="toggleMyBulk()" style="background:#f0f0ee;color:var(--text-sub);border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">취소</button>
@@ -624,7 +629,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="my-add-btn" onclick="addMyHandover()">+ 추가</button>
     </div>
   </div>
-
   <div class="pb"></div>
 </div>
 
@@ -843,31 +847,84 @@ window.closeNameModal=function(){
   pendingNameCb=null;
 };
 function closeNameModal(){window.closeNameModal();}
+// 기본 직원 목록 (Firebase에서 로드, 없으면 이걸 사용)
+const DEFAULT_STAFF = [
+  '오명록','고아현','장현진','장대운','신재현','정희경',
+  '조효정','홍다운','이종혁','원주현','김형진','윤하람',
+  '차영근','정유진','안태민','김다정'
+];
+
+let staffList = [...DEFAULT_STAFF];
+let myStaff = null; // 현재 선택된 직원 이름
+
+// 직원 목록 Firebase 로드/저장
+async function loadStaffList(){
+  try{
+    const snap=await getDoc(doc(db,'config/staff'));
+    if(snap.exists()&&snap.data().list){
+      staffList=snap.data().list;
+    } else {
+      await setDoc(doc(db,'config/staff'),{list:DEFAULT_STAFF});
+    }
+  }catch(e){}
+}
+async function saveStaffList(){
+  await setDoc(doc(db,'config/staff'),{list:staffList});
+}
+
 // ══════════════════════════════════════
 // 내 업무 페이지
 // ══════════════════════════════════════
 function renderMyPage(){
-  const name=getUsername()||'';
-  const avatarEl=document.getElementById('my-avatar');
-  const nameEl=document.getElementById('my-name-display');
-  if(avatarEl)avatarEl.textContent=name?name[0].toUpperCase():'?';
-  if(nameEl)nameEl.textContent=name||'이름을 설정해주세요';
+  showScreen('screen-my');
+  const grid=document.getElementById('staff-grid');
+  if(!grid)return;
+  grid.innerHTML='';
 
-  const nameBtn=document.getElementById('my-name-btn');
-  if(nameBtn)nameBtn.onclick=()=>openNameModal(()=>{renderMyPage();});
+  staffList.forEach(name=>{
+    const block=document.createElement('div');
+    block.className='staff-block';
+    block.innerHTML=`<div class="staff-avatar">${name[0]}</div><div class="staff-name">${name}</div>`;
+    block.onclick=()=>enterMyWork(name);
+    grid.appendChild(block);
+  });
 
+  // 관리자일 때만 직원 추가 블록 표시
+  if(isAdmin){
+    const addBlock=document.createElement('div');
+    addBlock.className='staff-add-block';
+    addBlock.innerHTML=`<div style="font-size:22px;margin-bottom:6px;">+</div>직원 추가`;
+    addBlock.onclick=()=>addStaffMember();
+    grid.appendChild(addBlock);
+  }
+}
+
+function enterMyWork(name){
+  myStaff=name;
+  myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  if(!myStore)myStore=STORES[0];
+  showScreen('screen-my-work');
+  renderMyWorkScreen();
+}
+
+window.backToStaffSelect=function(){
+  showScreen('screen-my');
+};
+function backToStaffSelect(){window.backToStaffSelect();}
+
+function renderMyWorkScreen(){
+  if(!myStaff||!myStore)return;
   const dows=['일','월','화','수','목','금','토'];
   const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const ty=myDate.getFullYear(),tm=myDate.getMonth(),td=myDate.getDate();
-  const todayMid=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  const isToday=myDate.getTime()===todayMid.getTime();
-  const isFuture=myDate>todayMid;
+  const isToday=myDate.getTime()===new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
+  const isFuture=myDate>new Date(today.getFullYear(),today.getMonth(),today.getDate());
 
-  // 날짜 표시
-  const subEl=document.getElementById('my-date-sub');
-  if(subEl)subEl.textContent=`${ty}년 ${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
+  document.getElementById('my-work-name').textContent=`👤 ${myStaff}`;
+  document.getElementById('my-work-sub').textContent=`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
+
   const dateLabel=document.getElementById('my-date-label');
-  if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' 오늘':''}`;
+  if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일${isToday?' (오늘)':''}`;
   const taskLabel=document.getElementById('my-task-date-label');
   if(taskLabel)taskLabel.textContent=isToday?'오늘':isFuture?`${mns[tm]} ${td}일 (예정)`:`${mns[tm]} ${td}일`;
   const nextBtn=document.getElementById('my-next-btn');
@@ -895,8 +952,24 @@ function renderMyPage(){
   loadMyStats();
 }
 
+// 관리자 — 직원 추가/삭제
+async function addStaffMember(){
+  const name=prompt('추가할 직원 이름을 입력하세요:');
+  if(!name||!name.trim())return;
+  if(staffList.includes(name.trim())){alert('이미 등록된 직원입니다.');return;}
+  staffList.push(name.trim());
+  await saveStaffList();
+  renderMyPage();
+}
+window.deleteStaffMember=async function(name){
+  if(!confirm(`${name} 직원을 삭제할까요?`))return;
+  staffList=staffList.filter(s=>s!==name);
+  await saveStaffList();
+  renderMyPage();
+};
+
 async function renderMyTodoList(){
-  if(!myStore)return;
+  if(!myStore||!myStaff)return;
   const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
   const listEl=document.getElementById('my-todo-list');
   if(!listEl)return;
@@ -977,7 +1050,7 @@ async function renderMyHandoverList(){
 }
 
 async function loadMyStats(){
-  const name=getUsername();
+  const name=myStaff;
   if(!name||!myStore)return;
   const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
   let total=0,done=0,carry=0;
@@ -1001,18 +1074,16 @@ window.chgMyDate=function(dir){
   const next=new Date(myDate);next.setDate(next.getDate()+dir);
   const max=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
   if(next>max)return;
-  myDate=next;renderMyPage();
+  myDate=next;renderMyWorkScreen();
 };
 function chgMyDate(dir){window.chgMyDate(dir);}
 
 window.addMyTodo=async function(){
   const input=document.getElementById('my-todo-input');
-  const text=input?.value.trim();if(!text||!myStore)return;
-  ensureUsername(async(author)=>{
-    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-    await addTodoItem(myStore.id,dateKey,text,author);
-    if(input)input.value='';renderMyTodoList();
-  });
+  const text=input?.value.trim();if(!text||!myStore||!myStaff)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  await addTodoItem(myStore.id,dateKey,text,myStaff);
+  if(input)input.value='';renderMyTodoList();
 };
 function addMyTodo(){window.addMyTodo();}
 
@@ -1025,25 +1096,21 @@ function toggleMyBulk(){window.toggleMyBulk();}
 window.addMyBulk=async function(){
   const ta=document.getElementById('my-bulk-textarea');
   const lines=(ta?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  if(!lines.length||!myStore)return;
-  ensureUsername(async(author)=>{
-    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-    await addTodoItems(myStore.id,dateKey,lines,author);
-    if(ta)ta.value='';
-    document.getElementById('my-bulk-wrap').style.display='none';
-    renderMyTodoList();
-  });
+  if(!lines.length||!myStore||!myStaff)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  await addTodoItems(myStore.id,dateKey,lines,myStaff);
+  if(ta)ta.value='';
+  document.getElementById('my-bulk-wrap').style.display='none';
+  renderMyTodoList();
 };
 function addMyBulk(){window.addMyBulk();}
 
 window.addMyHandover=async function(){
   const input=document.getElementById('my-handover-input');
-  const text=input?.value.trim();if(!text||!myStore)return;
-  ensureUsername(async(author)=>{
-    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-    await addHandoverItem(myStore.id,dateKey,text,author);
-    if(input)input.value='';renderMyHandoverList();
-  });
+  const text=input?.value.trim();if(!text||!myStore||!myStaff)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  await addHandoverItem(myStore.id,dateKey,text,myStaff);
+  if(input)input.value='';renderMyHandoverList();
 };
 function addMyHandover(){window.addMyHandover();}
 
@@ -1095,7 +1162,6 @@ window.switchTab = function(tab){
     renderCal();
     document.getElementById('detail').style.display='none';
   } else if(tab==='my'){
-    showScreen('screen-my');
     myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     if(!myStore)myStore=STORES[0];
     renderMyPage();
@@ -2657,8 +2723,8 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // ══════════════════════════════════════
 // 초기 실행
 // ══════════════════════════════════════
-curStore=STORES[0]; // 기본 지점: 인천 연수점
-switchTab('dashboard');
+curStore=STORES[0];
+loadStaffList().then(()=>switchTab('dashboard'));
 </script>
 </body>
 </html>
