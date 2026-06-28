@@ -429,13 +429,17 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 </div>
 
 <!-- 이름 입력 모달 -->
-<div class="modal-bg" id="name-modal" style="display:none">
+<div class="modal-bg" id="name-modal" style="display:none" onclick="if(event.target===this)closeNameModal()">
   <div class="modal">
-    <h3>👤 이름 입력</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <h3 style="margin:0;">👤 이름 입력</h3>
+      <button onclick="closeNameModal()" style="background:none;border:none;font-size:22px;color:var(--text-mute);cursor:pointer;padding:0 4px;line-height:1;">×</button>
+    </div>
     <p>업무 등록 시 표시될 이름을 입력해 주세요</p>
     <input type="text" id="name-input" maxlength="10" placeholder="예: 김민지" style="letter-spacing:normal;text-align:center;">
     <div class="modal-btns">
-      <button class="modal-btn confirm" style="flex:1" onclick="confirmName()">확인</button>
+      <button class="modal-btn cancel" onclick="closeNameModal()">취소</button>
+      <button class="modal-btn confirm" onclick="confirmName()">확인</button>
     </div>
   </div>
 </div>
@@ -834,6 +838,11 @@ window.openNameModal=function(cb){
   document.getElementById('name-input').value=getUsername();
   setTimeout(()=>document.getElementById('name-input').focus(),100);
 };
+window.closeNameModal=function(){
+  document.getElementById('name-modal').style.display='none';
+  pendingNameCb=null;
+};
+function closeNameModal(){window.closeNameModal();}
 // ══════════════════════════════════════
 // 내 업무 페이지
 // ══════════════════════════════════════
