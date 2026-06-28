@@ -374,16 +374,19 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 /* 게시글 작성 모달 */
 .board-write-modal-bg{position:fixed;inset:0;background:rgba(26,35,50,0.6);z-index:300;display:none;align-items:flex-end;justify-content:center;}
 .board-write-modal-bg.open{display:flex;}
-.board-write-modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + var(--safe-bot));width:100%;max-width:480px;max-height:85vh;overflow-y:auto;}
+.board-write-modal{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;}
+.board-write-modal-body{padding:20px 16px 8px;overflow-y:auto;flex:1;}
+.board-write-modal-footer{padding:8px 16px calc(16px + var(--safe-bot));background:var(--card);border-top:1px solid var(--border);}
 .board-write-modal h3{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--text);}
 .board-cat-select{display:flex;gap:8px;margin-bottom:12px;}
-.board-cat-btn{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-sub);}
+.board-cat-btn{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-sub);}
 .board-cat-btn.selected{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
 .board-cat-btn.selected-notice{border-color:var(--gold);color:var(--orange);background:var(--orange-light);}
+.board-cat-btn.selected-history{border-color:var(--purple);color:var(--purple);background:var(--purple-light);}
 .board-write-modal input,.board-write-modal textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;color:var(--text);}
 .board-write-modal input:focus,.board-write-modal textarea:focus{border-color:var(--gold);}
 .board-write-modal textarea{min-height:100px;resize:vertical;line-height:1.5;}
-.board-write-btns{display:flex;gap:8px;margin-top:4px;}
+.board-write-btns{display:flex;gap:8px;}
 .board-write-btns button{flex:1;padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
 .bw-confirm{background:var(--navy);color:#fff;}
 .bw-cancel{background:#f0f0ee;color:var(--text-sub);}
@@ -473,35 +476,39 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 <!-- 게시글 작성 모달 -->
 <div class="board-write-modal-bg" id="board-write-modal" onclick="if(event.target===this)closeBoardWrite()">
   <div class="board-write-modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <h3 style="margin:0;">✏️ 글 작성</h3>
-      <button onclick="closeBoardWrite()" style="background:none;border:none;font-size:22px;color:var(--text-mute);cursor:pointer;padding:0 4px;line-height:1;">×</button>
+    <div class="board-write-modal-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="margin:0;">✏️ 글 작성</h3>
+        <button onclick="closeBoardWrite()" style="background:none;border:none;font-size:22px;color:var(--text-mute);cursor:pointer;padding:0 4px;line-height:1;">×</button>
+      </div>
+      <div class="board-cat-select">
+        <button class="board-cat-btn selected-notice selected" id="bcat-notice" onclick="selectBoardCat('notice')">📢 공지</button>
+        <button class="board-cat-btn" id="bcat-share" onclick="selectBoardCat('share')">💬 업무공유</button>
+        <button class="board-cat-btn" id="bcat-history" onclick="selectBoardCat('history')">📌 히스토리</button>
+      </div>
+      <!-- 히스토리 전용 폼 -->
+      <div id="history-form-wrap" style="display:none;" class="history-form">
+        <select id="history-cat-select">
+          <option value="">카테고리 선택</option>
+          <option value="신제품 입고">📦 신제품 입고</option>
+          <option value="이벤트 시작">🎉 이벤트 시작</option>
+          <option value="이벤트 종료">✅ 이벤트 종료</option>
+          <option value="매장 이슈">⚠️ 매장 이슈</option>
+          <option value="인력 변동">👤 인력 변동</option>
+          <option value="시스템 변경">🔧 시스템 변경</option>
+          <option value="기타">📝 기타</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;font-weight:600;">해당 매장 (복수 선택 가능)</div>
+        <div class="history-store-chips" id="history-store-chips"></div>
+      </div>
+      <input type="text" id="board-title-input" placeholder="제목을 입력하세요">
+      <textarea id="board-body-input" placeholder="내용을 입력하세요..."></textarea>
     </div>
-    <div class="board-cat-select">
-      <button class="board-cat-btn selected-notice selected" id="bcat-notice" onclick="selectBoardCat('notice')">📢 공지</button>
-      <button class="board-cat-btn" id="bcat-share" onclick="selectBoardCat('share')">💬 업무공유</button>
-      <button class="board-cat-btn" id="bcat-history" onclick="selectBoardCat('history')">📌 히스토리</button>
-    </div>
-    <!-- 히스토리 전용 폼 (히스토리 선택시만 표시) -->
-    <div id="history-form-wrap" style="display:none;" class="history-form">
-      <select id="history-cat-select">
-        <option value="">카테고리 선택</option>
-        <option value="신제품 입고">📦 신제품 입고</option>
-        <option value="이벤트 시작">🎉 이벤트 시작</option>
-        <option value="이벤트 종료">✅ 이벤트 종료</option>
-        <option value="매장 이슈">⚠️ 매장 이슈</option>
-        <option value="인력 변동">👤 인력 변동</option>
-        <option value="시스템 변경">🔧 시스템 변경</option>
-        <option value="기타">📝 기타</option>
-      </select>
-      <div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;font-weight:600;">해당 매장 (복수 선택 가능)</div>
-      <div class="history-store-chips" id="history-store-chips"></div>
-    </div>
-    <input type="text" id="board-title-input" placeholder="제목을 입력하세요">
-    <textarea id="board-body-input" placeholder="내용을 입력하세요..."></textarea>
-    <div class="board-write-btns">
-      <button class="bw-cancel" onclick="closeBoardWrite()">취소</button>
-      <button class="bw-confirm" onclick="submitBoardPost()">등록</button>
+    <div class="board-write-modal-footer">
+      <div class="board-write-btns">
+        <button class="bw-cancel" onclick="closeBoardWrite()">취소</button>
+        <button class="bw-confirm" onclick="submitBoardPost()">등록</button>
+      </div>
     </div>
   </div>
 </div>
