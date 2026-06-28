@@ -370,6 +370,39 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .board-write-btns button{flex:1;padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
 .bw-confirm{background:var(--navy);color:#fff;}
 .bw-cancel{background:#f0f0ee;color:var(--text-sub);}
+
+/* ── 개인 페이지 ── */
+.my-header-wrap{padding:16px 16px 0;}
+.my-profile-card{background:var(--navy);color:#fff;border-radius:16px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.my-avatar{width:52px;height:52px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--navy);flex-shrink:0;}
+.my-name{font-size:18px;font-weight:700;}
+.my-name-sub{font-size:12px;opacity:0.7;margin-top:2px;}
+.my-change-btn{margin-left:auto;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.my-section{background:var(--card);border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 4px rgba(26,35,50,0.07);border:1px solid var(--border);}
+.my-section-header{font-size:13px;font-weight:700;color:var(--text);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.my-date-nav{display:flex;align-items:center;gap:8px;}
+.my-date-nav button{background:#f0f0ee;border:none;border-radius:6px;width:28px;height:28px;font-size:14px;cursor:pointer;color:var(--text);}
+.my-date-label{font-size:12px;font-weight:600;color:var(--text-sub);min-width:80px;text-align:center;}
+.my-todo-list{padding:8px 16px 12px;display:flex;flex-direction:column;gap:6px;}
+.my-todo-item{display:flex;align-items:flex-start;gap:8px;background:#f8f7f2;border-radius:8px;padding:8px 10px;border:1px solid var(--border);}
+.my-todo-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);margin-top:1px;flex-shrink:0;cursor:pointer;}
+.my-todo-item.done .my-todo-text{text-decoration:line-through;color:var(--text-mute);}
+.my-todo-text{font-size:13px;color:var(--text);line-height:1.4;flex:1;}
+.my-todo-meta{font-size:10px;color:var(--text-mute);margin-top:2px;}
+.my-todo-carry{font-size:10px;color:var(--orange);background:var(--orange-light);padding:1px 6px;border-radius:8px;margin-left:4px;}
+.my-store-badge{font-size:10px;color:var(--text-sub);background:#f0f0ee;padding:1px 6px;border-radius:6px;margin-left:4px;}
+.my-input-row{display:flex;gap:6px;padding:0 16px 12px;}
+.my-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff;}
+.my-input:focus{border-color:var(--gold);}
+.my-add-btn{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.my-empty{font-size:12px;color:var(--text-mute);text-align:center;padding:16px;}
+.my-store-select{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 12px;}
+.my-store-chip{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-sub);font-family:inherit;}
+.my-store-chip.active{border-color:var(--gold);background:var(--gold);color:var(--navy);}
+.my-stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 16px;}
+.my-stat-box{background:#f8f7f2;border-radius:10px;padding:12px;text-align:center;}
+.my-stat-num{font-size:22px;font-weight:700;color:var(--navy);}
+.my-stat-label{font-size:10px;color:var(--text-sub);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -561,6 +594,55 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div class="pb"></div>
 </div>
 
+<!-- ④ 개인 페이지 화면 -->
+<div class="screen has-tab-bar" id="screen-my">
+  <div class="header">
+    <div><div class="header-title">👤 내 업무</div><div class="header-sub" id="my-date-sub"></div></div>
+  </div>
+
+  <!-- 프로필 카드 -->
+  <div style="padding:12px 16px 0;">
+    <div class="my-profile-card">
+      <div class="my-avatar" id="my-avatar">?</div>
+      <div>
+        <div class="my-name" id="my-name-display">이름 미설정</div>
+        <div class="my-name-sub">내 업무 페이지</div>
+      </div>
+      <button class="my-change-btn" onclick="openNameModal(refreshMyPage)">이름 변경</button>
+    </div>
+  </div>
+
+  <!-- 오늘의 내 업무 요약 (이번 달 통계) -->
+  <div class="my-section">
+    <div class="my-section-header">📊 이번 달 내 업무</div>
+    <div class="my-stats-grid" id="my-stats-grid">
+      <div class="my-stat-box"><div class="my-stat-num" id="my-stat-total">-</div><div class="my-stat-label">총 업무</div></div>
+      <div class="my-stat-box"><div class="my-stat-num" id="my-stat-done">-</div><div class="my-stat-label">완료</div></div>
+      <div class="my-stat-box"><div class="my-stat-num" id="my-stat-carry">-</div><div class="my-stat-label">이월</div></div>
+    </div>
+  </div>
+
+  <!-- 날짜별 내 업무 -->
+  <div class="my-section">
+    <div class="my-section-header">
+      <span>📝 <span id="my-task-date-label">오늘</span>의 내 업무</span>
+      <div class="my-date-nav">
+        <button onclick="chgMyDate(-1)">‹</button>
+        <span class="my-date-label" id="my-date-label"></span>
+        <button onclick="chgMyDate(1)">›</button>
+      </div>
+    </div>
+    <!-- 매장 선택 -->
+    <div class="my-store-select" id="my-store-select"></div>
+    <div class="my-todo-list" id="my-todo-list"><div class="my-empty">불러오는 중...</div></div>
+    <div class="my-input-row">
+      <input type="text" class="my-input" id="my-todo-input" placeholder="할 일을 입력하세요">
+      <button class="my-add-btn" onclick="addMyTodo()">+ 추가</button>
+    </div>
+  </div>
+  <div class="pb"></div>
+</div>
+
 <!-- 하단 탭 바 -->
 <div class="tab-bar" id="tab-bar">
   <button class="tab-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
@@ -569,11 +651,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </button>
   <button class="tab-item" id="tab-monthly" onclick="switchTab('monthly')">
     <div class="tab-icon">📅</div>
-    <div class="tab-label">월간 스케줄</div>
+    <div class="tab-label">월간</div>
   </button>
   <button class="tab-item" id="tab-daily" onclick="switchTab('daily')">
     <div class="tab-icon">📝</div>
-    <div class="tab-label">일일 스케줄</div>
+    <div class="tab-label">일일</div>
+  </button>
+  <button class="tab-item" id="tab-my" onclick="switchTab('my')">
+    <div class="tab-icon">👤</div>
+    <div class="tab-label">내 업무</div>
   </button>
 </div>
 
@@ -659,9 +745,11 @@ let isAdmin = false;
 let dashUnsubs = [];
 let dashTab = 'today';
 let dashViewDate = null;
-let curTab = 'dashboard'; // 현재 탭
-let storeSelectCallback = null; // 지점 선택 후 콜백
-let dailyDate = new Date(); // 일일 스케줄 현재 날짜 (기본: 오늘)
+let curTab = 'dashboard';
+let storeSelectCallback = null;
+let dailyDate = new Date();
+let myDate = new Date();
+let myStore = null;
 function clearDashUnsubs(){dashUnsubs.forEach(u=>u());dashUnsubs=[];}
 
 // ══════════════════════════════════════
@@ -726,9 +814,9 @@ function isDateLocked(dateKey){
   const viewDate=new Date(yy,mm-1,dd);
   const todayDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
   const diffDays=Math.round((todayDate-viewDate)/86400000);
-  if(diffDays<=0)return false;
-  if(diffDays>=2)return true;
-  return new Date().getHours()>=10;
+  if(diffDays<=0)return false; // 오늘 및 미래 = 잠금 없음
+  if(diffDays>=2)return true;  // 그저께 이전 = 항상 잠금
+  return new Date().getHours()>=10; // 어제 = 오전 10시 이후 잠금
 }
 
 // 해당 날짜의 청소 체크 항목 총 개수 (대청소일이면 기본+구역, 아니면 기본만)
@@ -756,6 +844,8 @@ window.confirmName=function(){
   document.getElementById('name-modal').style.display='none';
   if(pendingNameCb)pendingNameCb(val);
   pendingNameCb=null;
+  // 개인 페이지 탭이면 새로고침
+  if(curTab==='my')refreshMyPage();
 };
 function ensureUsername(cb){
   const name=getUsername();
@@ -778,7 +868,7 @@ function showScreen(id){
 
 window.switchTab = function(tab){
   curTab=tab;
-  ['dashboard','monthly','daily'].forEach(t=>{
+  ['dashboard','monthly','daily','my'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
@@ -797,6 +887,11 @@ window.switchTab = function(tab){
     if(!curStore)curStore=STORES[0];
     dailyDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     renderDailyScreen();
+  } else if(tab==='my'){
+    showScreen('screen-my');
+    myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    if(!myStore)myStore=STORES[0];
+    refreshMyPage();
   }
 }
 function switchTab(tab){window.switchTab(tab);}
@@ -1068,6 +1163,151 @@ window.deleteBoardPost=async function(){
 };
 
 // ══════════════════════════════════════
+// 개인 페이지
+// ══════════════════════════════════════
+function refreshMyPage(){
+  const name=getUsername()||'미설정';
+  const initial=name!=='미설정'?name[0]:'?';
+  const avatarEl=document.getElementById('my-avatar');
+  const nameEl=document.getElementById('my-name-display');
+  if(avatarEl)avatarEl.textContent=initial;
+  if(nameEl)nameEl.textContent=name;
+
+  const dows=['일','월','화','수','목','금','토'];
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const ty=myDate.getFullYear(),tm=myDate.getMonth(),td=myDate.getDate();
+  const todayMid=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const isToday=myDate.getTime()===todayMid.getTime();
+  const isFuture=myDate>todayMid;
+
+  // 날짜 레이블
+  const dateLabel=document.getElementById('my-date-label');
+  const taskDateLabel=document.getElementById('my-task-date-label');
+  if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일`;
+  if(taskDateLabel)taskDateLabel.textContent=isToday?'오늘':isFuture?`${mns[tm]} ${td}일 (예정)`:`${mns[tm]} ${td}일`;
+
+  const subEl=document.getElementById('my-date-sub');
+  if(subEl)subEl.textContent=`${ty}년 ${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
+
+  // 매장 선택 칩
+  const storeSelect=document.getElementById('my-store-select');
+  if(storeSelect){
+    storeSelect.innerHTML='';
+    STORES.forEach(s=>{
+      const chip=document.createElement('button');
+      chip.className='my-store-chip'+(myStore&&myStore.id===s.id?' active':'');
+      chip.textContent=`${s.icon} ${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
+      chip.onclick=()=>{myStore=s;refreshMyTodoList();updateMyStoreChips();};
+      storeSelect.appendChild(chip);
+    });
+  }
+
+  refreshMyTodoList();
+  loadMyStats();
+}
+
+function updateMyStoreChips(){
+  const chips=document.querySelectorAll('.my-store-chip');
+  const storeNames=STORES.map(s=>s.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''));
+  chips.forEach((chip,i)=>{
+    chip.className='my-store-chip'+(myStore&&myStore.id===STORES[i].id?' active':'');
+  });
+}
+
+async function refreshMyTodoList(){
+  const name=getUsername();
+  if(!name||name==='미설정'){
+    const listEl=document.getElementById('my-todo-list');
+    if(listEl)listEl.innerHTML='<div class="my-empty">이름을 먼저 설정해주세요</div>';
+    return;
+  }
+  if(!myStore)myStore=STORES[0];
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const listEl=document.getElementById('my-todo-list');
+  if(!listEl)return;
+  listEl.innerHTML='<div class="my-empty">불러오는 중...</div>';
+
+  try{
+    const snap=await getDoc(doc(db,`todos/${myStore.id}_${dateKey}`));
+    const items=snap.exists()?(snap.data().items||[]):[];
+    // 내 이름으로 작성한 항목만 필터
+    const myItems=items.filter(i=>i.author===name);
+    if(myItems.length===0){
+      listEl.innerHTML=`<div class="my-empty">${myStore.name}에 등록된 내 업무가 없습니다</div>`;
+      return;
+    }
+    listEl.innerHTML='';
+    myItems.forEach(item=>{
+      const row=document.createElement('div');
+      row.className='my-todo-item'+(item.done?' done':'');
+      const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+      row.innerHTML=`<input type="checkbox" ${item.done?'checked':''}>
+        <div style="flex:1">
+          <div class="my-todo-text">${item.text}${carryTag}</div>
+          <div class="my-todo-meta">${myStore.icon} ${myStore.name}</div>
+        </div>`;
+      row.querySelector('input').onchange=async(e)=>{
+        await toggleTodoItem(myStore.id,dateKey,item.id,e.target.checked);
+        row.className='my-todo-item'+(e.target.checked?' done':'');
+      };
+      listEl.appendChild(row);
+    });
+  }catch(e){
+    listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';
+  }
+}
+
+async function loadMyStats(){
+  const name=getUsername();
+  if(!name||!myStore)return;
+  const y=today.getFullYear(),m=today.getMonth();
+  const lastDay=today.getDate();
+  let total=0,done=0,carry=0;
+  for(let d=1;d<=lastDay;d++){
+    const dateKey=dk(y,m,d);
+    try{
+      const snap=await getDoc(doc(db,`todos/${myStore.id}_${dateKey}`));
+      if(snap.exists()){
+        const items=(snap.data().items||[]).filter(i=>i.author===name);
+        total+=items.length;
+        done+=items.filter(i=>i.done).length;
+        carry+=items.filter(i=>i.fromDate&&i.fromDate!==dateKey).length;
+      }
+    }catch(e){}
+  }
+  const tEl=document.getElementById('my-stat-total');
+  const dEl=document.getElementById('my-stat-done');
+  const cEl=document.getElementById('my-stat-carry');
+  if(tEl)tEl.textContent=total;
+  if(dEl)dEl.textContent=done;
+  if(cEl)cEl.textContent=carry;
+}
+
+window.chgMyDate=function(dir){
+  const next=new Date(myDate);
+  next.setDate(next.getDate()+dir);
+  const maxDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+  if(next>maxDate)return;
+  myDate=next;
+  refreshMyPage();
+};
+function chgMyDate(dir){window.chgMyDate(dir);}
+
+window.addMyTodo=async function(){
+  const input=document.getElementById('my-todo-input');
+  const text=input?.value.trim();
+  if(!text)return;
+  ensureUsername(async(author)=>{
+    if(!myStore)myStore=STORES[0];
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    await addTodoItem(myStore.id,dateKey,text,author);
+    if(input)input.value='';
+    refreshMyTodoList();
+  });
+};
+function addMyTodo(){window.addMyTodo();}
+
+// ══════════════════════════════════════
 // 일일 스케줄 화면 (날짜 이동 가능)
 // ══════════════════════════════════════
 function renderDailyScreen(){
@@ -1156,8 +1396,9 @@ function renderDailyScreen(){
 window.chgDailyDate = function(dir){
   const next=new Date(dailyDate);
   next.setDate(next.getDate()+dir);
-  const todayMidnight=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  if(next>todayMidnight)return;
+  // 오늘 기준 +7일까지만 허용 (미리 입력 가능)
+  const maxDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+  if(next>maxDate)return;
   dailyDate=next;
   renderDailyScreen();
 }
