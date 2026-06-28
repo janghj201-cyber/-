@@ -1068,8 +1068,10 @@ async function renderMyTodoList(){
   const listEl=document.getElementById('my-todo-list');
   if(!listEl)return;
   try{
-    const items=await loadTodoItems(myStore.id,dateKey);
-    if(items.length===0){listEl.innerHTML='<div class="my-empty">등록된 업무가 없습니다</div>';return;}
+    const allItems=await loadTodoItems(myStore.id,dateKey);
+    // 본인 작성 업무만 필터
+    const items=allItems.filter(i=>i.author===myStaff);
+    if(items.length===0){listEl.innerHTML='<div class="my-empty">등록된 내 업무가 없습니다</div>';return;}
     listEl.innerHTML='';
     let editingId=null;
     const render=()=>{
@@ -1119,8 +1121,10 @@ async function renderMyHandoverList(){
   const listEl=document.getElementById('my-handover-list');
   if(!listEl)return;
   try{
-    const items=await loadHandoverItems(myStore.id,dateKey);
-    if(items.length===0){listEl.innerHTML='<div class="my-empty">인수인계 메모가 없습니다</div>';return;}
+    const allItems=await loadHandoverItems(myStore.id,dateKey);
+    // 본인 작성 인수인계만 필터
+    const items=allItems.filter(i=>i.author===myStaff);
+    if(items.length===0){listEl.innerHTML='<div class="my-empty">내가 작성한 인수인계가 없습니다</div>';return;}
     listEl.innerHTML='';
     items.forEach(item=>{
       const row=document.createElement('div');
