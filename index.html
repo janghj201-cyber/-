@@ -550,35 +550,77 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 </div>
 
 <!-- ③ 일일 스케줄 화면 -->
-<div class="screen has-tab-bar" id="screen-daily">
+<!-- ③ 내 업무 화면 -->
+<div class="screen has-tab-bar" id="screen-my">
   <div class="header">
-    <div><div class="header-title" id="daily-store-title">매장을 선택하세요</div><div class="header-sub" id="daily-date-sub"></div></div>
-    <div class="nav-btns">
-      <button class="nav-btn" onclick="chgDailyStore(-1)">‹</button>
-      <button class="nav-btn today-btn" onclick="openStoreSelect()">지점</button>
-      <button class="nav-btn" onclick="chgDailyStore(1)">›</button>
+    <div><div class="header-title">👤 내 업무</div><div class="header-sub" id="my-date-sub"></div></div>
+  </div>
+
+  <!-- 프로필 + 이름 설정 -->
+  <div style="background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="my-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy);flex-shrink:0;">?</div>
+      <div>
+        <div id="my-name-display" style="font-size:14px;font-weight:700;color:#fff;">이름을 설정해주세요</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);">내 업무 페이지</div>
+      </div>
+    </div>
+    <button id="my-name-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;">이름 변경</button>
+  </div>
+
+  <!-- 매장 선택 -->
+  <div style="background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;">
+    <div style="font-size:11px;color:var(--text-sub);margin-bottom:8px;font-weight:600;">📍 오늘 근무 매장</div>
+    <div class="my-store-select" id="my-store-select"></div>
+  </div>
+
+  <!-- 날짜 이동 -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);">
+    <button class="nav-btn" onclick="chgMyDate(-1)" style="background:#f0f0ee;color:#555;border:none;">‹ 전날</button>
+    <span id="my-date-label" style="font-size:13px;font-weight:700;color:var(--text);min-width:120px;text-align:center;"></span>
+    <button class="nav-btn" id="my-next-btn" onclick="chgMyDate(1)" style="background:#f0f0ee;color:#555;border:none;">다음날 ›</button>
+  </div>
+
+  <!-- 이번 달 통계 -->
+  <div class="my-stats-grid" id="my-stats-grid" style="margin:12px 16px 0;">
+    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-total">-</div><div class="my-stat-label">총 업무</div></div>
+    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-done">-</div><div class="my-stat-label">완료</div></div>
+    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-carry">-</div><div class="my-stat-label">이월</div></div>
+  </div>
+
+  <!-- 오늘의 업무 -->
+  <div class="my-section" style="margin-top:12px;">
+    <div class="my-section-header">
+      <span>📝 <span id="my-task-date-label">오늘</span>의 업무</span>
+    </div>
+    <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
+    <div class="my-input-row">
+      <input type="text" class="my-input" id="my-todo-input" placeholder="할 일을 입력하세요" onkeydown="if(event.key==='Enter')addMyTodo()">
+      <button class="my-add-btn" onclick="addMyTodo()">+ 추가</button>
+    </div>
+    <!-- 여러 개 입력 -->
+    <div style="padding:0 16px 12px;">
+      <button onclick="toggleMyBulk()" style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;">📋 여러 개 한번에 입력</button>
+      <div id="my-bulk-wrap" style="display:none;margin-top:8px;">
+        <textarea id="my-bulk-textarea" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;min-height:80px;resize:vertical;outline:none;" placeholder="한 줄에 하나씩 입력&#10;예) 재고 확인&#10;청소 완료 체크&#10;인수인계 메모 작성"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button onclick="addMyBulk()" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">일괄 추가</button>
+          <button onclick="toggleMyBulk()" style="background:#f0f0ee;color:var(--text-sub);border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">취소</button>
+        </div>
+      </div>
     </div>
   </div>
-  <!-- 작성자 이름 바 -->
-  <div style="background:var(--navy);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:12px;color:rgba(255,255,255,0.7);">✏️ 작성자: <b id="daily-username-display" style="color:var(--gold);">미설정</b></div>
-    <button id="daily-name-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;">이름 변경</button>
-  </div>
-  <!-- 날짜 이동 바 -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #ede9e0;">
-    <button class="nav-btn" onclick="chgDailyDate(-1)" style="background:#f0f0ee;color:#555;">‹ 전날</button>
-    <span id="daily-nav-label" style="font-size:13px;font-weight:700;color:#333;min-width:120px;text-align:center;"></span>
-    <button class="nav-btn" id="daily-next-btn" onclick="chgDailyDate(1)" style="background:#f0f0ee;color:#555;">다음날 ›</button>
-  </div>
-  <div class="detail" id="daily-detail" style="display:block">
-    <div class="detail-header">
-      <div class="detail-date" id="daily-ddate"></div>
-      <div class="detail-tags" id="daily-dtags"></div>
+
+  <!-- 인수인계 -->
+  <div class="my-section">
+    <div class="my-section-header">🔄 인수인계 메모</div>
+    <div id="my-handover-list" style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:6px;"><div class="my-empty">불러오는 중...</div></div>
+    <div class="my-input-row">
+      <input type="text" class="my-input" id="my-handover-input" placeholder="인수인계 내용 입력" onkeydown="if(event.key==='Enter')addMyHandover()">
+      <button class="my-add-btn" onclick="addMyHandover()">+ 추가</button>
     </div>
-    <div class="task-list" id="daily-tlist"></div>
-    <div id="daily-todo-container"></div>
-    <div id="daily-handover-container"></div>
   </div>
+
   <div class="pb"></div>
 </div>
 
@@ -610,11 +652,11 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </button>
   <button class="tab-item" id="tab-monthly" onclick="switchTab('monthly')">
     <div class="tab-icon">📅</div>
-    <div class="tab-label">월간</div>
+    <div class="tab-label">월간 스케줄</div>
   </button>
-  <button class="tab-item" id="tab-daily" onclick="switchTab('daily')">
-    <div class="tab-icon">📝</div>
-    <div class="tab-label">일일 스케줄</div>
+  <button class="tab-item" id="tab-my" onclick="switchTab('my')">
+    <div class="tab-icon">👤</div>
+    <div class="tab-label">내 업무</div>
   </button>
 </div>
 
@@ -792,11 +834,212 @@ window.openNameModal=function(cb){
   document.getElementById('name-input').value=getUsername();
   setTimeout(()=>document.getElementById('name-input').focus(),100);
 };
-function updateDailyUsername(){
-  const name=getUsername()||'미설정';
-  const el=document.getElementById('daily-username-display');
-  if(el)el.textContent=name;
+// ══════════════════════════════════════
+// 내 업무 페이지
+// ══════════════════════════════════════
+function renderMyPage(){
+  const name=getUsername()||'';
+  const avatarEl=document.getElementById('my-avatar');
+  const nameEl=document.getElementById('my-name-display');
+  if(avatarEl)avatarEl.textContent=name?name[0].toUpperCase():'?';
+  if(nameEl)nameEl.textContent=name||'이름을 설정해주세요';
+
+  const nameBtn=document.getElementById('my-name-btn');
+  if(nameBtn)nameBtn.onclick=()=>openNameModal(()=>{renderMyPage();});
+
+  const dows=['일','월','화','수','목','금','토'];
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const ty=myDate.getFullYear(),tm=myDate.getMonth(),td=myDate.getDate();
+  const todayMid=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const isToday=myDate.getTime()===todayMid.getTime();
+  const isFuture=myDate>todayMid;
+
+  // 날짜 표시
+  const subEl=document.getElementById('my-date-sub');
+  if(subEl)subEl.textContent=`${ty}년 ${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
+  const dateLabel=document.getElementById('my-date-label');
+  if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' 오늘':''}`;
+  const taskLabel=document.getElementById('my-task-date-label');
+  if(taskLabel)taskLabel.textContent=isToday?'오늘':isFuture?`${mns[tm]} ${td}일 (예정)`:`${mns[tm]} ${td}일`;
+  const nextBtn=document.getElementById('my-next-btn');
+  if(nextBtn){
+    const max=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+    nextBtn.disabled=myDate>=max;
+  }
+
+  // 매장 선택 칩
+  const storeSelect=document.getElementById('my-store-select');
+  if(storeSelect){
+    storeSelect.innerHTML='';
+    STORES.forEach(s=>{
+      const chip=document.createElement('button');
+      chip.className='my-store-chip'+(myStore&&myStore.id===s.id?' active':'');
+      const short=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+      chip.textContent=`${s.icon} ${short}`;
+      chip.onclick=()=>{myStore=s;renderMyTodoList();renderMyHandoverList();loadMyStats();};
+      storeSelect.appendChild(chip);
+    });
+  }
+
+  renderMyTodoList();
+  renderMyHandoverList();
+  loadMyStats();
 }
+
+async function renderMyTodoList(){
+  if(!myStore)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const listEl=document.getElementById('my-todo-list');
+  if(!listEl)return;
+  try{
+    const items=await loadTodoItems(myStore.id,dateKey);
+    if(items.length===0){listEl.innerHTML='<div class="my-empty">등록된 업무가 없습니다</div>';return;}
+    listEl.innerHTML='';
+    let editingId=null;
+    const render=()=>{
+      listEl.innerHTML='';
+      items.forEach(item=>{
+        const row=document.createElement('div');
+        row.className='my-todo-item'+(item.done?' done':'');
+        if(editingId===item.id){
+          row.innerHTML=`<div class="todo-edit-row"><input type="text" class="todo-edit-input" value="${item.text}"><div class="todo-edit-btns"><button class="todo-edit-save">저장</button><button class="todo-edit-cancel">취소</button></div></div>`;
+          const inp=row.querySelector('.todo-edit-input');
+          row.querySelector('.todo-edit-save').onclick=async()=>{
+            const t=inp.value.trim();if(!t)return;
+            await editTodoItem(myStore.id,dateKey,item.id,t);
+            item.text=t;editingId=null;render();
+          };
+          row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
+          setTimeout(()=>inp.focus(),0);
+        } else {
+          const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+          row.innerHTML=`<input type="checkbox" ${item.done?'checked':''}>
+            <div class="my-todo-text" style="flex:1">${item.text}${carry}<div class="my-todo-meta">${item.author||'익명'}</div></div>
+            <div class="todo-actions">
+              <button class="todo-action-btn" data-act="edit">✏️</button>
+              <button class="todo-action-btn" data-act="del">🗑️</button>
+            </div>`;
+          row.querySelector('input').onchange=async(e)=>{
+            await toggleTodoItem(myStore.id,dateKey,item.id,e.target.checked);
+            item.done=e.target.checked;row.className='my-todo-item'+(item.done?' done':'');
+          };
+          row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
+          row.querySelector('[data-act="del"]').onclick=async()=>{
+            if(!confirm('삭제할까요?'))return;
+            await deleteTodoItem(myStore.id,dateKey,item.id);
+            items.splice(items.indexOf(item),1);render();
+          };
+        }
+        listEl.appendChild(row);
+      });
+    };
+    render();
+  }catch(e){listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';}
+}
+
+async function renderMyHandoverList(){
+  if(!myStore)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const listEl=document.getElementById('my-handover-list');
+  if(!listEl)return;
+  try{
+    const items=await loadHandoverItems(myStore.id,dateKey);
+    if(items.length===0){listEl.innerHTML='<div class="my-empty">인수인계 메모가 없습니다</div>';return;}
+    listEl.innerHTML='';
+    items.forEach(item=>{
+      const row=document.createElement('div');
+      row.className='my-todo-item'+(item.confirmed?' done':'');
+      const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+      row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''}>
+        <div class="my-todo-text" style="flex:1">${item.text}${carry}<div class="my-todo-meta">${item.author||'익명'}</div></div>
+        <button class="todo-action-btn" data-act="del">🗑️</button>`;
+      row.querySelector('input').onchange=async(e)=>{
+        await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked);
+        row.className='my-todo-item'+(e.target.checked?' done':'');
+      };
+      row.querySelector('[data-act="del"]').onclick=async()=>{
+        if(!confirm('삭제할까요?'))return;
+        await deleteHandoverItem(myStore.id,dateKey,item.id);
+        row.remove();
+      };
+      listEl.appendChild(row);
+    });
+  }catch(e){listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';}
+}
+
+async function loadMyStats(){
+  const name=getUsername();
+  if(!name||!myStore)return;
+  const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
+  let total=0,done=0,carry=0;
+  for(let d=1;d<=lastDay;d++){
+    try{
+      const snap=await getDoc(doc(db,`todos/${myStore.id}_${dk(y,m,d)}`));
+      if(snap.exists()){
+        const its=(snap.data().items||[]).filter(i=>i.author===name);
+        total+=its.length;done+=its.filter(i=>i.done).length;
+        carry+=its.filter(i=>i.fromDate&&i.fromDate!==dk(y,m,d)).length;
+      }
+    }catch(e){}
+  }
+  const t=document.getElementById('my-stat-total');
+  const d=document.getElementById('my-stat-done');
+  const c=document.getElementById('my-stat-carry');
+  if(t)t.textContent=total;if(d)d.textContent=done;if(c)c.textContent=carry;
+}
+
+window.chgMyDate=function(dir){
+  const next=new Date(myDate);next.setDate(next.getDate()+dir);
+  const max=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+  if(next>max)return;
+  myDate=next;renderMyPage();
+};
+function chgMyDate(dir){window.chgMyDate(dir);}
+
+window.addMyTodo=async function(){
+  const input=document.getElementById('my-todo-input');
+  const text=input?.value.trim();if(!text||!myStore)return;
+  ensureUsername(async(author)=>{
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    await addTodoItem(myStore.id,dateKey,text,author);
+    if(input)input.value='';renderMyTodoList();
+  });
+};
+function addMyTodo(){window.addMyTodo();}
+
+window.toggleMyBulk=function(){
+  const wrap=document.getElementById('my-bulk-wrap');
+  if(wrap)wrap.style.display=wrap.style.display==='none'?'block':'none';
+};
+function toggleMyBulk(){window.toggleMyBulk();}
+
+window.addMyBulk=async function(){
+  const ta=document.getElementById('my-bulk-textarea');
+  const lines=(ta?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!lines.length||!myStore)return;
+  ensureUsername(async(author)=>{
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    await addTodoItems(myStore.id,dateKey,lines,author);
+    if(ta)ta.value='';
+    document.getElementById('my-bulk-wrap').style.display='none';
+    renderMyTodoList();
+  });
+};
+function addMyBulk(){window.addMyBulk();}
+
+window.addMyHandover=async function(){
+  const input=document.getElementById('my-handover-input');
+  const text=input?.value.trim();if(!text||!myStore)return;
+  ensureUsername(async(author)=>{
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    await addHandoverItem(myStore.id,dateKey,text,author);
+    if(input)input.value='';renderMyHandoverList();
+  });
+};
+function addMyHandover(){window.addMyHandover();}
+
+window.updateDailyUsername=function(){};
+function updateDailyUsername(){}
 
 window.confirmName=function(){
   const val=document.getElementById('name-input').value.trim();
@@ -805,7 +1048,7 @@ window.confirmName=function(){
   document.getElementById('name-modal').style.display='none';
   if(pendingNameCb)pendingNameCb(val);
   pendingNameCb=null;
-  updateDailyUsername();
+  if(curTab==='my')renderMyPage();
 };
 function ensureUsername(cb){
   const name=getUsername();
@@ -828,7 +1071,7 @@ function showScreen(id){
 
 window.switchTab = function(tab){
   curTab=tab;
-  ['dashboard','monthly','daily'].forEach(t=>{
+  ['dashboard','monthly','my'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
@@ -842,11 +1085,11 @@ window.switchTab = function(tab){
     document.getElementById('monthly-store-title').textContent=`${curStore.icon} ${curStore.name}`;
     renderCal();
     document.getElementById('detail').style.display='none';
-  } else if(tab==='daily'){
-    showScreen('screen-daily');
-    if(!curStore)curStore=STORES[0];
-    dailyDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-    renderDailyScreen();
+  } else if(tab==='my'){
+    showScreen('screen-my');
+    myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    if(!myStore)myStore=STORES[0];
+    renderMyPage();
   }
 }
 function switchTab(tab){window.switchTab(tab);}
@@ -1224,8 +1467,8 @@ window.chgDailyDate = function(dir){
 function chgDailyDate(dir){window.chgDailyDate(dir);}
 
 window.goToDailyFromCal = function(y,m,d){
-  dailyDate=new Date(y,m,d);
-  switchTab('daily');
+  myDate=new Date(y,m,d);
+  switchTab('my');
 }
 function goToDailyFromCal(y,m,d){window.goToDailyFromCal(y,m,d);}
 
