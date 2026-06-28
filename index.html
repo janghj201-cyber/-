@@ -338,6 +338,23 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .board-cat-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
 .board-cat-notice{background:var(--orange-light);color:var(--orange);}
 .board-cat-share{background:var(--blue-light);color:var(--blue);}
+.board-cat-history{background:var(--purple-light);color:var(--purple);}
+.board-cat-btn.selected-history{border-color:var(--purple);color:var(--purple);background:var(--purple-light);}
+
+/* 히스토리 입력 폼 */
+.history-form{background:#f8f7f2;border-radius:10px;padding:12px;margin-bottom:8px;}
+.history-form select{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:var(--text);margin-bottom:8px;}
+.history-form select:focus{border-color:var(--gold);}
+.history-store-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.history-store-chip{padding:5px 10px;border-radius:16px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-sub);font-family:inherit;}
+.history-store-chip.active{border-color:var(--purple);background:var(--purple-light);color:var(--purple);}
+
+/* 개인 히스토리 섹션 */
+.my-history-item{background:#f8f7f2;border-radius:8px;padding:10px 12px;border-left:3px solid var(--navy);margin-bottom:6px;}
+.my-history-date{font-size:10px;color:var(--text-mute);margin-bottom:3px;}
+.my-history-store{font-size:10px;font-weight:600;color:var(--text-sub);margin-bottom:3px;}
+.my-history-text{font-size:13px;color:var(--text);line-height:1.4;}
+.my-history-done{opacity:0.5;text-decoration:line-through;}
 .board-item-title{font-size:13px;font-weight:700;color:var(--text);}
 .board-item-preview{font-size:12px;color:var(--text-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .board-item-meta{font-size:11px;color:var(--text-mute);margin-top:4px;}
@@ -463,6 +480,22 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div class="board-cat-select">
       <button class="board-cat-btn selected-notice selected" id="bcat-notice" onclick="selectBoardCat('notice')">📢 공지</button>
       <button class="board-cat-btn" id="bcat-share" onclick="selectBoardCat('share')">💬 업무공유</button>
+      <button class="board-cat-btn" id="bcat-history" onclick="selectBoardCat('history')">📌 히스토리</button>
+    </div>
+    <!-- 히스토리 전용 폼 (히스토리 선택시만 표시) -->
+    <div id="history-form-wrap" style="display:none;" class="history-form">
+      <select id="history-cat-select">
+        <option value="">카테고리 선택</option>
+        <option value="신제품 입고">📦 신제품 입고</option>
+        <option value="이벤트 시작">🎉 이벤트 시작</option>
+        <option value="이벤트 종료">✅ 이벤트 종료</option>
+        <option value="매장 이슈">⚠️ 매장 이슈</option>
+        <option value="인력 변동">👤 인력 변동</option>
+        <option value="시스템 변경">🔧 시스템 변경</option>
+        <option value="기타">📝 기타</option>
+      </select>
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;font-weight:600;">해당 매장 (복수 선택 가능)</div>
+      <div class="history-store-chips" id="history-store-chips"></div>
     </div>
     <input type="text" id="board-title-input" placeholder="제목을 입력하세요">
     <textarea id="board-body-input" placeholder="내용을 입력하세요..."></textarea>
@@ -504,6 +537,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="board-tab active" id="btab-all" onclick="switchBoardTab('all')">전체</button>
       <button class="board-tab" id="btab-notice" onclick="switchBoardTab('notice')">📢 공지</button>
       <button class="board-tab" id="btab-share" onclick="switchBoardTab('share')">💬 업무공유</button>
+      <button class="board-tab" id="btab-history" onclick="switchBoardTab('history')">📌 히스토리</button>
     </div>
     <div class="board-list" id="board-list"><div class="board-empty">불러오는 중...</div></div>
   </div>
@@ -629,6 +663,25 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="my-add-btn" onclick="addMyHandover()">+ 추가</button>
     </div>
   </div>
+
+  <!-- 개인 업무 전체 히스토리 -->
+  <div class="my-section">
+    <div class="my-section-header">
+      <span>📊 내 전체 업무 히스토리</span>
+      <button onclick="toggleMyHistory()" id="my-history-toggle-btn" style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">펼치기 ▼</button>
+    </div>
+    <div id="my-history-wrap" style="display:none;">
+      <div style="display:flex;gap:6px;padding:8px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+        <button onclick="filterMyHistory('all')" id="mhf-all" class="my-store-chip active" style="font-size:11px;">전체</button>
+        <button onclick="filterMyHistory('undone')" id="mhf-undone" class="my-store-chip" style="font-size:11px;">미완료</button>
+        <button onclick="filterMyHistory('done')" id="mhf-done" class="my-store-chip" style="font-size:11px;">완료</button>
+      </div>
+      <div id="my-history-list" style="padding:8px 16px 12px;display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;">
+        <div class="my-empty">펼쳐서 확인하세요</div>
+      </div>
+    </div>
+  </div>
+
   <div class="pb"></div>
 </div>
 
@@ -1151,6 +1204,93 @@ function addMyHandover(){window.addMyHandover();}
 window.updateDailyUsername=function(){};
 function updateDailyUsername(){}
 
+// ══════════════════════════════════════
+// 개인 업무 전체 히스토리
+// ══════════════════════════════════════
+let myHistoryFilter='all';
+
+window.toggleMyHistory=async function(){
+  const wrap=document.getElementById('my-history-wrap');
+  const btn=document.getElementById('my-history-toggle-btn');
+  if(!wrap||!btn)return;
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'block';
+  btn.textContent=isOpen?'펼치기 ▼':'접기 ▲';
+  if(!isOpen)await loadMyHistory();
+};
+function toggleMyHistory(){window.toggleMyHistory();}
+
+window.filterMyHistory=function(filter){
+  myHistoryFilter=filter;
+  ['all','undone','done'].forEach(f=>{
+    const btn=document.getElementById(`mhf-${f}`);
+    if(btn)btn.className='my-store-chip'+(f===filter?' active':'');
+  });
+  loadMyHistory();
+};
+function filterMyHistory(f){window.filterMyHistory(f);}
+
+async function loadMyHistory(){
+  if(!myStaff)return;
+  const listEl=document.getElementById('my-history-list');
+  if(!listEl)return;
+  listEl.innerHTML='<div class="my-empty">불러오는 중...</div>';
+
+  // 이번 달 전체 매장에서 내 이름으로 작성한 업무 수집
+  const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
+  const allItems=[];
+
+  for(const store of STORES){
+    for(let d=1;d<=lastDay;d++){
+      const dateKey=dk(y,m,d);
+      try{
+        const snap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
+        if(snap.exists()){
+          const items=(snap.data().items||[]).filter(i=>i.author===myStaff);
+          items.forEach(item=>{
+            allItems.push({...item,storeId:store.id,storeName:store.name,storeIcon:store.icon,dateKey});
+          });
+        }
+      }catch(e){}
+    }
+  }
+
+  // 필터 적용
+  const filtered=myHistoryFilter==='done'?allItems.filter(i=>i.done)
+    :myHistoryFilter==='undone'?allItems.filter(i=>!i.done)
+    :allItems;
+
+  // 날짜 역순 정렬
+  filtered.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+
+  if(filtered.length===0){
+    listEl.innerHTML='<div class="my-empty">이번 달 업무 내역이 없습니다</div>';
+    return;
+  }
+
+  listEl.innerHTML='';
+  let lastDate='';
+  filtered.forEach(item=>{
+    // 날짜 구분선
+    if(item.dateKey!==lastDate){
+      const sep=document.createElement('div');
+      sep.style.cssText='font-size:11px;font-weight:700;color:var(--text-sub);padding:6px 0 2px;';
+      const d=new Date(item.dateKey);
+      const dows=['일','월','화','수','목','금','토'];
+      sep.textContent=`${d.getMonth()+1}/${d.getDate()} (${dows[d.getDay()]})`;
+      listEl.appendChild(sep);
+      lastDate=item.dateKey;
+    }
+    const row=document.createElement('div');
+    row.className='my-history-item'+(item.done?' my-history-done':'');
+    row.style.borderLeftColor=item.done?'var(--green)':item.fromDate&&item.fromDate!==item.dateKey?'var(--orange)':'var(--navy)';
+    const carryTag=item.fromDate&&item.fromDate!==item.dateKey?` <span style="font-size:10px;color:var(--orange);">[이월]</span>`:'';
+    row.innerHTML=`<div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
+      <div class="my-history-text">${item.done?'✅':'⬜'} ${item.text}${carryTag}</div>`;
+    listEl.appendChild(row);
+  });
+}
+
 window.confirmName=function(){
   const val=document.getElementById('name-input').value.trim();
   if(!val)return;
@@ -1366,8 +1506,8 @@ async function loadBoard(){
     listEl.innerHTML='';
     [...filtered].reverse().forEach((item,ri)=>{
       const realIdx=items.indexOf(item);
-      const catLabel=item.cat==='notice'?'📢 공지':'💬 업무공유';
-      const catClass=item.cat==='notice'?'board-cat-notice':'board-cat-share';
+      const catLabel=item.cat==='notice'?'📢 공지':item.cat==='history'?'📌 히스토리':'💬 업무공유';
+      const catClass=item.cat==='notice'?'board-cat-notice':item.cat==='history'?'board-cat-history':'board-cat-share';
       const div=document.createElement('div');div.className='board-item';
       div.innerHTML=`<div class="board-item-top">
           <span class="board-cat-badge ${catClass}">${catLabel}</span>
@@ -1385,7 +1525,7 @@ async function loadBoard(){
 
 window.switchBoardTab = function(tab){
   boardTab=tab;
-  ['all','notice','share'].forEach(t=>{
+  ['all','notice','share','history'].forEach(t=>{
     const btn=document.getElementById(`btab-${t}`);
     if(btn)btn.className='board-tab'+(t===tab?' active':'');
   });
@@ -1395,11 +1535,36 @@ function switchBoardTab(tab){window.switchBoardTab(tab);}
 
 // 게시글 작성
 window.openBoardWrite=function(){
-  // 공지 카테고리는 관리자만
   boardWriteCat=isAdmin?'notice':'share';
   selectBoardCat(boardWriteCat);
   document.getElementById('board-title-input').value='';
   document.getElementById('board-body-input').value='';
+  // 히스토리 매장 칩 초기화
+  const chips=document.getElementById('history-store-chips');
+  if(chips){
+    chips.innerHTML='';
+    // 전체 옵션
+    const all=document.createElement('button');
+    all.className='history-store-chip active';all.textContent='전체 매장';all.dataset.store='all';
+    all.onclick=()=>{
+      document.querySelectorAll('.history-store-chip').forEach(c=>c.classList.remove('active'));
+      all.classList.add('active');
+    };
+    chips.appendChild(all);
+    STORES.forEach(s=>{
+      const chip=document.createElement('button');
+      chip.className='history-store-chip';
+      chip.textContent=`${s.icon} ${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
+      chip.dataset.store=s.id;
+      chip.onclick=()=>{
+        const allChip=chips.querySelector('[data-store="all"]');
+        if(allChip)allChip.classList.remove('active');
+        chip.classList.toggle('active');
+        if(!chips.querySelector('.history-store-chip.active'))allChip.classList.add('active');
+      };
+      chips.appendChild(chip);
+    });
+  }
   document.getElementById('board-write-modal').classList.add('open');
   setTimeout(()=>document.getElementById('board-title-input').focus(),100);
 };
@@ -1410,30 +1575,43 @@ window.selectBoardCat=function(cat){
   boardWriteCat=cat;
   const nb=document.getElementById('bcat-notice');
   const sb=document.getElementById('bcat-share');
+  const hb=document.getElementById('bcat-history');
+  const hw=document.getElementById('history-form-wrap');
+  nb.className='board-cat-btn';sb.className='board-cat-btn';hb.className='board-cat-btn';
   if(cat==='notice'){
     nb.className='board-cat-btn selected-notice selected';
-    sb.className='board-cat-btn';
-  } else {
-    nb.className='board-cat-btn';
+    if(hw)hw.style.display='none';
+    if(cat==='notice'&&!isAdmin){alert('공지는 관리자만 작성할 수 있습니다');selectBoardCat('share');return;}
+  } else if(cat==='share'){
     sb.className='board-cat-btn selected';
-  }
-  // 공지는 관리자만 선택 가능
-  if(cat==='notice'&&!isAdmin){
-    alert('공지는 관리자만 작성할 수 있습니다');
-    selectBoardCat('share');
+    if(hw)hw.style.display='none';
+  } else if(cat==='history'){
+    hb.className='board-cat-btn selected-history selected';
+    if(hw)hw.style.display='block';
   }
 };
 window.submitBoardPost=async function(){
   const title=document.getElementById('board-title-input').value.trim();
   const body=document.getElementById('board-body-input').value.trim();
   if(!title||!body){alert('제목과 내용을 입력해주세요');return;}
-  const author=isAdmin?'관리자':(getUsername()||'익명');
+  const author=isAdmin?'관리자':(myStaff||getUsername()||'익명');
+  const now=new Date();
+  const date=`${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const fullDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  let extra={};
+  if(boardWriteCat==='history'){
+    const catSel=document.getElementById('history-cat-select');
+    const historyCat=catSel?catSel.value:'기타';
+    const activeChips=[...document.querySelectorAll('.history-store-chip.active')].map(c=>c.dataset.store);
+    const stores=activeChips.includes('all')?['all']:activeChips;
+    extra={historyCat,stores,fullDate};
+  }
+
   const ref=doc(db,'board/posts');
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  const now=new Date();
-  const date=`${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date});
+  items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date,...extra});
   await setDoc(ref,{items});
   closeBoardWrite();
   loadBoard();
@@ -1442,14 +1620,22 @@ window.submitBoardPost=async function(){
 // 게시글 상세
 function openBoardDetail(item,idx){
   boardViewPost={item,idx};
-  const catLabel=item.cat==='notice'?'📢 공지':'💬 업무공유';
-  const catClass=item.cat==='notice'?'board-cat-notice':'board-cat-share';
+  let catLabel,catClass;
+  if(item.cat==='notice'){catLabel='📢 공지';catClass='board-cat-notice';}
+  else if(item.cat==='history'){catLabel='📌 히스토리';catClass='board-cat-history';}
+  else{catLabel='💬 업무공유';catClass='board-cat-share';}
   document.getElementById('board-detail-cat').textContent=catLabel;
   document.getElementById('board-detail-cat').className=`board-detail-cat ${catClass}`;
   document.getElementById('board-detail-title').textContent=item.title;
-  document.getElementById('board-detail-meta').textContent=`${item.author||'익명'} · ${item.date||''}`;
+  let meta=`${item.author||'익명'} · ${item.date||''}`;
+  if(item.cat==='history'){
+    const storeNames=item.stores&&item.stores[0]!=='all'
+      ?item.stores.map(id=>STORES.find(s=>s.id===id)?.name||id).join(', ')
+      :'전체 매장';
+    meta+=`\n카테고리: ${item.historyCat||'기타'} | 매장: ${storeNames}`;
+  }
+  document.getElementById('board-detail-meta').textContent=meta;
   document.getElementById('board-detail-content').textContent=item.body;
-  // 삭제 버튼: 관리자는 모두, 직원은 본인 글만
   const delBtn=document.getElementById('board-detail-del-btn');
   const canDel=isAdmin||(item.author===getUsername()&&item.cat!=='notice');
   delBtn.style.display=canDel?'block':'none';
