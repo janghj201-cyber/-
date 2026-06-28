@@ -847,7 +847,25 @@ window.closeNameModal=function(){
   pendingNameCb=null;
 };
 function closeNameModal(){window.closeNameModal();}
-// 기본 직원 목록 (Firebase에서 로드, 없으면 이걸 사용)
+// 직원별 기본 매장 (null = 순환근무)
+const STAFF_DEFAULT_STORE = {
+  '오명록': 'yeonsu',
+  '고아현': 'nonhyeon',
+  '장현진': null,
+  '장대운': 'rodeo',
+  '신재현': null,
+  '정희경': 'rodeo',
+  '조효정': 'rodeo',
+  '홍다운': 'sijungdong',
+  '이종혁': 'airport',
+  '원주현': 'sangdong',
+  '김형진': null,
+  '윤하람': null,
+  '차영근': 'geomdan',
+  '정유진': 'gyesan',
+  '안태민': null,
+  '김다정': 'gyesan',
+};
 const DEFAULT_STAFF = [
   '오명록','고아현','장현진','장대운','신재현','정희경',
   '조효정','홍다운','이종혁','원주현','김형진','윤하람',
@@ -884,7 +902,12 @@ function renderMyPage(){
   staffList.forEach(name=>{
     const block=document.createElement('div');
     block.className='staff-block';
-    block.innerHTML=`<div class="staff-avatar">${name[0]}</div><div class="staff-name">${name}</div>`;
+    const defaultStoreId=STAFF_DEFAULT_STORE[name];
+    const defaultStore=defaultStoreId?STORES.find(s=>s.id===defaultStoreId):null;
+    const storeLabel=defaultStore
+      ?`<div style="font-size:10px;color:var(--text-sub);margin-top:4px;">${defaultStore.icon} ${defaultStore.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>`
+      :`<div style="font-size:10px;color:var(--gold);margin-top:4px;">🔄 순환근무</div>`;
+    block.innerHTML=`<div class="staff-avatar">${name[0]}</div><div class="staff-name">${name}</div>${storeLabel}`;
     block.onclick=()=>enterMyWork(name);
     grid.appendChild(block);
   });
@@ -902,7 +925,14 @@ function renderMyPage(){
 function enterMyWork(name){
   myStaff=name;
   myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  if(!myStore)myStore=STORES[0];
+  // 직원 기본 매장 자동 설정
+  const defaultStoreId=STAFF_DEFAULT_STORE[name];
+  if(defaultStoreId){
+    myStore=STORES.find(s=>s.id===defaultStoreId)||STORES[0];
+  } else {
+    // 순환근무자는 이전에 선택한 매장 유지, 없으면 첫 번째
+    if(!myStore)myStore=STORES[0];
+  }
   showScreen('screen-my-work');
   renderMyWorkScreen();
 }
@@ -937,12 +967,16 @@ function renderMyWorkScreen(){
   const storeSelect=document.getElementById('my-store-select');
   if(storeSelect){
     storeSelect.innerHTML='';
+    const defaultStoreId=STAFF_DEFAULT_STORE[myStaff];
     STORES.forEach(s=>{
       const chip=document.createElement('button');
-      chip.className='my-store-chip'+(myStore&&myStore.id===s.id?' active':'');
+      const isSelected=myStore&&myStore.id===s.id;
+      const isDefault=s.id===defaultStoreId;
+      chip.className='my-store-chip'+(isSelected?' active':'');
       const short=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
-      chip.textContent=`${s.icon} ${short}`;
-      chip.onclick=()=>{myStore=s;renderMyTodoList();renderMyHandoverList();loadMyStats();};
+      chip.textContent=`${s.icon} ${short}${isDefault?' ★':''}`;
+      chip.title=isDefault?'기본 매장':'';
+      chip.onclick=()=>{myStore=s;renderMyTodoList();renderMyHandoverList();loadMyStats();renderMyWorkScreen();};
       storeSelect.appendChild(chip);
     });
   }
