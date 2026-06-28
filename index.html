@@ -355,6 +355,14 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-history-store{font-size:10px;font-weight:600;color:var(--text-sub);margin-bottom:3px;}
 .my-history-text{font-size:13px;color:var(--text);line-height:1.4;}
 .my-history-done{opacity:0.5;text-decoration:line-through;}
+
+/* 지난달 미완료 알림 배너 */
+.carry-banner{margin:12px 16px 0;background:#fff8e6;border:1.5px solid var(--gold);border-radius:12px;padding:12px 14px;}
+.carry-banner-title{font-size:13px;font-weight:700;color:var(--orange);margin-bottom:8px;}
+.carry-banner-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #fde8b0;font-size:12px;color:var(--text);}
+.carry-banner-item:last-child{border-bottom:none;}
+.carry-move-btn{background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px;}
+.carry-move-all-btn{display:block;width:100%;margin-top:8px;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 .board-item-title{font-size:13px;font-weight:700;color:var(--text);}
 .board-item-preview{font-size:12px;color:var(--text-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .board-item-meta{font-size:11px;color:var(--text-mute);margin-top:4px;}
@@ -618,6 +626,9 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div><div class="header-title" id="my-work-name">-</div><div class="header-sub" id="my-work-sub"></div></div>
     <button class="back-btn" onclick="backToStaffSelect()">← 직원 선택</button>
   </div>
+
+  <!-- 지난달 미완료 알림 배너 (월 첫날에만 표시) -->
+  <div id="carry-banner-wrap"></div>
 
   <!-- 매장 선택 -->
   <div style="background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;">
@@ -1044,6 +1055,7 @@ function renderMyWorkScreen(){
   renderMyTodoList();
   renderMyHandoverList();
   loadMyStats();
+  checkLastMonthCarry();
 }
 
 // 관리자 — 직원 추가/삭제
@@ -1247,7 +1259,6 @@ async function loadMyHistory(){
   if(!listEl)return;
   listEl.innerHTML='<div class="my-empty">불러오는 중...</div>';
 
-  // 이번 달 전체 매장에서 내 이름으로 작성한 업무 수집
   const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
   const allItems=[];
 
@@ -1266,12 +1277,10 @@ async function loadMyHistory(){
     }
   }
 
-  // 필터 적용
   const filtered=myHistoryFilter==='done'?allItems.filter(i=>i.done)
     :myHistoryFilter==='undone'?allItems.filter(i=>!i.done)
     :allItems;
 
-  // 날짜 역순 정렬
   filtered.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
 
   if(filtered.length===0){
@@ -1281,25 +1290,128 @@ async function loadMyHistory(){
 
   listEl.innerHTML='';
   let lastDate='';
+  const todayKey=dk(y,m,today.getDate());
+
   filtered.forEach(item=>{
-    // 날짜 구분선
     if(item.dateKey!==lastDate){
       const sep=document.createElement('div');
-      sep.style.cssText='font-size:11px;font-weight:700;color:var(--text-sub);padding:6px 0 2px;';
+      sep.style.cssText='font-size:11px;font-weight:700;color:var(--text-sub);padding:6px 0 2px;display:flex;align-items:center;justify-content:space-between;';
       const d=new Date(item.dateKey);
       const dows=['일','월','화','수','목','금','토'];
-      sep.textContent=`${d.getMonth()+1}/${d.getDate()} (${dows[d.getDay()]})`;
+      sep.innerHTML=`<span>${d.getMonth()+1}/${d.getDate()} (${dows[d.getDay()]})</span>`;
       listEl.appendChild(sep);
       lastDate=item.dateKey;
     }
+
     const row=document.createElement('div');
     row.className='my-history-item'+(item.done?' my-history-done':'');
     row.style.borderLeftColor=item.done?'var(--green)':item.fromDate&&item.fromDate!==item.dateKey?'var(--orange)':'var(--navy)';
     const carryTag=item.fromDate&&item.fromDate!==item.dateKey?` <span style="font-size:10px;color:var(--orange);">[이월]</span>`:'';
-    row.innerHTML=`<div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
-      <div class="my-history-text">${item.done?'✅':'⬜'} ${item.text}${carryTag}</div>`;
+
+    // 오늘 항목이 아닌 미완료 → 오늘로 이월 버튼
+    const canCarry=!item.done&&item.dateKey!==todayKey;
+    row.innerHTML=`
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <input type="checkbox" ${item.done?'checked':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
+        <div style="flex:1;">
+          <div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
+          <div class="my-history-text">${item.text}${carryTag}</div>
+        </div>
+        ${canCarry?`<button class="carry-move-btn" style="margin-top:2px;">오늘로↑</button>`:''}
+      </div>`;
+
+    // 체크박스 — 완료 처리
+    row.querySelector('input').onchange=async(e)=>{
+      await toggleTodoItem(item.storeId,item.dateKey,item.id,e.target.checked);
+      item.done=e.target.checked;
+      row.className='my-history-item'+(item.done?' my-history-done':'');
+      row.style.borderLeftColor=item.done?'var(--green)':'var(--navy)';
+    };
+
+    // 오늘로 이월 버튼
+    if(canCarry){
+      row.querySelector('.carry-move-btn').onclick=async()=>{
+        await carryItemToToday(item);
+        await loadMyHistory();
+      };
+    }
+
     listEl.appendChild(row);
   });
+}
+
+// 지난달 미완료 알림 배너 (월 첫날 접속 시)
+async function checkLastMonthCarry(){
+  const bannerWrap=document.getElementById('carry-banner-wrap');
+  if(!bannerWrap||!myStaff)return;
+  bannerWrap.innerHTML='';
+
+  // 오늘이 1일이 아니면 표시 안 함
+  if(today.getDate()!==1)return;
+
+  // 지난달 미완료 수집
+  const prevMonth=new Date(today.getFullYear(),today.getMonth()-1,1);
+  const py=prevMonth.getFullYear(),pm=prevMonth.getMonth();
+  const lastDay=new Date(py,pm+1,0).getDate();
+  const undoneItems=[];
+
+  for(const store of STORES){
+    for(let d=1;d<=lastDay;d++){
+      const dateKey=dk(py,pm,d);
+      try{
+        const snap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
+        if(snap.exists()){
+          const items=(snap.data().items||[]).filter(i=>i.author===myStaff&&!i.done);
+          items.forEach(item=>undoneItems.push({...item,storeId:store.id,storeName:store.name,storeIcon:store.icon,dateKey}));
+        }
+      }catch(e){}
+    }
+  }
+
+  if(undoneItems.length===0)return;
+
+  const banner=document.createElement('div');
+  banner.className='carry-banner';
+  banner.innerHTML=`<div class="carry-banner-title">⚠️ 지난달 미완료 업무 ${undoneItems.length}건</div>`;
+
+  undoneItems.slice(0,5).forEach(item=>{
+    const row=document.createElement('div');
+    row.className='carry-banner-item';
+    row.innerHTML=`<span>${item.storeIcon} ${item.text}</span>
+      <button class="carry-move-btn">오늘로↑</button>`;
+    row.querySelector('.carry-move-btn').onclick=async()=>{
+      await carryItemToToday(item);
+      row.remove();
+      const title=banner.querySelector('.carry-banner-title');
+      const remaining=banner.querySelectorAll('.carry-banner-item').length;
+      if(remaining===0)banner.remove();
+      else if(title)title.textContent=`⚠️ 지난달 미완료 업무 ${remaining}건`;
+    };
+    banner.appendChild(row);
+  });
+
+  if(undoneItems.length>1){
+    const allBtn=document.createElement('button');
+    allBtn.className='carry-move-all-btn';
+    allBtn.textContent=`전체 ${undoneItems.length}건 오늘로 이월`;
+    allBtn.onclick=async()=>{
+      allBtn.textContent='이월 중...';allBtn.disabled=true;
+      for(const item of undoneItems)await carryItemToToday(item);
+      banner.remove();
+      renderMyTodoList();
+    };
+    banner.appendChild(allBtn);
+  }
+
+  bannerWrap.appendChild(banner);
+}
+
+// 특정 항목을 오늘 날짜로 이월
+async function carryItemToToday(item){
+  const todayDateKey=dk(today.getFullYear(),today.getMonth(),today.getDate());
+  if(item.dateKey===todayDateKey)return;
+  // 오늘 날짜에 추가 (fromDate 태그 포함)
+  await addTodoItem(item.storeId,todayDateKey,item.text,item.author,item.dateKey);
 }
 
 window.confirmName=function(){
@@ -1982,11 +2094,11 @@ async function loadTodoItems(storeId,dateKey){
   return items;
 }
 
-async function addTodoItem(storeId,dateKey,text,author){
+async function addTodoItem(storeId,dateKey,text,author,fromDate=null){
   const ref=doc(db,`todos/${storeId}_${dateKey}`);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,done:false,fromDate:null});
+  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,done:false,fromDate});
   await setDoc(ref,{items});
 }
 
