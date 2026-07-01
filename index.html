@@ -1662,8 +1662,7 @@ window.switchBoardTab = function(tab){
 function switchBoardTab(tab){window.switchBoardTab(tab);}
 
 // 게시글 작성
-window.openBoardWrite=function(){
-  boardWriteCat=isAdmin?'notice':'share';
+window.openBoardWrite=function(){  boardWriteCat=isAdmin?'notice':'share';
   selectBoardCat(boardWriteCat);
   document.getElementById('board-title-input').value='';
   document.getElementById('board-body-input').value='';
@@ -1699,6 +1698,8 @@ window.openBoardWrite=function(){
 window.closeBoardWrite=function(){
   document.getElementById('board-write-modal').classList.remove('open');
 };
+function openBoardWrite(){window.openBoardWrite();}
+function closeBoardWrite(){window.closeBoardWrite();}
 window.selectBoardCat=function(cat){
   boardWriteCat=cat;
   const nb=document.getElementById('bcat-notice');
@@ -2081,36 +2082,6 @@ function showDetail(y,m,d){
 
   setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'start'}),50);
 }
-
-// ══════════════════════════════════════
-// 오늘의 업무 (직원 자유 입력 + 이월)
-// ══════════════════════════════════════
-async function loadTodoItems(storeId,dateKey){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
-  const snap=await getDoc(ref);
-  let items=snap.exists()?(snap.data().items||[]):[];
-  // 오늘 날짜를 볼 때만 전날 미완료 항목을 이월시켜 병합
-  if(dateKey===todayKey()){
-    const prevKey=prevDateKey(dateKey);
-    try{
-      const prevSnap=await getDoc(doc(db,`todos/${storeId}_${prevKey}`));
-      if(prevSnap.exists()){
-        const prevItems=prevSnap.data().items||[];
-        const undone=prevItems.filter(it=>!it.done);
-        let changed=false;
-        undone.forEach(it=>{
-          if(!items.find(x=>x.id===it.id)){
-            items.push({...it,fromDate:it.fromDate||prevKey});
-            changed=true;
-          }
-        });
-        if(changed)await setDoc(ref,{items});
-      }
-    }catch(e){}
-  }
-  return items;
-}
-
 
 // ══════════════════════════════════════
 // 직원 업무 CRUD (staff_todos/{name}_{date})
