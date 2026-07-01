@@ -71,17 +71,18 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .wd:first-child{color:var(--red);}
 .wd:last-child{color:var(--blue);}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-.day{min-height:62px;padding:5px 4px 4px;border-top:0.5px solid var(--border);cursor:pointer;transition:background 0.12s;}
+.day{min-height:72px;padding:6px 4px 4px;border-top:0.5px solid var(--border);cursor:pointer;transition:background 0.12s;position:relative;}
 .day:hover{background:#f5f3ee;}
-.day.selected{background:var(--gold-light);border-color:var(--gold);}
-.day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px;font-weight:700;}
-.day-num{font-size:13px;font-weight:500;text-align:center;margin-bottom:3px;line-height:1;color:var(--text);}
+.day.selected{background:var(--gold-light);border-color:var(--gold);border-top:2px solid var(--gold);}
+.day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px;font-weight:700;font-size:14px;}
+.day-num{font-size:13px;font-weight:600;text-align:center;margin-bottom:3px;line-height:1;color:var(--text);}
+.day.other-month{background:#faf9f6;}
 .day.other-month .day-num{color:var(--text-mute);}
 .day.sun .day-num{color:var(--red);}
 .day.sat .day-num{color:var(--blue);}
 .day.today.sun .day-num,.day.today.sat .day-num{color:var(--navy);}
 .badges{display:flex;flex-direction:column;gap:2px;}
-.badge{font-size:9px;font-weight:600;border-radius:3px;padding:1px 3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.badge{font-size:9px;font-weight:700;border-radius:4px;padding:2px 4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .b-blue{background:#1a5fb5;color:#fff;}
 .b-orange{background:#d97706;color:#fff;}
 .b-purple{background:#6d3fa0;color:#fff;}
@@ -526,7 +527,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div class="board-detail-header">
     <button class="back-btn" onclick="closeBoardDetail()">← 목록</button>
     <div style="font-size:14px;font-weight:700;">게시글</div>
-    <button class="board-detail-del" id="board-detail-del-btn" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;" onclick="deleteBoardPost()">삭제</button>
+    <div style="display:flex;gap:6px;">
+      <button id="board-detail-edit-btn" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;" onclick="editBoardPost()">수정</button>
+      <button class="board-detail-del" id="board-detail-del-btn" style="display:none;background:rgba(255,100,100,0.3);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;" onclick="deleteBoardPost()">삭제</button>
+    </div>
   </div>
   <div class="board-detail-body">
     <div class="board-detail-cat" id="board-detail-cat"></div>
@@ -1766,13 +1770,36 @@ function openBoardDetail(item,idx){
   document.getElementById('board-detail-meta').textContent=meta;
   document.getElementById('board-detail-content').textContent=item.body;
   const delBtn=document.getElementById('board-detail-del-btn');
-  const canDel=isAdmin||(item.author===getUsername()&&item.cat!=='notice');
-  delBtn.style.display=canDel?'block':'none';
+  const editBtn=document.getElementById('board-detail-edit-btn');
+  const canEdit=isAdmin||(item.cat!=='notice'&&item.author===(myStaff||getUsername()));
+  const canDel=isAdmin||(item.author===(myStaff||getUsername())&&item.cat!=='notice');
+  if(delBtn)delBtn.style.display=canDel?'block':'none';
+  if(editBtn)editBtn.style.display=canEdit?'block':'none';
   document.getElementById('board-detail-screen').classList.add('open');
 }
 window.closeBoardDetail=function(){
   document.getElementById('board-detail-screen').classList.remove('open');
 };
+window.editBoardPost=async function(){
+  if(!boardViewPost)return;
+  const item=boardViewPost.item;
+  const newTitle=prompt('제목 수정:', item.title);
+  if(newTitle===null)return;
+  const newBody=prompt('내용 수정:', item.body);
+  if(newBody===null)return;
+  if(!newTitle.trim()||!newBody.trim()){alert('제목과 내용을 입력해주세요');return;}
+  const ref=doc(db,'board/posts');
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const target=items.find(i=>i.id===item.id);
+  if(target){target.title=newTitle.trim();target.body=newBody.trim();}
+  await setDoc(ref,{items});
+  document.getElementById('board-detail-title').textContent=newTitle.trim();
+  document.getElementById('board-detail-content').textContent=newBody.trim();
+  item.title=newTitle.trim();item.body=newBody.trim();
+  loadBoard();
+};
+function editBoardPost(){window.editBoardPost();}
 window.deleteBoardPost=async function(){
   if(!boardViewPost||!confirm('이 게시글을 삭제할까요?'))return;
   const ref=doc(db,'board/posts');
@@ -2417,39 +2444,71 @@ function buildHandoverSection(y,m,d){
   const dateKey=dk(y,m,d);
   const locked=isDateLocked(dateKey);
   const wrap=document.createElement('div');wrap.className='handover-section';
-  wrap.innerHTML=`<div class="handover-header">🔄 인수인계${locked?'<span class="lock-badge">🔒 마감됨</span>':''}</div>`;
 
-  // 📌 매장 정보 (고정, 날짜 무관)
+  // 📌 매장 고정 정보 (펼치기/접기)
   const infoBox=document.createElement('div');infoBox.className='storeinfo-box';
-  infoBox.innerHTML=`<div class="storeinfo-label">📌 매장 정보 (와이파이·도어락·POS 등 고정 정보 — 모든 날짜 공통)</div>
-    <textarea class="storeinfo-textarea" id="storeinfo-textarea" placeholder="예) 와이파이: WeVape_5G / 비밀번호: ...${'\n'}도어락 번호: ...${'\n'}POS 로그인 정보: ..."></textarea>
-    <div class="storeinfo-save-row">
-      <button class="storeinfo-save-btn" id="storeinfo-save-btn">💾 저장</button>
-      <span class="storeinfo-saved" id="storeinfo-saved"></span>
+  infoBox.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="storeinfo-toggle-row">
+      <div class="storeinfo-label" style="margin:0;">📌 매장 고정 정보</div>
+      <button style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" id="storeinfo-toggle-btn">펼치기 ▼</button>
+    </div>
+    <div id="storeinfo-content" style="display:none;margin-top:10px;">
+      <textarea class="storeinfo-textarea" id="storeinfo-textarea" placeholder="예) 와이파이: WeVape_5G / 비밀번호: ...${'\n'}도어락 번호: ...${'\n'}POS 로그인 정보: ..." rows="5"></textarea>
+      <div class="storeinfo-save-row">
+        <button class="storeinfo-save-btn" id="storeinfo-save-btn">💾 저장</button>
+        <span class="storeinfo-saved" id="storeinfo-saved"></span>
+      </div>
     </div>`;
   wrap.appendChild(infoBox);
 
-  const infoTextarea=infoBox.querySelector('#storeinfo-textarea');
-  const infoSaveBtn=infoBox.querySelector('#storeinfo-save-btn');
-  const infoSaved=infoBox.querySelector('#storeinfo-saved');
-  infoTextarea.value='불러오는 중...';
-  loadStoreInfo(curStore.id).then(text=>{infoTextarea.value=text;}).catch(()=>{infoTextarea.value='';});
-  infoSaveBtn.onclick=async()=>{
-    infoSaved.textContent='저장 중...';
+  // 펼치기/접기 토글
+  const toggleRow=infoBox.querySelector('#storeinfo-toggle-row');
+  const toggleBtn=infoBox.querySelector('#storeinfo-toggle-btn');
+  const content=infoBox.querySelector('#storeinfo-content');
+  let infoLoaded=false;
+  toggleRow.onclick=()=>{
+    const isOpen=content.style.display!=='none';
+    content.style.display=isOpen?'none':'block';
+    toggleBtn.textContent=isOpen?'펼치기 ▼':'접기 ▲';
+    if(!isOpen&&!infoLoaded){
+      infoLoaded=true;
+      const textarea=infoBox.querySelector('#storeinfo-textarea');
+      textarea.value='불러오는 중...';
+      loadStoreInfo(curStore.id).then(text=>{textarea.value=text;}).catch(()=>{textarea.value='';});
+    }
+  };
+  infoBox.querySelector('#storeinfo-save-btn').onclick=async()=>{
+    const saved=infoBox.querySelector('#storeinfo-saved');
+    saved.textContent='저장 중...';
     try{
-      await saveStoreInfo(curStore.id,infoTextarea.value);
-      infoSaved.textContent='✓ 저장됨';
-      setTimeout(()=>infoSaved.textContent='',2000);
-    }catch(e){infoSaved.textContent='⚠ 저장 실패';}
+      await saveStoreInfo(curStore.id,infoBox.querySelector('#storeinfo-textarea').value);
+      saved.textContent='✓ 저장됨';
+      setTimeout(()=>saved.textContent='',2000);
+    }catch(e){saved.textContent='⚠ 저장 실패';}
   };
 
-  // 📝 인수인계 메모 (날짜별, 이월)
-  const sub=document.createElement('div');sub.className='handover-sub';sub.textContent='📝 인수인계 메모 (다음 근무자 확인 필요)';
-  wrap.appendChild(sub);
+  // 📝 인수인계 헤더 + 완료 숨기기 토글
+  const headerRow=document.createElement('div');
+  headerRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px;';
+  headerRow.innerHTML=`<div class="handover-sub" style="margin:0;">📝 인수인계 메모</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <label style="font-size:11px;color:var(--text-sub);display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="hide-done-toggle" checked style="accent-color:var(--gold);"> 완료 숨기기
+      </label>
+      <button id="show-archive-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text-sub);cursor:pointer;font-family:inherit;">보관함 📂</button>
+    </div>`;
+  wrap.appendChild(headerRow);
 
   const listEl=document.createElement('div');listEl.className='todo-list';listEl.id='handover-list-box';
-  listEl.textContent='불러오는 중...';
+  listEl.innerHTML='<div class="todo-empty">불러오는 중...</div>';
   wrap.appendChild(listEl);
+
+  // 보관함 (완료된 항목)
+  const archiveEl=document.createElement('div');
+  archiveEl.id='handover-archive-box';
+  archiveEl.style.cssText='display:none;margin-top:8px;padding:10px 12px;background:#f8f7f2;border-radius:10px;border:1px solid var(--border);';
+  archiveEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">📂 완료된 인수인계</div><div id="archive-list"></div>';
+  wrap.appendChild(archiveEl);
 
   if(!locked){
     const inputRow=document.createElement('div');inputRow.className='todo-input-row';
@@ -2458,103 +2517,106 @@ function buildHandoverSection(y,m,d){
     wrap.appendChild(inputRow);
   }
 
+  let hideDone=true;
   let editingId=null;
+  let allItems=[];
 
   async function render(){
     try{
-      const items=await loadHandoverItems(curStore.id,dateKey);
-      if(items.length===0){
-        listEl.innerHTML='<div class="todo-empty">등록된 인수인계 메모가 없습니다</div>';
-        return;
+      allItems=await loadHandoverItems(curStore.id,dateKey);
+      const active=allItems.filter(i=>!i.confirmed);
+      const done=allItems.filter(i=>i.confirmed);
+      const show=hideDone?active:allItems;
+
+      if(show.length===0){
+        listEl.innerHTML=`<div class="todo-empty">${hideDone&&done.length>0?`완료 ${done.length}건 숨김 (보관함에서 확인)`:' 등록된 인수인계가 없습니다'}</div>`;
+      } else {
+        listEl.innerHTML='';
+        show.forEach(item=>renderHandoverRow(item));
       }
-      listEl.innerHTML='';
-      items.forEach(item=>{
-        const row=document.createElement('div');row.className='todo-item'+(item.confirmed?' done':'');
 
-        if(!locked&&editingId===item.id){
-          row.innerHTML=`<div class="todo-edit-row">
-            <input type="text" class="todo-edit-input">
-            <div class="todo-edit-btns">
-              <button class="todo-edit-save">저장</button>
-              <button class="todo-edit-cancel">취소</button>
-            </div>
-          </div>`;
-          const editInput=row.querySelector('.todo-edit-input');
-          editInput.value=item.text;
-          const doSave=async()=>{
-            const newText=editInput.value.trim();
-            if(!newText)return;
-            try{
-              await editHandoverItem(curStore.id,dateKey,item.id,newText);
-              editingId=null;
-              await render();
-            }catch(err){alert('수정에 실패했습니다. 인터넷 연결을 확인해주세요.');}
-          };
-          row.querySelector('.todo-edit-save').onclick=doSave;
-          row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
-          editInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSave();});
-          listEl.appendChild(row);
-          setTimeout(()=>editInput.focus(),0);
-          return;
-        }
-
-        const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
-        const confirmTag=item.confirmed?`<span class="confirm-tag">확인됨</span>`:'';
-        row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
-          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmTag}<div class="todo-author">${item.author||'익명'}</div></div>
-          ${!locked?`<div class="todo-actions">
-            <button class="todo-action-btn" data-act="edit" title="수정">✏️</button>
-            <button class="todo-action-btn" data-act="del" title="삭제">🗑️</button>
-          </div>`:''}`;
-        if(!locked){
-          row.querySelector('input').onchange=async(e)=>{
-            try{
-              await toggleHandoverItem(curStore.id,dateKey,item.id,e.target.checked);
-              row.className='todo-item'+(e.target.checked?' done':'');
-            }catch(err){
-              e.target.checked=!e.target.checked;
-              alert('저장에 실패했습니다. 인터넷 연결을 확인해주세요.');
-            }
-          };
-          row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
-          row.querySelector('[data-act="del"]').onclick=async()=>{
-            if(!confirm('이 메모를 삭제할까요?'))return;
-            try{
-              await deleteHandoverItem(curStore.id,dateKey,item.id);
-              await render();
-            }catch(err){alert('삭제에 실패했습니다. 인터넷 연결을 확인해주세요.');}
-          };
-        }
-        listEl.appendChild(row);
-      });
+      // 보관함
+      const archiveList=archiveEl.querySelector('#archive-list');
+      if(done.length===0){
+        archiveList.innerHTML='<div style="font-size:12px;color:var(--text-mute);">완료된 항목이 없습니다</div>';
+      } else {
+        archiveList.innerHTML='';
+        done.forEach(item=>{
+          const r=document.createElement('div');
+          r.style.cssText='font-size:12px;color:var(--text-mute);padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;';
+          r.innerHTML=`<span>✅</span><span style="flex:1;text-decoration:line-through;">${item.text}</span><span style="font-size:10px;">${item.author||''}</span>`;
+          archiveList.appendChild(r);
+        });
+      }
     }catch(err){
-      listEl.innerHTML='<div class="todo-error">⚠ 불러오기에 실패했습니다. 새로고침 후 다시 시도해주세요.</div>';
+      listEl.innerHTML='<div class="todo-error">⚠ 불러오기 실패</div>';
     }
   }
+
+  function renderHandoverRow(item){
+    const row=document.createElement('div');row.className='todo-item'+(item.confirmed?' done':'');
+    if(!locked&&editingId===item.id){
+      row.innerHTML=`<div class="todo-edit-row"><input type="text" class="todo-edit-input"><div class="todo-edit-btns"><button class="todo-edit-save">저장</button><button class="todo-edit-cancel">취소</button></div></div>`;
+      const editInput=row.querySelector('.todo-edit-input');editInput.value=item.text;
+      row.querySelector('.todo-edit-save').onclick=async()=>{
+        const t=editInput.value.trim();if(!t)return;
+        try{await editHandoverItem(curStore.id,dateKey,item.id,t);editingId=null;await render();}
+        catch(e){alert('수정 실패');}
+      };
+      row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
+      setTimeout(()=>editInput.focus(),0);
+    } else {
+      const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
+      row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
+        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>
+        ${!locked?`<div class="todo-actions"><button class="todo-action-btn" data-act="edit">✏️</button><button class="todo-action-btn" data-act="del">🗑️</button></div>`:''}`;
+      if(!locked){
+        row.querySelector('input').onchange=async(e)=>{
+          try{
+            await toggleHandoverItem(curStore.id,dateKey,item.id,e.target.checked);
+            await render();
+          }catch(err){e.target.checked=!e.target.checked;alert('저장 실패');}
+        };
+        row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
+        row.querySelector('[data-act="del"]').onclick=async()=>{
+          if(!confirm('삭제할까요?'))return;
+          try{await deleteHandoverItem(curStore.id,dateKey,item.id);await render();}
+          catch(e){alert('삭제 실패');}
+        };
+      }
+    }
+    listEl.appendChild(row);
+  }
+
   render();
+
+  // 완료 숨기기 토글
+  const hideToggle=wrap.querySelector('#hide-done-toggle');
+  if(hideToggle)hideToggle.onchange=(e)=>{hideDone=e.target.checked;render();};
+
+  // 보관함 토글
+  const archiveBtn=wrap.querySelector('#show-archive-btn');
+  if(archiveBtn)archiveBtn.onclick=()=>{
+    const isOpen=archiveEl.style.display!=='none';
+    archiveEl.style.display=isOpen?'none':'block';
+    archiveBtn.textContent=isOpen?'보관함 📂':'보관함 닫기 ✕';
+  };
 
   if(!locked){
     const addBtn=wrap.querySelector('#handover-add-box');
     const input=wrap.querySelector('#handover-input-box');
     const doAdd=()=>{
-      const text=input.value.trim();
-      if(!text)return;
+      const text=input.value.trim();if(!text)return;
       ensureUsername(async(author)=>{
         addBtn.disabled=true;
-        try{
-          await addHandoverItem(curStore.id,dateKey,text,author);
-          input.value='';
-          await render();
-        }catch(err){
-          alert('추가에 실패했습니다. 인터넷 연결을 확인해주세요.');
-        }
+        try{await addHandoverItem(curStore.id,dateKey,text,author);input.value='';await render();}
+        catch(e){alert('추가 실패');}
         addBtn.disabled=false;
       });
     };
     addBtn.onclick=doAdd;
     input.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
   }
-
   return wrap;
 }
 
