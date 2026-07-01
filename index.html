@@ -1075,20 +1075,32 @@ window.deleteStaffMember=async function(name){
 };
 
 async function renderMyTodoList(){
-  if(!myStore||!myStaff)return;
+  if(!myStaff)return;
   const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
   const listEl=document.getElementById('my-todo-list');
   if(!listEl)return;
   try{
-    const allItems=await loadTodoItems(myStore.id,dateKey);
-    // 본인 작성 업무만 필터
-    const items=allItems.filter(i=>i.author===myStaff);
-    if(items.length===0){listEl.innerHTML='<div class="my-empty">등록된 내 업무가 없습니다</div>';return;}
-    listEl.innerHTML='';
+    const allItems=await loadStaffTodos(myStaff,dateKey);
+    if(allItems.length===0){
+      listEl.innerHTML='<div class="my-empty">등록된 내 업무가 없습니다</div>';return;
+    }
     let editingId=null;
     const render=()=>{
       listEl.innerHTML='';
-      items.forEach(item=>{
+      // 전체 삭제 버튼
+      if(allItems.length>1){
+        const bar=document.createElement('div');
+        bar.style.cssText='display:flex;justify-content:flex-end;padding:0 0 6px;';
+        bar.innerHTML=`<button id="del-all-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;">전체 삭제</button>`;
+        bar.querySelector('#del-all-btn').onclick=async()=>{
+          if(!confirm('오늘 업무를 전체 삭제할까요?'))return;
+          await setDoc(staffTodoRef(myStaff,dateKey),{items:[]});
+          listEl.innerHTML='<div class="my-empty">등록된 내 업무가 없습니다</div>';
+        };
+        listEl.appendChild(bar);
+      }
+      allItems.forEach(item=>{
+        const store=STORES.find(s=>s.id===item.storeId)||myStore;
         const row=document.createElement('div');
         row.className='my-todo-item'+(item.done?' done':'');
         if(editingId===item.id){
@@ -1096,28 +1108,30 @@ async function renderMyTodoList(){
           const inp=row.querySelector('.todo-edit-input');
           row.querySelector('.todo-edit-save').onclick=async()=>{
             const t=inp.value.trim();if(!t)return;
-            await editTodoItem(myStore.id,dateKey,item.id,t);
+            await editTodoItem(myStaff,dateKey,item.id,t);
             item.text=t;editingId=null;render();
           };
           row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
           setTimeout(()=>inp.focus(),0);
         } else {
           const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+          const storeTag=store?`<span style="font-size:10px;background:#f0f0ee;color:var(--text-sub);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
           row.innerHTML=`<input type="checkbox" ${item.done?'checked':''}>
-            <div class="my-todo-text" style="flex:1">${item.text}${carry}<div class="my-todo-meta">${item.author||'익명'}</div></div>
+            <div class="my-todo-text" style="flex:1">${item.text}${carry}${storeTag}</div>
             <div class="todo-actions">
               <button class="todo-action-btn" data-act="edit">✏️</button>
               <button class="todo-action-btn" data-act="del">🗑️</button>
             </div>`;
           row.querySelector('input').onchange=async(e)=>{
-            await toggleTodoItem(myStore.id,dateKey,item.id,e.target.checked);
-            item.done=e.target.checked;row.className='my-todo-item'+(item.done?' done':'');
+            await toggleTodoItem(myStaff,dateKey,item.id,e.target.checked);
+            item.done=e.target.checked;
+            row.className='my-todo-item'+(item.done?' done':'');
           };
           row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
           row.querySelector('[data-act="del"]').onclick=async()=>{
             if(!confirm('삭제할까요?'))return;
-            await deleteTodoItem(myStore.id,dateKey,item.id);
-            items.splice(items.indexOf(item),1);render();
+            await deleteTodoItem(myStaff,dateKey,item.id);
+            allItems.splice(allItems.indexOf(item),1);render();
           };
         }
         listEl.appendChild(row);
@@ -1161,17 +1175,15 @@ async function renderMyHandoverList(){
 
 async function loadMyStats(){
   const name=myStaff;
-  if(!name||!myStore)return;
+  if(!name)return;
   const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
   let total=0,done=0,carry=0;
   for(let d=1;d<=lastDay;d++){
     try{
-      const snap=await getDoc(doc(db,`todos/${myStore.id}_${dk(y,m,d)}`));
-      if(snap.exists()){
-        const its=(snap.data().items||[]).filter(i=>i.author===name);
-        total+=its.length;done+=its.filter(i=>i.done).length;
-        carry+=its.filter(i=>i.fromDate&&i.fromDate!==dk(y,m,d)).length;
-      }
+      const items=await loadStaffTodos(name,dk(y,m,d));
+      total+=items.length;
+      done+=items.filter(i=>i.done).length;
+      carry+=items.filter(i=>i.fromDate&&i.fromDate!==dk(y,m,d)).length;
     }catch(e){}
   }
   const t=document.getElementById('my-stat-total');
@@ -1262,19 +1274,15 @@ async function loadMyHistory(){
   const y=today.getFullYear(),m=today.getMonth(),lastDay=today.getDate();
   const allItems=[];
 
-  for(const store of STORES){
-    for(let d=1;d<=lastDay;d++){
-      const dateKey=dk(y,m,d);
-      try{
-        const snap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
-        if(snap.exists()){
-          const items=(snap.data().items||[]).filter(i=>i.author===myStaff);
-          items.forEach(item=>{
-            allItems.push({...item,storeId:store.id,storeName:store.name,storeIcon:store.icon,dateKey});
-          });
-        }
-      }catch(e){}
-    }
+  for(let d=1;d<=lastDay;d++){
+    const dateKey=dk(y,m,d);
+    try{
+      const items=await loadStaffTodos(myStaff,dateKey);
+      items.forEach(item=>{
+        const store=STORES.find(s=>s.id===item.storeId)||STORES[0];
+        allItems.push({...item,storeId:item.storeId,storeName:store.name,storeIcon:store.icon,dateKey});
+      });
+    }catch(e){}
   }
 
   const filtered=myHistoryFilter==='done'?allItems.filter(i=>i.done)
@@ -1355,17 +1363,15 @@ async function checkLastMonthCarry(){
   const lastDay=new Date(py,pm+1,0).getDate();
   const undoneItems=[];
 
-  for(const store of STORES){
-    for(let d=1;d<=lastDay;d++){
-      const dateKey=dk(py,pm,d);
-      try{
-        const snap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
-        if(snap.exists()){
-          const items=(snap.data().items||[]).filter(i=>i.author===myStaff&&!i.done);
-          items.forEach(item=>undoneItems.push({...item,storeId:store.id,storeName:store.name,storeIcon:store.icon,dateKey}));
-        }
-      }catch(e){}
-    }
+  for(let d=1;d<=lastDay;d++){
+    const dateKey=dk(py,pm,d);
+    try{
+      const items=await loadStaffTodos(myStaff,dateKey);
+      items.filter(i=>!i.done).forEach(item=>{
+        const store=STORES.find(s=>s.id===item.storeId)||STORES[0];
+        undoneItems.push({...item,storeId:item.storeId,storeName:store.name,storeIcon:store.icon,dateKey});
+      });
+    }catch(e){}
   }
 
   if(undoneItems.length===0)return;
@@ -1410,8 +1416,7 @@ async function checkLastMonthCarry(){
 async function carryItemToToday(item){
   const todayDateKey=dk(today.getFullYear(),today.getMonth(),today.getDate());
   if(item.dateKey===todayDateKey)return;
-  // 오늘 날짜에 추가 (fromDate 태그 포함)
-  await addTodoItem(item.storeId,todayDateKey,item.text,item.author,item.dateKey);
+  await addTodoItem(item.storeId,todayDateKey,item.text,myStaff,item.dateKey);
 }
 
 window.confirmName=function(){
@@ -1948,25 +1953,37 @@ function renderCal(){
       div.appendChild(bd);
       div.onclick=()=>selDay(c.y,c.m,c.d);
 
-      // 일일 업무 데이터 비동기 뱃지 (오늘 포함 과거 날짜만)
+      // 일일 업무 데이터 비동기 뱃지 (staff_todos 기반)
       const isPastOrToday=(new Date(c.y,c.m,c.d)<=new Date(today.getFullYear(),today.getMonth(),today.getDate()));
-      if(isPastOrToday&&curStore){
+      if(isPastOrToday){
         const dateKey=dk(c.y,c.m,c.d);
-        getDoc(doc(db,`todos/${curStore.id}_${dateKey}`)).then(snap=>{
-          if(!snap.exists())return;
-          const items=snap.data().items||[];
-          if(items.length===0)return;
-          const done=items.filter(i=>i.done).length;
-          const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
-          const wb=document.createElement('div');wb.className='badge b-blue';
-          wb.textContent=`📝${done}/${items.length}`;
+        // 해당 날짜에 업무가 있는 직원들 조회
+        Promise.all(staffList.map(async name=>{
+          try{
+            const items=await loadStaffTodos(name,dateKey);
+            // 현재 매장 필터 (curStore 기준)
+            const storeItems=curStore?items.filter(i=>i.storeId===curStore.id):items;
+            if(storeItems.length===0)return null;
+            const done=storeItems.filter(i=>i.done).length;
+            return {name,total:storeItems.length,done};
+          }catch(e){return null;}
+        })).then(results=>{
+          const valid=results.filter(Boolean);
+          if(valid.length===0)return;
+          // 업무 완료율 뱃지
+          const totalItems=valid.reduce((s,r)=>s+r.total,0);
+          const doneItems=valid.reduce((s,r)=>s+r.done,0);
+          const wb=document.createElement('div');
+          wb.className=`badge ${doneItems===totalItems?'b-green':'b-blue'}`;
+          wb.textContent=`📝${doneItems}/${totalItems}`;
           bd.appendChild(wb);
-          if(authors.length>0){
-            const ab=document.createElement('div');ab.className='badge';
-            ab.style.cssText='background:#f0f0ee;color:#666;';
-            ab.textContent=authors.slice(0,2).join(',')+(authors.length>2?'..':'');
-            bd.appendChild(ab);
-          }
+          // 근무자 이름 (최대 2명)
+          const names=valid.map(r=>r.name.slice(0,2));
+          const nb=document.createElement('div');
+          nb.className='badge';
+          nb.style.cssText='background:#f0f0ee;color:#666;';
+          nb.textContent=names.slice(0,2).join(',')+(names.length>2?'..':'');
+          bd.appendChild(nb);
         }).catch(()=>{});
       }
     }
@@ -2094,27 +2111,46 @@ async function loadTodoItems(storeId,dateKey){
   return items;
 }
 
-async function addTodoItem(storeId,dateKey,text,author,fromDate=null){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
-  const snap=await getDoc(ref);
-  const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,done:false,fromDate});
-  await setDoc(ref,{items});
+
+// ══════════════════════════════════════
+// 직원 업무 CRUD (staff_todos/{name}_{date})
+// ══════════════════════════════════════
+function staffTodoRef(name,dateKey){
+  return doc(db,`staff_todos/${name}_${dateKey}`);
 }
 
-// 한 번에 여러 항목 추가 (각 줄 = 한 항목)
-async function addTodoItems(storeId,dateKey,texts,author){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+async function loadStaffTodos(name,dateKey){
+  const snap=await getDoc(staffTodoRef(name,dateKey));
+  return snap.exists()?(snap.data().items||[]):[];
+}
+
+async function addTodoItem(storeId,dateKey,text,author,fromDate=null){
+  // author(직원이름) 기준으로 저장, storeId는 태그로
+  const ref=staffTodoRef(author,dateKey);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  texts.forEach(text=>{
-    items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7)+'_'+items.length,text,author,done:false,fromDate:null});
+  items.push({
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,7),
+    text,storeId,done:false,fromDate
   });
   await setDoc(ref,{items});
 }
 
-async function toggleTodoItem(storeId,dateKey,itemId,doneVal){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+async function addTodoItems(storeId,dateKey,texts,author){
+  const ref=staffTodoRef(author,dateKey);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  texts.forEach((text,i)=>{
+    items.push({
+      id:Date.now()+'_'+Math.random().toString(36).slice(2,7)+'_'+i,
+      text,storeId,done:false,fromDate:null
+    });
+  });
+  await setDoc(ref,{items});
+}
+
+async function toggleTodoItem(name,dateKey,itemId,doneVal){
+  const ref=staffTodoRef(name,dateKey);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
   const item=items.find(x=>x.id===itemId);
@@ -2122,8 +2158,8 @@ async function toggleTodoItem(storeId,dateKey,itemId,doneVal){
   await setDoc(ref,{items});
 }
 
-async function editTodoItem(storeId,dateKey,itemId,newText){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+async function editTodoItem(name,dateKey,itemId,newText){
+  const ref=staffTodoRef(name,dateKey);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
   const item=items.find(x=>x.id===itemId);
@@ -2131,12 +2167,17 @@ async function editTodoItem(storeId,dateKey,itemId,newText){
   await setDoc(ref,{items});
 }
 
-async function deleteTodoItem(storeId,dateKey,itemId){
-  const ref=doc(db,`todos/${storeId}_${dateKey}`);
+async function deleteTodoItem(name,dateKey,itemId){
+  const ref=staffTodoRef(name,dateKey);
   const snap=await getDoc(ref);
   let items=snap.exists()?(snap.data().items||[]):[];
   items=items.filter(x=>x.id!==itemId);
   await setDoc(ref,{items});
+}
+
+// 기존 loadTodoItems → staff_todos 기반으로 교체
+async function loadTodoItems(name,dateKey){
+  return await loadStaffTodos(name,dateKey);
 }
 
 function buildTodoSection(y,m,d,readOnly=false){
@@ -2199,7 +2240,17 @@ function buildTodoSection(y,m,d,readOnly=false){
     const listEl=wrap.querySelector('#todo-list-box');
     if(!listEl)return;
     try{
-      const items=await loadTodoItems(curStore.id,dateKey);
+      let items=[];
+      if(readOnly){
+        // 월간 스케줄 읽기전용: 해당 매장에서 일한 모든 직원 업무 표시
+        for(const name of staffList){
+          const staffItems=await loadStaffTodos(name,dateKey);
+          const storeItems=curStore?staffItems.filter(i=>i.storeId===curStore.id):staffItems;
+          storeItems.forEach(i=>items.push({...i,authorName:name}));
+        }
+      } else {
+        items=await loadTodoItems(curStore?.id,dateKey);
+      }
       if(items.length===0){
         listEl.innerHTML='<div class="todo-empty">등록된 업무가 없습니다</div>';
         return;
@@ -2236,8 +2287,9 @@ function buildTodoSection(y,m,d,readOnly=false){
         }
 
         const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
+        const authorDisplay=readOnly?(item.authorName||item.author||'익명'):(item.author||'익명');
         row.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ${locked?'disabled':''}>
-          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>
+          <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${authorDisplay}</div></div>
           ${!locked?`<div class="todo-actions">
             <button class="todo-action-btn" data-act="edit" title="수정">✏️</button>
             <button class="todo-action-btn" data-act="del" title="삭제">🗑️</button>
