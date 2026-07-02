@@ -108,7 +108,8 @@ function scheduleTokenRefresh() {
 
 function forceLogout() {
   if (refreshTimer) clearTimeout(refreshTimer);
-  [TOKEN_KEY, REFRESH_KEY, EXPIRES_KEY, EMAIL_KEY, ROLE_KEY, USER_NAME_KEY, USER_STORE_KEY]
+  // wevape_onboarding_complete, wevape_features, wevape_company는 로그아웃 후에도 유지되어야 함
+  [TOKEN_KEY, ROLE_KEY, USER_NAME_KEY, USER_STORE_KEY, "wevape_default_store"]
     .forEach(k => localStorage.removeItem(k));
   location.reload();
 }
