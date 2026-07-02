@@ -1151,23 +1151,30 @@ async function renderMyHandoverList(){
   const listEl=document.getElementById('my-handover-list');
   if(!listEl)return;
   try{
-    const allItems=await loadHandoverItems(myStore.id,dateKey);
-    // 본인 작성 인수인계만 필터
-    const items=allItems.filter(i=>i.author===myStaff);
-    if(items.length===0){listEl.innerHTML='<div class="my-empty">내가 작성한 인수인계가 없습니다</div>';return;}
+    // 인수인계는 매장 단위 전체 조회 (내 것만 아님)
+    const items=await loadHandoverItems(myStore.id,dateKey);
+    if(items.length===0){
+      listEl.innerHTML='<div class="my-empty">이 매장의 인수인계 메모가 없습니다</div>';return;
+    }
     listEl.innerHTML='';
-    items.forEach(item=>{
+    // 미완료 먼저, 완료는 흐리게
+    const sorted=[...items.filter(i=>!i.confirmed),...items.filter(i=>i.confirmed)];
+    sorted.forEach(item=>{
       const row=document.createElement('div');
       row.className='my-todo-item'+(item.confirmed?' done':'');
       const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+      const isMine=item.author===myStaff;
       row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''}>
-        <div class="my-todo-text" style="flex:1">${item.text}${carry}<div class="my-todo-meta">${item.author||'익명'}</div></div>
-        <button class="todo-action-btn" data-act="del">🗑️</button>`;
+        <div class="my-todo-text" style="flex:1">${item.text}${carry}
+          <div class="my-todo-meta">${item.author||'익명'}${isMine?' (내 글)':''}</div>
+        </div>
+        ${isMine?'<button class="todo-action-btn" data-act="del">🗑️</button>':''}`;
       row.querySelector('input').onchange=async(e)=>{
         await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked);
         row.className='my-todo-item'+(e.target.checked?' done':'');
       };
-      row.querySelector('[data-act="del"]').onclick=async()=>{
+      const delBtn=row.querySelector('[data-act="del"]');
+      if(delBtn)delBtn.onclick=async()=>{
         if(!confirm('삭제할까요?'))return;
         await deleteHandoverItem(myStore.id,dateKey,item.id);
         row.remove();
