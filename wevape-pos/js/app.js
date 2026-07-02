@@ -27,6 +27,7 @@ const TAB_PERMISSIONS = {
   "staff-accounts": ["admin"],
   notices:          ["admin"],
   export:           ["admin"],
+  "feature-management": ["admin"],
 };
 
 // ── 기본 매장 ─────────────────────────────────────────────────────────────────
@@ -54,9 +55,17 @@ function hasPermission(tab) {
 }
 
 function applyRoleBasedUI() {
-  // 1. 접근 불가 탭 버튼 숨기기
+  const tabVisible = (tab) => hasPermission(tab) && isFeatureEnabled(tab);
+
+  // 1. 접근 불가/비활성 기능 탭 버튼 숨기기
   document.querySelectorAll("#navBar button[data-tab]").forEach(btn => {
-    btn.style.display = hasPermission(btn.dataset.tab) ? "" : "none";
+    btn.style.display = tabVisible(btn.dataset.tab) ? "" : "none";
+  });
+  document.querySelectorAll("#bottomNav .bn-item[data-tab]").forEach(btn => {
+    btn.style.display = tabVisible(btn.dataset.tab) ? "" : "none";
+  });
+  document.querySelectorAll(".bn-more-item[data-tab]").forEach(btn => {
+    btn.style.display = tabVisible(btn.dataset.tab) ? "" : "none";
   });
 
   // 2. 접근 가능한 자식이 없는 navGroup 숨기기
@@ -93,6 +102,7 @@ const modules = {
   export:           ExportModule,
   "staff-accounts": StaffAccountsModule,
   notices:          NoticesModule,
+  "feature-management": FeatureManagementModule,
 };
 const renderedTabs = new Set();
 
@@ -245,6 +255,10 @@ function initBottomNav() {
 // ── 부트스트랩 ────────────────────────────────────────────────────────────────
 
 (async () => {
+  if (needsOnboarding()) {
+    OnboardingModule.start();
+    return;
+  }
   if (await isLoggedIn()) {
     initApp();
     scheduleTokenRefresh();

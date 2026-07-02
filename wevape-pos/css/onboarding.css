@@ -1,0 +1,103 @@
+/* ── 온보딩(초기 설정 마법사) ────────────────────────────────────────────── */
+
+#onboardingView {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #111;
+  color: #fdfaf0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.ob-card {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  color: var(--ink, #15140f);
+  border-radius: 16px;
+  padding: 32px 36px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+.ob-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.ob-logo { font-weight: 800; font-size: 15px; }
+.ob-progress {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft, #4a4840);
+}
+.ob-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--line, #e7e3d6); display: inline-block;
+}
+.ob-dot.on { background: var(--amber, #f4b400); }
+
+.ob-title { font-size: 19px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
+.ob-hint  { font-size: 13px; color: var(--ink-soft, #4a4840); margin-bottom: 18px; }
+
+.ob-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-soft, #4a4840); margin: 14px 0 6px; }
+.ob-card input[type="text"],
+.ob-card input[type="email"],
+.ob-card input[type="password"],
+.ob-card select {
+  width: 100%;
+}
+
+.ob-error {
+  color: var(--bad, #b3361f); font-size: 13px; min-height: 18px; margin-top: 10px;
+}
+.ob-warn {
+  margin-top: 18px; padding: 10px 12px; border-radius: 8px;
+  background: #fff6e0; border: 1px solid #f0dca0; color: #8a6400;
+  font-size: 12.5px; line-height: 1.5;
+}
+
+.ob-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 24px; gap: 10px;
+}
+
+/* Step 2 — 매장 목록 */
+#ob_storeRows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.ob-storeRow { display: flex; gap: 8px; align-items: center; }
+.ob-storeRow input { flex: 1; }
+
+/* Step 3 — 기능 선택 */
+.ob-featureGroup { margin-bottom: 16px; }
+.ob-featureGroupTitle {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ink-soft, #4a4840); margin-bottom: 8px;
+}
+.ob-featureRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 4px; font-size: 14px; border-bottom: 1px solid var(--line, #e7e3d6);
+}
+.ob-featureRow:last-child { border-bottom: none; }
+.ob-featureRow.disabled { color: var(--ink-soft, #4a4840); }
+.ob-featureRow input[type="checkbox"] { width: 17px; height: 17px; padding: 0; cursor: pointer; }
+
+/* Step 5 — 완료 화면 */
+.ob-complete { text-align: center; }
+.ob-emoji { font-size: 44px; margin-bottom: 10px; }
+.ob-summary {
+  text-align: left; background: var(--paper, #f7f5ef); border-radius: 10px;
+  padding: 14px 18px; margin: 18px 0; font-size: 13.5px;
+}
+.ob-summary > div { display: flex; justify-content: space-between; padding: 4px 0; }
+.ob-summary span { color: var(--ink-soft, #4a4840); }
+.ob-progressList {
+  text-align: left; font-size: 13.5px; line-height: 1.9; margin: 14px 0;
+  min-height: 24px;
+}
+
+@media (max-width: 600px) {
+  .ob-card { padding: 24px 20px; }
+}

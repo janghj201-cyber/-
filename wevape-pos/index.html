@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="위베이프 POS" />
+<link rel="stylesheet" href="css/onboarding.css" />
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -272,6 +273,8 @@
   <div id="loginError"></div>
 </div>
 
+<div id="onboardingView"></div>
+
 <div id="appView">
   <div class="shell">
     <aside class="sidebar">
@@ -312,6 +315,8 @@
             <button data-tab="products">상품관리</button>
             <button data-tab="staff-accounts">직원 계정 관리</button>
             <button data-tab="notices">공지사항 발송</button>
+            <button data-tab="export">데이터 내보내기</button>
+            <button data-tab="feature-management">기능 관리</button>
           </div>
         </div>
       </nav>
@@ -350,6 +355,7 @@
       <div id="panel-export" class="panel"></div>
       <div id="panel-staff-accounts" class="panel"></div>
       <div id="panel-notices" class="panel"></div>
+      <div id="panel-feature-management" class="panel"></div>
     </main>
   </div>
 </div>
@@ -463,6 +469,7 @@
 <script src="js/notices.js"></script>
 <script src="js/receipt.js"></script>
 <script src="js/offline.js"></script>
+<script src="js/onboarding.js"></script>
 <script src="js/app.js"></script>
 <script>
 if ('serviceWorker' in navigator) {

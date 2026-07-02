@@ -1,8 +1,9 @@
-const CACHE_NAME = 'wevape-pos-v2';
+const CACHE_NAME = 'wevape-pos-v3';
 
 const APP_SHELL = [
   './',
   './index.html',
+  './css/onboarding.css',
   './js/supabaseClient.js',
   './js/auth.js',
   './js/payment.js',
@@ -29,6 +30,7 @@ const APP_SHELL = [
   './js/notices.js',
   './js/receipt.js',
   './js/offline.js',
+  './js/onboarding.js',
   './js/app.js',
 ];
 
