@@ -1,7 +1,9 @@
 """
-위베이프 월간 보고 스크립트
-- Firebase에서 전월 전체 데이터 읽기
-- 분석 후 이메일(Gmail SMTP) 발송
+위베이프 월간 보고 스크립트 v2.0
+- 직원별 운영 점수 + 유형 분류
+- 베스트 직원/매장 TOP 3
+- 관리자 전용 상세 분석
+- 게시판 자동 공지 (순위만, 점수 없음)
 """
 import os
 import calendar
@@ -20,18 +22,22 @@ GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
 REPORT_TO = os.environ["REPORT_TO_EMAIL"]
 
 STORES = [
-    {"id": "yeonsu", "name": "인천 연수점", "icon": "🏪"},
-    {"id": "nonhyeon", "name": "인천 논현점", "icon": "🏬"},
-    {"id": "rodeo", "name": "구월 로데오점", "icon": "🎯"},
+    {"id": "yeonsu",    "name": "인천 연수점",   "icon": "🏪"},
+    {"id": "nonhyeon",  "name": "인천 논현점",   "icon": "🏬"},
+    {"id": "rodeo",     "name": "구월 로데오점", "icon": "🎯"},
     {"id": "gilbyeong", "name": "구월 길병원점", "icon": "🏥"},
-    {"id": "airport", "name": "인천공항점", "icon": "✈️"},
-    {"id": "geomdan", "name": "검단점", "icon": "🌱"},
-    {"id": "gyesan", "name": "계산점", "icon": "🏙️"},
-    {"id": "sangdong", "name": "부천 상동점", "icon": "🌿"},
-    {"id": "sijungdong", "name": "부천 신중동점", "icon": "⭐"},
+    {"id": "airport",   "name": "인천공항점",    "icon": "✈️"},
+    {"id": "geomdan",   "name": "검단점",        "icon": "🌱"},
+    {"id": "gyesan",    "name": "계산점",        "icon": "🏙️"},
+    {"id": "sangdong",  "name": "부천 상동점",   "icon": "🌿"},
+    {"id": "sijungdong","name": "부천 신중동점", "icon": "⭐"},
 ]
 
-CLEAN_BASE_COUNT = 6
+STAFF = [
+    "오명록","고아현","장현진","장대운","신재현","정희경",
+    "조효정","홍다운","이종혁","원주현","김형진","윤하람",
+    "차영근","정유진","안태민","김다정"
+]
 
 
 def fb_get(path):
@@ -49,19 +55,13 @@ def fb_get(path):
 
 
 def parse_value(v):
-    if "stringValue" in v:
-        return v["stringValue"]
-    if "booleanValue" in v:
-        return v["booleanValue"]
-    if "integerValue" in v:
-        return int(v["integerValue"])
-    if "doubleValue" in v:
-        return v["doubleValue"]
-    if "nullValue" in v:
-        return None
+    if "stringValue" in v: return v["stringValue"]
+    if "booleanValue" in v: return v["booleanValue"]
+    if "integerValue" in v: return int(v["integerValue"])
+    if "doubleValue" in v: return v["doubleValue"]
+    if "nullValue" in v: return None
     if "arrayValue" in v:
-        vals = v["arrayValue"].get("values", [])
-        return [parse_value(x) for x in vals]
+        return [parse_value(x) for x in v["arrayValue"].get("values", [])]
     if "mapValue" in v:
         return parse_fields(v["mapValue"].get("fields", {}))
     return None
@@ -71,131 +71,339 @@ def parse_fields(fields):
     return {k: parse_value(v) for k, v in fields.items()}
 
 
-def get_prev_month_range():
+def fb_post(path, body):
+    """Firestore 문서 PATCH (업서트)"""
+    url = f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}"
+    try:
+        r = requests.patch(url, json=body, timeout=15)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def get_prev_month_dates():
     today = datetime.now()
-    first_of_this_month = today.replace(day=1)
-    last_day_prev_month = first_of_this_month - timedelta(days=1)
-    year, month = last_day_prev_month.year, last_day_prev_month.month
+    first = today.replace(day=1)
+    last_prev = first - timedelta(days=1)
+    year, month = last_prev.year, last_prev.month
     num_days = calendar.monthrange(year, month)[1]
-    dates = [datetime(year, month, d).strftime("%Y-%m-%d") for d in range(1, num_days + 1)]
-    return year, month, dates
+    dates = [f"{year}-{month:02d}-{d:02d}" for d in range(1, num_days+1)]
+    return dates, year, month
 
 
-def analyze_store_month(store_id, dates):
-    clean_done_total, clean_item_total = 0, 0
-    todo_done_total, todo_item_total = 0, 0
+def analyze_staff(name, dates):
+    """직원 한 명의 월간 데이터 분석"""
+    total_todos = 0
+    done_todos = 0
     carry_count = 0
-    days_with_data = 0
+    used_days = 0
+    handover_written = 0
+    handover_confirmed = 0
 
     for date_key in dates:
-        clean_data = fb_get(f"checks/{store_id}_{date_key}/clean")
-        if clean_data:
-            keys = [k for k in clean_data.keys() if k.startswith("item_")]
-            if keys:
-                days_with_data += 1
-                clean_item_total += len(keys)
-                clean_done_total += sum(1 for k in keys if clean_data.get(k) is True)
+        todos = []
+        data = fb_get(f"staff_todos/{name}_{date_key}")
+        if data and "items" in data:
+            todos = data["items"] or []
 
-        todo_data = fb_get(f"todos/{store_id}_{date_key}")
-        if todo_data and todo_data.get("items"):
-            items = todo_data["items"]
-            todo_item_total += len(items)
-            todo_done_total += sum(1 for t in items if t.get("done"))
-            for t in items:
-                if t.get("fromDate") and t.get("fromDate") != date_key:
-                    carry_count += 1
+        if todos:
+            used_days += 1
+            total_todos += len(todos)
+            done_todos += sum(1 for t in todos if t.get("done"))
+            carry_count += sum(1 for t in todos if t.get("fromDate") and t.get("fromDate") != date_key)
 
-    clean_pct = round(clean_done_total / clean_item_total * 100) if clean_item_total else None
-    todo_pct = round(todo_done_total / todo_item_total * 100) if todo_item_total else None
+    # 인수인계 확인률 (작성한 것 기준)
+    for date_key in dates:
+        data = fb_get(f"handover/{name}_{date_key}")  # 본인이 작성한 것
+        if data and "items" in data:
+            items = data["items"] or []
+            mine = [i for i in items if i.get("author") == name]
+            handover_written += len(mine)
+            handover_confirmed += sum(1 for i in mine if i.get("confirmed"))
+
+    # 프로젝트
+    proj_data = fb_get(f"staff_projects/{name}")
+    projects = proj_data.get("items", []) if proj_data else []
+    ongoing = len([p for p in projects if not p.get("done")])
+    completed = len([p for p in projects if p.get("done")])
+
+    # 점수 계산 (100점 만점)
+    completion_rate = done_todos / total_todos if total_todos > 0 else 0
+    participation_rate = used_days / len(dates) if dates else 0
+    handover_rate = handover_confirmed / handover_written if handover_written > 0 else 1.0
+
+    score_completion = int(completion_rate * 40)       # 최대 40점
+    score_participation = int(participation_rate * 20) # 최대 20점
+    score_handover = int(handover_rate * 20)           # 최대 20점
+    score_project = min(ongoing * 5 + completed * 3, 20)  # 최대 20점
+
+    total_score = score_completion + score_participation + score_handover + score_project
+
+    # 유형 분류
+    if not used_days:
+        staff_type = "📵 미참여형"
+    elif ongoing >= 1 and completion_rate >= 0.8:
+        staff_type = "🌟 주도형"
+    elif completion_rate >= 0.8 and carry_count <= 2:
+        staff_type = "✅ 성실형"
+    elif total_todos >= 10 and completion_rate < 0.5:
+        staff_type = "📋 형식형"
+    elif used_days <= len(dates) * 0.3:
+        staff_type = "📵 미참여형"
+    else:
+        staff_type = "📌 일반형"
 
     return {
-        "clean_pct": clean_pct, "todo_pct": todo_pct,
-        "carry_count": carry_count, "days_with_data": days_with_data,
-        "clean_done": clean_done_total, "clean_total": clean_item_total,
-        "todo_done": todo_done_total, "todo_total": todo_item_total,
+        "name": name,
+        "score": total_score,
+        "type": staff_type,
+        "used_days": used_days,
+        "total_days": len(dates),
+        "total_todos": total_todos,
+        "done_todos": done_todos,
+        "completion_rate": completion_rate,
+        "carry_count": carry_count,
+        "handover_rate": handover_rate,
+        "ongoing_projects": ongoing,
+        "completed_projects": completed,
+        "scores": {
+            "completion": score_completion,
+            "participation": score_participation,
+            "handover": score_handover,
+            "project": score_project,
+        }
     }
 
 
+def analyze_store(store, dates):
+    """매장 월간 데이터 분석"""
+    sid = store["id"]
+    clean_days = 0
+    clean_total_days = 0
+    todo_total = 0
+    todo_done = 0
+    handover_total = 0
+    handover_confirmed = 0
+
+    for date_key in dates:
+        # 청소
+        data = fb_get(f"checks/{sid}/{date_key}/clean")
+        if data:
+            keys = [k for k in data.keys() if k.startswith("item_")]
+            if keys:
+                clean_total_days += 1
+                if all(data.get(k) for k in keys):
+                    clean_days += 1
+
+        # 직원 업무 (이 매장 태그된 것)
+        for name in STAFF:
+            todos_data = fb_get(f"staff_todos/{name}_{date_key}")
+            if todos_data and "items" in todos_data:
+                mine = [t for t in (todos_data["items"] or []) if t.get("storeId") == sid]
+                todo_total += len(mine)
+                todo_done += sum(1 for t in mine if t.get("done"))
+
+        # 인수인계
+        ho_data = fb_get(f"handover/{sid}_{date_key}")
+        if ho_data and "items" in ho_data:
+            items = ho_data["items"] or []
+            handover_total += len(items)
+            handover_confirmed += sum(1 for i in items if i.get("confirmed"))
+
+    clean_rate = clean_days / clean_total_days if clean_total_days > 0 else 0
+    todo_rate = todo_done / todo_total if todo_total > 0 else 0
+    handover_rate = handover_confirmed / handover_total if handover_total > 0 else 1.0
+
+    score = int(clean_rate * 40 + todo_rate * 40 + handover_rate * 20)
+
+    return {
+        "name": store["name"],
+        "icon": store["icon"],
+        "score": score,
+        "clean_rate": clean_rate,
+        "clean_days": clean_days,
+        "clean_total_days": clean_total_days,
+        "todo_rate": todo_rate,
+        "todo_total": todo_total,
+        "todo_done": todo_done,
+        "handover_rate": handover_rate,
+    }
+
+
+def post_board_notice(year, month, best_staff, best_stores):
+    """게시판에 베스트 순위 공지 자동 등록 (점수 없음)"""
+    month_label = f"{year}년 {month}월"
+    medals = ["🥇", "🥈", "🥉"]
+
+    body = f"{month_label} 한 달 동안 수고하셨습니다!\n\n"
+    body += "🏆 이달의 베스트 직원\n"
+    for i, s in enumerate(best_staff[:3]):
+        body += f"{medals[i]} {s['name']}\n"
+    body += "\n🏆 이달의 베스트 매장\n"
+    for i, s in enumerate(best_stores[:3]):
+        body += f"{medals[i]} {s['name']}\n"
+    body += "\n모두 수고 많으셨습니다 👏"
+
+    import time
+    post_id = str(int(time.time() * 1000))
+    now = datetime.now()
+    date_str = f"{now.month}/{now.day} {now.hour:02d}:{now.minute:02d}"
+
+    # 기존 게시글 로드
+    existing = fb_get("board/posts")
+    items = existing.get("items", []) if existing else []
+
+    new_post = {
+        "id": post_id,
+        "cat": "notice",
+        "title": f"🏆 {month_label} 이달의 베스트 직원 & 매장",
+        "body": body,
+        "author": "관리자",
+        "date": date_str
+    }
+
+    def to_value(v):
+        if isinstance(v, bool): return {"booleanValue": v}
+        return {"stringValue": str(v)}
+
+    def to_map(d):
+        return {"mapValue": {"fields": {k: to_value(v) for k, v in d.items()}}}
+
+    all_posts = [new_post] + items
+    firestore_body = {
+        "fields": {
+            "items": {
+                "arrayValue": {
+                    "values": [to_map(p) for p in all_posts]
+                }
+            }
+        }
+    }
+
+    url = f"{BASE_URL}/board/posts?key={FIREBASE_API_KEY}"
+    try:
+        r = requests.patch(url, json=firestore_body, timeout=15)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def build_monthly_report():
-    year, month, dates = get_prev_month_range()
-    num_days = len(dates)
-
-    results = []
-    for store in STORES:
-        stats = analyze_store_month(store["id"], dates)
-        results.append({**store, **stats})
-
-    scored = [r for r in results if r["clean_pct"] is not None or r["todo_pct"] is not None]
-    def score(r):
-        c = r["clean_pct"] or 0
-        t = r["todo_pct"] or 0
-        return (c + t) / 2
-
-    scored.sort(key=score, reverse=True)
-    top3 = scored[:3]
-    worst = [r for r in scored if score(r) < 80][-3:] if len(scored) > 3 else []
-
-    no_data = [r for r in results if r["days_with_data"] == 0]
+    dates, year, month = get_prev_month_dates()
+    month_label = f"{year}년 {month}월"
+    medals = ["🥇", "🥈", "🥉"]
 
     lines = []
-    lines.append(f"📊 위베이프 {month}월 월간 보고")
-    lines.append("━━━━━━━━━━━━━━━━━━")
-    lines.append("")
-    lines.append("🏆 이달의 우수 지점")
-    for i, r in enumerate(top3, 1):
-        c = f"{r['clean_pct']}%" if r["clean_pct"] is not None else "데이터없음"
-        t = f"{r['todo_pct']}%" if r["todo_pct"] is not None else "데이터없음"
-        lines.append(f"{i}위 {r['icon']} {r['name']} — 청소 {c} · 업무 완료율 {t}")
+    lines.append(f"📊 위베이프 월간 보고  |  {month_label}")
+    lines.append("━" * 40)
     lines.append("")
 
-    lines.append("📉 개선 필요 지점")
-    if worst:
-        for r in worst:
-            c = f"{r['clean_pct']}%" if r["clean_pct"] is not None else "데이터없음"
-            lines.append(f"⚠️ {r['icon']} {r['name']} — 청소 {c} · 이월 {r['carry_count']}건")
-    if no_data:
-        for r in no_data:
-            lines.append(f"⚠️ {r['icon']} {r['name']} — 이번 달 데이터 미기록")
-    if not worst and not no_data:
-        lines.append("(해당 없음, 전 지점 양호)")
+    # ── 직원 분석 ─────────────────────────────
+    lines.append("👤 직원별 운영 분석 (관리자 전용)")
     lines.append("")
 
-    lines.append("━━━━━━━━━━━━━━━━━━")
-    lines.append(f"📈 전체 지점 현황 ({num_days}일 기준)")
+    staff_results = []
+    for name in STAFF:
+        result = analyze_staff(name, dates)
+        staff_results.append(result)
+
+    # 점수 기준 정렬
+    staff_sorted = sorted(staff_results, key=lambda x: x["score"], reverse=True)
+    active_staff = [s for s in staff_sorted if s["used_days"] > 0]
+
+    for s in staff_sorted:
+        bar = "█" * (s["score"]//10) + "░" * (10 - s["score"]//10)
+        comp = int(s["completion_rate"] * 100)
+        part = int(s["used_days"] / s["total_days"] * 100) if s["total_days"] > 0 else 0
+
+        lines.append(f"{s['type']}  {s['name']}  [{bar}]  {s['score']}점")
+        lines.append(f"   └ 업무완료 {comp}%  참여율 {part}%  ({s['used_days']}/{s['total_days']}일)")
+        lines.append(f"   └ 이월누적 {s['carry_count']}건  인수인계확인률 {int(s['handover_rate']*100)}%")
+        if s["ongoing_projects"] or s["completed_projects"]:
+            lines.append(f"   └ 프로젝트 진행중 {s['ongoing_projects']}건 · 완료 {s['completed_projects']}건")
+        lines.append(f"   └ 세부점수: 완료율{s['scores']['completion']} + 참여도{s['scores']['participation']} + 인수인계{s['scores']['handover']} + 프로젝트{s['scores']['project']}")
+        lines.append("")
+
     lines.append("")
-    lines.append(f"{'지점':<14}{'청소':>8}{'업무':>8}{'이월':>8}")
-    for r in results:
-        c = f"{r['clean_pct']}%" if r["clean_pct"] is not None else "-"
-        t = f"{r['todo_pct']}%" if r["todo_pct"] is not None else "-"
-        lines.append(f"{r['icon']} {r['name']:<10}{c:>8}{t:>8}{str(r['carry_count'])+'건':>8}")
+
+    # ── 매장 분석 ─────────────────────────────
+    lines.append("🏪 매장별 운영 분석")
     lines.append("")
 
-    lines.append("━━━━━━━━━━━━━━━━━━")
-    lines.append("💡 이달의 인사이트")
-    insight_num = 1
+    store_results = []
+    for store in STORES:
+        result = analyze_store(store, dates)
+        store_results.append(result)
 
-    if worst:
-        worst_one = worst[0]
-        lines.append(f"{insight_num}. {worst_one['name']} 이월 {worst_one['carry_count']}건으로 가장 많은 미완료 — 업무량 대비 인력 검토 필요")
-        insight_num += 1
+    store_sorted = sorted(store_results, key=lambda x: x["score"], reverse=True)
 
-    valid_clean = [r["clean_pct"] for r in results if r["clean_pct"] is not None]
-    if valid_clean:
-        avg_clean = round(sum(valid_clean) / len(valid_clean))
-        lines.append(f"{insight_num}. 전체 지점 평균 청소 완료율 {avg_clean}%")
-        insight_num += 1
+    for s in store_sorted:
+        bar = "█" * (s["score"]//10) + "░" * (10 - s["score"]//10)
+        lines.append(f"{s['icon']} {s['name']}  [{bar}]  {s['score']}점")
+        lines.append(f"   └ 청소완료율 {int(s['clean_rate']*100)}% ({s['clean_days']}/{s['clean_total_days']}일)")
+        lines.append(f"   └ 업무완료율 {int(s['todo_rate']*100)}% ({s['todo_done']}/{s['todo_total']}건)")
+        lines.append(f"   └ 인수인계확인률 {int(s['handover_rate']*100)}%")
+        lines.append("")
 
-    if no_data:
-        names = ', '.join(r['name'] for r in no_data)
-        lines.append(f"{insight_num}. {names} — 앱 활용도가 낮습니다. 사용 독려 필요")
-        insight_num += 1
+    # ── 베스트 TOP 3 ──────────────────────────
+    lines.append("━" * 40)
+    lines.append(f"🏆 {month_label} 베스트 직원 TOP 3")
+    lines.append("")
+    for i, s in enumerate(active_staff[:3]):
+        lines.append(f"{medals[i]} {s['name']}  {s['type']}  {s['score']}점")
+        comp = int(s['completion_rate']*100)
+        lines.append(f"   업무완료 {comp}% · 참여 {s['used_days']}일 · 프로젝트 {s['ongoing_projects']+s['completed_projects']}건")
+    lines.append("")
 
-    zero_carry = [r["name"] for r in results if r["carry_count"] == 0 and r["days_with_data"] > 0]
-    if zero_carry:
-        lines.append(f"{insight_num}. 이월 0건 달성: {', '.join(zero_carry)} 👏")
-        insight_num += 1
+    lines.append(f"🏆 {month_label} 베스트 매장 TOP 3")
+    lines.append("")
+    for i, s in enumerate(store_sorted[:3]):
+        lines.append(f"{medals[i]} {s['name']}  {s['score']}점")
+        lines.append(f"   청소 {int(s['clean_rate']*100)}% · 업무 {int(s['todo_rate']*100)}% · 인수인계 {int(s['handover_rate']*100)}%")
+    lines.append("")
 
-    return "\n".join(lines), year, month
+    # ── AI 인사이트 ───────────────────────────
+    lines.append("━" * 40)
+    lines.append("💡 월간 운영 인사이트")
+    lines.append("")
+
+    # 미참여자
+    no_show = [s for s in staff_results if s["used_days"] == 0]
+    if no_show:
+        lines.append(f"• 앱 미사용 직원: {', '.join(s['name'] for s in no_show)} — 현장 확인 필요")
+
+    # 이월 누적 많은 직원
+    heavy_carry = [s for s in staff_results if s["carry_count"] >= 5]
+    if heavy_carry:
+        lines.append(f"• 이월 누적 5건 이상: {', '.join(s['name'] for s in heavy_carry)} — 업무 부하 점검")
+
+    # 형식형 직원
+    formal = [s for s in staff_results if s["type"] == "📋 형식형"]
+    if formal:
+        lines.append(f"• 입력 대비 완료율 저조: {', '.join(s['name'] for s in formal)} — 실행력 점검")
+
+    # 주도형 직원 칭찬
+    leaders = [s for s in staff_results if s["type"] == "🌟 주도형"]
+    if leaders:
+        lines.append(f"• 이달 주도적 활약: {', '.join(s['name'] for s in leaders)} — 우수 사례 공유 권장")
+
+    # 청소 미흡 매장
+    clean_issues = [s for s in store_results if s["clean_rate"] < 0.8]
+    if clean_issues:
+        lines.append(f"• 청소 수행률 80% 미만: {', '.join(s['name'] for s in clean_issues)}")
+
+    lines.append("")
+    lines.append("━" * 40)
+    lines.append(f"📱 위베이프 운영 시스템  |  자동 발송")
+
+    # 게시판 공지 자동 등록
+    posted = post_board_notice(year, month, active_staff, store_sorted)
+    if posted:
+        lines.append("✅ 게시판 베스트 공지 자동 등록 완료")
+    else:
+        lines.append("⚠️ 게시판 공지 등록 실패 (수동 등록 필요)")
+
+    return "\n".join(lines), month_label
 
 
 def send_email(subject, body):
@@ -204,7 +412,6 @@ def send_email(subject, body):
     msg["To"] = REPORT_TO
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain", "utf-8"))
-
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
         server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
@@ -212,8 +419,8 @@ def send_email(subject, body):
 
 
 if __name__ == "__main__":
-    report_text, year, month = build_monthly_report()
-    subject = f"[위베이프 월간보고] {year}년 {month}월"
+    report_text, month_label = build_monthly_report()
+    subject = f"[위베이프 월간보고] {month_label}"
     send_email(subject, report_text)
-    print("월간 보고 이메일 발송 완료")
+    print("✅ 월간 보고 발송 완료")
     print(report_text)
