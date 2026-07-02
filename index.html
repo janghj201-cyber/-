@@ -1199,14 +1199,16 @@ async function renderMyHandoverList(){
       const row=document.createElement('div');
       row.className='my-todo-item'+(item.confirmed?' done':'');
       const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
+      const confirmInfo=item.confirmed
+        ?`<span style="font-size:10px;color:var(--green);font-weight:600;"> ✅ ${item.confirmedBy||'확인됨'}</span>`:'';
       const isMine=item.author===myStaff;
       row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''}>
-        <div class="my-todo-text" style="flex:1">${item.text}${carry}
-          <div class="my-todo-meta">${item.author||'익명'}${isMine?' (내 글)':''}</div>
+        <div class="my-todo-text" style="flex:1">${item.text}${carry}${confirmInfo}
+          <div class="my-todo-meta">작성: ${item.author||'익명'}${isMine?' (내 글)':''}</div>
         </div>
         ${isMine?'<button class="todo-action-btn" data-act="del">🗑️</button>':''}`;
       row.querySelector('input').onchange=async(e)=>{
-        await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked);
+        await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked,myStaff);
         row.className='my-todo-item'+(e.target.checked?' done':'');
       };
       const delBtn=row.querySelector('[data-act="del"]');
@@ -2559,12 +2561,21 @@ async function addHandoverItem(storeId,dateKey,text,author){
   items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null});
   await setDoc(ref,{items});
 }
-async function toggleHandoverItem(storeId,dateKey,itemId,val){
+async function toggleHandoverItem(storeId,dateKey,itemId,val,confirmerName=null){
   const ref=doc(db,`handover/${storeId}_${dateKey}`);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
   const item=items.find(x=>x.id===itemId);
-  if(item)item.confirmed=val;
+  if(item){
+    item.confirmed=val;
+    if(val){
+      item.confirmedBy=confirmerName||myStaff||getUsername()||'익명';
+      item.confirmedAt=dk(today.getFullYear(),today.getMonth(),today.getDate());
+    } else {
+      item.confirmedBy=null;
+      item.confirmedAt=null;
+    }
+  }
   await setDoc(ref,{items});
 }
 async function editHandoverItem(storeId,dateKey,itemId,newText){
@@ -2710,8 +2721,11 @@ function buildHandoverSection(y,m,d){
       setTimeout(()=>editInput.focus(),0);
     } else {
       const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
+      const confirmInfo=item.confirmed&&item.confirmedBy
+        ?`<span class="confirm-tag">✅ ${item.confirmedBy} 확인</span>`
+        :item.confirmed?`<span class="confirm-tag">✅ 확인됨</span>`:'';
       row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
-        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}<div class="todo-author">${item.author||'익명'}</div></div>
+        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmInfo}<div class="todo-author">작성: ${item.author||'익명'}</div></div>
         ${!locked?`<div class="todo-actions"><button class="todo-action-btn" data-act="edit">✏️</button><button class="todo-action-btn" data-act="del">🗑️</button></div>`:''}`;
       if(!locked){
         row.querySelector('input').onchange=async(e)=>{
