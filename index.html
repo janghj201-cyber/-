@@ -364,6 +364,30 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .carry-banner-item:last-child{border-bottom:none;}
 .carry-move-btn{background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px;}
 .carry-move-all-btn{display:block;width:100%;margin-top:8px;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+
+/* 업무 타입 선택 */
+.task-type-select{display:flex;gap:6px;padding:0 16px 8px;}
+.task-type-btn{flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-sub);}
+.task-type-btn.active-daily{border-color:var(--navy);background:var(--navy);color:#fff;}
+.task-type-btn.active-project{border-color:var(--purple);background:var(--purple-light);color:var(--purple);}
+
+/* 프로젝트 현황 */
+.project-staff-block{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);}
+.project-staff-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.project-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.project-item:last-child{border-bottom:none;}
+.project-status{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+.project-ongoing{background:var(--blue-light);color:var(--blue);}
+.project-done{background:var(--green-light);color:var(--green);}
+.project-days{font-size:10px;color:var(--text-mute);margin-left:auto;white-space:nowrap;}
+.project-empty{font-size:12px;color:var(--text-mute);text-align:center;padding:20px 0;}
+
+/* 내 업무 진행중 프로젝트 고정 배너 */
+.my-project-banner{background:var(--purple-light);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--purple);}
+.my-project-banner-title{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;}
+.my-project-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(167,139,250,0.2);font-size:12px;color:var(--text);}
+.my-project-item:last-child{border-bottom:none;}
+.my-project-item input{width:16px;height:16px;accent-color:var(--purple);cursor:pointer;}
 .board-item-title{font-size:13px;font-weight:700;color:var(--text);}
 .board-item-preview{font-size:12px;color:var(--text-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .board-item-meta{font-size:11px;color:var(--text-mute);margin-top:4px;}
@@ -654,12 +678,20 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div class="my-stat-box"><div class="my-stat-num" id="my-stat-carry">-</div><div class="my-stat-label">이월</div></div>
   </div>
 
+  <!-- 진행중 프로젝트 고정 배너 -->
+  <div id="my-project-banner" style="padding:8px 16px 0;display:none;"></div>
+
   <!-- 오늘의 업무 -->
   <div class="my-section" style="margin-top:12px;">
     <div class="my-section-header">
       <span>📝 <span id="my-task-date-label">오늘</span>의 업무</span>
     </div>
     <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
+    <!-- 업무 타입 선택 -->
+    <div class="task-type-select" id="task-type-select">
+      <button class="task-type-btn active-daily" id="type-daily" onclick="setTaskType('daily')">📋 오늘 업무</button>
+      <button class="task-type-btn" id="type-project" onclick="setTaskType('project')">🔄 진행중 프로젝트</button>
+    </div>
     <div class="my-input-row">
       <input type="text" class="my-input" id="my-todo-input" placeholder="할 일을 입력하세요" onkeydown="if(event.key==='Enter')addMyTodo()">
       <button class="my-add-btn" onclick="addMyTodo()">+ 추가</button>
@@ -830,6 +862,7 @@ let storeSelectCallback = null;
 let dailyDate = new Date();
 let myDate = new Date();
 let myStore = null;
+let myTaskType = 'daily'; // 'daily' | 'project'
 function clearDashUnsubs(){dashUnsubs.forEach(u=>u());dashUnsubs=[];}
 
 // ══════════════════════════════════════
@@ -1060,6 +1093,9 @@ function renderMyWorkScreen(){
   renderMyHandoverList();
   loadMyStats();
   checkLastMonthCarry();
+  renderMyProjectBanner();
+  // 타입 초기화
+  setTaskType('daily');
 }
 
 // 관리자 — 직원 추가/삭제
@@ -1214,9 +1250,17 @@ function chgMyDate(dir){window.chgMyDate(dir);}
 window.addMyTodo=async function(){
   const input=document.getElementById('my-todo-input');
   const text=input?.value.trim();if(!text||!myStore||!myStaff)return;
-  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-  await addTodoItem(myStore.id,dateKey,text,myStaff);
-  if(input)input.value='';renderMyTodoList();
+  if(myTaskType==='project'){
+    // 프로젝트로 저장
+    await addProject(myStaff,text,myStore.id);
+    if(input)input.value='';
+    renderMyProjectBanner();
+  } else {
+    // 오늘 업무로 저장
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    await addTodoItem(myStore.id,dateKey,text,myStaff);
+    if(input)input.value='';renderMyTodoList();
+  }
 };
 function addMyTodo(){window.addMyTodo();}
 
@@ -1249,6 +1293,98 @@ function addMyHandover(){window.addMyHandover();}
 
 window.updateDailyUsername=function(){};
 function updateDailyUsername(){}
+
+// ══════════════════════════════════════
+// 진행중 프로젝트 (staff_projects/{name})
+// ══════════════════════════════════════
+function projectRef(name){
+  return doc(db,`staff_projects/${name}`);
+}
+
+async function loadProjects(name){
+  const snap=await getDoc(projectRef(name));
+  return snap.exists()?(snap.data().items||[]):[];
+}
+
+async function addProject(name,text,storeId){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  items.push({
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    text, storeId, done:false,
+    startDate:dk(today.getFullYear(),today.getMonth(),today.getDate())
+  });
+  await setDoc(ref,{items});
+}
+
+async function toggleProject(name,itemId,doneVal){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item){item.done=doneVal;if(doneVal)item.doneDate=dk(today.getFullYear(),today.getMonth(),today.getDate());}
+  await setDoc(ref,{items});
+}
+
+async function deleteProject(name,itemId){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  items=items.filter(x=>x.id!==itemId);
+  await setDoc(ref,{items});
+}
+
+// 타입 선택
+window.setTaskType=function(type){
+  myTaskType=type;
+  const db=document.getElementById('type-daily');
+  const pb=document.getElementById('type-project');
+  if(db)db.className='task-type-btn'+(type==='daily'?' active-daily':'');
+  if(pb)pb.className='task-type-btn'+(type==='project'?' active-project':'');
+  const input=document.getElementById('my-todo-input');
+  if(input)input.placeholder=type==='daily'?'오늘 할 일 입력':'프로젝트명 입력 (장기 진행)';
+};
+function setTaskType(t){window.setTaskType(t);}
+
+// 진행중 프로젝트 배너 렌더링
+async function renderMyProjectBanner(){
+  const banner=document.getElementById('my-project-banner');
+  if(!banner||!myStaff)return;
+  try{
+    const items=await loadProjects(myStaff);
+    const ongoing=items.filter(i=>!i.done);
+    if(ongoing.length===0){banner.style.display='none';return;}
+    banner.style.display='block';
+    const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
+    banner.innerHTML=`<div class="my-project-banner">
+      <div class="my-project-banner-title">🔄 진행중 프로젝트 ${ongoing.length}건</div>
+      ${ongoing.map(item=>{
+        const days=Math.floor((new Date(today0)-new Date(item.startDate))/86400000);
+        return `<div class="my-project-item">
+          <input type="checkbox" data-id="${item.id}">
+          <span style="flex:1">${item.text}</span>
+          <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
+          <button onclick="delProject('${item.id}')" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;">🗑️</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+    banner.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.onchange=async(e)=>{
+        await toggleProject(myStaff,cb.dataset.id,e.target.checked);
+        await renderMyProjectBanner();
+        renderMyTodoList();
+      };
+    });
+  }catch(e){banner.style.display='none';}
+}
+
+window.delProject=async function(itemId){
+  if(!confirm('이 프로젝트를 삭제할까요?'))return;
+  await deleteProject(myStaff,itemId);
+  renderMyProjectBanner();
+};
+function delProject(id){window.delProject(id);}
 
 // ══════════════════════════════════════
 // 개인 업무 전체 히스토리
@@ -2786,7 +2922,8 @@ async function renderDashboard(){
   const tabDefs=[
     {id:'today',label:'📍 오늘 현황'},
     {id:'report',label:'📋 일일 보고'},
-    {id:'monthly',label:'📊 월간 통계'}
+    {id:'monthly',label:'📊 월간 통계'},
+    {id:'projects',label:'🔄 프로젝트'}
   ];
   tabDefs.forEach(td=>{
     const b=document.createElement('button');
@@ -2802,6 +2939,7 @@ async function renderDashboard(){
 
   if(dashTab==='today')await renderTodayTab(content);
   else if(dashTab==='report')await renderReportTab(content);
+  else if(dashTab==='projects')await renderProjectsTab(content);
   else await renderMonthlyTab(content);
 
   if(dashTab!=='monthly'){
@@ -3052,6 +3190,87 @@ async function renderReportTab(content){
 }
 
 // ── 탭 3: 월간 통계 (이번 달 누적) ──
+async function renderProjectsTab(content){
+  content.innerHTML='<div class="monthly-loading">프로젝트 현황 불러오는 중...</div>';
+  const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
+
+  let hasAny=false;
+  const wrap=document.createElement('div');wrap.style.padding='0 12px 12px';
+
+  // 요약 카드
+  const summary=document.createElement('div');
+  summary.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;';
+  let totalOngoing=0,totalDone=0;
+
+  for(const name of staffList){
+    try{
+      const items=await loadProjects(name);
+      if(items.length===0)continue;
+      hasAny=true;
+      const ongoing=items.filter(i=>!i.done);
+      const done=items.filter(i=>i.done);
+      totalOngoing+=ongoing.length;
+      totalDone+=done.length;
+
+      const block=document.createElement('div');
+      block.className='project-staff-block';
+      const avatar=name[0];
+
+      // 진행중 항목
+      const ongoingHtml=ongoing.length===0
+        ?'<div style="font-size:12px;color:var(--text-mute);padding:6px 0;">진행중 프로젝트 없음</div>'
+        :ongoing.map(item=>{
+          const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
+          const store=STORES.find(s=>s.id===item.storeId);
+          const storeTag=store?`<span style="font-size:10px;color:var(--text-sub);background:#f0f0ee;padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
+          return `<div class="project-item">
+            <span class="project-status project-ongoing">🔄 진행중</span>
+            <span style="flex:1;font-size:13px;color:var(--text);">${item.text}${storeTag}</span>
+            <span class="project-days">D+${days}</span>
+          </div>`;
+        }).join('');
+
+      // 완료 항목 (최근 3개만)
+      const doneHtml=done.length===0?''
+        :`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">✅ 완료 ${done.length}건</div>
+          ${done.slice(-3).map(item=>`<div class="project-item" style="opacity:0.6;">
+            <span class="project-status project-done">✅ 완료</span>
+            <span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--text-mute);">${item.text}</span>
+          </div>`).join('')}
+        </div>`;
+
+      block.innerHTML=`<div class="project-staff-name">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--gold);">${avatar}</div>
+          ${name}
+          <span style="font-size:11px;color:var(--text-sub);font-weight:400;margin-left:auto;">진행 ${ongoing.length}건</span>
+        </div>
+        ${ongoingHtml}${doneHtml}`;
+      wrap.appendChild(block);
+    }catch(e){}
+  }
+
+  summary.innerHTML=`
+    <div style="background:var(--blue-light);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:var(--blue);">${totalOngoing}</div>
+      <div style="font-size:11px;color:var(--text-sub);">진행중</div>
+    </div>
+    <div style="background:var(--green-light);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:var(--green);">${totalDone}</div>
+      <div style="font-size:11px;color:var(--text-sub);">완료</div>
+    </div>`;
+
+  content.innerHTML='';
+  content.style.padding='12px';
+  content.appendChild(summary);
+
+  if(!hasAny){
+    content.innerHTML+=`<div class="project-empty">📭 등록된 프로젝트가 없습니다<br><span style="font-size:11px;color:var(--text-mute);">내 업무 → 🔄 진행중 프로젝트로 추가하세요</span></div>`;
+  } else {
+    content.appendChild(wrap);
+  }
+}
+
 async function renderMonthlyTab(content){
   document.getElementById('dash-sub').textContent='이번 달 지점별 누적 통계';
   const y=today.getFullYear(),m=today.getMonth();
