@@ -720,6 +720,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="nav-btn" onclick="chg(1)">›</button>
     </div>
   </div>
+  <!-- 보기 전환 탭 -->
+  <div style="display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--border);">
+    <button id="view-store-btn" onclick="setMonthlyView('store')" style="flex:1;padding:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;border-bottom:2px solid var(--gold);">🏪 매장별 보기</button>
+    <button id="view-staff-btn" onclick="setMonthlyView('staff')" style="flex:1;padding:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text-sub);">👤 직원별 보기</button>
+  </div>
+  <!-- 직원별 보기: 직원 선택 바 -->
+  <div id="monthly-staff-selector" style="display:none;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;">
+    <div style="display:flex;gap:6px;width:max-content;" id="monthly-staff-chips"></div>
+  </div>
   <div class="cal-wrap">
     <div class="weekday-row">
       <div class="wd">일</div><div class="wd">월</div><div class="wd">화</div>
@@ -972,6 +981,8 @@ const CSECTIONS=[
 const today = new Date();
 let cy=today.getFullYear(), cm=today.getMonth(), sel=null;
 let curStore = null;
+let monthlyView = 'store'; // 'store' | 'staff'
+let curStaffView = null;   // 직원별 보기 시 선택된 직원 이름
 let isAdmin = false;
 let dashUnsubs = [];
 let dashTab = 'today';
@@ -1529,6 +1540,177 @@ const GUIDE_SECTIONS = [
     ]
   }
 ];
+
+// ══════════════════════════════════════
+// 월간 스케줄 보기 모드 전환
+// ══════════════════════════════════════
+window.setMonthlyView=function(mode){
+  monthlyView=mode;
+  const storeBtn=document.getElementById('view-store-btn');
+  const staffBtn=document.getElementById('view-staff-btn');
+  const storeSel=document.getElementById('monthly-store-selector');
+  const staffSel=document.getElementById('monthly-staff-selector');
+  const titleEl=document.getElementById('monthly-store-title');
+
+  if(mode==='store'){
+    if(storeBtn){storeBtn.style.background='var(--navy)';storeBtn.style.color='#fff';storeBtn.style.borderBottom='2px solid var(--gold)';}
+    if(staffBtn){staffBtn.style.background='var(--card)';staffBtn.style.color='var(--text-sub)';staffBtn.style.borderBottom='none';}
+    if(storeSel)storeSel.style.display='flex';
+    if(staffSel)staffSel.style.display='none';
+    if(titleEl)titleEl.textContent=`${curStore?.icon||'🏪'} ${curStore?.name||'매장 선택'}`;
+    renderCal();
+  } else {
+    if(staffBtn){staffBtn.style.background='var(--navy)';staffBtn.style.color='#fff';staffBtn.style.borderBottom='2px solid var(--gold)';}
+    if(storeBtn){storeBtn.style.background='var(--card)';storeBtn.style.color='var(--text-sub)';storeBtn.style.borderBottom='none';}
+    if(storeSel)storeSel.style.display='none';
+    if(staffSel)staffSel.style.display='block';
+    if(!curStaffView)curStaffView=staffList[0];
+    renderStaffChips();
+    renderStaffCal();
+  }
+};
+function setMonthlyView(m){window.setMonthlyView(m);}
+
+function renderStaffChips(){
+  const wrap=document.getElementById('monthly-staff-chips');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  staffList.forEach(name=>{
+    const chip=document.createElement('button');
+    const isActive=name===curStaffView;
+    chip.style.cssText=`padding:6px 12px;border-radius:16px;border:1.5px solid ${isActive?'var(--navy)':'var(--border)'};
+      background:${isActive?'var(--navy)':'#fff'};color:${isActive?'#fff':'var(--text-sub)'};
+      font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;`;
+    chip.textContent=name;
+    chip.onclick=()=>{curStaffView=name;renderStaffChips();renderStaffCal();};
+    wrap.appendChild(chip);
+  });
+}
+
+async function renderStaffCal(){
+  if(!curStaffView)return;
+  const titleEl=document.getElementById('monthly-store-title');
+  const subEl=document.getElementById('monthly-hsub');
+  if(titleEl)titleEl.textContent=`👤 ${curStaffView}`;
+  if(subEl)subEl.textContent=`${cy}년 ${cm+1}월 업무 현황`;
+
+  const grid=document.getElementById('grid');
+  if(!grid)return;
+  grid.innerHTML='';
+
+  const daysInMonth=new Date(cy,cm+1,0).getDate();
+  const firstDay=new Date(cy,cm,1).getDay();
+  const dows=['일','월','화','수','목','금','토'];
+
+  for(let i=0;i<firstDay;i++){
+    const e=document.createElement('div');e.className='day other-month';
+    e.appendChild(document.createElement('div'));
+    grid.appendChild(e);
+  }
+
+  // 휴무 데이터 미리 로드
+  let dayoffData={};
+  try{
+    const snap=await getDoc(doc(db,'config/dayoff'));
+    if(snap.exists())dayoffData=snap.data()||{};
+  }catch(e){}
+  const myDayoffs=dayoffData[curStaffView]||{};
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dateKey=`${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow=new Date(cy,cm,d).getDay();
+    const isToday2=cy===today.getFullYear()&&cm===today.getMonth()&&d===today.getDate();
+    const isSel=sel&&sel.y===cy&&sel.m===cm&&sel.d===d;
+    const isDayoff=myDayoffs[dateKey]==='dayoff';
+
+    const cell=document.createElement('div');
+    cell.className=`day${isToday2?' today':''}${isSel?' selected':''}${dow===0?' sun':dow===6?' sat':''}`;
+    if(isDayoff)cell.style.background='#fffbeb';
+
+    const num=document.createElement('div');
+    num.className='day-num';num.textContent=d;
+    cell.appendChild(num);
+
+    const bd=document.createElement('div');bd.className='badges';
+
+    if(isDayoff){
+      const hb=document.createElement('div');
+      hb.className='badge';
+      hb.style.cssText='background:#fef3c7;color:var(--orange);font-weight:700;';
+      hb.textContent='🏖️ 휴무';
+      bd.appendChild(hb);
+    } else {
+      // 업무 뱃지 비동기
+      loadStaffTodos(curStaffView,dateKey).then(items=>{
+        if(items.length===0)return;
+        const done=items.filter(i=>i.done).length;
+        const storeIds=[...new Set(items.map(i=>i.storeId).filter(Boolean))];
+        storeIds.forEach(sid=>{
+          const s=STORES.find(s=>s.id===sid);
+          if(!s)return;
+          const sb=document.createElement('div');
+          sb.className='badge';
+          sb.style.cssText='background:var(--navy);color:#fff;font-size:9px;';
+          sb.textContent=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+          bd.appendChild(sb);
+        });
+        const wb=document.createElement('div');
+        wb.className=`badge ${done===items.length?'b-green':'b-blue'}`;
+        wb.textContent=`📝${done}/${items.length}`;
+        bd.appendChild(wb);
+      }).catch(()=>{});
+    }
+
+    cell.appendChild(bd);
+    cell.onclick=()=>{
+      if(isDayoff)return;
+      sel={y:cy,m:cm,d};
+      renderStaffCal();
+      showStaffDayDetail(cy,cm,d,curStaffView);
+    };
+    grid.appendChild(cell);
+  }
+
+  const det=document.getElementById('detail');
+  if(det)det.style.display='none';
+}
+
+async function showStaffDayDetail(y,m,d,name){
+  const dateKey=dk(y,m,d);
+  const det=document.getElementById('detail');
+  if(!det)return;
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dows=['일','월','화','수','목','금','토'];
+  document.getElementById('ddate').textContent=`${mns[m]} ${d}일 (${dows[new Date(y,m,d).getDay()]}) — 👤 ${name}`;
+  document.getElementById('dtags').innerHTML='';
+  document.getElementById('tlist').innerHTML='';
+
+  const todoContainer=document.getElementById('todo-container');
+  todoContainer.innerHTML='';
+  const items=await loadStaffTodos(name,dateKey);
+
+  if(items.length===0){
+    todoContainer.innerHTML='<div style="padding:16px;text-align:center;font-size:13px;color:var(--text-mute);">이 날 등록된 업무가 없습니다</div>';
+  } else {
+    const wrap=document.createElement('div');wrap.className='todo-section';
+    wrap.innerHTML=`<div class="todo-header">📝 ${name}의 업무 <span class="lock-badge" style="background:var(--blue-light);color:var(--blue);">👁 보기 전용</span></div>`;
+    const list=document.createElement('div');list.className='todo-list';
+    items.forEach(item=>{
+      const store=STORES.find(s=>s.id===item.storeId);
+      const row=document.createElement('div');row.className='todo-item'+(item.done?' done':'');
+      const carry=item.fromDate&&item.fromDate!==dateKey?`<span class="todo-carry">${item.fromDate.slice(5)} 이월</span>`:'';
+      const storeTag=store?`<span style="font-size:10px;background:#f0f0ee;padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
+      row.innerHTML=`<input type="checkbox" ${item.done?'checked':''} disabled>
+        <div class="todo-text-wrap"><span class="todo-text">${item.text}${storeTag}</span>${carry}</div>`;
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    todoContainer.appendChild(wrap);
+  }
+  document.getElementById('handover-container').innerHTML='';
+  det.style.display='block';
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 
 window.openGuideModal=function(){
   const body=document.getElementById('guide-modal-body');
