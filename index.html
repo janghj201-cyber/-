@@ -429,6 +429,19 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .project-days{font-size:10px;color:var(--text-mute);margin-left:auto;white-space:nowrap;}
 .project-empty{font-size:12px;color:var(--text-mute);text-align:center;padding:20px 0;}
 
+/* 휴무 관리 */
+.dayoff-staff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.dayoff-staff-btn{background:var(--card);border:2px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);font-family:inherit;}
+.dayoff-staff-btn.selected{border-color:var(--navy);background:var(--navy);color:#fff;}
+.dayoff-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px;}
+.dayoff-day-btn{padding:8px 4px;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text);}
+.dayoff-day-btn.dayoff{background:#fef3c7;border-color:var(--gold);color:var(--orange);}
+.dayoff-day-btn.work{background:var(--green-light);border-color:var(--green);color:var(--green);}
+.dayoff-day-btn.empty{background:#f8f7f2;border-color:var(--border);color:var(--text-mute);cursor:default;}
+.dayoff-legend{display:flex;gap:12px;font-size:11px;color:var(--text-sub);margin-bottom:10px;}
+.dayoff-legend span{display:flex;align-items:center;gap:4px;}
+.dayoff-summary{background:#f8f7f2;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text-sub);margin-top:8px;}
+
 /* 내 업무 진행중 프로젝트 고정 배너 */
 .my-project-banner{background:var(--purple-light);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--purple);}
 .my-project-banner-title{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;}
@@ -3111,7 +3124,8 @@ async function renderDashboard(){
     {id:'today',label:'📍 오늘 현황'},
     {id:'report',label:'📋 일일 보고'},
     {id:'monthly',label:'📊 월간 통계'},
-    {id:'projects',label:'🔄 프로젝트'}
+    {id:'projects',label:'🔄 프로젝트'},
+    {id:'dayoff',label:'🏖️ 휴무 관리'}
   ];
   tabDefs.forEach(td=>{
     const b=document.createElement('button');
@@ -3128,6 +3142,7 @@ async function renderDashboard(){
   if(dashTab==='today')await renderTodayTab(content);
   else if(dashTab==='report')await renderReportTab(content);
   else if(dashTab==='projects')await renderProjectsTab(content);
+  else if(dashTab==='dayoff')await renderDayoffTab(content);
   else await renderMonthlyTab(content);
 
   if(dashTab!=='monthly'){
@@ -3457,6 +3472,152 @@ async function renderProjectsTab(content){
   } else {
     content.appendChild(wrap);
   }
+}
+
+async function renderDayoffTab(content){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dows=['일','월','화','수','목','금','토'];
+
+  let selectedStaff=staffList[0];
+  let dayoffData={}; // {name: {dateKey: 'dayoff'|'work'}}
+
+  // Firebase에서 전체 휴무 데이터 로드
+  async function loadDayoffData(){
+    try{
+      const snap=await getDoc(doc(db,'config/dayoff'));
+      if(snap.exists()) dayoffData=snap.data()||{};
+    }catch(e){}
+  }
+
+  async function saveDayoffData(){
+    await setDoc(doc(db,'config/dayoff'),dayoffData);
+  }
+
+  await loadDayoffData();
+
+  function render(){
+    content.innerHTML='';
+    content.style.padding='12px';
+
+    // 헤더
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+    header.innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text);">🏖️ 휴무 관리 — ${mns[m]}</div>
+      <div style="font-size:11px;color:var(--text-sub);">노란색=휴무 · 초록색=근무확정</div>`;
+    content.appendChild(header);
+
+    // 직원 선택 그리드
+    const staffGrid=document.createElement('div');
+    staffGrid.className='dayoff-staff-grid';
+    staffList.forEach(name=>{
+      const btn=document.createElement('button');
+      btn.className='dayoff-staff-btn'+(name===selectedStaff?' selected':'');
+      const myData=dayoffData[name]||{};
+      const dayoffCount=Object.values(myData).filter(v=>v==='dayoff').length;
+      btn.innerHTML=`${name}<br><span style="font-size:10px;font-weight:400;opacity:0.7;">${dayoffCount>0?`휴무 ${dayoffCount}일`:'미설정'}</span>`;
+      btn.onclick=()=>{selectedStaff=name;render();};
+      staffGrid.appendChild(btn);
+    });
+    content.appendChild(staffGrid);
+
+    // 달력 범례
+    const legend=document.createElement('div');
+    legend.className='dayoff-legend';
+    legend.innerHTML=`<span><span style="display:inline-block;width:12px;height:12px;background:#fef3c7;border:1.5px solid var(--gold);border-radius:3px;"></span>휴무</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:var(--green-light);border:1.5px solid var(--green);border-radius:3px;"></span>근무확정</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:#fff;border:1.5px solid var(--border);border-radius:3px;"></span>미설정 (클릭으로 변경)</span>`;
+    content.appendChild(legend);
+
+    // 선택된 직원 이름 표시
+    const staffLabel=document.createElement('div');
+    staffLabel.style.cssText='font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;';
+    staffLabel.textContent=`👤 ${selectedStaff}`;
+    content.appendChild(staffLabel);
+
+    // 달력 헤더 (요일)
+    const calGrid=document.createElement('div');
+    calGrid.className='dayoff-cal-grid';
+    dows.forEach(d=>{
+      const h=document.createElement('div');
+      h.style.cssText=`text-align:center;font-size:11px;font-weight:700;padding:4px 0;color:${d==='일'?'var(--red)':d==='토'?'var(--blue)':'var(--text-sub)'};`;
+      h.textContent=d;
+      calGrid.appendChild(h);
+    });
+
+    // 달력 날짜
+    const firstDay=new Date(y,m,1).getDay();
+    const myData=dayoffData[selectedStaff]||{};
+
+    // 빈 칸 채우기
+    for(let i=0;i<firstDay;i++){
+      const empty=document.createElement('div');
+      empty.className='dayoff-day-btn empty';
+      calGrid.appendChild(empty);
+    }
+
+    for(let d=1;d<=daysInMonth;d++){
+      const dateKey=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const status=myData[dateKey]||'none';
+      const dow=new Date(y,m,d).getDay();
+      const isWeekend=dow===0||dow===6;
+
+      const btn=document.createElement('button');
+      btn.className=`dayoff-day-btn ${status==='dayoff'?'dayoff':status==='work'?'work':''}`;
+      btn.innerHTML=`<div style="font-size:11px;color:${dow===0?'var(--red)':dow===6?'var(--blue)':'inherit'}">${d}</div>
+        <div style="font-size:9px;margin-top:1px;">${status==='dayoff'?'휴무':status==='work'?'근무':''}</div>`;
+
+      // 클릭: none → dayoff → work → none 순환
+      btn.onclick=async()=>{
+        const cur=myData[dateKey]||'none';
+        const next=cur==='none'?'dayoff':cur==='dayoff'?'work':'none';
+        if(!dayoffData[selectedStaff])dayoffData[selectedStaff]={};
+        if(next==='none'){
+          delete dayoffData[selectedStaff][dateKey];
+        } else {
+          dayoffData[selectedStaff][dateKey]=next;
+        }
+        await saveDayoffData();
+        render();
+      };
+      calGrid.appendChild(btn);
+    }
+    content.appendChild(calGrid);
+
+    // 이번 달 휴무 요약
+    const dayoffDays=Object.entries(myData)
+      .filter(([k,v])=>k.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)&&v==='dayoff')
+      .map(([k])=>parseInt(k.split('-')[2]))
+      .sort((a,b)=>a-b);
+
+    const summary=document.createElement('div');
+    summary.className='dayoff-summary';
+    summary.textContent=dayoffDays.length>0
+      ?`${mns[m]} 휴무일: ${dayoffDays.join(', ')}일 (총 ${dayoffDays.length}일)`
+      :`${mns[m]} 휴무 미설정`;
+    content.appendChild(summary);
+
+    // 전체 직원 이번 달 휴무 요약
+    const allSummary=document.createElement('div');
+    allSummary.style.cssText='margin-top:12px;padding-top:12px;border-top:1px solid var(--border);';
+    allSummary.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:8px;">전체 직원 휴무 현황</div>';
+    staffList.forEach(name=>{
+      const data=dayoffData[name]||{};
+      const days=Object.entries(data)
+        .filter(([k,v])=>k.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)&&v==='dayoff')
+        .length;
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;';
+      row.innerHTML=`<span style="color:var(--text)">${name}</span>
+        <span style="color:${days>0?'var(--orange)':'var(--text-mute)'};">${days>0?`휴무 ${days}일`:'미설정'}</span>`;
+      allSummary.appendChild(row);
+    });
+    content.appendChild(allSummary);
+  }
+
+  render();
 }
 
 async function renderMonthlyTab(content){
