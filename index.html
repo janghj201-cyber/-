@@ -2413,8 +2413,32 @@ function staffTodoRef(name,dateKey){
 }
 
 async function loadStaffTodos(name,dateKey){
-  const snap=await getDoc(staffTodoRef(name,dateKey));
-  return snap.exists()?(snap.data().items||[]):[];
+  const ref=staffTodoRef(name,dateKey);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+
+  // 오늘 날짜만 이월 처리 (다른 날짜는 그냥 반환)
+  if(dateKey===todayKey()){
+    const prevKey=prevDateKey(dateKey);
+    try{
+      const prevRef=staffTodoRef(name,prevKey);
+      const prevSnap=await getDoc(prevRef);
+      if(prevSnap.exists()){
+        const prevItems=prevSnap.data().items||[];
+        const undone=prevItems.filter(it=>!it.done);
+        let changed=false;
+        undone.forEach(it=>{
+          // 이미 이월된 항목이면 추가 안 함
+          if(!items.find(x=>x.id===it.id)){
+            items.push({...it,fromDate:it.fromDate||prevKey});
+            changed=true;
+          }
+        });
+        if(changed)await setDoc(ref,{items});
+      }
+    }catch(e){}
+  }
+  return items;
 }
 
 async function addTodoItem(storeId,dateKey,text,author,fromDate=null){
