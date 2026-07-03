@@ -3566,10 +3566,38 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
-loadStaffList().then(()=>{
+loadStaffList().then(async()=>{
   switchTab('dashboard');
   checkUpdateNotice();
+  await autoPostNotice();
 });
+
+// 앱 업데이트 공지 자동 등록 (한 번만)
+async function autoPostNotice(){
+  const noticeId='notice_v1_4_0703';
+  const seen=localStorage.getItem(noticeId);
+  if(seen)return;
+  try{
+    const ref=doc(db,'board/posts');
+    const snap=await getDoc(ref);
+    const items=snap.exists()?(snap.data().items||[]):[];
+    // 이미 등록된 공지면 스킵
+    if(items.find(i=>i.id===noticeId))return;
+    const now=new Date();
+    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const newPost={
+      id:noticeId,
+      cat:'notice',
+      title:'📱 앱 업데이트 안내 (7월 3일)',
+      body:`안녕하세요! 여러분의 피드백을 반영해 앱을 업데이트했습니다.\n\n✅ 수정된 사항\n\n[버그 수정]\n• 전날 미완료 업무가 다음날로 이월되지 않던 문제 수정\n  → 이제 미완료 업무가 다음날 자동으로 이월됩니다\n\n[인수인계]\n• 확인자 이름 표시 추가 (누가 확인했는지 바로 확인)\n• 완료된 인수인계 자동 숨김 + 보관함 기능\n• 매장 고정 정보 펼치기/접기 방식으로 개선\n\n[게시판]\n• 본인 작성 글 수정 기능 추가\n• 📌 히스토리 카테고리 추가\n\n[대시보드]\n• 매장 블록에 상세 현황 표시\n  (청소 완료 / 업무 완료율 / 오늘 근무자 / 미확인 인수인계)\n\n[내 업무]\n• 📋 오늘 업무 / 🔄 진행중 프로젝트 타입 구분 추가\n\n궁금한 점은 업무공유 게시판에 남겨주세요 😊`,
+      author:'관리자',
+      date:dateStr
+    };
+    items.unshift(newPost);
+    await setDoc(ref,{items});
+    localStorage.setItem(noticeId,'done');
+  }catch(e){}
+}
 </script>
 </body>
 </html>
