@@ -741,11 +741,18 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div class="my-store-select" id="my-store-select"></div>
   </div>
 
-  <!-- 날짜 이동 -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);">
+  <!-- 날짜 이동 + 휴무 토글 -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);">
     <button class="nav-btn" onclick="chgMyDate(-1)" style="background:#f0f0ee;color:#555;border:none;">‹ 전날</button>
-    <span id="my-date-label" style="font-size:13px;font-weight:700;color:var(--text);min-width:120px;text-align:center;"></span>
+    <span id="my-date-label" style="font-size:13px;font-weight:700;color:var(--text);min-width:100px;text-align:center;"></span>
     <button class="nav-btn" id="my-next-btn" onclick="chgMyDate(1)" style="background:#f0f0ee;color:#555;border:none;">다음날 ›</button>
+    <button id="my-dayoff-btn" onclick="toggleMyDayoff()" style="margin-left:4px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text-sub);">🏖️ 휴무</button>
+  </div>
+  <!-- 휴무 안내 배너 (휴무일에만 표시) -->
+  <div id="my-dayoff-banner" style="display:none;background:#fef3c7;border-bottom:2px solid var(--gold);padding:12px 16px;text-align:center;">
+    <div style="font-size:14px;font-weight:700;color:var(--orange);">🏖️ 휴무일로 설정됨</div>
+    <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">이 날은 일일 보고에서 휴무로 표시됩니다</div>
+    <button onclick="toggleMyDayoff()" style="margin-top:8px;background:#fff;border:1.5px solid var(--gold);color:var(--orange);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">근무일로 변경</button>
   </div>
 
   <!-- 이번 달 통계 -->
@@ -1210,6 +1217,9 @@ function renderMyWorkScreen(){
   renderMyProjectBanner();
   // 타입 초기화
   setTaskType('daily');
+  // 휴무 상태 체크
+  const _dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  getMyDayoffStatus(myStaff,_dateKey).then(status=>updateDayoffUI(status));
 }
 
 // 관리자 — 직원 추가/삭제
@@ -1407,8 +1417,65 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-window.updateDailyUsername=function(){};
-function updateDailyUsername(){}
+// ══════════════════════════════════════
+// 직원 휴무 관리
+// ══════════════════════════════════════
+async function getMyDayoffStatus(name, dateKey){
+  try{
+    const snap=await getDoc(doc(db,'config/dayoff'));
+    if(!snap.exists())return 'none';
+    const data=snap.data()||{};
+    return (data[name]&&data[name][dateKey])||'none';
+  }catch(e){return 'none';}
+}
+
+async function setMyDayoffStatus(name, dateKey, status){
+  try{
+    const snap=await getDoc(doc(db,'config/dayoff'));
+    const data=snap.exists()?(snap.data()||{}):{};
+    if(!data[name])data[name]={};
+    if(status==='none'){
+      delete data[name][dateKey];
+    } else {
+      data[name][dateKey]=status;
+    }
+    await setDoc(doc(db,'config/dayoff'),data);
+  }catch(e){}
+}
+
+window.toggleMyDayoff=async function(){
+  if(!myStaff)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const cur=await getMyDayoffStatus(myStaff,dateKey);
+  const next=cur==='dayoff'?'none':'dayoff';
+  await setMyDayoffStatus(myStaff,dateKey,next);
+  updateDayoffUI(next);
+};
+function toggleMyDayoff(){window.toggleMyDayoff();}
+
+function updateDayoffUI(status){
+  const banner=document.getElementById('my-dayoff-banner');
+  const btn=document.getElementById('my-dayoff-btn');
+  const workSections=['my-project-banner','task-type-select','my-handover-container'];
+  const todoSection=document.querySelector('.my-section');
+
+  if(status==='dayoff'){
+    if(banner)banner.style.display='block';
+    if(btn){btn.style.background='#fef3c7';btn.style.borderColor='var(--gold)';btn.style.color='var(--orange)';}
+    // 업무 입력 숨기기
+    const taskTypeEl=document.getElementById('task-type-select');
+    const inputRows=document.querySelectorAll('.my-input-row');
+    if(taskTypeEl)taskTypeEl.style.display='none';
+    inputRows.forEach(r=>r.style.display='none');
+  } else {
+    if(banner)banner.style.display='none';
+    if(btn){btn.style.background='#fff';btn.style.borderColor='var(--border)';btn.style.color='var(--text-sub)';}
+    const taskTypeEl=document.getElementById('task-type-select');
+    const inputRows=document.querySelectorAll('.my-input-row');
+    if(taskTypeEl)taskTypeEl.style.display='flex';
+    inputRows.forEach(r=>r.style.display='flex');
+  }
+}
 
 // ══════════════════════════════════════
 // 진행중 프로젝트 (staff_projects/{name})
@@ -2290,14 +2357,28 @@ function renderCal(){
       div.onclick=()=>selDay(c.y,c.m,c.d);
 
       // 일일 업무 데이터 비동기 뱃지 (staff_todos 기반)
+      const dateKey=dk(c.y,c.m,c.d);
       const isPastOrToday=(new Date(c.y,c.m,c.d)<=new Date(today.getFullYear(),today.getMonth(),today.getDate()));
+
+      // 휴무 뱃지 (미래 포함)
+      getDoc(doc(db,'config/dayoff')).then(snap=>{
+        if(!snap.exists())return;
+        const data=snap.data()||{};
+        const dayoffStaff=staffList.filter(name=>data[name]&&data[name][dateKey]==='dayoff');
+        if(dayoffStaff.length>0){
+          const hb=document.createElement('div');
+          hb.className='badge';
+          hb.style.cssText='background:#fef3c7;color:var(--orange);';
+          hb.textContent=`🏖️${dayoffStaff.map(n=>n[0]).join('')}`;
+          bd.appendChild(hb);
+        }
+      }).catch(()=>{});
+
       if(isPastOrToday){
-        const dateKey=dk(c.y,c.m,c.d);
         // 해당 날짜에 업무가 있는 직원들 조회
         Promise.all(staffList.map(async name=>{
           try{
             const items=await loadStaffTodos(name,dateKey);
-            // 현재 매장 필터 (curStore 기준)
             const storeItems=curStore?items.filter(i=>i.storeId===curStore.id):items;
             if(storeItems.length===0)return null;
             const done=storeItems.filter(i=>i.done).length;
@@ -2306,14 +2387,12 @@ function renderCal(){
         })).then(results=>{
           const valid=results.filter(Boolean);
           if(valid.length===0)return;
-          // 업무 완료율 뱃지
           const totalItems=valid.reduce((s,r)=>s+r.total,0);
           const doneItems=valid.reduce((s,r)=>s+r.done,0);
           const wb=document.createElement('div');
           wb.className=`badge ${doneItems===totalItems?'b-green':'b-blue'}`;
           wb.textContent=`📝${doneItems}/${totalItems}`;
           bd.appendChild(wb);
-          // 근무자 이름 (최대 2명)
           const names=valid.map(r=>r.name.slice(0,2));
           const nb=document.createElement('div');
           nb.className='badge';
