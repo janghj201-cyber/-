@@ -583,6 +583,39 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 </div>
 
+<!-- 🏖️ 휴무 설정 모달 -->
+<div class="update-modal-bg" id="dayoff-modal">
+  <div class="update-modal" style="max-height:85vh;">
+    <div class="update-modal-header">
+      <h3>🏖️ 이번 달 휴무 설정</h3>
+      <button onclick="closeDayoffModal()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;">×</button>
+    </div>
+    <div class="update-modal-body" id="dayoff-modal-body">
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:12px;">날짜를 눌러 휴무일을 설정하세요. 다시 누르면 해제됩니다.</div>
+      <div class="dayoff-cal-grid" id="dayoff-modal-cal"></div>
+      <div class="dayoff-summary" id="dayoff-modal-summary"></div>
+    </div>
+    <div class="update-modal-footer">
+      <button class="update-confirm-btn" onclick="closeDayoffModal()">완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📖 사용 가이드 모달 -->
+<div class="update-modal-bg" id="guide-modal">
+  <div class="update-modal" style="max-height:88vh;">
+    <div class="update-modal-header">
+      <h3>📖 사용 가이드</h3>
+      <span class="update-modal-version">v1.4</span>
+      <button onclick="closeGuideModal()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
+    </div>
+    <div class="update-modal-body" id="guide-modal-body"></div>
+    <div class="update-modal-footer">
+      <button class="update-confirm-btn" onclick="closeGuideModal()">확인</button>
+    </div>
+  </div>
+</div>
+
 <!-- 게시글 작성 모달 -->
 <div class="board-write-modal-bg" id="board-write-modal" onclick="if(event.target===this)closeBoardWrite()">
   <div class="board-write-modal">
@@ -645,7 +678,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 <div class="screen active has-tab-bar" id="screen-dashboard">
   <div class="header">
     <div><div class="header-title">📋 위베이프</div><div class="header-sub" id="dashboard-date-sub"></div></div>
-    <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
+    <div style="display:flex;gap:6px;">
+      <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📖 가이드</button>
+      <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
+    </div>
   </div>
   <!-- 게시판 -->
   <div class="board-section">
@@ -741,18 +777,17 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <div class="my-store-select" id="my-store-select"></div>
   </div>
 
-  <!-- 날짜 이동 + 휴무 토글 -->
+  <!-- 날짜 이동 + 이번 달 휴무 설정 -->
   <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);">
     <button class="nav-btn" onclick="chgMyDate(-1)" style="background:#f0f0ee;color:#555;border:none;">‹ 전날</button>
     <span id="my-date-label" style="font-size:13px;font-weight:700;color:var(--text);min-width:100px;text-align:center;"></span>
     <button class="nav-btn" id="my-next-btn" onclick="chgMyDate(1)" style="background:#f0f0ee;color:#555;border:none;">다음날 ›</button>
-    <button id="my-dayoff-btn" onclick="toggleMyDayoff()" style="margin-left:4px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text-sub);">🏖️ 휴무</button>
+    <button onclick="openMyDayoffModal()" style="margin-left:4px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--gold);background:var(--gold-light);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--orange);">🏖️ 휴무 설정</button>
   </div>
-  <!-- 휴무 안내 배너 (휴무일에만 표시) -->
-  <div id="my-dayoff-banner" style="display:none;background:#fef3c7;border-bottom:2px solid var(--gold);padding:12px 16px;text-align:center;">
-    <div style="font-size:14px;font-weight:700;color:var(--orange);">🏖️ 휴무일로 설정됨</div>
-    <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">이 날은 일일 보고에서 휴무로 표시됩니다</div>
-    <button onclick="toggleMyDayoff()" style="margin-top:8px;background:#fff;border:1.5px solid var(--gold);color:var(--orange);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">근무일로 변경</button>
+  <!-- 오늘 휴무 배너 -->
+  <div id="my-dayoff-banner" style="display:none;background:#fef3c7;border-bottom:2px solid var(--gold);padding:10px 16px;text-align:center;">
+    <span style="font-size:13px;font-weight:700;color:var(--orange);">🏖️ 오늘은 휴무일입니다</span>
+    <button onclick="toggleMyDayoff()" style="margin-left:10px;background:#fff;border:1.5px solid var(--gold);color:var(--orange);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
   </div>
 
   <!-- 이번 달 통계 -->
@@ -1418,8 +1453,194 @@ window.addMyHandover=async function(){
 function addMyHandover(){window.addMyHandover();}
 
 // ══════════════════════════════════════
-// 직원 휴무 관리
+// 사용 가이드
 // ══════════════════════════════════════
+const GUIDE_VERSION = 'v1.4';
+const GUIDE_SECTIONS = [
+  {
+    title: '🏠 대시보드',
+    items: [
+      '게시판에서 공지·업무공유·히스토리 확인 및 작성',
+      '9개 매장 현황 블록 — 청소완료/업무완료율/근무자/인수인계 미확인 한눈에 확인',
+      '매장 블록 클릭 → 해당 매장 월간 스케줄로 이동',
+      '📖 가이드 버튼으로 이 화면을 언제든지 다시 볼 수 있어요',
+    ]
+  },
+  {
+    title: '📅 월간 스케줄',
+    items: [
+      '‹ 지점 › 버튼으로 매장 전환, ‹ 오늘 › 버튼으로 월 이동',
+      '날짜 클릭 → 그날 업무 현황(읽기전용) + 청소 체크리스트 + 인수인계 확인',
+      '달력에 📝 뱃지 = 업무 기록 있는 날, 🏖️ 뱃지 = 휴무자 있는 날',
+      '대청소 날 클릭 시 구역별 청소 항목 상세 표시',
+    ]
+  },
+  {
+    title: '👤 내 업무',
+    items: [
+      '본인 이름 블록 선택 → 근무 매장 선택 → 업무 입력',
+      '★ 표시 매장 = 기본 근무 매장 (자동 선택됨), 다른 매장 근무 시 변경 가능',
+      '📋 오늘 업무: 당일 할 일 입력, 매장에 저장, 월간 달력에 표시',
+      '🔄 진행중 프로젝트: 장기 업무 등록, 완료 전까지 상단에 항상 표시',
+      '미완료 업무는 다음날 자동 이월 — [이월] 태그로 표시',
+      '여러 개 한번에 입력 버튼으로 한 줄에 하나씩 일괄 등록 가능',
+      '전체 삭제 버튼으로 오늘 업무 한 번에 정리',
+      '📊 내 전체 업무 히스토리: 이번 달 전체 업무 날짜별 조회 가능',
+    ]
+  },
+  {
+    title: '🏖️ 휴무 설정',
+    items: [
+      '내 업무 → 이름 선택 후 상단 🏖️ 휴무 설정 버튼 클릭',
+      '달력에서 날짜 클릭 → 휴무 설정 (노란색), 다시 클릭 → 해제',
+      '월 초에 한 번 이번 달 휴무일 전체 설정 권장',
+      '휴무일은 일일 보고에서 "미사용"과 구분되어 정확하게 표시됨',
+      '월간 달력에 🏖️ 뱃지로 표시',
+    ]
+  },
+  {
+    title: '🔄 인수인계',
+    items: [
+      '내 업무 화면 하단 인수인계 섹션에서 작성',
+      '인수인계는 매장 단위로 저장 — 같은 매장 모든 직원이 확인 가능',
+      '체크박스 클릭 시 확인자 이름이 자동으로 기록됨',
+      '완료된 인수인계는 자동 숨김 — 보관함 버튼으로 확인 가능',
+      '📌 매장 고정 정보: 와이파이·도어락 등 고정 정보 저장 (펼치기/접기)',
+      '미확인 인수인계는 다음날 자동 이월',
+    ]
+  },
+  {
+    title: '📋 게시판',
+    items: [
+      '✏️ 글쓰기 버튼으로 업무공유 자유 작성',
+      '📢 공지: 관리자만 작성 가능',
+      '📌 히스토리: 신제품 입고/이벤트/매장이슈 등 데이터 기록용',
+      '히스토리 작성 시 카테고리와 해당 매장 선택 가능',
+      '본인이 작성한 글은 수정/삭제 가능',
+    ]
+  },
+  {
+    title: '❓ 자주 묻는 질문',
+    items: [
+      'Q. 어제 업무가 오늘도 보여요 → 정상입니다. 미완료 업무 자동 이월이에요.',
+      'Q. 다른 매장 임시 근무 시 → 매장 칩에서 오늘 근무 매장으로 변경하세요.',
+      'Q. 앱이 예전 버전으로 보여요 → Ctrl+Shift+R (강제 새로고침)',
+      'Q. 인수인계가 안 보여요 → 완료 숨기기가 켜진 상태입니다. 보관함 버튼 확인',
+    ]
+  }
+];
+
+window.openGuideModal=function(){
+  const body=document.getElementById('guide-modal-body');
+  if(body){
+    body.innerHTML=GUIDE_SECTIONS.map(s=>`
+      <div class="update-section">
+        <div class="update-section-title">${s.title}</div>
+        ${s.items.map(i=>`<div class="update-item"><span style="color:var(--gold);flex-shrink:0;margin-right:6px;">•</span><span>${i}</span></div>`).join('')}
+      </div>`).join('');
+  }
+  document.getElementById('guide-modal').classList.add('open');
+};
+function openGuideModal(){window.openGuideModal();}
+window.closeGuideModal=function(){
+  document.getElementById('guide-modal').classList.remove('open');
+};
+function closeGuideModal(){window.closeGuideModal();}
+
+// ══════════════════════════════════════
+// 휴무 설정 모달 (직원용)
+// ══════════════════════════════════════
+window.openMyDayoffModal=async function(){
+  if(!myStaff)return;
+  const modal=document.getElementById('dayoff-modal');
+  const cal=document.getElementById('dayoff-modal-cal');
+  const summary=document.getElementById('dayoff-modal-summary');
+  if(!modal||!cal)return;
+
+  const y=today.getFullYear(),m=today.getMonth();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dows=['일','월','화','수','목','금','토'];
+
+  // 현재 휴무 데이터 로드
+  const snap=await getDoc(doc(db,'config/dayoff'));
+  const dayoffData=snap.exists()?(snap.data()||{}):{};
+  const myData=dayoffData[myStaff]||{};
+
+  function renderCal(){
+    cal.innerHTML='';
+    // 요일 헤더
+    dows.forEach(d=>{
+      const h=document.createElement('div');
+      h.style.cssText=`text-align:center;font-size:11px;font-weight:700;padding:4px 0;color:${d==='일'?'var(--red)':d==='토'?'var(--blue)':'var(--text-sub)'};`;
+      h.textContent=d;
+      cal.appendChild(h);
+    });
+    // 빈 칸
+    const firstDay=new Date(y,m,1).getDay();
+    for(let i=0;i<firstDay;i++){
+      const e=document.createElement('div');
+      e.className='dayoff-day-btn empty';
+      cal.appendChild(e);
+    }
+    // 날짜
+    for(let d=1;d<=daysInMonth;d++){
+      const dateKey=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isDayoff=myData[dateKey]==='dayoff';
+      const dow=new Date(y,m,d).getDay();
+      const btn=document.createElement('button');
+      btn.className=`dayoff-day-btn${isDayoff?' dayoff':''}`;
+      btn.innerHTML=`<div style="font-size:11px;color:${dow===0?'var(--red)':dow===6?'var(--blue)':'inherit'}">${d}</div>
+        <div style="font-size:9px;">${isDayoff?'휴무':''}</div>`;
+      btn.onclick=async()=>{
+        if(!dayoffData[myStaff])dayoffData[myStaff]={};
+        if(isDayoff){
+          delete dayoffData[myStaff][dateKey];
+        } else {
+          dayoffData[myStaff][dateKey]='dayoff';
+        }
+        await setDoc(doc(db,'config/dayoff'),dayoffData);
+        // 로컬 반영 후 다시 렌더
+        myData[dateKey]=isDayoff?undefined:'dayoff';
+        if(isDayoff)delete myData[dateKey];
+        renderCal();
+        updateSummary();
+      };
+      cal.appendChild(btn);
+    }
+  }
+
+  function updateSummary(){
+    const snap2=getDoc(doc(db,'config/dayoff')).then(s=>{
+      const d2=s.exists()?(s.data()||{}):{};
+      const my2=d2[myStaff]||{};
+      const days=Object.entries(my2)
+        .filter(([k,v])=>k.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)&&v==='dayoff')
+        .map(([k])=>parseInt(k.split('-')[2])).sort((a,b)=>a-b);
+      if(summary)summary.textContent=days.length>0
+        ?`${mns[m]} 휴무: ${days.join(', ')}일 (총 ${days.length}일)`
+        :`${mns[m]} 설정된 휴무가 없습니다`;
+    });
+  }
+
+  renderCal();
+  updateSummary();
+  modal.classList.add('open');
+
+  // 오늘 날짜 휴무 상태도 업데이트
+  const todayKey2=dk(today.getFullYear(),today.getMonth(),today.getDate());
+  const todayStatus=myData[todayKey2]==='dayoff'?'dayoff':'none';
+  updateDayoffUI(todayStatus);
+};
+function openMyDayoffModal(){window.openMyDayoffModal();}
+
+window.closeDayoffModal=function(){
+  document.getElementById('dayoff-modal').classList.remove('open');
+  // 현재 날짜 휴무 상태 업데이트
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  getMyDayoffStatus(myStaff,dateKey).then(s=>updateDayoffUI(s));
+};
+function closeDayoffModal(){window.closeDayoffModal();}
 async function getMyDayoffStatus(name, dateKey){
   try{
     const snap=await getDoc(doc(db,'config/dayoff'));
