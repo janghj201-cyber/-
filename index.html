@@ -1564,7 +1564,12 @@ window.setMonthlyView=function(mode){
     if(storeBtn){storeBtn.style.background='var(--card)';storeBtn.style.color='var(--text-sub)';storeBtn.style.borderBottom='none';}
     if(storeSel)storeSel.style.display='none';
     if(staffSel)staffSel.style.display='block';
-    if(!curStaffView)curStaffView=staffList[0];
+    // 비관리자면 본인 자동 선택, 관리자면 첫 번째 직원
+    if(!isAdmin&&myStaff){
+      curStaffView=myStaff;
+    } else if(!curStaffView){
+      curStaffView=staffList[0];
+    }
     renderStaffChips();
     renderStaffCal();
   }
@@ -1575,7 +1580,16 @@ function renderStaffChips(){
   const wrap=document.getElementById('monthly-staff-chips');
   if(!wrap)return;
   wrap.innerHTML='';
-  staffList.forEach(name=>{
+
+  // 관리자면 전체, 직원이면 본인만
+  const visibleStaff=isAdmin?staffList:staffList.filter(name=>name===myStaff);
+
+  if(!isAdmin&&!myStaff){
+    wrap.innerHTML=`<div style="font-size:12px;color:var(--text-mute);padding:4px 0;">👤 내 업무 탭에서 이름을 먼저 선택해주세요</div>`;
+    return;
+  }
+
+  visibleStaff.forEach(name=>{
     const chip=document.createElement('button');
     const isActive=name===curStaffView;
     chip.style.cssText=`padding:6px 12px;border-radius:16px;border:1.5px solid ${isActive?'var(--navy)':'var(--border)'};
@@ -1585,6 +1599,11 @@ function renderStaffChips(){
     chip.onclick=()=>{curStaffView=name;renderStaffChips();renderStaffCal();};
     wrap.appendChild(chip);
   });
+
+  // 비관리자면 자동으로 본인 선택
+  if(!isAdmin&&myStaff&&curStaffView!==myStaff){
+    curStaffView=myStaff;
+  }
 }
 
 async function renderStaffCal(){
