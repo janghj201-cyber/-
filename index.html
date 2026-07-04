@@ -1400,12 +1400,13 @@ async function renderMyTodoList(){
               <div class="my-todo-text">${item.text}${tags}</div>
               ${actionBtns}
             </div>
-            ${!carryDays||item.done?`<div class="todo-actions">
+            <div class="todo-actions">
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
+              ${!carryDays||item.done?`
               <button class="todo-action-btn" data-act="edit">✏️</button>
-              <button class="todo-action-btn" data-act="del">🗑️</button>
-            </div>`:''}`;
+              <button class="todo-action-btn" data-act="del">🗑️</button>`:''}
+            </div>`;
 
           row.querySelector('input').onchange=async(e)=>{
             await toggleTodoItem(myStaff,dateKey,item.id,e.target.checked);
