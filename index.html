@@ -1548,9 +1548,28 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-// ══════════════════════════════════════
-// 사용 가이드
-// ══════════════════════════════════════
+// 휴무 설정 안내 공지 자동 등록
+async function autoPostDayoffNotice(){
+  const noticeId='notice_dayoff_202507';
+  if(localStorage.getItem(noticeId))return;
+  try{
+    const ref=doc(db,'board/posts');
+    const snap=await getDoc(ref);
+    const items=snap.exists()?(snap.data().items||[]):[];
+    if(items.find(i=>i.id===noticeId))return;
+    const now=new Date();
+    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const newPost={
+      id:noticeId, cat:'notice',
+      title:'📢 [필독] 이번 달 휴무 설정 해주세요',
+      body:`안녕하세요 😊\n\n앱에 휴무 설정 기능이 추가되었습니다.\n본인의 이번 달 휴무일을 직접 등록해주세요!\n\n━━━━━━━━━━━━━━━━\n📍 설정 방법\n━━━━━━━━━━━━━━━━\n\n1. 하단 👤 내 업무 탭 클릭\n2. 본인 이름 블록 선택\n3. 상단 🏖️ 휴무 설정 버튼 클릭\n4. 달력에서 휴무인 날짜 클릭 (노란색으로 표시)\n5. 다시 클릭하면 해제\n\n━━━━━━━━━━━━━━━━\n❓ 왜 필요한가요?\n━━━━━━━━━━━━━━━━\n\n휴무 설정을 하지 않으면 쉬는 날도 "앱 미사용"으로 기록됩니다.\n설정해두면 보고서에 휴무로 정확하게 구분되어 표시됩니다.\n\n⏰ 이번 달 안에 꼭 설정 부탁드립니다!\n\n궁금한 점은 업무공유 게시판에 남겨주세요 🙏`,
+      author:'관리자', date:dateStr
+    };
+    items.unshift(newPost);
+    await setDoc(ref,{items});
+    localStorage.setItem(noticeId,'done');
+  }catch(e){}
+}
 const GUIDE_VERSION = 'v1.4';
 const GUIDE_SECTIONS = [
   {
@@ -4317,6 +4336,7 @@ loadStaffList().then(async()=>{
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();
+  await autoPostDayoffNotice();
 });
 
 // 앱 업데이트 공지 자동 등록 (한 번만)
