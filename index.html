@@ -2893,41 +2893,43 @@ function renderCal(){
       const dateKey=dk(c.y,c.m,c.d);
       const isPastOrToday=(new Date(c.y,c.m,c.d)<=new Date(today.getFullYear(),today.getMonth(),today.getDate()));
 
-      // 휴무 뱃지 (미래 포함)
-      getDoc(doc(db,'config/dayoff')).then(snap=>{
-        if(!snap.exists())return;
-        const data=snap.data()||{};
-        const dayoffStaff=staffList.filter(name=>data[name]&&data[name][dateKey]==='dayoff');
+      // 휴무 + 근무자 뱃지 (한 번에 처리)
+      getDoc(doc(db,'config/dayoff')).then(async snap=>{
+        const dayoffData=snap.exists()?(snap.data()||{}):{};
+        const dayoffStaff=staffList.filter(name=>dayoffData[name]&&dayoffData[name][dateKey]==='dayoff');
+
+        // 휴무자 뱃지
         if(dayoffStaff.length>0){
           const hb=document.createElement('div');
           hb.className='badge';
           hb.style.cssText='background:#fef3c7;color:var(--orange);';
-          hb.textContent=`🏖️${dayoffStaff.map(n=>n[0]).join('')}`;
+          hb.textContent=`🏖️ ${dayoffStaff.map(n=>n.slice(0,1)).join('')}`;
           bd.appendChild(hb);
         }
-      }).catch(()=>{});
 
-      if(isPastOrToday){
-        // 해당 날짜에 업무가 있는 직원들 조회
-        Promise.all(staffList.map(async name=>{
-          try{
-            const items=await loadStaffTodos(name,dateKey);
-            const storeItems=curStore?items.filter(i=>i.storeId===curStore.id):items;
-            if(storeItems.length===0)return null;
-            const done=storeItems.filter(i=>i.done).length;
-            return {name,total:storeItems.length,done};
-          }catch(e){return null;}
-        })).then(results=>{
+        if(isPastOrToday){
+          // 휴무가 아닌 직원만 업무 조회
+          const workStaff=staffList.filter(name=>!dayoffData[name]||dayoffData[name][dateKey]!=='dayoff');
+          const results=await Promise.all(workStaff.map(async name=>{
+            try{
+              const items=await loadStaffTodos(name,dateKey);
+              const storeItems=curStore?items.filter(i=>i.storeId===curStore.id):items;
+              if(storeItems.length===0)return null;
+              const done=storeItems.filter(i=>i.done).length;
+              return {name,total:storeItems.length,done};
+            }catch(e){return null;}
+          }));
           const valid=results.filter(Boolean);
           if(valid.length===0)return;
+
           const totalItems=valid.reduce((s,r)=>s+r.total,0);
           const doneItems=valid.reduce((s,r)=>s+r.done,0);
-          // 업무 완료율 뱃지
           const wb=document.createElement('div');
           wb.className=`badge ${doneItems===totalItems?'b-green':'b-blue'}`;
           wb.textContent=`📝${doneItems}/${totalItems}`;
           bd.appendChild(wb);
-          // 근무자 이름 - 전체 이름 개별 표시 (최대 3명)
+
+          // 근무자 이름 전체 표시 (최대 3명)
           valid.slice(0,3).forEach(r=>{
             const nb=document.createElement('div');
             nb.className='worker-badge';
@@ -2941,8 +2943,8 @@ function renderCal(){
             more.textContent=`+${valid.length-3}명`;
             bd.appendChild(more);
           }
-        }).catch(()=>{});
-      }
+        }
+      }).catch(()=>{});
     }
     g.appendChild(div);
   });
