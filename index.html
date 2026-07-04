@@ -1401,6 +1401,8 @@ async function renderMyTodoList(){
               ${actionBtns}
             </div>
             ${!carryDays||item.done?`<div class="todo-actions">
+              <button class="todo-action-btn" data-act="up" title="위로">↑</button>
+              <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
               <button class="todo-action-btn" data-act="edit">✏️</button>
               <button class="todo-action-btn" data-act="del">🗑️</button>
             </div>`:''}`;
@@ -1412,6 +1414,22 @@ async function renderMyTodoList(){
             row.style.borderLeft='';row.style.opacity='1';
             render();
           };
+
+          // 순서 이동
+          row.querySelector('[data-act="up"]')?.addEventListener('click',async()=>{
+            const idx=allItems.indexOf(item);
+            if(idx<=0)return;
+            allItems.splice(idx,1);allItems.splice(idx-1,0,item);
+            await setDoc(staffTodoRef(myStaff,dateKey),{items:allItems});
+            render();
+          });
+          row.querySelector('[data-act="down"]')?.addEventListener('click',async()=>{
+            const idx=allItems.indexOf(item);
+            if(idx>=allItems.length-1)return;
+            allItems.splice(idx,1);allItems.splice(idx+1,0,item);
+            await setDoc(staffTodoRef(myStaff,dateKey),{items:allItems});
+            render();
+          });
 
           // 일반 수정/삭제
           row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{editingId=item.id;render();});
