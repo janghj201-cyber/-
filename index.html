@@ -196,6 +196,13 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .todo-item.done .todo-text{text-decoration:line-through;color:var(--text-mute);}
 .todo-author{font-size:11px;color:var(--text-sub);margin-top:2px;}
 .todo-carry{font-size:10px;color:var(--orange);background:var(--orange-light);padding:1px 6px;border-radius:8px;margin-left:6px;}
+.carry-old-store{font-size:10px;color:#7c3aed;background:#ede9fe;padding:1px 6px;border-radius:8px;margin-left:4px;}
+.carry-3day{font-size:10px;color:var(--red);background:#fee2e2;padding:1px 6px;border-radius:8px;margin-left:4px;}
+.carry-action-btns{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.carry-action-btn{padding:4px 10px;border-radius:6px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.carry-done-btn{background:var(--green-light);color:var(--green);}
+.carry-keep-btn{background:#ede9fe;color:#7c3aed;}
+.carry-del-btn{background:#fee2e2;color:var(--red);}
 .todo-input-row{display:flex;gap:6px;}
 .todo-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:var(--text);}
 .todo-input:focus{border-color:var(--gold);}
@@ -1294,9 +1301,14 @@ async function renderMyTodoList(){
     if(allItems.length===0){
       listEl.innerHTML='<div class="my-empty">등록된 내 업무가 없습니다</div>';return;
     }
+
+    // 오늘 날짜 기준으로 이월 일수 계산
+    const todayMs=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
+
     let editingId=null;
     const render=()=>{
       listEl.innerHTML='';
+
       // 전체 삭제 버튼
       if(allItems.length>1){
         const bar=document.createElement('div');
@@ -1309,10 +1321,33 @@ async function renderMyTodoList(){
         };
         listEl.appendChild(bar);
       }
+
       allItems.forEach(item=>{
         const store=STORES.find(s=>s.id===item.storeId)||myStore;
+        const isCarried=item.fromDate&&item.fromDate!==dateKey;
+        const isDiffStore=isCarried&&item.storeId!==myStore?.id;
+
+        // 이월 일수 계산
+        let carryDays=0;
+        if(isCarried){
+          const fromMs=new Date(item.fromDate).getTime();
+          carryDays=Math.floor((todayMs-fromMs)/86400000);
+        }
+
         const row=document.createElement('div');
         row.className='my-todo-item'+(item.done?' done':'');
+
+        // 이전 매장 미완료면 흐리게
+        if(isDiffStore&&!item.done){
+          row.style.opacity='0.7';
+          row.style.borderLeft='3px solid #7c3aed';
+        }
+        // 3일 이상 이월이면 빨간 테두리
+        if(carryDays>=3&&!item.done){
+          row.style.borderLeft='3px solid var(--red)';
+          row.style.opacity='1';
+        }
+
         if(editingId===item.id){
           row.innerHTML=`<div class="todo-edit-row"><input type="text" class="todo-edit-input" value="${item.text}"><div class="todo-edit-btns"><button class="todo-edit-save">저장</button><button class="todo-edit-cancel">취소</button></div></div>`;
           const inp=row.querySelector('.todo-edit-input');
@@ -1324,25 +1359,75 @@ async function renderMyTodoList(){
           row.querySelector('.todo-edit-cancel').onclick=()=>{editingId=null;render();};
           setTimeout(()=>inp.focus(),0);
         } else {
-          const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
-          const storeTag=store?`<span style="font-size:10px;background:#f0f0ee;color:var(--text-sub);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
-          row.innerHTML=`<input type="checkbox" ${item.done?'checked':''}>
-            <div class="my-todo-text" style="flex:1">${item.text}${carry}${storeTag}</div>
-            <div class="todo-actions">
+          // 태그 구성
+          let tags='';
+          if(isCarried){
+            if(carryDays>=3){
+              tags+=`<span class="carry-3day">⚠️ ${carryDays}일째 미완료</span>`;
+            } else {
+              tags+=`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`;
+            }
+          }
+          if(isDiffStore&&store){
+            tags+=`<span class="carry-old-store">📍 ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`;
+          } else if(store&&!isDiffStore){
+            tags+=`<span style="font-size:10px;background:#f0f0ee;color:var(--text-sub);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`;
+          }
+
+          // 3일 이상 이월 액션 버튼
+          const actionBtns=carryDays>=3&&!item.done?`
+            <div class="carry-action-btns">
+              <button class="carry-action-btn carry-done-btn" data-act="done">✅ 완료</button>
+              <button class="carry-action-btn carry-keep-btn" data-act="keep">📦 보관</button>
+              <button class="carry-action-btn carry-del-btn" data-act="delete">🗑️ 삭제</button>
+            </div>`:'';
+
+          row.innerHTML=`
+            <input type="checkbox" ${item.done?'checked':''}>
+            <div style="flex:1">
+              <div class="my-todo-text">${item.text}${tags}</div>
+              ${actionBtns}
+            </div>
+            ${!carryDays||item.done?`<div class="todo-actions">
               <button class="todo-action-btn" data-act="edit">✏️</button>
               <button class="todo-action-btn" data-act="del">🗑️</button>
-            </div>`;
+            </div>`:''}`;
+
           row.querySelector('input').onchange=async(e)=>{
             await toggleTodoItem(myStaff,dateKey,item.id,e.target.checked);
             item.done=e.target.checked;
             row.className='my-todo-item'+(item.done?' done':'');
+            row.style.borderLeft='';row.style.opacity='1';
+            render();
           };
-          row.querySelector('[data-act="edit"]').onclick=()=>{editingId=item.id;render();};
-          row.querySelector('[data-act="del"]').onclick=async()=>{
+
+          // 일반 수정/삭제
+          row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{editingId=item.id;render();});
+          row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
             if(!confirm('삭제할까요?'))return;
             await deleteTodoItem(myStaff,dateKey,item.id);
             allItems.splice(allItems.indexOf(item),1);render();
-          };
+          });
+
+          // 3일 이상 이월 액션
+          row.querySelector('[data-act="done"]')?.addEventListener('click',async()=>{
+            await toggleTodoItem(myStaff,dateKey,item.id,true);
+            item.done=true;render();
+          });
+          row.querySelector('[data-act="keep"]')?.addEventListener('click',async()=>{
+            // 보관: kept 플래그 추가 + 현재 목록에서 제거
+            const ref=staffTodoRef(myStaff,dateKey);
+            const snap=await getDoc(ref);
+            const items2=snap.exists()?(snap.data().items||[]):[];
+            const target=items2.find(x=>x.id===item.id);
+            if(target){target.kept=true;await setDoc(ref,{items:items2});}
+            allItems.splice(allItems.indexOf(item),1);render();
+          });
+          row.querySelector('[data-act="delete"]')?.addEventListener('click',async()=>{
+            if(!confirm('이 미완료 업무를 삭제할까요?'))return;
+            await deleteTodoItem(myStaff,dateKey,item.id);
+            allItems.splice(allItems.indexOf(item),1);render();
+          });
         }
         listEl.appendChild(row);
       });
