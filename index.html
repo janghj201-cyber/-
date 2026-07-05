@@ -1995,6 +1995,18 @@ window.closeDayoffModal=function(){
   getMyDayoffStatus(myStaff,dateKey).then(s=>updateDayoffUI(s));
 };
 function closeDayoffModal(){window.closeDayoffModal();}
+// 업무 타입 선택
+window.setTaskType=function(type){
+  myTaskType=type;
+  const dailyBtn=document.getElementById('type-daily');
+  const projBtn=document.getElementById('type-project');
+  if(dailyBtn)dailyBtn.className='task-type-btn'+(type==='daily'?' active-daily':'');
+  if(projBtn)projBtn.className='task-type-btn'+(type==='project'?' active-project':'');
+  const input=document.getElementById('my-todo-input');
+  if(input)input.placeholder=type==='daily'?'오늘 할 일 입력':'프로젝트명 입력 (장기 진행)';
+};
+function setTaskType(t){window.setTaskType(t);}
+
 async function getMyDayoffStatus(name, dateKey){
   try{
     const snap=await getDoc(doc(db,'config/dayoff'));
