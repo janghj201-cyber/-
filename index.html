@@ -2203,25 +2203,68 @@ async function renderMyProjectBanner(){
       });
       row.appendChild(pctBtns);
 
-      // 진행 일지 목록 (최근 3개)
+      // 진행 일지 목록 (전체)
       if(logs.length>0){
         const logWrap=document.createElement('div');
         logWrap.className='project-log-wrap';
-        const recentLogs=logs.slice(-3);
-        recentLogs.forEach(l=>{
+        logs.forEach((l,li)=>{
           const logRow=document.createElement('div');
           logRow.className='project-log-item';
+          logRow.style.cssText='display:flex;align-items:flex-start;gap:6px;padding:3px 0;border-bottom:1px solid rgba(167,139,250,0.15);';
           const dateShort=l.date?l.date.slice(5):'';
-          logRow.innerHTML=`<span class="project-log-date">${dateShort}</span>
-            <span class="project-log-text">${l.text}</span>`;
+
+          const renderLogRow=()=>{
+            logRow.innerHTML=`
+              <span class="project-log-date" style="padding-top:1px;">${dateShort}</span>
+              <span class="project-log-text" style="flex:1;">${l.text}</span>
+              <div style="display:flex;gap:2px;flex-shrink:0;">
+                <button data-edit-log style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text-mute);">✏️</button>
+                <button data-del-log style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text-mute);">🗑️</button>
+              </div>`;
+
+            // 수정 버튼
+            logRow.querySelector('[data-edit-log]').onclick=()=>{
+              logRow.innerHTML=`
+                <span class="project-log-date" style="padding-top:6px;">${dateShort}</span>
+                <input type="text" value="${l.text}" style="flex:1;border:1px solid var(--purple);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;">
+                <div style="display:flex;gap:2px;flex-shrink:0;">
+                  <button data-save-log style="background:var(--purple);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit;">저장</button>
+                  <button data-cancel-log style="background:#f0f0ee;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit;">취소</button>
+                </div>`;
+              const inp=logRow.querySelector('input');
+              setTimeout(()=>inp.focus(),0);
+              logRow.querySelector('[data-save-log]').onclick=async()=>{
+                const newText=inp.value.trim();
+                if(!newText)return;
+                // Firebase 업데이트
+                const ref=projectRef(myStaff);
+                const snap=await getDoc(ref);
+                const its=snap.exists()?(snap.data().items||[]):[];
+                const target=its.find(x=>x.id===item.id);
+                if(target&&target.logs){target.logs[li].text=newText;await setDoc(ref,{items:its});}
+                l.text=newText;
+                renderLogRow();
+              };
+              logRow.querySelector('[data-cancel-log]').onclick=()=>renderLogRow();
+            };
+
+            // 삭제 버튼
+            logRow.querySelector('[data-del-log]').onclick=async()=>{
+              if(!confirm('이 일지를 삭제할까요?'))return;
+              const ref=projectRef(myStaff);
+              const snap=await getDoc(ref);
+              const its=snap.exists()?(snap.data().items||[]):[];
+              const target=its.find(x=>x.id===item.id);
+              if(target&&target.logs){target.logs.splice(li,1);await setDoc(ref,{items:its});}
+              logs.splice(li,1);
+              logWrap.removeChild(logRow);
+              if(logs.length===0)logWrap.remove();
+            };
+          };
+
+          renderLogRow();
           logWrap.appendChild(logRow);
         });
-        if(logs.length>3){
-          const more=document.createElement('div');
-          more.style.cssText='font-size:10px;color:var(--text-mute);padding-left:4px;';
-          more.textContent=`외 ${logs.length-3}건 더...`;
-          logWrap.appendChild(more);
-        }
         row.appendChild(logWrap);
       }
 
