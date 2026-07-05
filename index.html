@@ -468,7 +468,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-project-item:last-child{border-bottom:none;}
 .my-project-item input{width:16px;height:16px;accent-color:var(--purple);cursor:pointer;}
 
-/* 프로젝트 일지 */
+/* 프로젝트 진행률 */
+.project-progress-wrap{display:flex;align-items:center;gap:6px;padding:4px 0 2px 28px;}
+.project-progress-label{font-size:10px;color:var(--text-sub);flex-shrink:0;}
+.project-progress-bar{flex:1;height:6px;background:#e9e7ff;border-radius:3px;overflow:hidden;}
+.project-progress-fill{height:100%;background:var(--purple);border-radius:3px;transition:width 0.3s;}
+.project-progress-pct{font-size:11px;font-weight:700;color:var(--purple);flex-shrink:0;min-width:32px;text-align:right;}
+.project-pct-btns{display:flex;gap:3px;padding:2px 0 4px 28px;flex-wrap:wrap;}
+.project-pct-btn{padding:3px 7px;border-radius:6px;border:1.5px solid var(--border);background:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text-sub);}
+.project-pct-btn.active{border-color:var(--purple);background:var(--purple);color:#fff;}
 .project-log-wrap{padding:4px 0 4px 28px;display:flex;flex-direction:column;gap:3px;}
 .project-log-item{font-size:11px;display:flex;gap:6px;align-items:flex-start;line-height:1.5;}
 .project-log-date{color:var(--gold);font-weight:700;flex-shrink:0;font-size:10px;margin-top:1px;}
@@ -2141,6 +2149,41 @@ async function renderMyProjectBanner(){
         <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
         <button data-del="${item.id}" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;padding:0 4px;">🗑️</button>`;
       row.appendChild(header);
+
+      // 진행률 바
+      const pct=item.progress||0;
+      const progressWrap=document.createElement('div');
+      progressWrap.className='project-progress-wrap';
+      progressWrap.innerHTML=`<span class="project-progress-label">진행률</span>
+        <div class="project-progress-bar"><div class="project-progress-fill" style="width:${pct}%"></div></div>
+        <span class="project-progress-pct">${pct}%</span>`;
+      row.appendChild(progressWrap);
+
+      // 퍼센트 선택 버튼 (20% 단위)
+      const pctBtns=document.createElement('div');
+      pctBtns.className='project-pct-btns';
+      [0,20,40,60,80,100].forEach(p=>{
+        const btn=document.createElement('button');
+        btn.className='project-pct-btn'+(pct===p?' active':'');
+        btn.textContent=`${p}%`;
+        btn.onclick=async()=>{
+          // Firebase 업데이트
+          const ref=projectRef(myStaff);
+          const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];
+          const target=its.find(x=>x.id===item.id);
+          if(target){target.progress=p;await setDoc(ref,{items:its});}
+          item.progress=p;
+          // 바 즉시 업데이트
+          progressWrap.querySelector('.project-progress-fill').style.width=`${p}%`;
+          progressWrap.querySelector('.project-progress-pct').textContent=`${p}%`;
+          pctBtns.querySelectorAll('.project-pct-btn').forEach(b=>{
+            b.className='project-pct-btn'+(b.textContent===`${p}%`?' active':'');
+          });
+        };
+        pctBtns.appendChild(btn);
+      });
+      row.appendChild(pctBtns);
 
       // 진행 일지 목록 (최근 3개)
       if(logs.length>0){
@@ -4183,11 +4226,18 @@ async function renderProjectsTab(content){
               </div>`).join('')}
             </div>`:'';
 
+          const pct=item.progress||0;
           return `<div class="project-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
             <div style="display:flex;align-items:center;gap:6px;width:100%;">
               <span class="project-status project-ongoing">🔄 진행중</span>
               <span style="flex:1;font-size:13px;color:var(--text);">${item.text}${storeTag}</span>
               <span class="project-days">D+${days}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;width:100%;padding-left:8px;">
+              <div style="flex:1;height:5px;background:#e9e7ff;border-radius:3px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:var(--purple);border-radius:3px;"></div>
+              </div>
+              <span style="font-size:11px;font-weight:700;color:var(--purple);min-width:30px;text-align:right;">${pct}%</span>
             </div>
             ${logsHtml}
           </div>`;
