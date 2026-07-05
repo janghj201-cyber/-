@@ -2071,6 +2071,43 @@ async function addProjectLog(name, itemId, logText){
   await setDoc(ref,{items});
 }
 
+async function addProject(name,text,storeId){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  items.push({
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    text, storeId, done:false,
+    startDate:dk(today.getFullYear(),today.getMonth(),today.getDate()),
+    logs:[]
+  });
+  await setDoc(ref,{items});
+}
+
+async function toggleProject(name,itemId,doneVal){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item){item.done=doneVal;if(doneVal)item.doneDate=dk(today.getFullYear(),today.getMonth(),today.getDate());}
+  await setDoc(ref,{items});
+}
+
+async function deleteProject(name,itemId){
+  const ref=projectRef(name);
+  const snap=await getDoc(ref);
+  let items=snap.exists()?(snap.data().items||[]):[];
+  items=items.filter(x=>x.id!==itemId);
+  await setDoc(ref,{items});
+}
+
+window.delProject=async function(itemId){
+  if(!confirm('이 프로젝트를 삭제할까요?'))return;
+  await deleteProject(myStaff,itemId);
+  renderMyProjectBanner();
+};
+function delProject(id){window.delProject(id);}
+
 // 진행중 프로젝트 배너 렌더링 (일지 포함)
 async function renderMyProjectBanner(){
   const banner=document.getElementById('my-project-banner');
