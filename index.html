@@ -2127,10 +2127,16 @@ async function renderMyProjectBanner(){
     banner.style.display='block';
     const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
     banner.innerHTML='';
+    banner.style.display='block';
 
     const wrap=document.createElement('div');
     wrap.className='my-project-banner';
-    wrap.innerHTML=`<div class="my-project-banner-title">🔄 진행중 프로젝트 ${ongoing.length}건</div>`;
+
+    // 타이틀
+    const title=document.createElement('div');
+    title.className='my-project-banner-title';
+    title.textContent=`🔄 진행중 프로젝트 ${ongoing.length}건`;
+    wrap.appendChild(title);
 
     ongoing.forEach(item=>{
       const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
