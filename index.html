@@ -467,6 +467,16 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-project-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(167,139,250,0.2);font-size:12px;color:var(--text);}
 .my-project-item:last-child{border-bottom:none;}
 .my-project-item input{width:16px;height:16px;accent-color:var(--purple);cursor:pointer;}
+
+/* 프로젝트 일지 */
+.project-log-wrap{padding:4px 0 4px 28px;display:flex;flex-direction:column;gap:3px;}
+.project-log-item{font-size:11px;display:flex;gap:6px;align-items:flex-start;line-height:1.5;}
+.project-log-date{color:var(--gold);font-weight:700;flex-shrink:0;font-size:10px;margin-top:1px;}
+.project-log-text{flex:1;color:var(--text);}
+.project-log-input-row{display:flex;gap:6px;padding:4px 0 4px 28px;}
+.project-log-input{flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;font-family:inherit;outline:none;background:#fff;}
+.project-log-input:focus{border-color:var(--purple);}
+.project-log-btn{background:var(--purple-light);color:var(--purple);border:1px solid var(--purple);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
 .board-item-title{font-size:13px;font-weight:700;color:var(--text);}
 .board-item-preview{font-size:12px;color:var(--text-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .board-item-meta{font-size:11px;color:var(--text-mute);margin-top:4px;}
@@ -2046,48 +2056,22 @@ async function loadProjects(name){
   return snap.exists()?(snap.data().items||[]):[];
 }
 
-async function addProject(name,text,storeId){
-  const ref=projectRef(name);
-  const snap=await getDoc(ref);
-  const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({
-    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
-    text, storeId, done:false,
-    startDate:dk(today.getFullYear(),today.getMonth(),today.getDate())
-  });
-  await setDoc(ref,{items});
-}
-
-async function toggleProject(name,itemId,doneVal){
+async function addProjectLog(name, itemId, logText){
   const ref=projectRef(name);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
   const item=items.find(x=>x.id===itemId);
-  if(item){item.done=doneVal;if(doneVal)item.doneDate=dk(today.getFullYear(),today.getMonth(),today.getDate());}
+  if(!item)return;
+  if(!item.logs)item.logs=[];
+  item.logs.push({
+    date:dk(today.getFullYear(),today.getMonth(),today.getDate()),
+    text:logText,
+    ts:Date.now()
+  });
   await setDoc(ref,{items});
 }
 
-async function deleteProject(name,itemId){
-  const ref=projectRef(name);
-  const snap=await getDoc(ref);
-  let items=snap.exists()?(snap.data().items||[]):[];
-  items=items.filter(x=>x.id!==itemId);
-  await setDoc(ref,{items});
-}
-
-// 타입 선택
-window.setTaskType=function(type){
-  myTaskType=type;
-  const db=document.getElementById('type-daily');
-  const pb=document.getElementById('type-project');
-  if(db)db.className='task-type-btn'+(type==='daily'?' active-daily':'');
-  if(pb)pb.className='task-type-btn'+(type==='project'?' active-project':'');
-  const input=document.getElementById('my-todo-input');
-  if(input)input.placeholder=type==='daily'?'오늘 할 일 입력':'프로젝트명 입력 (장기 진행)';
-};
-function setTaskType(t){window.setTaskType(t);}
-
-// 진행중 프로젝트 배너 렌더링
+// 진행중 프로젝트 배너 렌더링 (일지 포함)
 async function renderMyProjectBanner(){
   const banner=document.getElementById('my-project-banner');
   if(!banner||!myStaff)return;
@@ -2097,18 +2081,65 @@ async function renderMyProjectBanner(){
     if(ongoing.length===0){banner.style.display='none';return;}
     banner.style.display='block';
     const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
-    banner.innerHTML=`<div class="my-project-banner">
-      <div class="my-project-banner-title">🔄 진행중 프로젝트 ${ongoing.length}건</div>
-      ${ongoing.map(item=>{
-        const days=Math.floor((new Date(today0)-new Date(item.startDate))/86400000);
-        return `<div class="my-project-item">
-          <input type="checkbox" data-id="${item.id}">
-          <span style="flex:1">${item.text}</span>
-          <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
-          <button onclick="delProject('${item.id}')" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;">🗑️</button>
-        </div>`;
-      }).join('')}
-    </div>`;
+    banner.innerHTML='';
+
+    const wrap=document.createElement('div');
+    wrap.className='my-project-banner';
+    wrap.innerHTML=`<div class="my-project-banner-title">🔄 진행중 프로젝트 ${ongoing.length}건</div>`;
+
+    ongoing.forEach(item=>{
+      const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
+      const logs=item.logs||[];
+      const todayLog=logs.find(l=>l.date===today0);
+
+      // 프로젝트 행
+      const row=document.createElement('div');
+      row.style.cssText='border-bottom:1px solid rgba(167,139,250,0.2);padding-bottom:6px;margin-bottom:6px;';
+
+      // 프로젝트 헤더
+      const header=document.createElement('div');
+      header.className='my-project-item';
+      header.innerHTML=`<input type="checkbox" data-id="${item.id}">
+        <span style="flex:1;font-weight:600;">${item.text}</span>
+        <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
+        <button data-del="${item.id}" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;padding:0 4px;">🗑️</button>`;
+      row.appendChild(header);
+
+      // 진행 일지 목록 (최근 3개)
+      if(logs.length>0){
+        const logWrap=document.createElement('div');
+        logWrap.className='project-log-wrap';
+        const recentLogs=logs.slice(-3);
+        recentLogs.forEach(l=>{
+          const logRow=document.createElement('div');
+          logRow.className='project-log-item';
+          const dateShort=l.date?l.date.slice(5):'';
+          logRow.innerHTML=`<span class="project-log-date">${dateShort}</span>
+            <span class="project-log-text">${l.text}</span>`;
+          logWrap.appendChild(logRow);
+        });
+        if(logs.length>3){
+          const more=document.createElement('div');
+          more.style.cssText='font-size:10px;color:var(--text-mute);padding-left:4px;';
+          more.textContent=`외 ${logs.length-3}건 더...`;
+          logWrap.appendChild(more);
+        }
+        row.appendChild(logWrap);
+      }
+
+      // 오늘 진행 상황 입력
+      const inputRow=document.createElement('div');
+      inputRow.className='project-log-input-row';
+      inputRow.innerHTML=`<input type="text" class="project-log-input" placeholder="${todayLog?'오늘 진행 상황 추가':'오늘 진행 상황을 입력하세요'}" data-project-id="${item.id}">
+        <button class="project-log-btn" data-log-add="${item.id}">+ 기록</button>`;
+      row.appendChild(inputRow);
+
+      wrap.appendChild(row);
+    });
+
+    banner.appendChild(wrap);
+
+    // 체크박스 이벤트
     banner.querySelectorAll('input[type=checkbox]').forEach(cb=>{
       cb.onchange=async(e)=>{
         await toggleProject(myStaff,cb.dataset.id,e.target.checked);
@@ -2116,18 +2147,46 @@ async function renderMyProjectBanner(){
         renderMyTodoList();
       };
     });
+
+    // 삭제 버튼
+    banner.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.onclick=async()=>{
+        if(!confirm('이 프로젝트를 삭제할까요?'))return;
+        await deleteProject(myStaff,btn.dataset.del);
+        renderMyProjectBanner();
+      };
+    });
+
+    // 일지 추가 버튼
+    banner.querySelectorAll('[data-log-add]').forEach(btn=>{
+      btn.onclick=async()=>{
+        const id=btn.dataset.logAdd;
+        const input=banner.querySelector(`input[data-project-id="${id}"]`);
+        const text=input?.value.trim();
+        if(!text)return;
+        btn.disabled=true;btn.textContent='저장중...';
+        await addProjectLog(myStaff,id,text);
+        if(input)input.value='';
+        await renderMyProjectBanner();
+      };
+    });
+
+    // Enter 키 지원
+    banner.querySelectorAll('.project-log-input').forEach(input=>{
+      input.addEventListener('keydown',async(e)=>{
+        if(e.key!=='Enter')return;
+        const id=input.dataset.projectId;
+        const text=input.value.trim();
+        if(!text)return;
+        await addProjectLog(myStaff,id,text);
+        input.value='';
+        await renderMyProjectBanner();
+      });
+    });
+
   }catch(e){banner.style.display='none';}
 }
 
-window.delProject=async function(itemId){
-  if(!confirm('이 프로젝트를 삭제할까요?'))return;
-  await deleteProject(myStaff,itemId);
-  renderMyProjectBanner();
-};
-function delProject(id){window.delProject(id);}
-
-// ══════════════════════════════════════
-// 개인 업무 전체 히스토리
 // ══════════════════════════════════════
 let myHistoryFilter='all';
 
@@ -4076,10 +4135,24 @@ async function renderProjectsTab(content){
           const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
           const store=STORES.find(s=>s.id===item.storeId);
           const storeTag=store?`<span style="font-size:10px;color:var(--text-sub);background:#f0f0ee;padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
-          return `<div class="project-item">
-            <span class="project-status project-ongoing">🔄 진행중</span>
-            <span style="flex:1;font-size:13px;color:var(--text);">${item.text}${storeTag}</span>
-            <span class="project-days">D+${days}</span>
+
+          // 일지 최근 3개
+          const logs=(item.logs||[]).slice(-3);
+          const logsHtml=logs.length>0
+            ?`<div style="padding:4px 0 2px 12px;display:flex;flex-direction:column;gap:3px;">
+              ${logs.map(l=>`<div style="font-size:11px;display:flex;gap:6px;">
+                <span style="color:var(--gold);font-weight:700;flex-shrink:0;">${l.date?l.date.slice(5):''}</span>
+                <span style="color:var(--text);">${l.text}</span>
+              </div>`).join('')}
+            </div>`:'';
+
+          return `<div class="project-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:6px;width:100%;">
+              <span class="project-status project-ongoing">🔄 진행중</span>
+              <span style="flex:1;font-size:13px;color:var(--text);">${item.text}${storeTag}</span>
+              <span class="project-days">D+${days}</span>
+            </div>
+            ${logsHtml}
           </div>`;
         }).join('');
 
