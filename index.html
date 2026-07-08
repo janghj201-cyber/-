@@ -1491,14 +1491,13 @@ async function renderMyHandoverList(){
   const listEl=document.getElementById('my-handover-list');
   if(!listEl)return;
   try{
-    // 인수인계는 매장 단위 전체 조회 (내 것만 아님)
     const items=await loadHandoverItems(myStore.id,dateKey);
     if(items.length===0){
       listEl.innerHTML='<div class="my-empty">이 매장의 인수인계 메모가 없습니다</div>';return;
     }
     listEl.innerHTML='';
-    // 미완료 먼저, 완료는 흐리게
     const sorted=[...items.filter(i=>!i.confirmed),...items.filter(i=>i.confirmed)];
+
     sorted.forEach(item=>{
       const row=document.createElement('div');
       row.className='my-todo-item'+(item.confirmed?' done':'');
@@ -1506,21 +1505,91 @@ async function renderMyHandoverList(){
       const confirmInfo=item.confirmed
         ?`<span style="font-size:10px;color:var(--green);font-weight:600;"> ✅ ${item.confirmedBy||'확인됨'}</span>`:'';
       const isMine=item.author===myStaff;
-      row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''}>
-        <div class="my-todo-text" style="flex:1">${item.text}${carry}${confirmInfo}
+      const feedbacks=item.feedbacks||[];
+
+      row.innerHTML=`
+        <input type="checkbox" ${item.confirmed?'checked':''}>
+        <div style="flex:1">
+          <div class="my-todo-text">${item.text}${carry}${confirmInfo}</div>
           <div class="my-todo-meta">작성: ${item.author||'익명'}${isMine?' (내 글)':''}</div>
+          ${feedbacks.length>0?`<div class="handover-feedbacks" style="margin-top:4px;padding-left:8px;display:flex;flex-direction:column;gap:3px;">
+            ${feedbacks.map((f,fi)=>`<div style="font-size:11px;color:var(--text-sub);display:flex;gap:4px;align-items:flex-start;">
+              <span style="color:var(--gold);font-weight:700;flex-shrink:0;font-size:10px;">${f.author||'익명'}</span>
+              <span style="flex:1;">${f.text}</span>
+              ${f.author===myStaff?`<button data-del-fb="${fi}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-mute);padding:0 2px;">🗑️</button>`:''}
+            </div>`).join('')}
+          </div>`:''}
+          <div class="feedback-input-wrap" style="display:none;margin-top:6px;padding-left:8px;display:flex;gap:4px;">
+            <input type="text" class="feedback-input" placeholder="피드백 입력..." style="flex:1;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;">
+            <button class="feedback-submit" style="background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">등록</button>
+          </div>
         </div>
-        ${isMine?'<button class="todo-action-btn" data-act="del">🗑️</button>':''}`;
+        <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+          <button class="todo-action-btn feedback-toggle-btn" title="피드백">💬</button>
+          ${isMine?'<button class="todo-action-btn" data-act="del">🗑️</button>':''}
+        </div>`;
+
+      // 체크박스
       row.querySelector('input').onchange=async(e)=>{
         await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked,myStaff);
         row.className='my-todo-item'+(e.target.checked?' done':'');
       };
+
+      // 삭제
       const delBtn=row.querySelector('[data-act="del"]');
       if(delBtn)delBtn.onclick=async()=>{
         if(!confirm('삭제할까요?'))return;
         await deleteHandoverItem(myStore.id,dateKey,item.id);
         row.remove();
       };
+
+      // 피드백 입력 토글
+      const fbWrap=row.querySelector('.feedback-input-wrap');
+      const fbToggle=row.querySelector('.feedback-toggle-btn');
+      fbToggle.onclick=()=>{
+        const isOpen=fbWrap.style.display==='flex';
+        fbWrap.style.display=isOpen?'none':'flex';
+        if(!isOpen)setTimeout(()=>fbWrap.querySelector('.feedback-input').focus(),0);
+      };
+
+      // 피드백 등록
+      const fbInput=row.querySelector('.feedback-input');
+      const fbSubmit=row.querySelector('.feedback-submit');
+      const doSubmit=async()=>{
+        const text=fbInput.value.trim();
+        if(!text)return;
+        // Firebase 피드백 추가
+        const ref=doc(db,`handover/${myStore.id}_${dateKey}`);
+        const snap=await getDoc(ref);
+        const its=snap.exists()?(snap.data().items||[]):[];
+        const target=its.find(x=>x.id===item.id);
+        if(target){
+          if(!target.feedbacks)target.feedbacks=[];
+          target.feedbacks.push({author:myStaff,text,ts:Date.now()});
+          await setDoc(ref,{items:its});
+        }
+        fbInput.value='';
+        fbWrap.style.display='none';
+        // 리렌더
+        renderMyHandoverList();
+      };
+      fbSubmit.onclick=doSubmit;
+      fbInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSubmit();});
+
+      // 피드백 삭제
+      row.querySelectorAll('[data-del-fb]').forEach(btn=>{
+        btn.onclick=async()=>{
+          const fi=parseInt(btn.dataset.delFb);
+          if(!confirm('피드백을 삭제할까요?'))return;
+          const ref=doc(db,`handover/${myStore.id}_${dateKey}`);
+          const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];
+          const target=its.find(x=>x.id===item.id);
+          if(target&&target.feedbacks){target.feedbacks.splice(fi,1);await setDoc(ref,{items:its});}
+          renderMyHandoverList();
+        };
+      });
+
       listEl.appendChild(row);
     });
   }catch(e){listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';}
@@ -2402,35 +2471,67 @@ async function loadMyHistory(){
     row.className='my-history-item'+(item.done?' my-history-done':'');
     row.style.borderLeftColor=item.done?'var(--green)':item.fromDate&&item.fromDate!==item.dateKey?'var(--orange)':'var(--navy)';
     const carryTag=item.fromDate&&item.fromDate!==item.dateKey?` <span style="font-size:10px;color:var(--orange);">[이월]</span>`:'';
-
-    // 오늘 항목이 아닌 미완료 → 오늘로 이월 버튼
     const canCarry=!item.done&&item.dateKey!==todayKey;
-    row.innerHTML=`
-      <div style="display:flex;align-items:flex-start;gap:8px;">
-        <input type="checkbox" ${item.done?'checked':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
-        <div style="flex:1;">
-          <div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
-          <div class="my-history-text">${item.text}${carryTag}</div>
-        </div>
-        ${canCarry?`<button class="carry-move-btn" style="margin-top:2px;">오늘로↑</button>`:''}
-      </div>`;
 
-    // 체크박스 — 완료 처리
-    row.querySelector('input').onchange=async(e)=>{
-      await toggleTodoItem(item.storeId,item.dateKey,item.id,e.target.checked);
-      item.done=e.target.checked;
-      row.className='my-history-item'+(item.done?' my-history-done':'');
-      row.style.borderLeftColor=item.done?'var(--green)':'var(--navy)';
+    const renderRow=()=>{
+      row.innerHTML=`
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <input type="checkbox" ${item.done?'checked':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
+          <div style="flex:1;">
+            <div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
+            <div class="my-history-text">${item.text}${carryTag}</div>
+          </div>
+          <div style="display:flex;gap:2px;flex-shrink:0;margin-top:2px;">
+            ${canCarry?`<button class="carry-move-btn">오늘로↑</button>`:''}
+            <button data-act="edit" class="todo-action-btn" title="수정">✏️</button>
+            <button data-act="del" class="todo-action-btn" title="삭제">🗑️</button>
+          </div>
+        </div>`;
+
+      // 체크박스
+      row.querySelector('input').onchange=async(e)=>{
+        await toggleTodoItem(item.storeId,item.dateKey,item.id,e.target.checked);
+        item.done=e.target.checked;
+        row.className='my-history-item'+(item.done?' my-history-done':'');
+        row.style.borderLeftColor=item.done?'var(--green)':'var(--navy)';
+        renderRow();
+      };
+
+      // 이월
+      if(canCarry){
+        row.querySelector('.carry-move-btn')?.addEventListener('click',async()=>{
+          await carryItemToToday(item);
+          await loadMyHistory();
+        });
+      }
+
+      // 수정
+      row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{
+        row.innerHTML=`
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="text" value="${item.text}" style="flex:1;border:1.5px solid var(--gold);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;">
+            <button data-save style="background:var(--navy);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">저장</button>
+            <button data-cancel style="background:#f0f0ee;border:none;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;">취소</button>
+          </div>`;
+        const inp=row.querySelector('input');
+        setTimeout(()=>inp.focus(),0);
+        row.querySelector('[data-save]').onclick=async()=>{
+          const t=inp.value.trim();if(!t)return;
+          await editTodoItem(item.storeId,item.dateKey,item.id,t);
+          item.text=t;renderRow();
+        };
+        row.querySelector('[data-cancel]').onclick=()=>renderRow();
+      });
+
+      // 삭제
+      row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
+        if(!confirm('이 업무를 삭제할까요?'))return;
+        await deleteTodoItem(item.storeId,item.dateKey,item.id);
+        row.remove();
+      });
     };
 
-    // 오늘로 이월 버튼
-    if(canCarry){
-      row.querySelector('.carry-move-btn').onclick=async()=>{
-        await carryItemToToday(item);
-        await loadMyHistory();
-      };
-    }
-
+    renderRow();
     listEl.appendChild(row);
   });
 }
