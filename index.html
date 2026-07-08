@@ -836,17 +836,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     <button onclick="toggleMyDayoff()" style="margin-left:10px;background:#fff;border:1.5px solid var(--gold);color:var(--orange);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
   </div>
 
-  <!-- 이번 달 통계 -->
-  <div class="my-stats-grid" style="margin:12px 16px 0;">
-    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-total">-</div><div class="my-stat-label">총 업무</div></div>
-    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-done">-</div><div class="my-stat-label">완료</div></div>
-    <div class="my-stat-box"><div class="my-stat-num" id="my-stat-carry">-</div><div class="my-stat-label">이월</div></div>
-  </div>
+  <!-- ⚠️ 인수인계 미확인 알림 배너 -->
+  <div id="handover-unread-banner" style="display:none;"></div>
 
-  <!-- 진행중 프로젝트 고정 배너 -->
-  <div id="my-project-banner" style="padding:8px 16px 0;display:none;"></div>
-
-  <!-- 오늘의 업무 -->
+  <!-- 오늘의 업무 (핵심 최상단) -->
   <div class="my-section" style="margin-top:12px;">
     <div class="my-section-header">
       <span>📝 <span id="my-task-date-label">오늘</span>의 업무</span>
@@ -870,6 +863,17 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
           <button onclick="toggleMyBulk()" style="background:#f0f0ee;color:var(--text-sub);border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">취소</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 진행중 프로젝트 (기본 접힘) -->
+  <div class="my-section">
+    <div class="my-section-header">
+      <span>🔄 진행중 프로젝트</span>
+      <button id="project-banner-toggle" onclick="toggleProjectBanner()" style="background:none;border:none;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">펼치기 ▼</button>
+    </div>
+    <div id="my-project-banner-wrap" style="display:none;">
+      <div id="my-project-banner" style="padding:0 4px;"></div>
     </div>
   </div>
 
@@ -1297,7 +1301,12 @@ function renderMyWorkScreen(){
   renderMyHandoverList();
   loadMyStats();
   checkLastMonthCarry();
-  renderMyProjectBanner();
+  checkHandoverUnread();
+  // 프로젝트 배너 기본 접힘
+  const projWrap=document.getElementById('my-project-banner-wrap');
+  const projBtn=document.getElementById('project-banner-toggle');
+  if(projWrap)projWrap.style.display='none';
+  if(projBtn)projBtn.textContent='펼치기 ▼';
   // 타입 초기화
   setTaskType('daily');
   // 휴무 상태 체크
@@ -2064,9 +2073,69 @@ window.closeDayoffModal=function(){
   getMyDayoffStatus(myStaff,dateKey).then(s=>updateDayoffUI(s));
 };
 function closeDayoffModal(){window.closeDayoffModal();}
+// 프로젝트 배너 펼치기/접기
+window.toggleProjectBanner=function(){
+  const wrap=document.getElementById('my-project-banner-wrap');
+  const btn=document.getElementById('project-banner-toggle');
+  if(!wrap||!btn)return;
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'block';
+  btn.textContent=isOpen?'펼치기 ▼':'접기 ▲';
+  if(!isOpen)renderMyProjectBanner();
+};
+function toggleProjectBanner(){window.toggleProjectBanner();}
+
+// 인수인계 미확인 알림 (내가 쓴 인수인계가 아직 미확인인 경우)
+async function checkHandoverUnread(){
+  const banner=document.getElementById('handover-unread-banner');
+  if(!banner||!myStaff||!myStore)return;
+  banner.style.display='none';
+  banner.innerHTML='';
+
+  try{
+    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+    // 오늘 + 최근 3일치 확인
+    const checkDates=[];
+    for(let i=0;i<4;i++){
+      const d=new Date(myDate);d.setDate(d.getDate()-i);
+      checkDates.push(dk(d.getFullYear(),d.getMonth(),d.getDate()));
+    }
+
+    const unread=[];
+    for(const storeObj of STORES){
+      for(const dKey of checkDates){
+        const snap=await getDoc(doc(db,`handover/${storeObj.id}_${dKey}`));
+        if(!snap.exists())continue;
+        const items=snap.data().items||[];
+        const mine=items.filter(i=>i.author===myStaff&&!i.confirmed);
+        mine.forEach(i=>unread.push({
+          ...i,
+          storeName:storeObj.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''),
+          storeIcon:storeObj.icon,
+          dateKey:dKey
+        }));
+      }
+    }
+
+    if(unread.length===0)return;
+
+    banner.style.display='block';
+    banner.innerHTML=`
+      <div style="margin:8px 16px 0;background:#fff3e0;border:1.5px solid var(--orange);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">🔔 내가 쓴 인수인계 ${unread.length}건이 아직 미확인이에요</div>
+        ${unread.slice(0,3).map(i=>`
+          <div style="font-size:11px;color:var(--text);display:flex;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(251,146,60,0.2);">
+            <span style="color:var(--text-mute);flex-shrink:0;">${i.storeIcon} ${i.storeName} · ${i.dateKey.slice(5)}</span>
+            <span style="flex:1;">${i.text}</span>
+            <span style="font-size:10px;color:var(--orange);font-weight:600;">미확인</span>
+          </div>`).join('')}
+        ${unread.length>3?`<div style="font-size:10px;color:var(--text-mute);margin-top:4px;">외 ${unread.length-3}건 더</div>`:''}
+      </div>`;
+  }catch(e){}
+}
+
 // 업무 타입 선택
-window.setTaskType=function(type){
-  myTaskType=type;
+window.setTaskType=function(type){  myTaskType=type;
   const dailyBtn=document.getElementById('type-daily');
   const projBtn=document.getElementById('type-project');
   if(dailyBtn)dailyBtn.className='task-type-btn'+(type==='daily'?' active-daily':'');
