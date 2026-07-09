@@ -33,9 +33,10 @@ STORES = [
     {"id":"sijungdong","name":"부천 신중동점", "short":"신중동점"},
 ]
 
-STAFF = ["오명록","고아현","장현진","장대운","신재현","정희경",
+DEFAULT_STAFF = ["오명록","고아현","장현진","장대운","신재현","정희경",
          "조효정","홍다운","이종혁","원주현","김형진","윤하람",
          "차영근","정유진","안태민","김다정"]
+STAFF = DEFAULT_STAFF  # 폴백 기본값. build_report() 시작 시 config/staff 최신값으로 갱신됨
 
 def fb_get(path):
     try:
@@ -61,6 +62,14 @@ def parse_fields(f): return {k: parse_value(v) for k,v in f.items()}
 
 def get_todos(name, dk):
     d = fb_get(f"staff_todos/{name}_{dk}"); return (d.get("items") or []) if d else []
+
+def get_staff_list():
+    """앱의 config/staff(직원 추가/삭제 UI로 관리)를 우선 사용, 없으면 폴백"""
+    d = fb_get("config/staff")
+    lst = d.get("list") if d else None
+    if lst and isinstance(lst, list) and len(lst) > 0:
+        return lst
+    return DEFAULT_STAFF
 
 # 청소 체크값 판독 (구버전 boolean / 신버전 {v,t} 객체 모두 지원)
 def ck_val(x):
@@ -171,6 +180,8 @@ def llm_judge(staff_texts):
         return {}, err
 
 def build_report():
+    global STAFF
+    STAFF = get_staff_list()
     rdate = datetime.now() - timedelta(days=1)
     dk = rdate.strftime("%Y-%m-%d")
     dlabel = rdate.strftime("%Y년 %m월 %d일")
