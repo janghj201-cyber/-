@@ -10,7 +10,7 @@ v4 추가:
   - 인수인계 수신확인(다른 사람 인계를 내가 확인한 건수) → 협력도 점수에 반영
   - Claude API를 통한 업무/인수인계 내용 질적 판단 (직원별 월간 요약)
 """
-import os, json, calendar, urllib.request, smtplib, io, time
+import os, json, calendar, urllib.request, urllib.error, smtplib, io, time
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -251,9 +251,9 @@ def analyze_store(store, dates, dayoff_data):
 
 # ── Claude API를 통한 업무/인수인계 내용 질적 판단 (월간 요약) ──
 def llm_judge_monthly(staff_results):
-    """활동한 직원들만 대상으로, 한 달 샘플 텍스트 기반 한 줄 질적 평가"""
+    """활동한 직원들만 대상으로, 한 달 샘플 텍스트 기반 한 줄 질적 평가. 반환: (dict, error or None)"""
     if not ANTHROPIC_API_KEY:
-        return {}
+        return {}, None
     lines = []
     for s in staff_results:
         if s["used_days"] == 0 and not s["sample_handovers"]:
@@ -265,7 +265,7 @@ def llm_judge_monthly(staff_results):
         if s["sample_handovers"]:
             lines.append("인수인계 샘플: " + " / ".join(s["sample_handovers"][:8]))
     if not lines:
-        return {}
+        return {}, None
 
     prompt = (
         "다음은 위베이프 매장 직원들이 한 달 동안 입력한 '업무 내용'과 '인수인계 내용'의 샘플입니다.\n"
@@ -294,10 +294,19 @@ def llm_judge_monthly(staff_results):
         if text.startswith("```"):
             text = text.strip("`")
             if text.startswith("json"): text = text[4:]
-        return json.loads(text)
+        return json.loads(text), None
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read().decode(errors="replace")[:200]
+        except Exception:
+            err_body = ""
+        err = f"HTTP {e.code} {e.reason} - {err_body}"
+        print(f"⚠️ LLM 월간 판단 실패: {err}")
+        return {}, err
     except Exception as e:
-        print(f"⚠️ LLM 월간 판단 실패(건너뜀): {e}")
-        return {}
+        err = f"{type(e).__name__}: {e}"
+        print(f"⚠️ LLM 월간 판단 실패: {err}")
+        return {}, err
 
 # ── 게시판 공지 등록 ────────────────────────────
 def post_board_notice(y, m, best_staff, best_stores):
@@ -426,11 +435,13 @@ def build_report():
     elif not has_content:
         L.append("  (이번 달 업무·인수인계 입력이 없어 판단할 내용이 없습니다)")
     else:
-        judgments = llm_judge_monthly(staff_results)
+        judgments, err = llm_judge_monthly(staff_results)
         if judgments:
             for s in staff_sorted:
                 if s["name"] in judgments:
                     L.append(f"  · {s['name']}: {judgments[s['name']]}")
+        elif err:
+            L.append(f"  (판단 실패: {err})")
         else:
             L.append("  (판단 실패 — 다음 실행에서 재시도됩니다)")
     L += ["","="*55,""]
