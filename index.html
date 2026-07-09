@@ -1041,6 +1041,8 @@ function clearDashUnsubs(){dashUnsubs.forEach(u=>u());dashUnsubs=[];}
 // ══════════════════════════════════════
 function pad(n){return String(n).padStart(2,'0');}
 function dk(y,m,d){return `${y}-${pad(m+1)}-${pad(d)}`;}
+// 청소 체크 값 판독 (구버전 boolean / 신버전 {v,t} 객체 모두 지원)
+function ckVal(x){return (x&&typeof x==='object')?!!x.v:!!x;}
 function todayKey(){return dk(today.getFullYear(),today.getMonth(),today.getDate());}
 function sundays(y,m){let s=[],d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()===0)s.push(d.getDate());d.setDate(d.getDate()+1);}return s;}
 
@@ -2787,8 +2789,7 @@ async function renderStoreGrid(){
     getDoc(doc(db,`checks/${store.id}/${tKey}/clean`))
       .then(snap=>{
         const data=snap.exists()?snap.data():{};
-        const done=Object.values(data).filter(Boolean).length;
-        const el=document.getElementById(statusId);
+        const done=Object.values(data).filter(ckVal).length;
         if(!el)return;
         if(done>=total&&total>0){
           el.className='store-today today-done';el.textContent=`✅ ${label} 완료`;
@@ -3778,7 +3779,7 @@ async function toggleHandoverItem(storeId,dateKey,itemId,val,confirmerName=null)
     item.confirmed=val;
     if(val){
       item.confirmedBy=confirmerName||myStaff||getUsername()||'익명';
-      item.confirmedAt=dk(today.getFullYear(),today.getMonth(),today.getDate());
+      item.confirmedAt=Date.now();
     } else {
       item.confirmedBy=null;
       item.confirmedAt=null;
@@ -4015,7 +4016,7 @@ function buildCL(mode,secIdx,dateKey){
         try{
           const snap=await getDoc(docRef);
           const cur=snap.exists()?snap.data():{};
-          cur[key]=cb.checked;
+          cur[key]=cb.checked?{v:true,t:Date.now()}:{v:false,t:null};
           await setDoc(docRef,cur);
           syncEl.textContent='✓ 저장됨';
           setTimeout(()=>syncEl.textContent='',2000);
@@ -4055,7 +4056,7 @@ function buildCL(mode,secIdx,dateKey){
       const cbs=wrap.querySelectorAll('input[type=checkbox]');
       cbs.forEach((cb,idx)=>{
         const key=`item_${idx}`;
-        cb.checked=!!data[key];
+        cb.checked=ckVal(data[key]);
       });
       updateCount();
     }catch(e){ct.textContent='불러오기 실패';}
@@ -4325,7 +4326,7 @@ async function renderTodayTab(content){
     const cleanRef=doc(db,`checks/${store.id}/${tKey}/clean`);
     const unsub1=onSnapshot(cleanRef,(snap)=>{
       const data=snap.exists()?snap.data():{};
-      const done=Object.values(data).filter(Boolean).length;
+      const done=Object.values(data).filter(ckVal).length;
       const pct=totalClean>0?Math.round(done/totalClean*100):0;
       pbFill.style.width=pct+'%';
       pbFill.className='progress-fill'+(done===0?' empty':done<totalClean?' warn':'');
@@ -4339,7 +4340,7 @@ async function renderTodayTab(content){
       }
       // 항목별 상세
       cleanItemList.forEach((item,ii)=>{
-        const checked=!!data[`item_${ii}`];
+        const checked=ckVal(data[`item_${ii}`]);
         const ck=document.getElementById(`dck-${store.id}-${ii}`);
         const nm=document.getElementById(`dname-${store.id}-${ii}`);
         if(ck)ck.className='dash-check '+(checked?'done':'undone');
