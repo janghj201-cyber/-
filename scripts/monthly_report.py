@@ -1,462 +1,386 @@
 """
-위베이프 월간 보고 스크립트 v2.0
-- 직원별 운영 점수 + 유형 분류
-- 베스트 직원/매장 TOP 3
-- 관리자 전용 상세 분석
-- 게시판 자동 공지 (순위만, 점수 없음)
+위베이프 월간 보고 스크립트 v3.0
+- 기업 보고서 형식
+- 6가지 역량 지표 (미완료 감점 없음)
+- 베스트 직원/매장 TOP3
+- Word(.docx) 첨부 발송
+- 게시판 공지 자동 등록 (순위만, 점수 없음)
 """
-import os
-import calendar
-import requests
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import os, json, calendar, urllib.request, smtplib, io, time
 from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
-FIREBASE_API_KEY = os.environ["FIREBASE_API_KEY"]
-PROJECT_ID = "wevape-schedule"
-BASE_URL = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
-
-GMAIL_USER = os.environ["GMAIL_USER"]
+FIREBASE_API_KEY   = os.environ["FIREBASE_API_KEY"]
+GMAIL_USER         = os.environ["GMAIL_USER"]
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
-REPORT_TO = os.environ["REPORT_TO_EMAIL"]
+REPORT_TO          = os.environ["REPORT_TO_EMAIL"]
+PROJECT_ID         = "wevape-schedule"
+BASE_URL           = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
 
 STORES = [
-    {"id": "yeonsu",    "name": "인천 연수점",   "icon": "🏪"},
-    {"id": "nonhyeon",  "name": "인천 논현점",   "icon": "🏬"},
-    {"id": "rodeo",     "name": "구월 로데오점", "icon": "🎯"},
-    {"id": "gilbyeong", "name": "구월 길병원점", "icon": "🏥"},
-    {"id": "airport",   "name": "인천공항점",    "icon": "✈️"},
-    {"id": "geomdan",   "name": "검단점",        "icon": "🌱"},
-    {"id": "gyesan",    "name": "계산점",        "icon": "🏙️"},
-    {"id": "sangdong",  "name": "부천 상동점",   "icon": "🌿"},
-    {"id": "sijungdong","name": "부천 신중동점", "icon": "⭐"},
+    {"id":"yeonsu",    "name":"인천 연수점",   "short":"연수점"},
+    {"id":"nonhyeon",  "name":"인천 논현점",   "short":"논현점"},
+    {"id":"rodeo",     "name":"구월 로데오점", "short":"로데오점"},
+    {"id":"gilbyeong", "name":"구월 길병원점", "short":"길병원점"},
+    {"id":"airport",   "name":"인천공항점",    "short":"공항점"},
+    {"id":"geomdan",   "name":"검단점",        "short":"검단점"},
+    {"id":"gyesan",    "name":"계산점",        "short":"계산점"},
+    {"id":"sangdong",  "name":"부천 상동점",   "short":"상동점"},
+    {"id":"sijungdong","name":"부천 신중동점", "short":"신중동점"},
 ]
 
-STAFF = [
-    "오명록","고아현","장현진","장대운","신재현","정희경",
-    "조효정","홍다운","이종혁","원주현","김형진","윤하람",
-    "차영근","정유진","안태민","김다정"
-]
+STAFF = ["오명록","고아현","장현진","장대운","신재현","정희경",
+         "조효정","홍다운","이종혁","원주현","김형진","윤하람",
+         "차영근","정유진","안태민","김다정"]
 
-
+# ── Firebase 헬퍼 ───────────────────────────────
 def fb_get(path):
-    url = f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}"
     try:
-        r = requests.get(url, timeout=15)
-        if r.status_code != 200:
-            return None
-        data = r.json()
-        if "fields" not in data:
-            return None
-        return parse_fields(data["fields"])
-    except Exception:
-        return None
+        req = urllib.request.Request(f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}")
+        with urllib.request.urlopen(req, timeout=15) as r:
+            d = json.load(r)
+            return parse_fields(d["fields"]) if "fields" in d else None
+    except: return None
 
+def fb_patch(path, body):
+    try:
+        data = json.dumps(body).encode()
+        req = urllib.request.Request(f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}", data=data, method="PATCH")
+        req.add_header("Content-Type","application/json")
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return r.status == 200
+    except: return False
 
 def parse_value(v):
-    if "stringValue" in v: return v["stringValue"]
+    if "stringValue"  in v: return v["stringValue"]
     if "booleanValue" in v: return v["booleanValue"]
     if "integerValue" in v: return int(v["integerValue"])
-    if "doubleValue" in v: return v["doubleValue"]
-    if "nullValue" in v: return None
-    if "arrayValue" in v:
-        return [parse_value(x) for x in v["arrayValue"].get("values", [])]
-    if "mapValue" in v:
-        return parse_fields(v["mapValue"].get("fields", {}))
+    if "arrayValue"   in v: return [parse_value(x) for x in v["arrayValue"].get("values",[])]
+    if "mapValue"     in v: return parse_fields(v["mapValue"].get("fields",{}))
     return None
 
+def parse_fields(f): return {k: parse_value(v) for k,v in f.items()}
 
-def parse_fields(fields):
-    return {k: parse_value(v) for k, v in fields.items()}
+def get_todos(name, dk):
+    d = fb_get(f"staff_todos/{name}_{dk}"); return (d.get("items") or []) if d else []
+def get_clean(sid, dk):
+    d = fb_get(f"checks/{sid}/{dk}/clean")
+    if not d: return 0,0
+    keys=[k for k in d if k.startswith("item_")]; total=len(keys) or 6
+    return sum(1 for k in keys if d.get(k) is True), total
+def get_handover(sid, dk):
+    d = fb_get(f"handover/{sid}_{dk}"); return (d.get("items") or []) if d else []
+def get_dayoff():
+    d = fb_get("config/dayoff"); return d or {}
+def get_projects(name):
+    d = fb_get(f"staff_projects/{name}"); return (d.get("items") or []) if d else []
 
-
-def fb_post(path, body):
-    """Firestore 문서 PATCH (업서트)"""
-    url = f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}"
-    try:
-        r = requests.patch(url, json=body, timeout=15)
-        return r.status_code == 200
-    except Exception:
-        return False
-
-
+# ── 지난달 날짜 목록 ────────────────────────────
 def get_prev_month_dates():
     today = datetime.now()
     first = today.replace(day=1)
     last_prev = first - timedelta(days=1)
-    year, month = last_prev.year, last_prev.month
-    num_days = calendar.monthrange(year, month)[1]
-    dates = [f"{year}-{month:02d}-{d:02d}" for d in range(1, num_days+1)]
-    return dates, year, month
+    y, m = last_prev.year, last_prev.month
+    num_days = calendar.monthrange(y, m)[1]
+    dates = [f"{y}-{m:02d}-{d:02d}" for d in range(1, num_days+1)]
+    return dates, y, m
 
+# ── 직원 분석 ───────────────────────────────────
+def analyze_staff(name, dates, dayoff_data):
+    my_dayoffs = dayoff_data.get(name, {})
+    work_days, used_days = 0, 0
+    total_todos, done_todos, kept_count, carry_count, carry_done = 0,0,0,0,0
+    handover_written, handover_confirmed = 0,0
 
-def analyze_staff(name, dates):
-    """직원 한 명의 월간 데이터 분석"""
-    total_todos = 0
-    done_todos = 0
-    carry_count = 0
-    carry_done = 0
-    kept_count = 0      # 보관 처리된 미완료
-    diff_store_carry = 0  # 다른 매장으로 이월된 업무
-    used_days = 0
-    handover_written = 0
-    handover_confirmed = 0
+    for dk in dates:
+        is_dayoff = my_dayoffs.get(dk) == "dayoff"
+        if is_dayoff: continue
+        work_days += 1
 
-    for date_key in dates:
-        todos = []
-        data = fb_get(f"staff_todos/{name}_{date_key}")
-        if data and "items" in data:
-            todos = data["items"] or []
-
+        todos = get_todos(name, dk)
         if todos:
             used_days += 1
             total_todos += len(todos)
             done_todos += sum(1 for t in todos if t.get("done"))
-
             for t in todos:
-                if t.get("fromDate") and t.get("fromDate") != date_key:
+                if t.get("fromDate") and t.get("fromDate") != dk:
                     carry_count += 1
-                    if t.get("done"):
-                        carry_done += 1
-                    if t.get("kept"):
-                        kept_count += 1
-                    # 이월됐는데 원래 매장과 현재 날짜 매장이 다른 경우
-                    # (순환근무자의 다른 매장 이월)
-                    from_date = t.get("fromDate","")
-                    from_data = fb_get(f"staff_todos/{name}_{from_date}") if from_date else None
-                    if from_data and from_data.get("items"):
-                        orig = next((x for x in from_data["items"] if x.get("id")==t.get("id")), None)
-                        if orig and orig.get("storeId") != t.get("storeId"):
-                            diff_store_carry += 1
+                    if t.get("done"): carry_done += 1
+                    if t.get("kept"): kept_count += 1
 
-    # 인수인계 확인률 (작성한 것 기준)
-    for date_key in dates:
-        data = fb_get(f"handover/{name}_{date_key}")  # 본인이 작성한 것
-        if data and "items" in data:
-            items = data["items"] or []
-            mine = [i for i in items if i.get("author") == name]
+    # 인수인계 확인률
+    for s in STORES:
+        for dk in dates:
+            items = get_handover(s["id"], dk)
+            mine = [i for i in items if i.get("author")==name]
             handover_written += len(mine)
             handover_confirmed += sum(1 for i in mine if i.get("confirmed"))
 
     # 프로젝트
-    proj_data = fb_get(f"staff_projects/{name}")
-    projects = proj_data.get("items", []) if proj_data else []
-    ongoing = len([p for p in projects if not p.get("done")])
-    completed = len([p for p in projects if p.get("done")])
+    projs = get_projects(name)
+    ongoing = len([p for p in projs if not p.get("done")])
+    completed_p = len([p for p in projs if p.get("done")])
 
-    # 점수 계산 (100점 만점)
-    completion_rate = done_todos / total_todos if total_todos > 0 else 0
-    participation_rate = used_days / len(dates) if dates else 0
-    handover_rate = handover_confirmed / handover_written if handover_written > 0 else 1.0
-
-    # 업무 충실도: 입력량 + 완료율 복합 (미완료 자체는 감점 없음)
-    input_score = min(total_todos // 3, 12)
-    comp_score = int(completion_rate * 13)
-    score_completion = input_score + comp_score  # 최대 25점
-
-    # 참여도
-    score_participation = int(participation_rate * 20)  # 최대 20점
-
-    # 책임감: 이월 후 처리율 (완료 + 보관 모두 인정, 보관은 합리적 이유 있는 미완료)
+    # 6가지 역량 점수
+    part_rate = used_days/work_days if work_days>0 else 0
+    comp_rate = done_todos/total_todos if total_todos>0 else 0
+    # 이월 처리율 (완료+보관 모두 인정)
     carry_resolved = carry_done + kept_count
-    carry_rate = carry_resolved / carry_count if carry_count > 0 else 1.0
-    score_responsibility = int(carry_rate * 20)  # 최대 20점
+    carry_rate = carry_resolved/carry_count if carry_count>0 else 1.0
+    handover_rate = handover_confirmed/handover_written if handover_written>0 else 1.0
 
-    # 주도성: 프로젝트
-    score_project = min(ongoing * 5 + completed * 3, 20)  # 최대 20점
-
-    # 협력도: 인수인계
-    score_handover = int(handover_rate * 15)  # 최대 15점
-
-    total_score = score_completion + score_participation + score_responsibility + score_project + score_handover
+    s_steady     = int(part_rate * 20)                        # 꾸준함 20점
+    s_diligence  = min(total_todos//3, 12) + int(comp_rate*13)# 충실도 25점
+    s_resp       = int(carry_rate * 20)                       # 책임감 20점
+    s_initiative = min(ongoing*4 + completed_p*2, 10)         # 주도성 10점
+    s_handover   = int(handover_rate * 15)                    # 협력도 15점
+    s_growth     = 10                                         # 성장성 10점 (기본값)
+    total_score  = s_steady+s_diligence+s_resp+s_initiative+s_handover+s_growth
 
     # 유형 분류
-    if not used_days:
-        staff_type = "📵 미참여형"
-    elif ongoing >= 1 and completion_rate >= 0.8:
-        staff_type = "🌟 주도형"
-    elif completion_rate >= 0.8 and carry_count <= 2:
-        staff_type = "✅ 성실형"
-    elif total_todos >= 10 and completion_rate < 0.5:
-        staff_type = "📋 형식형"
-    elif used_days <= len(dates) * 0.3:
-        staff_type = "📵 미참여형"
-    else:
-        staff_type = "📌 일반형"
+    if used_days == 0:                                stype = "📵 미참여형"
+    elif s_initiative>=8 and part_rate>=0.8:          stype = "🌟 주도형"
+    elif part_rate>=0.85 and carry_rate>=0.8:         stype = "✅ 성실형"
+    elif total_todos>=10 and comp_rate<0.5 and carry_rate<0.5: stype = "📋 형식형"
+    elif part_rate<=0.3:                              stype = "📵 미참여형"
+    else:                                             stype = "📌 일반형"
 
     return {
-        "name": name, "score": total_score, "type": staff_type,
-        "used_days": used_days, "total_days": len(dates),
-        "total_todos": total_todos, "done_todos": done_todos,
-        "completion_rate": completion_rate,
-        "carry_count": carry_count, "carry_done": carry_done,
-        "carry_rate": carry_rate, "kept_count": kept_count,
-        "diff_store_carry": diff_store_carry,
-        "handover_rate": handover_rate,
-        "ongoing_projects": ongoing, "completed_projects": completed,
-        "scores": {
-            "충실도": score_completion, "참여도": score_participation,
-            "책임감": score_responsibility, "주도성": score_project,
-            "협력도": score_handover
-        }
+        "name":name, "score":total_score, "type":stype,
+        "used_days":used_days, "work_days":work_days,
+        "total":total_todos, "done":done_todos, "comp_rate":comp_rate,
+        "carry_count":carry_count, "carry_done":carry_done,
+        "carry_rate":carry_rate, "kept_count":kept_count,
+        "ongoing":ongoing, "completed_p":completed_p,
+        "handover_rate":handover_rate,
+        "scores":{"꾸준함":s_steady,"충실도":s_diligence,"책임감":s_resp,
+                  "주도성":s_initiative,"협력도":s_handover,"성장성":s_growth}
     }
 
-
-def analyze_store(store, dates):
-    """매장 월간 데이터 분석"""
+# ── 매장 분석 ───────────────────────────────────
+def analyze_store(store, dates, dayoff_data):
     sid = store["id"]
-    clean_days = 0
-    clean_total_days = 0
-    todo_total = 0
-    todo_done = 0
-    handover_total = 0
-    handover_confirmed = 0
+    clean_days=clean_total_days=0
+    todo_total=todo_done=0
+    hw_total=hw_confirmed=0
 
-    for date_key in dates:
-        # 청소
-        data = fb_get(f"checks/{sid}/{date_key}/clean")
-        if data:
-            keys = [k for k in data.keys() if k.startswith("item_")]
-            if keys:
-                clean_total_days += 1
-                if all(data.get(k) for k in keys):
-                    clean_days += 1
+    for dk in dates:
+        cd,ct = get_clean(sid, dk)
+        if ct>0:
+            clean_total_days+=1
+            if cd>=ct: clean_days+=1
 
-        # 직원 업무 (이 매장 태그된 것)
         for name in STAFF:
-            todos_data = fb_get(f"staff_todos/{name}_{date_key}")
-            if todos_data and "items" in todos_data:
-                mine = [t for t in (todos_data["items"] or []) if t.get("storeId") == sid]
-                todo_total += len(mine)
-                todo_done += sum(1 for t in mine if t.get("done"))
+            if dayoff_data.get(name,{}).get(dk)=="dayoff": continue
+            todos=[t for t in get_todos(name,dk) if t.get("storeId")==sid]
+            todo_total+=len(todos)
+            todo_done+=sum(1 for t in todos if t.get("done"))
 
-        # 인수인계
-        ho_data = fb_get(f"handover/{sid}_{date_key}")
-        if ho_data and "items" in ho_data:
-            items = ho_data["items"] or []
-            handover_total += len(items)
-            handover_confirmed += sum(1 for i in items if i.get("confirmed"))
+        items=get_handover(sid,dk)
+        hw_total+=len(items)
+        hw_confirmed+=sum(1 for i in items if i.get("confirmed"))
 
-    clean_rate = clean_days / clean_total_days if clean_total_days > 0 else 0
-    todo_rate = todo_done / todo_total if todo_total > 0 else 0
-    handover_rate = handover_confirmed / handover_total if handover_total > 0 else 1.0
-
-    score = int(clean_rate * 40 + todo_rate * 40 + handover_rate * 20)
+    clean_rate = clean_days/clean_total_days if clean_total_days>0 else 0
+    todo_rate  = todo_done/todo_total if todo_total>0 else 0
+    hw_rate    = hw_confirmed/hw_total if hw_total>0 else 1.0
+    score      = int(clean_rate*40 + todo_rate*35 + hw_rate*25)
 
     return {
-        "name": store["name"],
-        "icon": store["icon"],
-        "score": score,
-        "clean_rate": clean_rate,
-        "clean_days": clean_days,
-        "clean_total_days": clean_total_days,
-        "todo_rate": todo_rate,
-        "todo_total": todo_total,
-        "todo_done": todo_done,
-        "handover_rate": handover_rate,
+        "name":store["name"],"short":store["short"],"score":score,
+        "clean_rate":clean_rate,"clean_days":clean_days,"clean_total":clean_total_days,
+        "todo_rate":todo_rate,"todo_done":todo_done,"todo_total":todo_total,
+        "hw_rate":hw_rate
     }
 
-
-def post_board_notice(year, month, best_staff, best_stores):
-    """게시판에 베스트 순위 공지 자동 등록 (점수 없음)"""
-    month_label = f"{year}년 {month}월"
-    medals = ["🥇", "🥈", "🥉"]
-
-    body = f"{month_label} 한 달 동안 수고하셨습니다!\n\n"
+# ── 게시판 공지 등록 ────────────────────────────
+def post_board_notice(y, m, best_staff, best_stores):
+    month_label = f"{y}년 {m}월"
+    medals = ["🥇","🥈","🥉"]
+    body = f"{month_label} 한 달 수고 많으셨습니다!\n\n"
     body += "🏆 이달의 베스트 직원\n"
-    for i, s in enumerate(best_staff[:3]):
+    for i,s in enumerate(best_staff[:3]):
         body += f"{medals[i]} {s['name']}\n"
     body += "\n🏆 이달의 베스트 매장\n"
-    for i, s in enumerate(best_stores[:3]):
+    for i,s in enumerate(best_stores[:3]):
         body += f"{medals[i]} {s['name']}\n"
     body += "\n모두 수고 많으셨습니다 👏"
 
-    import time
-    post_id = str(int(time.time() * 1000))
-    now = datetime.now()
-    date_str = f"{now.month}/{now.day} {now.hour:02d}:{now.minute:02d}"
-
-    # 기존 게시글 로드
     existing = fb_get("board/posts")
-    items = existing.get("items", []) if existing else []
-
+    items = (existing.get("items") or []) if existing else []
+    now = datetime.now()
     new_post = {
-        "id": post_id,
-        "cat": "notice",
-        "title": f"🏆 {month_label} 이달의 베스트 직원 & 매장",
-        "body": body,
-        "author": "관리자",
-        "date": date_str
+        "id": str(int(time.time()*1000)), "cat":"notice",
+        "title": f"🏆 {month_label} 이달의 베스트",
+        "body": body, "author":"관리자",
+        "date": f"{now.month}/{now.day} {now.hour:02d}:{now.minute:02d}"
     }
+    def to_v(v):
+        if isinstance(v,bool): return {"booleanValue":v}
+        return {"stringValue":str(v)}
+    def to_map(d): return {"mapValue":{"fields":{k:to_v(v) for k,v in d.items()}}}
+    fb_body={"fields":{"items":{"arrayValue":{"values":[to_map(p) for p in [new_post]+items]}}}}
+    return fb_patch("board/posts", fb_body)
 
-    def to_value(v):
-        if isinstance(v, bool): return {"booleanValue": v}
-        return {"stringValue": str(v)}
+# ── 보고서 생성 ─────────────────────────────────
+def build_report():
+    dates, y, m = get_prev_month_dates()
+    month_label = f"{y}년 {m}월"
+    dayoff = get_dayoff()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    medals = ["🥇","🥈","🥉"]
+    L = []
 
-    def to_map(d):
-        return {"mapValue": {"fields": {k: to_value(v) for k, v in d.items()}}}
+    L += [f"위베이프 월간 운영 보고",
+          f"보고 기간: {month_label}",
+          f"생성: {now_str}","","="*55,""]
 
-    all_posts = [new_post] + items
-    firestore_body = {
-        "fields": {
-            "items": {
-                "arrayValue": {
-                    "values": [to_map(p) for p in all_posts]
-                }
-            }
-        }
-    }
+    # 1. 경영진 요약
+    L += ["[1] 이달의 경영 요약",""]
 
-    url = f"{BASE_URL}/board/posts?key={FIREBASE_API_KEY}"
-    try:
-        r = requests.patch(url, json=firestore_body, timeout=15)
-        return r.status_code == 200
-    except Exception:
-        return False
-
-
-def build_monthly_report():
-    dates, year, month = get_prev_month_dates()
-    month_label = f"{year}년 {month}월"
-    medals = ["🥇", "🥈", "🥉"]
-
-    lines = []
-    lines.append(f"📊 위베이프 월간 보고  |  {month_label}")
-    lines.append("━" * 40)
-    lines.append("")
-
-    # ── 직원 분석 ─────────────────────────────
-    lines.append("👤 직원별 운영 분석 (관리자 전용)")
-    lines.append("")
-
+    # 직원/매장 분석 (시간이 걸려서 먼저 수집)
+    print("직원 데이터 수집 중...")
     staff_results = []
     for name in STAFF:
-        result = analyze_staff(name, dates)
-        staff_results.append(result)
+        print(f"  - {name}...")
+        r = analyze_staff(name, dates, dayoff)
+        staff_results.append(r)
 
-    # 점수 기준 정렬
-    staff_sorted = sorted(staff_results, key=lambda x: x["score"], reverse=True)
-    active_staff = [s for s in staff_sorted if s["used_days"] > 0]
+    print("매장 데이터 수집 중...")
+    store_results = []
+    for s in STORES:
+        print(f"  - {s['name']}...")
+        r = analyze_store(s, dates, dayoff)
+        store_results.append(r)
+
+    staff_sorted = sorted(staff_results, key=lambda x:x["score"], reverse=True)
+    store_sorted = sorted(store_results, key=lambda x:x["score"], reverse=True)
+    active = [s for s in staff_sorted if s["used_days"]>0]
+
+    # 전체 지표 요약
+    total_todos_all = sum(s["total"] for s in staff_results)
+    total_done_all  = sum(s["done"] for s in staff_results)
+    overall_comp    = int(total_done_all/total_todos_all*100) if total_todos_all>0 else 0
+    no_show = [s for s in staff_results if s["used_days"]==0]
+    leaders = [s for s in staff_results if s["type"]=="🌟 주도형"]
+
+    L.append(f"  전체 업무 완료율: {overall_comp}% ({total_done_all}/{total_todos_all}건)")
+    L.append(f"  앱 참여 직원: {len(active)}/{len(STAFF)}명")
+    if leaders: L.append(f"  이달의 주도형 직원: {', '.join(s['name'] for s in leaders)}")
+    if no_show: L.append(f"  ⚠️ 앱 미참여: {', '.join(s['name'] for s in no_show)}")
+    L += ["","="*55,""]
+
+    # 2. 매장별 월간 현황
+    L += ["[2] 매장별 월간 운영 현황",""]
+    for s in store_sorted:
+        bar = "■"*(s["score"]//10) + "□"*(10-s["score"]//10)
+        L.append(f"  {s['name']}  [{bar}] {s['score']}점")
+        L.append(f"    청소완료율  {int(s['clean_rate']*100):3d}%  ({s['clean_days']}/{s['clean_total']}일)")
+        L.append(f"    업무완료율  {int(s['todo_rate']*100):3d}%  ({s['todo_done']}/{s['todo_total']}건)")
+        L.append(f"    인수인계확인 {int(s['hw_rate']*100):3d}%")
+        L.append("")
+    L += ["="*55,""]
+
+    # 3. 직원별 역량 분석 (관리자 전용)
+    L += ["[3] 직원별 역량 분석  ※ 관리자 전용","",
+          "  ※ 미완료 업무 자체는 감점 없음 — 이월 후 처리 여부로 책임감 평가",""]
 
     for s in staff_sorted:
-        bar = "█" * (s["score"]//10) + "░" * (10 - s["score"]//10)
-        comp = int(s["completion_rate"] * 100)
-        part = int(s["used_days"] / s["total_days"] * 100) if s["total_days"] > 0 else 0
+        bar = "■"*(s["score"]//10) + "□"*(10-s["score"]//10)
+        comp = int(s["comp_rate"]*100)
+        part = int(s["used_days"]/s["work_days"]*100) if s["work_days"]>0 else 0
+        L.append(f"  {s['type']}  {s['name']}  [{bar}]  {s['score']}점")
+        L.append(f"    참여율  {part}%  ({s['used_days']}/{s['work_days']}일 근무)")
+        L.append(f"    업무    {s['total']}건 입력 → {s['done']}건 완료 ({comp}%)")
+        if s["carry_count"]>0:
+            txt = f"    이월    {s['carry_count']}건 중 처리 {s['carry_done']}건"
+            if s["kept_count"]>0: txt += f" / 보관 {s['kept_count']}건(합리적사유)"
+            L.append(txt)
+        if s["ongoing"] or s["completed_p"]:
+            L.append(f"    프로젝트 진행중 {s['ongoing']}건 · 완료 {s['completed_p']}건")
+        sc = s["scores"]
+        L.append(f"    세부: 꾸준함{sc['꾸준함']} 충실도{sc['충실도']} 책임감{sc['책임감']} 주도성{sc['주도성']} 협력도{sc['협력도']} 성장성{sc['성장성']}")
+        L.append("")
+    L += ["="*55,""]
 
-        lines.append(f"{s['type']}  {s['name']}  [{bar}]  {s['score']}점")
-        lines.append(f"   └ 업무 {s['total_todos']}건 입력 → {s['done_todos']}건 완료 ({comp}%)")
-        lines.append(f"   └ 참여율 {part}%  ({s['used_days']}/{s['total_days']}일)")
-        if s["carry_count"] > 0:
-            carry_info = f"이월 {s['carry_count']}건 → 완료 {s['carry_done']}건"
-            if s["kept_count"] > 0:
-                carry_info += f" · 보관 {s['kept_count']}건 (순환근무 등 합리적 사유)"
-            if s["diff_store_carry"] > 0:
-                carry_info += f" · 다른매장 이월 {s['diff_store_carry']}건"
-            lines.append(f"   └ {carry_info}")
-        if s["ongoing_projects"] or s["completed_projects"]:
-            lines.append(f"   └ 프로젝트 진행중 {s['ongoing_projects']}건 · 완료 {s['completed_projects']}건")
-        sc = s['scores']
-        lines.append(f"   └ 세부: 충실도{sc['충실도']} 참여도{sc['참여도']} 책임감{sc['책임감']} 주도성{sc['주도성']} 협력도{sc['협력도']}")
-        lines.append("")
+    # 4. 이달의 베스트 TOP3
+    L += ["[4] 이달의 베스트",""]
+    L.append(f"  🏆 베스트 직원 TOP3")
+    for i,s in enumerate(active[:3]):
+        comp=int(s["comp_rate"]*100)
+        L.append(f"    {medals[i]} {s['name']}  {s['type']}  {s['score']}점")
+        L.append(f"         참여율 {int(s['used_days']/s['work_days']*100) if s['work_days']>0 else 0}% · 업무완료 {comp}% · 프로젝트 {s['ongoing']+s['completed_p']}건")
+    L.append("")
+    L.append(f"  🏆 베스트 매장 TOP3")
+    for i,s in enumerate(store_sorted[:3]):
+        L.append(f"    {medals[i]} {s['name']}  {s['score']}점")
+        L.append(f"         청소 {int(s['clean_rate']*100)}% · 업무 {int(s['todo_rate']*100)}% · 인수인계 {int(s['hw_rate']*100)}%")
+    L += ["","="*55,""]
 
-    lines.append("")
+    # 5. 종합 의견
+    L += ["[5] 월간 종합 의견",""]
+    opinions = []
+    low_stores = [s for s in store_results if s["clean_rate"]<0.8]
+    if low_stores: opinions.append(f"• 청소 수행률 부진 매장: {', '.join(s['short'] for s in low_stores)} — 점검 필요")
+    low_carry = [s for s in staff_results if s["carry_count"]>=5 and s["carry_rate"]<0.4]
+    if low_carry: opinions.append(f"• 이월 미처리 누적: {', '.join(s['name'] for s in low_carry)} — 업무 부하 점검")
+    if no_show: opinions.append(f"• 앱 미참여 직원 {len(no_show)}명 — 현장 확인 필요")
+    if leaders: opinions.append(f"• 우수 활약: {', '.join(s['name'] for s in leaders)} — 사례 공유 권장")
+    if not opinions: opinions.append("• 전반적으로 양호한 한 달이었습니다.")
+    L.extend(opinions)
+    L += ["","="*55,"📱 위베이프 운영 시스템 | 자동 월간 보고"]
 
-    # ── 매장 분석 ─────────────────────────────
-    lines.append("🏪 매장별 운영 분석")
-    lines.append("")
+    return L, month_label, y, m, active, store_sorted
 
-    store_results = []
-    for store in STORES:
-        result = analyze_store(store, dates)
-        store_results.append(result)
+def try_make_docx(lines, title):
+    try:
+        from docx import Document
+        from docx.shared import Pt, Cm, RGBColor
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        doc = Document()
+        for sec in doc.sections:
+            sec.top_margin=Cm(2); sec.bottom_margin=Cm(2)
+            sec.left_margin=Cm(2.5); sec.right_margin=Cm(2.5)
+        h = doc.add_heading(title, 0); h.alignment=WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_paragraph("")
+        for line in lines:
+            if line.startswith("="*10):
+                p=doc.add_paragraph(); p.add_run("─"*45)
+            elif line.startswith("[") and "]" in line[:5]:
+                doc.add_heading(line, level=1)
+            elif line=="":
+                doc.add_paragraph("")
+            else:
+                p=doc.add_paragraph(line)
+                p.paragraph_format.space_after=Pt(1)
+        buf=io.BytesIO(); doc.save(buf); buf.seek(0)
+        return buf.read()
+    except ImportError:
+        return None
 
-    store_sorted = sorted(store_results, key=lambda x: x["score"], reverse=True)
-
-    for s in store_sorted:
-        bar = "█" * (s["score"]//10) + "░" * (10 - s["score"]//10)
-        lines.append(f"{s['icon']} {s['name']}  [{bar}]  {s['score']}점")
-        lines.append(f"   └ 청소완료율 {int(s['clean_rate']*100)}% ({s['clean_days']}/{s['clean_total_days']}일)")
-        lines.append(f"   └ 업무완료율 {int(s['todo_rate']*100)}% ({s['todo_done']}/{s['todo_total']}건)")
-        lines.append(f"   └ 인수인계확인률 {int(s['handover_rate']*100)}%")
-        lines.append("")
-
-    # ── 베스트 TOP 3 ──────────────────────────
-    lines.append("━" * 40)
-    lines.append(f"🏆 {month_label} 베스트 직원 TOP 3")
-    lines.append("")
-    for i, s in enumerate(active_staff[:3]):
-        lines.append(f"{medals[i]} {s['name']}  {s['type']}  {s['score']}점")
-        comp = int(s['completion_rate']*100)
-        lines.append(f"   업무완료 {comp}% · 참여 {s['used_days']}일 · 프로젝트 {s['ongoing_projects']+s['completed_projects']}건")
-    lines.append("")
-
-    lines.append(f"🏆 {month_label} 베스트 매장 TOP 3")
-    lines.append("")
-    for i, s in enumerate(store_sorted[:3]):
-        lines.append(f"{medals[i]} {s['name']}  {s['score']}점")
-        lines.append(f"   청소 {int(s['clean_rate']*100)}% · 업무 {int(s['todo_rate']*100)}% · 인수인계 {int(s['handover_rate']*100)}%")
-    lines.append("")
-
-    # ── AI 인사이트 ───────────────────────────
-    lines.append("━" * 40)
-    lines.append("💡 월간 운영 인사이트")
-    lines.append("")
-
-    # 미참여자
-    no_show = [s for s in staff_results if s["used_days"] == 0]
-    if no_show:
-        lines.append(f"• 앱 미사용 직원: {', '.join(s['name'] for s in no_show)} — 현장 확인 필요")
-
-    # 이월 누적 많은 직원
-    heavy_carry = [s for s in staff_results if s["carry_count"] >= 5]
-    if heavy_carry:
-        lines.append(f"• 이월 누적 5건 이상: {', '.join(s['name'] for s in heavy_carry)} — 업무 부하 점검")
-
-    # 형식형 직원
-    formal = [s for s in staff_results if s["type"] == "📋 형식형"]
-    if formal:
-        lines.append(f"• 입력 대비 완료율 저조: {', '.join(s['name'] for s in formal)} — 실행력 점검")
-
-    # 주도형 직원 칭찬
-    leaders = [s for s in staff_results if s["type"] == "🌟 주도형"]
-    if leaders:
-        lines.append(f"• 이달 주도적 활약: {', '.join(s['name'] for s in leaders)} — 우수 사례 공유 권장")
-
-    # 청소 미흡 매장
-    clean_issues = [s for s in store_results if s["clean_rate"] < 0.8]
-    if clean_issues:
-        lines.append(f"• 청소 수행률 80% 미만: {', '.join(s['name'] for s in clean_issues)}")
-
-    lines.append("")
-    lines.append("━" * 40)
-    lines.append(f"📱 위베이프 운영 시스템  |  자동 발송")
-
-    # 게시판 공지 자동 등록
-    posted = post_board_notice(year, month, active_staff, store_sorted)
-    if posted:
-        lines.append("✅ 게시판 베스트 공지 자동 등록 완료")
-    else:
-        lines.append("⚠️ 게시판 공지 등록 실패 (수동 등록 필요)")
-
-    return "\n".join(lines), month_label
-
-
-def send_email(subject, body):
-    msg = MIMEMultipart()
-    msg["From"] = GMAIL_USER
-    msg["To"] = REPORT_TO
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain", "utf-8"))
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-        server.send_message(msg)
-
-
-if __name__ == "__main__":
-    report_text, month_label = build_monthly_report()
+def send():
+    lines, month_label, y, m, active, store_sorted = build_report()
     subject = f"[위베이프 월간보고] {month_label}"
-    send_email(subject, report_text)
-    print("✅ 월간 보고 발송 완료")
-    print(report_text)
+    body = "\n".join(lines)
+    msg = MIMEMultipart()
+    msg["From"]=GMAIL_USER; msg["To"]=REPORT_TO; msg["Subject"]=subject
+    msg.attach(MIMEText(body,"plain","utf-8"))
+    docx = try_make_docx(lines, f"위베이프 월간보고 {month_label}")
+    if docx:
+        part=MIMEBase("application","octet-stream"); part.set_payload(docx)
+        encoders.encode_base64(part)
+        fname=f"위베이프_월간보고_{month_label.replace(' ','')}.docx"
+        part.add_header("Content-Disposition",f"attachment; filename={fname}")
+        msg.attach(part)
+    with smtplib.SMTP("smtp.gmail.com",587) as sv:
+        sv.starttls(); sv.login(GMAIL_USER,GMAIL_APP_PASSWORD); sv.send_message(msg)
+    # 게시판 공지
+    posted = post_board_notice(y, m, active, store_sorted)
+    print(f"✅ 월간보고 발송 완료: {month_label}")
+    print(f"{'✅' if posted else '⚠️'} 게시판 공지 {'등록 완료' if posted else '등록 실패'}")
+    print(body)
+
+if __name__=="__main__":
+    send()
