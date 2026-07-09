@@ -4142,8 +4142,7 @@ async function renderDashboard(){
 
   const tabs=document.createElement('div');tabs.className='dash-tabs';
   const tabDefs=[
-    {id:'today',label:'📍 오늘 현황'},
-    {id:'report',label:'📋 일일 보고'},
+    {id:'today',label:'📍 현황·보고'},
     {id:'monthly',label:'📊 월간 통계'},
     {id:'projects',label:'🔄 프로젝트'},
     {id:'dayoff',label:'🏖️ 휴무 관리'}
@@ -4161,7 +4160,6 @@ async function renderDashboard(){
   wrap.appendChild(content);
 
   if(dashTab==='today')await renderTodayTab(content);
-  else if(dashTab==='report')await renderReportTab(content);
   else if(dashTab==='projects')await renderProjectsTab(content);
   else if(dashTab==='dayoff')await renderDayoffTab(content);
   else await renderMonthlyTab(content);
@@ -4175,21 +4173,61 @@ async function renderDashboard(){
   }
 }
 
-// ── 탭 1: 오늘 현황 (실시간) ──
+// ── 탭 1: 현황·보고 (날짜 이동 + 실시간, 전날 오전10시 이후 잠금 확정) ──
 async function renderTodayTab(content){
-  const tKey=todayKey();
+  if(!dashViewDate){
+    const t=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    dashViewDate={y:t.getFullYear(),m:t.getMonth(),d:t.getDate()};
+  }
+  const {y,m,d}=dashViewDate;
+  const tKey=dk(y,m,d);
   const dows=['일','월','화','수','목','금','토'];
   const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('dash-sub').textContent=
-    `${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[today.getDay()]}) · 실시간`;
+  const dow=new Date(y,m,d).getDay();
+  const todayDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const viewDate=new Date(y,m,d);
+  const isToday=viewDate.getTime()===todayDate.getTime();
+  const nextDate=new Date(y,m,d+1);
 
-  const totalClean=getCleanItemCount(today.getFullYear(),today.getMonth(),today.getDate());
-  const evs=getEvs(today.getFullYear(),today.getMonth(),today.getDate());
+  document.getElementById('dash-sub').textContent=
+    `${y}년 ${mns[m]} ${d}일 (${dows[dow]})${isToday?' · 오늘':''} · 실시간`;
+
+  // 날짜 네비게이션
+  const nav=document.createElement('div');nav.className='dash-datenav';
+  nav.innerHTML=`<button id="rep-prev">‹</button>
+    <span class="dash-datenav-label">${y}년 ${mns[m]} ${d}일 (${dows[dow]})${isToday?' · 오늘':''}</span>
+    <button id="rep-next" ${nextDate>todayDate?'disabled':''}>›</button>`;
+  content.appendChild(nav);
+  nav.querySelector('#rep-prev').onclick=()=>{
+    const nd=new Date(y,m,d-1);
+    dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
+    renderDashboard();
+  };
+  const nextBtn=nav.querySelector('#rep-next');
+  if(!nextBtn.disabled){
+    nextBtn.onclick=()=>{
+      const nd=new Date(y,m,d+1);
+      dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
+      renderDashboard();
+    };
+  }
+
+  // 전날 오전 10시 이전 잠금 안내
+  const isYesterday=Math.round((todayDate-viewDate)/86400000)===1;
+  if(isYesterday&&new Date().getHours()<10){
+    const noticeEl=document.createElement('div');noticeEl.className='dash-date';
+    noticeEl.textContent='⏰ 오전 10시 이후 전일 데이터가 최종 확정됩니다 (그 전까지는 직원이 수정 가능)';
+    content.appendChild(noticeEl);
+  }
+
+  const totalClean=getCleanItemCount(y,m,d);
+  const evs=getEvs(y,m,d);
   const cleanEv=evs.find(e=>e.t==='clean');
   const cleanLabel=cleanEv?`🧹 대청소 ${cleanEv.sec}구역 (기본+구역)`:'청소 및 매장 정리 (기본 6항목)';
 
+  const dayLabel=isToday?'오늘':`${m+1}/${d}`;
   const dateEl=document.createElement('div');dateEl.className='dash-date';
-  dateEl.textContent=cleanEv?`오늘은 대청소 ${cleanEv.sec}구역 날입니다`:'오늘은 기본 청소만 진행하는 날입니다';
+  dateEl.textContent=cleanEv?`${dayLabel}은 대청소 ${cleanEv.sec}구역 날입니다`:`${dayLabel}은 기본 청소만 진행하는 날입니다`;
   content.appendChild(dateEl);
 
   for(const store of STORES){
@@ -4198,6 +4236,11 @@ async function renderTodayTab(content){
     const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
     nameDiv.innerHTML=`${store.icon} ${store.name} <span class="dash-store-badge" id="badge-${store.id}"></span>`;
     card.appendChild(nameDiv);
+
+    // 근무자
+    const workersEl=document.createElement('div');workersEl.className='dash-workers';workersEl.id=`workers-${store.id}`;
+    workersEl.textContent='👤 근무자: 불러오는 중...';
+    card.appendChild(workersEl);
 
     // 청소 진행률
     const pbWrap=document.createElement('div');pbWrap.className='progress-bar';
@@ -4210,7 +4253,7 @@ async function renderTodayTab(content){
     // 오늘의 업무 진행률
     const todoStats=document.createElement('div');todoStats.className='dash-todo-summary';
     todoStats.id=`todostat-${store.id}`;
-    todoStats.textContent='📝 오늘의 업무 불러오는 중...';
+    todoStats.textContent='📝 업무 불러오는 중...';
     card.appendChild(todoStats);
 
     // 상세보기 토글 + 상세 영역
@@ -4240,7 +4283,7 @@ async function renderTodayTab(content){
       cleanItemsWrap.appendChild(row);
     });
 
-    // 관리자 피드백 입력 영역
+    // 관리자 피드백 입력 영역 (선택된 날짜 기준)
     const fbAdminWrap=document.createElement('div');fbAdminWrap.className='feedback-box';
     const fbSavedEl=document.createElement('div');fbSavedEl.className='feedback-saved';
     fbAdminWrap.innerHTML=`<div class="feedback-label">✏️ 피드백 작성</div>`;
@@ -4258,7 +4301,7 @@ async function renderTodayTab(content){
 
     content.appendChild(card);
 
-    // 기존 피드백 로드
+    // 기존 피드백 로드 (선택된 날짜)
     const fbRef=doc(db,`feedback/${store.id}/${tKey}/comment`);
     getDoc(fbRef).then(snap=>{
       if(snap.exists()&&snap.data().text){
@@ -4278,7 +4321,7 @@ async function renderTodayTab(content){
       }catch(e){fbSavedEl.textContent='⚠ 저장 실패';}
     };
 
-    // 청소 실시간 리스닝
+    // 청소 실시간 리스닝 (선택된 날짜 기준)
     const cleanRef=doc(db,`checks/${store.id}/${tKey}/clean`);
     const unsub1=onSnapshot(cleanRef,(snap)=>{
       const data=snap.exists()?snap.data():{};
@@ -4305,13 +4348,18 @@ async function renderTodayTab(content){
     });
     dashUnsubs.push(unsub1);
 
-    // 오늘의 업무 실시간 리스닝
+    // 오늘의 업무 + 근무자 실시간 리스닝 (선택된 날짜 기준)
     const todoRef=doc(db,`todos/${store.id}_${tKey}`);
     const unsub2=onSnapshot(todoRef,(snap)=>{
       const items=snap.exists()?(snap.data().items||[]):[];
       const done=items.filter(i=>i.done).length;
       const el=document.getElementById(`todostat-${store.id}`);
       if(el)el.textContent=`📝 오늘의 업무: ${done} / ${items.length} 완료`;
+
+      const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
+      const workersEl=document.getElementById(`workers-${store.id}`);
+      if(workersEl)workersEl.textContent=`👤 근무자: ${authors.length?authors.join(', '):'기록 없음'}`;
+
       // 항목별 상세
       const todoItemsWrap=document.getElementById(`todoitems-${store.id}`);
       if(todoItemsWrap){
@@ -4329,87 +4377,6 @@ async function renderTodayTab(content){
       }
     });
     dashUnsubs.push(unsub2);
-  }
-}
-
-// ── 탭 2: 일일 보고 (날짜 이동, 전날 기본값, 어제 10시 이후 잠금 확정) ──
-async function renderReportTab(content){
-  if(!dashViewDate){
-    const yest=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1);
-    dashViewDate={y:yest.getFullYear(),m:yest.getMonth(),d:yest.getDate()};
-  }
-  const {y,m,d}=dashViewDate;
-  const dateKey=dk(y,m,d);
-  const dows=['일','월','화','수','목','금','토'];
-  const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const dow=new Date(y,m,d).getDay();
-
-  document.getElementById('dash-sub').textContent='지점별 일일 업무 보고';
-
-  const nav=document.createElement('div');nav.className='dash-datenav';
-  const todayDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  const viewDate=new Date(y,m,d);
-  const nextDate=new Date(y,m,d+1);
-  const isYesterday=Math.round((todayDate-viewDate)/86400000)===1;
-  nav.innerHTML=`<button id="rep-prev">‹</button>
-    <span class="dash-datenav-label">${y}년 ${mns[m]} ${d}일 (${dows[dow]})${isYesterday?' · 어제':''}</span>
-    <button id="rep-next" ${nextDate>=todayDate?'disabled':''}>›</button>`;
-  content.appendChild(nav);
-  nav.querySelector('#rep-prev').onclick=()=>{
-    const nd=new Date(y,m,d-1);
-    dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
-    renderDashboard();
-  };
-  const nextBtn=nav.querySelector('#rep-next');
-  if(!nextBtn.disabled){
-    nextBtn.onclick=()=>{
-      const nd=new Date(y,m,d+1);
-      dashViewDate={y:nd.getFullYear(),m:nd.getMonth(),d:nd.getDate()};
-      renderDashboard();
-    };
-  }
-
-  if(isYesterday&&new Date().getHours()<10){
-    const noticeEl=document.createElement('div');noticeEl.className='dash-date';
-    noticeEl.textContent='⏰ 오전 10시 이후 전일 데이터가 최종 확정됩니다 (그 전까지는 직원이 수정 가능)';
-    content.appendChild(noticeEl);
-  }
-
-  const totalClean=getCleanItemCount(y,m,d);
-  const evs=getEvs(y,m,d);
-  const cleanEv=evs.find(e=>e.t==='clean');
-  const cleanLabel=cleanEv?`🧹 대청소 ${cleanEv.sec}구역`:'청소 및 매장 정리';
-
-  for(const store of STORES){
-    const card=document.createElement('div');card.className='dash-card';
-
-    const cleanSnap=await getDoc(doc(db,`checks/${store.id}/${dateKey}/clean`));
-    const cleanData=cleanSnap.exists()?cleanSnap.data():{};
-    const cleanDone=Object.values(cleanData).filter(Boolean).length;
-
-    const todoSnap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
-    const items=todoSnap.exists()?(todoSnap.data().items||[]):[];
-    const todoDone=items.filter(i=>i.done).length;
-    const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
-
-    let html=`<div class="dash-store-name">${store.icon} ${store.name}</div>`;
-    html+=`<div class="dash-workers">👤 근무자: ${authors.length?authors.join(', '):'기록 없음'}</div>`;
-    html+=`<div class="dash-section-title">${cleanLabel}</div>`;
-    const cleanIcon=(totalClean>0&&cleanDone>=totalClean)?'✅':(cleanDone>0?'🟡':'⬜');
-    html+=`<div class="dash-stats" style="margin-bottom:4px"><span>${cleanDone} / ${totalClean} 완료</span><span>${cleanIcon}</span></div>`;
-    html+=`<div class="dash-section-title">📝 오늘의 업무 (${todoDone}/${items.length})</div>`;
-    if(items.length===0){
-      html+=`<div class="no-clean">등록된 업무 없음</div>`;
-    }else{
-      html+=`<div class="dash-todo-list">`;
-      items.forEach(it=>{
-        const carry=(it.fromDate&&it.fromDate!==dateKey)?` <span style="color:var(--orange)">[${it.fromDate.slice(5)} 이월]</span>`:'';
-        html+=`<div class="dash-todo-item${it.done?' done':''}"><span class="ico">${it.done?'✅':'⬜'}</span><span class="txt">${it.text} <span style="color:#bbb">(${it.author||'익명'})</span>${carry}</span></div>`;
-      });
-      html+=`</div>`;
-    }
-    card.innerHTML=html;
-    content.appendChild(card);
   }
 }
 
