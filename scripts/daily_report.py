@@ -1,6 +1,10 @@
 """
-위베이프 일일 보고 스크립트 v3.0
+위베이프 일일 보고 스크립트 v4.0
 경로: staff_todos/{이름}_{날짜} / handover/{매장}_{날짜} / checks/{매장}/{날짜}/clean
+v4 추가:
+  - 청소 체크 타임스탬프 기반 "몰아치기" 패턴 감지
+  - 인수인계 수신확인(다른 사람 인계를 내가 확인한 건수) 집계
+  - Claude API를 통한 업무/인수인계 내용 질적 판단
 """
 import os, json, urllib.request, smtplib, io
 from datetime import datetime, timedelta
@@ -13,6 +17,7 @@ FIREBASE_API_KEY   = os.environ["FIREBASE_API_KEY"]
 GMAIL_USER         = os.environ["GMAIL_USER"]
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
 REPORT_TO          = os.environ["REPORT_TO_EMAIL"]
+ANTHROPIC_API_KEY  = os.environ.get("ANTHROPIC_API_KEY")  # 없으면 LLM 판단 단계는 건너뜀
 PROJECT_ID         = "wevape-schedule"
 BASE_URL           = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
 
@@ -45,25 +50,111 @@ def parse_value(v):
     if "stringValue"  in v: return v["stringValue"]
     if "booleanValue" in v: return v["booleanValue"]
     if "integerValue" in v: return int(v["integerValue"])
+    if "doubleValue"  in v: return v["doubleValue"]
     if "arrayValue"   in v: return [parse_value(x) for x in v["arrayValue"].get("values",[])]
     if "mapValue"     in v: return parse_fields(v["mapValue"].get("fields",{}))
     return None
 
 def parse_fields(f): return {k: parse_value(v) for k,v in f.items()}
 
-def get_todos(name, dk): 
+def get_todos(name, dk):
     d = fb_get(f"staff_todos/{name}_{dk}"); return (d.get("items") or []) if d else []
+
+# 청소 체크값 판독 (구버전 boolean / 신버전 {v,t} 객체 모두 지원)
+def ck_val(x):
+    if isinstance(x, dict): return x.get("v") is True
+    return x is True
+def ck_time(x):
+    if isinstance(x, dict): return x.get("t")
+    return None
+
 def get_clean(sid, dk):
     d = fb_get(f"checks/{sid}/{dk}/clean")
-    if not d: return 0,0
-    keys=[k for k in d if k.startswith("item_")]; total=len(keys) or 6
-    return sum(1 for k in keys if d.get(k) is True), total
+    if not d: return 0, 0, []
+    keys = [k for k in d if k.startswith("item_")]
+    total = len(keys) or 6
+    done = sum(1 for k in keys if ck_val(d.get(k)))
+    times = sorted([ck_time(d.get(k)) for k in keys if ck_time(d.get(k))])
+    return done, total, times
+
+def check_clean_pattern(times, total):
+    """청소 체크 타임스탬프가 비정상적으로 몰려서 찍혔는지(일괄 클릭 의심) 판단"""
+    if len(times) < max(3, total // 2):
+        return None
+    span_sec = (max(times) - min(times)) / 1000
+    if len(times) >= 4 and span_sec < 60:
+        return f"청소 체크 {len(times)}건이 {int(span_sec)}초 안에 몰려서 처리됨 (일괄 클릭 의심)"
+    return None
+
 def get_handover(sid, dk):
     d = fb_get(f"handover/{sid}_{dk}"); return (d.get("items") or []) if d else []
+
+def get_handover_confirmations(dk):
+    """해당 날짜, 전 매장 기준 - 각 직원이 '확인 처리'한 인수인계 건수 (수신 성실도)"""
+    counts = {}
+    for s in STORES:
+        for it in get_handover(s["id"], dk):
+            if it.get("confirmed") and it.get("confirmedBy"):
+                who = it["confirmedBy"]
+                counts[who] = counts.get(who, 0) + 1
+    return counts
+
 def get_dayoff():
     d = fb_get("config/dayoff"); return d or {}
 def get_projects(name):
     d = fb_get(f"staff_projects/{name}"); return (d.get("items") or []) if d else []
+
+# ── Claude API를 통한 업무/인수인계 내용 질적 판단 ──────────────
+def llm_judge(staff_texts):
+    """
+    staff_texts: {이름: {"todos": [...], "handovers": [...]}}
+    반환: {이름: "한 줄 질적 평가"}
+    """
+    if not ANTHROPIC_API_KEY:
+        return {}
+    lines = []
+    for name, d in staff_texts.items():
+        if not d["todos"] and not d["handovers"]:
+            continue
+        lines.append(f"[{name}]")
+        if d["todos"]:
+            lines.append("업무: " + " / ".join(d["todos"][:8]))
+        if d["handovers"]:
+            lines.append("인수인계: " + " / ".join(d["handovers"][:5]))
+    if not lines:
+        return {}
+
+    prompt = (
+        "다음은 위베이프 매장 직원들이 하루 동안 입력한 '업무 내용'과 '인수인계 내용'입니다.\n"
+        "각 직원별로 입력 내용이 구체적이고 실질적인지, 아니면 형식적이거나 성의없이 짧게만 썼는지를 "
+        "한 줄로 짧고 담백하게 평가해 주세요. 과장하지 말고 사실 기반으로만 판단하세요.\n"
+        "반드시 아래 JSON 형식으로만 응답하세요 (다른 설명, 코드블록 없이 순수 JSON만):\n"
+        '{"직원이름": "한 줄 평가"}\n\n'
+        + "\n".join(lines)
+    )
+    try:
+        body = json.dumps({
+            "model": "claude-sonnet-5",
+            "max_tokens": 1000,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=body, method="POST"
+        )
+        req.add_header("x-api-key", ANTHROPIC_API_KEY)
+        req.add_header("anthropic-version", "2023-06-01")
+        req.add_header("content-type", "application/json")
+        with urllib.request.urlopen(req, timeout=30) as r:
+            resp = json.load(r)
+        text = resp["content"][0]["text"].strip()
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.startswith("json"): text = text[4:]
+        return json.loads(text)
+    except Exception as e:
+        print(f"⚠️ LLM 판단 실패(건너뜀): {e}")
+        return {}
 
 def build_report():
     rdate = datetime.now() - timedelta(days=1)
@@ -72,6 +163,7 @@ def build_report():
     wd = ["월","화","수","목","금","토","일"][rdate.weekday()]
     dayoff = get_dayoff()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    handover_recv = get_handover_confirmations(dk)  # 수신확인 성실도
     L = []
 
     L += [f"위베이프 일일 운영 보고",
@@ -81,11 +173,15 @@ def build_report():
     # 1. 매장별 현황
     L += ["[1] 매장별 운영 현황",""]
     issue_stores, ok_stores = [], []
+    clean_pattern_flags = []
 
     for s in STORES:
         sid, sname, sshort = s["id"], s["name"], s["short"]
-        cd, ct = get_clean(sid, dk)
+        cd, ct, ctimes = get_clean(sid, dk)
         clean_ok = ct>0 and cd>=ct
+        pattern = check_clean_pattern(ctimes, ct)
+        if pattern:
+            clean_pattern_flags.append(f"{sshort}: {pattern}")
         hw = get_handover(sid, dk)
         unconf = [h for h in hw if not h.get("confirmed")]
 
@@ -98,6 +194,7 @@ def build_report():
 
         issues = []
         if not clean_ok and ct>0: issues.append(f"청소미완료({cd}/{ct})")
+        if pattern: issues.append("청소체크 일괄처리 의심")
         if unconf: issues.append(f"인수인계미확인{len(unconf)}건")
         if not workers: issues.append("업무기록없음")
 
@@ -121,11 +218,13 @@ def build_report():
     # 2. 직원별 업무 현황
     L += ["[2] 직원별 업무 현황",""]
     active, dayoff_list, unused = [], [], []
+    staff_texts = {}  # LLM 판단용 텍스트 수집
 
     for name in STAFF:
         if dayoff.get(name,{}).get(dk)=="dayoff":
             dayoff_list.append(name); continue
         todos = get_todos(name, dk)
+        recv_cnt = handover_recv.get(name, 0)
         if not todos:
             unused.append(name); continue
         total=len(todos); done=sum(1 for t in todos if t.get("done"))
@@ -140,24 +239,47 @@ def build_report():
         if snames: line+=f"  @{','.join(snames)}"
         if carried: line+=f"  이월{carried}건"
         if proj: line+=f"  프로젝트{len(proj)}건"
+        if recv_cnt: line+=f"  인계수신확인{recv_cnt}건"
         L.append(line)
         undone=[t for t in todos if not t.get("done")]
         for t in undone[:2]: L.append(f"          └❌ {t.get('text','')}")
         if len(undone)>2: L.append(f"          └ 외 {len(undone)-2}건")
         active.append({"name":name,"comp":comp})
 
+        # LLM 판단용 텍스트 수집
+        my_handovers = []
+        for s in STORES:
+            my_handovers += [h.get("text","") for h in get_handover(s["id"], dk) if h.get("author")==name]
+        staff_texts[name] = {
+            "todos": [t.get("text","") for t in todos],
+            "handovers": my_handovers
+        }
+
     L.append("")
     if dayoff_list: L.append(f"  🏖️ 휴무: {', '.join(dayoff_list)}")
     if unused:      L.append(f"  📵 미사용: {', '.join(unused)}")
     L += ["","="*50,""]
 
-    # 3. 인사이트
-    L += ["[3] 오늘의 인사이트",""]
+    # 3. AI 업무 내용 판단
+    L += ["[3] AI 업무 내용 판단",""]
+    judgments = llm_judge(staff_texts)
+    if judgments:
+        for name in STAFF:
+            if name in judgments:
+                L.append(f"  · {name}: {judgments[name]}")
+    else:
+        L.append("  (판단 불가 — ANTHROPIC_API_KEY 미설정 또는 오류)")
+    L += ["","="*50,""]
+
+    # 4. 인사이트
+    L += ["[4] 오늘의 인사이트",""]
     insights = []
     if issue_stores: insights.append(f"• 이슈 매장 {len(issue_stores)}개: {', '.join(issue_stores)}")
     low=[s for s in active if s["comp"]<50]
     if low: insights.append(f"• 완료율 50% 미만: {', '.join(s['name'] for s in low)}")
     if unused: insights.append(f"• 앱 미사용 {len(unused)}명: {', '.join(unused)}")
+    if clean_pattern_flags:
+        insights.append(f"• 청소체크 일괄처리 의심: {' / '.join(clean_pattern_flags)}")
     if not insights: insights.append("• 특이사항 없음. 전반적으로 양호합니다.")
     L.extend(insights)
     L += ["","="*50,"📱 위베이프 운영 시스템 | 자동 발송"]
@@ -169,11 +291,9 @@ def try_make_docx(lines, title):
         from docx.shared import Pt, Cm
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         doc = Document()
-        # 여백 설정
         for sec in doc.sections:
             sec.top_margin=Cm(2); sec.bottom_margin=Cm(2)
             sec.left_margin=Cm(2.5); sec.right_margin=Cm(2.5)
-        # 제목
         h=doc.add_heading(title,0); h.alignment=WD_ALIGN_PARAGRAPH.CENTER
         doc.add_paragraph("")
         for line in lines:
@@ -198,7 +318,6 @@ def send():
     msg = MIMEMultipart()
     msg["From"]=GMAIL_USER; msg["To"]=REPORT_TO; msg["Subject"]=subject
     msg.attach(MIMEText(body, "plain", "utf-8"))
-    # docx 첨부
     docx = try_make_docx(lines, f"위베이프 일일보고 {dlabel}")
     if docx:
         part=MIMEBase("application","octet-stream"); part.set_payload(docx)
