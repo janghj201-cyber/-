@@ -3458,7 +3458,8 @@ async function loadStaffTodos(name,dateKey){
       const prevSnap=await getDoc(prevRef);
       if(prevSnap.exists()){
         const prevItems=prevSnap.data().items||[];
-        const undone=prevItems.filter(it=>!it.done);
+        // 미완료 중 보관(kept) 항목은 이월 제외
+        const undone=prevItems.filter(it=>!it.done&&!it.kept);
         let changed=false;
         undone.forEach(it=>{
           // 이미 이월된 항목이면 추가 안 함
