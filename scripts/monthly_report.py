@@ -10,7 +10,7 @@ v4 추가:
   - 인수인계 수신확인(다른 사람 인계를 내가 확인한 건수) → 협력도 점수에 반영
   - Claude API를 통한 업무/인수인계 내용 질적 판단 (직원별 월간 요약)
 """
-import os, json, calendar, urllib.request, urllib.error, smtplib, io, time
+import os, json, calendar, urllib.request, urllib.error, urllib.parse, smtplib, io, time
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -44,7 +44,9 @@ STAFF = ["오명록","고아현","장현진","장대운","신재현","정희경"
 # ── Firebase 헬퍼 ───────────────────────────────
 def fb_get(path):
     try:
-        req = urllib.request.Request(f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}")
+        # 경로에 한글 등 비ASCII 문자가 있으면 urllib이 요청을 못 만들고 조용히 실패하므로 인코딩 필수
+        encoded_path = "/".join(urllib.parse.quote(seg, safe="") for seg in path.split("/"))
+        req = urllib.request.Request(f"{BASE_URL}/{encoded_path}?key={FIREBASE_API_KEY}")
         with urllib.request.urlopen(req, timeout=15) as r:
             d = json.load(r)
             return parse_fields(d["fields"]) if "fields" in d else None
@@ -52,8 +54,9 @@ def fb_get(path):
 
 def fb_patch(path, body):
     try:
+        encoded_path = "/".join(urllib.parse.quote(seg, safe="") for seg in path.split("/"))
         data = json.dumps(body).encode()
-        req = urllib.request.Request(f"{BASE_URL}/{path}?key={FIREBASE_API_KEY}", data=data, method="PATCH")
+        req = urllib.request.Request(f"{BASE_URL}/{encoded_path}?key={FIREBASE_API_KEY}", data=data, method="PATCH")
         req.add_header("Content-Type","application/json")
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.status == 200
