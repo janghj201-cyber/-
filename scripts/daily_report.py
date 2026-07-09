@@ -225,8 +225,18 @@ def build_report():
             dayoff_list.append(name); continue
         todos = get_todos(name, dk)
         recv_cnt = handover_recv.get(name, 0)
+
+        # 인수인계 텍스트는 업무 입력 여부와 무관하게 항상 수집
+        my_handovers = []
+        for s in STORES:
+            my_handovers += [h.get("text","") for h in get_handover(s["id"], dk) if h.get("author")==name]
+
         if not todos:
-            unused.append(name); continue
+            unused.append(name)
+            if my_handovers:
+                staff_texts[name] = {"todos": [], "handovers": my_handovers}
+            continue
+
         total=len(todos); done=sum(1 for t in todos if t.get("done"))
         carried=sum(1 for t in todos if t.get("fromDate") and t.get("fromDate")!=dk)
         comp=int(done/total*100) if total>0 else 0
@@ -246,10 +256,6 @@ def build_report():
         if len(undone)>2: L.append(f"          └ 외 {len(undone)-2}건")
         active.append({"name":name,"comp":comp})
 
-        # LLM 판단용 텍스트 수집
-        my_handovers = []
-        for s in STORES:
-            my_handovers += [h.get("text","") for h in get_handover(s["id"], dk) if h.get("author")==name]
         staff_texts[name] = {
             "todos": [t.get("text","") for t in todos],
             "handovers": my_handovers
@@ -262,13 +268,19 @@ def build_report():
 
     # 3. AI 업무 내용 판단
     L += ["[3] AI 업무 내용 판단",""]
-    judgments = llm_judge(staff_texts)
-    if judgments:
-        for name in STAFF:
-            if name in judgments:
-                L.append(f"  · {name}: {judgments[name]}")
+    has_content = any(d["todos"] or d["handovers"] for d in staff_texts.values())
+    if not ANTHROPIC_API_KEY:
+        L.append("  (ANTHROPIC_API_KEY 미설정 — 관리자 확인 필요)")
+    elif not has_content:
+        L.append("  (오늘은 업무·인수인계 입력이 없어 판단할 내용이 없습니다)")
     else:
-        L.append("  (판단 불가 — ANTHROPIC_API_KEY 미설정 또는 오류)")
+        judgments = llm_judge(staff_texts)
+        if judgments:
+            for name in STAFF:
+                if name in judgments:
+                    L.append(f"  · {name}: {judgments[name]}")
+        else:
+            L.append("  (판단 실패 — 다음 실행에서 재시도됩니다)")
     L += ["","="*50,""]
 
     # 4. 인사이트
