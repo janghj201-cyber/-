@@ -6,7 +6,7 @@ v4 추가:
   - 인수인계 수신확인(다른 사람 인계를 내가 확인한 건수) 집계
   - Claude API를 통한 업무/인수인계 내용 질적 판단
 """
-import os, json, urllib.request, smtplib, io
+import os, json, urllib.request, urllib.error, smtplib, io
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -108,10 +108,10 @@ def get_projects(name):
 def llm_judge(staff_texts):
     """
     staff_texts: {이름: {"todos": [...], "handovers": [...]}}
-    반환: {이름: "한 줄 질적 평가"}
+    반환: (judgments dict, error string or None)
     """
     if not ANTHROPIC_API_KEY:
-        return {}
+        return {}, None
     lines = []
     for name, d in staff_texts.items():
         if not d["todos"] and not d["handovers"]:
@@ -122,7 +122,7 @@ def llm_judge(staff_texts):
         if d["handovers"]:
             lines.append("인수인계: " + " / ".join(d["handovers"][:5]))
     if not lines:
-        return {}
+        return {}, None
 
     prompt = (
         "다음은 위베이프 매장 직원들이 하루 동안 입력한 '업무 내용'과 '인수인계 내용'입니다.\n"
@@ -151,10 +151,19 @@ def llm_judge(staff_texts):
         if text.startswith("```"):
             text = text.strip("`")
             if text.startswith("json"): text = text[4:]
-        return json.loads(text)
+        return json.loads(text), None
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read().decode(errors="replace")[:200]
+        except Exception:
+            err_body = ""
+        err = f"HTTP {e.code} {e.reason} - {err_body}"
+        print(f"⚠️ LLM 판단 실패: {err}")
+        return {}, err
     except Exception as e:
-        print(f"⚠️ LLM 판단 실패(건너뜀): {e}")
-        return {}
+        err = f"{type(e).__name__}: {e}"
+        print(f"⚠️ LLM 판단 실패: {err}")
+        return {}, err
 
 def build_report():
     rdate = datetime.now() - timedelta(days=1)
@@ -274,11 +283,13 @@ def build_report():
     elif not has_content:
         L.append("  (오늘은 업무·인수인계 입력이 없어 판단할 내용이 없습니다)")
     else:
-        judgments = llm_judge(staff_texts)
+        judgments, err = llm_judge(staff_texts)
         if judgments:
             for name in STAFF:
                 if name in judgments:
                     L.append(f"  · {name}: {judgments[name]}")
+        elif err:
+            L.append(f"  (판단 실패: {err})")
         else:
             L.append("  (판단 실패 — 다음 실행에서 재시도됩니다)")
     L += ["","="*50,""]
