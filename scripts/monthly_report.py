@@ -256,7 +256,7 @@ def llm_judge_monthly(staff_results):
         return {}
     lines = []
     for s in staff_results:
-        if s["used_days"] == 0:
+        if s["used_days"] == 0 and not s["sample_handovers"]:
             continue
         name = s["name"]
         lines.append(f"[{name}] (근무 {s['used_days']}일, 업무 {s['total']}건)")
@@ -420,13 +420,19 @@ def build_report():
 
     # 4. AI 업무 내용 판단 (월간)
     L += ["[4] AI 업무 내용 판단 (월간 샘플 기반)",""]
-    judgments = llm_judge_monthly(staff_results)
-    if judgments:
-        for s in staff_sorted:
-            if s["name"] in judgments:
-                L.append(f"  · {s['name']}: {judgments[s['name']]}")
+    has_content = any(s["sample_todos"] or s["sample_handovers"] for s in staff_results)
+    if not ANTHROPIC_API_KEY:
+        L.append("  (ANTHROPIC_API_KEY 미설정 — 관리자 확인 필요)")
+    elif not has_content:
+        L.append("  (이번 달 업무·인수인계 입력이 없어 판단할 내용이 없습니다)")
     else:
-        L.append("  (판단 불가 — ANTHROPIC_API_KEY 미설정 또는 오류)")
+        judgments = llm_judge_monthly(staff_results)
+        if judgments:
+            for s in staff_sorted:
+                if s["name"] in judgments:
+                    L.append(f"  · {s['name']}: {judgments[s['name']]}")
+        else:
+            L.append("  (판단 실패 — 다음 실행에서 재시도됩니다)")
     L += ["","="*55,""]
 
     # 5. 이달의 베스트 TOP3
