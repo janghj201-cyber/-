@@ -147,7 +147,10 @@ def llm_judge(staff_texts):
         req.add_header("content-type", "application/json")
         with urllib.request.urlopen(req, timeout=30) as r:
             resp = json.load(r)
-        text = resp["content"][0]["text"].strip()
+        text_block = next((b.get("text") for b in resp.get("content", []) if b.get("type") == "text"), None)
+        if text_block is None:
+            raise ValueError(f"text 블록 없음 (content types: {[b.get('type') for b in resp.get('content', [])]})")
+        text = text_block.strip()
         if text.startswith("```"):
             text = text.strip("`")
             if text.startswith("json"): text = text[4:]
