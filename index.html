@@ -555,7 +555,8 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-stat-label{font-size:10px;color:var(--text-sub);margin-top:2px;}
 
 /* 직원 블록 타일 */
-.staff-block{background:var(--card);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);transition:transform 0.12s,border-color 0.15s;}
+.staff-block{background:var(--card);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);transition:transform 0.12s,border-color 0.15s;position:relative;}
+.staff-del-btn{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid #e5433a;color:#e5433a;font-size:13px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.15);z-index:2;}
 .staff-block:active{transform:scale(0.95);}
 .staff-block:hover{border-color:var(--gold);}
 .staff-avatar{width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);margin:0 auto 8px;}
@@ -993,22 +994,84 @@ const CLEAN_BASE=[
   "액상 및 기기 앞정렬",
   "시연 제품 먼지/얼룩 제거 (+진열 박스)"
 ];
-const SPECIALS={
-  order:{task:"전체 주문 (주간)",meta:"전 품목 발주 · 본사 재고 연동 확인",col:"c-blue"},
-  stock:{task:"재고 실사",meta:"전 품목 실사 · 본사 직영 재고 대조",col:"c-orange"},
-  pod:{task:"팟형 기기 진열 점검",meta:"팟형 전시 기기 작동·외관 점검",col:"c-purple"},
-  aio:{task:"일체형 기기 진열 점검",meta:"일체형 전시 기기 작동·외관 점검",col:"c-purple"},
-  report:{task:"📊 월간 보고 마감",meta:"매장 현황 보고서 입력 마감 (매출·재고·직원의견)",col:"c-pink",report:true},
-  as_deadline:{task:"📦 A/S 접수 마감",meta:"각 매장 고객 A/S 접수 마감일 (오늘까지 접수)",col:"c-teal"},
-  as_send:{task:"🚚 A/S 택배 발송일",meta:"전 지점 A/S 물품 → 로데오점으로 발송",col:"c-teal",asSend:true},
-};
-const HOLIDAYS={
+// 월간 고정업무 규칙의 기본값(폴백) — Firestore config/schedule_rules 없으면 이걸로 시딩
+const DEFAULT_SCHEDULE_RULES=[
+  {key:'order',condType:'weekday',weekday:1,task:'전체 주문 (주간)',meta:'전 품목 발주 · 본사 재고 연동 확인',col:'c-blue'},
+  {key:'stock',condType:'monthdays',days:[1,2],task:'재고 실사',meta:'전 품목 실사 · 본사 직영 재고 대조',col:'c-orange'},
+  {key:'pod',condType:'monthdays',days:[8],task:'팟형 기기 진열 점검',meta:'팟형 전시 기기 작동·외관 점검',col:'c-purple'},
+  {key:'aio',condType:'monthdays',days:[22],task:'일체형 기기 진열 점검',meta:'일체형 전시 기기 작동·외관 점검',col:'c-purple'},
+  {key:'report',condType:'monthdays',days:[25],task:'📊 월간 보고 마감',meta:'매장 현황 보고서 입력 마감 (매출·재고·직원의견)',col:'c-pink',report:true},
+  {key:'as_deadline',condType:'monthdays',days:[15],task:'📦 A/S 접수 마감',meta:'각 매장 고객 A/S 접수 마감일 (오늘까지 접수)',col:'c-teal'},
+  {key:'as_send',condType:'lastBizDayBefore',targetDay:16,task:'🚚 A/S 택배 발송일',meta:'전 지점 A/S 물품 → 로데오점으로 발송',col:'c-teal',asSend:true},
+];
+let scheduleRules=DEFAULT_SCHEDULE_RULES.map(r=>({...r}));
+let SPECIALS={};
+function rebuildSpecials(){
+  SPECIALS={};
+  scheduleRules.forEach(r=>{
+    SPECIALS[r.key]={task:r.task,meta:r.meta,col:r.col,report:!!r.report,asSend:!!r.asSend};
+  });
+}
+rebuildSpecials();
+
+async function loadScheduleRules(){
+  try{
+    const snap=await getDoc(doc(db,'config/schedule_rules'));
+    if(snap.exists()&&Array.isArray(snap.data().rules)&&snap.data().rules.length){
+      scheduleRules=snap.data().rules;
+    } else {
+      await setDoc(doc(db,'config/schedule_rules'),{rules:scheduleRules});
+    }
+  }catch(e){}
+  rebuildSpecials();
+}
+async function saveScheduleRules(){
+  await setDoc(doc(db,'config/schedule_rules'),{rules:scheduleRules});
+  rebuildSpecials();
+}
+
+// 공휴일 — 매년 자동 조회(Nager.Date 공공 API)해서 Firestore에 캐싱, 코드 수정 불필요
+const DEFAULT_HOLIDAYS={
   "2026-01-01":"신정","2026-01-28":"설연휴","2026-01-29":"설날","2026-01-30":"설연휴",
   "2026-03-01":"삼일절","2026-05-05":"어린이날","2026-05-25":"부처님오신날",
   "2026-06-06":"현충일","2026-08-15":"광복절",
   "2026-09-24":"추석연휴","2026-09-25":"추석","2026-09-26":"추석연휴",
   "2026-10-03":"개천절","2026-10-09":"한글날","2026-12-25":"크리스마스"
 };
+let HOLIDAYS={...DEFAULT_HOLIDAYS};
+const HOLIDAY_LABEL_MAP={
+  "New Year's Day":"신정","Lunar New Year's Day":"설날","Lunar New Year's Eve":"설연휴",
+  "Day after Lunar New Year's Day":"설연휴","Independence Movement Day":"삼일절",
+  "Children's Day":"어린이날","Buddha's Birthday":"부처님오신날","Memorial Day":"현충일",
+  "Liberation Day":"광복절","Chuseok's Eve":"추석연휴","Chuseok":"추석","Day after Chuseok":"추석연휴",
+  "National Foundation Day":"개천절","Hangeul Day":"한글날","Christmas Day":"크리스마스"
+};
+async function ensureHolidayYear(year){
+  const hasYear=Object.keys(HOLIDAYS).some(k=>k.startsWith(String(year)+'-'));
+  if(hasYear)return;
+  try{
+    const res=await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`);
+    if(!res.ok)return;
+    const list=await res.json();
+    list.forEach(h=>{
+      HOLIDAYS[h.date]=HOLIDAY_LABEL_MAP[h.localName]||HOLIDAY_LABEL_MAP[h.name]||h.localName||h.name;
+    });
+    await setDoc(doc(db,'config/holidays'),{map:HOLIDAYS});
+  }catch(e){
+    console.warn('공휴일 자동조회 실패',e);
+  }
+}
+async function loadHolidays(){
+  try{
+    const snap=await getDoc(doc(db,'config/holidays'));
+    if(snap.exists()&&snap.data().map){
+      HOLIDAYS={...DEFAULT_HOLIDAYS,...snap.data().map};
+    }
+  }catch(e){}
+  const thisYear=today.getFullYear();
+  await ensureHolidayYear(thisYear);
+  await ensureHolidayYear(thisYear+1);
+}
 const CSECTIONS=[
   {title:"대청소 1구역 — 외부·내부",items:["유리창 닦기(안팎)","자판기 외면 청소","바닥 쓸기·걸레질","입간판 정리","바닥 타일 줄눈 청소","몰딩·사각지대 먼지 제거"]},
   {title:"대청소 2구역 — 시연대·응대존",items:["시연대 손님쪽 표면 닦기","시연대 직원쪽 표면 닦기","응대존 카운터 소독","포인트 진열 정리·먼지 제거"]},
@@ -1046,27 +1109,32 @@ function ckVal(x){return (x&&typeof x==='object')?!!x.v:!!x;}
 function todayKey(){return dk(today.getFullYear(),today.getMonth(),today.getDate());}
 function sundays(y,m){let s=[],d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()===0)s.push(d.getDate());d.setDate(d.getDate()+1);}return s;}
 
-function getAsSendDate(y,m){
-  let d=16;
+function getLastBizDayOnOrBefore(y,m,targetDay){
+  let d=targetDay;
   while(d>=1){
     const dow=new Date(y,m,d).getDay();
     const key=dk(y,m,d);
     if(dow!==0&&dow!==6&&!HOLIDAYS[key])return d;
     d--;
   }
-  return 16;
+  return targetDay;
+}
+function getAsSendDate(y,m){
+  const rule=scheduleRules.find(r=>r.key==='as_send');
+  const targetDay=(rule&&rule.targetDay)?rule.targetDay:16;
+  return getLastBizDayOnOrBefore(y,m,targetDay);
 }
 
 function getEvs(y,m,d){
   const ev=[],dow=new Date(y,m,d).getDay(),key=dk(y,m,d);
   if(HOLIDAYS[key])ev.push({t:'holiday',label:HOLIDAYS[key]});
-  if(dow===1)ev.push({t:'order'});
-  if(d===1||d===2)ev.push({t:'stock'});
-  if(d===8)ev.push({t:'pod'});
-  if(d===22)ev.push({t:'aio'});
-  if(d===25)ev.push({t:'report'});
-  if(d===15)ev.push({t:'as_deadline'});
-  if(d===getAsSendDate(y,m))ev.push({t:'as_send'});
+  scheduleRules.forEach(rule=>{
+    let match=false;
+    if(rule.condType==='weekday') match = dow===rule.weekday;
+    else if(rule.condType==='monthdays') match = (rule.days||[]).includes(d);
+    else if(rule.condType==='lastBizDayBefore') match = d===getLastBizDayOnOrBefore(y,m,rule.targetDay||16);
+    if(match) ev.push({t:rule.key});
+  });
   if(dow===0){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&i<4)ev.push({t:'clean',sec:i+1});}
   return ev;
 }
@@ -1227,6 +1295,14 @@ function renderMyPage(){
       :`<div style="font-size:10px;color:var(--gold);margin-top:4px;">🔄 순환근무</div>`;
     block.innerHTML=`<div class="staff-avatar">${name[0]}</div><div class="staff-name">${name}</div>${storeLabel}`;
     block.onclick=()=>enterMyWork(name);
+    if(isAdmin){
+      const delBtn=document.createElement('div');
+      delBtn.className='staff-del-btn';
+      delBtn.textContent='×';
+      delBtn.title=`${name} 삭제`;
+      delBtn.onclick=(e)=>{e.stopPropagation();deleteStaffMember(name);};
+      block.appendChild(delBtn);
+    }
     grid.appendChild(block);
   });
 
@@ -4146,7 +4222,8 @@ async function renderDashboard(){
     {id:'today',label:'📍 현황·보고'},
     {id:'monthly',label:'📊 월간 통계'},
     {id:'projects',label:'🔄 프로젝트'},
-    {id:'dayoff',label:'🏖️ 휴무 관리'}
+    {id:'dayoff',label:'🏖️ 휴무 관리'},
+    {id:'fixedtasks',label:'⚙️ 고정업무'}
   ];
   tabDefs.forEach(td=>{
     const b=document.createElement('button');
@@ -4163,9 +4240,10 @@ async function renderDashboard(){
   if(dashTab==='today')await renderTodayTab(content);
   else if(dashTab==='projects')await renderProjectsTab(content);
   else if(dashTab==='dayoff')await renderDayoffTab(content);
+  else if(dashTab==='fixedtasks')await renderFixedTasksTab(content);
   else await renderMonthlyTab(content);
 
-  if(dashTab!=='monthly'){
+  if(dashTab!=='monthly'&&dashTab!=='fixedtasks'){
     const refreshBtn=document.createElement('button');
     refreshBtn.className='dash-refresh';
     refreshBtn.textContent='🔄 새로고침';
@@ -4348,27 +4426,34 @@ async function renderTodayTab(content){
       });
     });
     dashUnsubs.push(unsub1);
+  }
 
-    // 오늘의 업무 + 근무자 실시간 리스닝 (선택된 날짜 기준)
-    const todoRef=doc(db,`todos/${store.id}_${tKey}`);
-    const unsub2=onSnapshot(todoRef,(snap)=>{
-      const items=snap.exists()?(snap.data().items||[]):[];
-      const done=items.filter(i=>i.done).length;
+  // 오늘의 업무 + 근무자 실시간 집계 (staff_todos를 storeId 기준으로 매장별 재집계)
+  // ※ 예전엔 아무도 쓰지 않는 todos/{store}_{date} 컬렉션을 읽어서 항상 빈 값이었음 (수정됨)
+  const staffTodoCache={};
+  function recomputeStoreTodos(){
+    STORES.forEach(store=>{
+      const allItems=[];
+      staffList.forEach(name=>{
+        (staffTodoCache[name]||[]).forEach(it=>{
+          if(it.storeId===store.id)allItems.push(it);
+        });
+      });
+      const done=allItems.filter(i=>i.done).length;
       const el=document.getElementById(`todostat-${store.id}`);
-      if(el)el.textContent=`📝 오늘의 업무: ${done} / ${items.length} 완료`;
+      if(el)el.textContent=`📝 오늘의 업무: ${done} / ${allItems.length} 완료`;
 
-      const authors=[...new Set(items.map(i=>i.author).filter(Boolean))];
+      const authors=[...new Set(allItems.map(i=>i.author).filter(Boolean))];
       const workersEl=document.getElementById(`workers-${store.id}`);
       if(workersEl)workersEl.textContent=`👤 근무자: ${authors.length?authors.join(', '):'기록 없음'}`;
 
-      // 항목별 상세
       const todoItemsWrap=document.getElementById(`todoitems-${store.id}`);
       if(todoItemsWrap){
-        if(items.length===0){
+        if(allItems.length===0){
           todoItemsWrap.innerHTML='<div class="no-clean">등록된 업무 없음</div>';
         }else{
           todoItemsWrap.innerHTML='';
-          items.forEach(it=>{
+          allItems.forEach(it=>{
             const carry=(it.fromDate&&it.fromDate!==tKey)?` <span style="color:var(--orange)">[${it.fromDate.slice(5)} 이월]</span>`:'';
             const row=document.createElement('div');row.className='dash-todo-item'+(it.done?' done':'');
             row.innerHTML=`<span class="ico">${it.done?'✅':'⬜'}</span><span class="txt">${it.text} <span style="color:#bbb">(${it.author||'익명'})</span>${carry}</span>`;
@@ -4377,8 +4462,15 @@ async function renderTodayTab(content){
         }
       }
     });
-    dashUnsubs.push(unsub2);
   }
+  staffList.forEach(name=>{
+    const staffRef=doc(db,`staff_todos/${name}_${tKey}`);
+    const unsubStaff=onSnapshot(staffRef,(snap)=>{
+      staffTodoCache[name]=snap.exists()?(snap.data().items||[]):[];
+      recomputeStoreTodos();
+    });
+    dashUnsubs.push(unsubStaff);
+  });
 }
 
 // ── 탭 3: 월간 통계 (이번 달 누적) ──
@@ -4630,6 +4722,143 @@ async function renderDayoffTab(content){
   render();
 }
 
+// ── 탭: 고정업무 관리 (월간 반복되는 주문/재고/점검/보고 마감 규칙 편집) ──
+const RULE_COLORS=[
+  {v:'c-blue',label:'파랑'},{v:'c-orange',label:'주황'},{v:'c-purple',label:'보라'},
+  {v:'c-pink',label:'핑크'},{v:'c-teal',label:'청록'},{v:'c-green',label:'초록'}
+];
+function condSummary(rule){
+  if(rule.condType==='weekday') return `매주 ${['일','월','화','수','목','금','토'][rule.weekday]}요일`;
+  if(rule.condType==='monthdays') return `매월 ${(rule.days||[]).join(', ')}일`;
+  if(rule.condType==='lastBizDayBefore') return `매월 ${rule.targetDay}일 이전 마지막 영업일`;
+  return '조건 없음';
+}
+function buildRuleForm(rule){
+  const box=document.createElement('div');box.className='feedback-box';box.style.marginTop='10px';
+  const mk=(labelText)=>{
+    const lb=document.createElement('div');lb.style.cssText='font-size:11px;color:var(--text-sub);margin:6px 0 3px';lb.textContent=labelText;
+    return lb;
+  };
+  const inputStyle='padding:7px 8px;border-radius:6px;border:1px solid var(--border);width:100%;font-family:inherit;font-size:13px;box-sizing:border-box;';
+
+  box.appendChild(mk('조건 유형'));
+  const condSel=document.createElement('select');condSel.style.cssText=inputStyle;
+  condSel.innerHTML=`<option value="weekday">매주 특정 요일</option><option value="monthdays">매월 특정 일자(들)</option><option value="lastBizDayBefore">매월 N일 이전 마지막 영업일</option>`;
+  condSel.value=rule.condType;
+  box.appendChild(condSel);
+
+  const weekdayWrap=document.createElement('div');
+  const weekdaySel=document.createElement('select');weekdaySel.style.cssText=inputStyle;
+  weekdaySel.innerHTML=['일','월','화','수','목','금','토'].map((d,i)=>`<option value="${i}">${d}요일</option>`).join('');
+  weekdaySel.value=rule.weekday??1;
+  weekdayWrap.appendChild(mk('요일 선택'));weekdayWrap.appendChild(weekdaySel);
+
+  const monthdaysWrap=document.createElement('div');
+  const monthdaysInput=document.createElement('input');monthdaysInput.type='text';monthdaysInput.style.cssText=inputStyle;
+  monthdaysInput.placeholder='예: 1,2,15';monthdaysInput.value=(rule.days||[]).join(',');
+  monthdaysWrap.appendChild(mk('일자(쉼표로 구분)'));monthdaysWrap.appendChild(monthdaysInput);
+
+  const lastBizWrap=document.createElement('div');
+  const lastBizInput=document.createElement('input');lastBizInput.type='number';lastBizInput.min='1';lastBizInput.max='31';lastBizInput.style.cssText=inputStyle;
+  lastBizInput.value=rule.targetDay||16;
+  lastBizWrap.appendChild(mk('기준일(N일)'));lastBizWrap.appendChild(lastBizInput);
+
+  box.appendChild(weekdayWrap);box.appendChild(monthdaysWrap);box.appendChild(lastBizWrap);
+
+  const syncCondVisibility=()=>{
+    weekdayWrap.style.display=condSel.value==='weekday'?'block':'none';
+    monthdaysWrap.style.display=condSel.value==='monthdays'?'block':'none';
+    lastBizWrap.style.display=condSel.value==='lastBizDayBefore'?'block':'none';
+  };
+  syncCondVisibility();
+  condSel.onchange=syncCondVisibility;
+
+  box.appendChild(mk('업무명'));
+  const taskInput=document.createElement('input');taskInput.type='text';taskInput.style.cssText=inputStyle;taskInput.value=rule.task||'';
+  box.appendChild(taskInput);
+
+  box.appendChild(mk('설명'));
+  const metaInput=document.createElement('input');metaInput.type='text';metaInput.style.cssText=inputStyle;metaInput.value=rule.meta||'';
+  box.appendChild(metaInput);
+
+  box.appendChild(mk('색상 태그'));
+  const colSel=document.createElement('select');colSel.style.cssText=inputStyle;
+  colSel.innerHTML=RULE_COLORS.map(c=>`<option value="${c.v}">${c.label}</option>`).join('');
+  colSel.value=rule.col||'c-blue';
+  box.appendChild(colSel);
+
+  const saveBtn=document.createElement('button');saveBtn.className='feedback-save-btn';saveBtn.style.marginTop='10px';saveBtn.textContent='💾 저장';
+  const savedEl=document.createElement('div');savedEl.className='feedback-saved';
+  box.appendChild(saveBtn);box.appendChild(savedEl);
+
+  saveBtn.onclick=async()=>{
+    rule.condType=condSel.value;
+    if(rule.condType==='weekday'){ rule.weekday=parseInt(weekdaySel.value,10); delete rule.days; delete rule.targetDay; }
+    else if(rule.condType==='monthdays'){ rule.days=monthdaysInput.value.split(',').map(s=>parseInt(s.trim(),10)).filter(n=>!isNaN(n)&&n>=1&&n<=31); delete rule.weekday; delete rule.targetDay; }
+    else if(rule.condType==='lastBizDayBefore'){ rule.targetDay=parseInt(lastBizInput.value,10)||16; delete rule.weekday; delete rule.days; }
+    rule.task=taskInput.value.trim()||'(제목없음)';
+    rule.meta=metaInput.value.trim();
+    rule.col=colSel.value;
+    savedEl.textContent='저장 중...';
+    await saveScheduleRules();
+    savedEl.textContent='✓ 저장됨';
+    setTimeout(()=>renderDashboard(),600);
+  };
+
+  return box;
+}
+async function renderFixedTasksTab(content){
+  document.getElementById('dash-sub').textContent='매월 반복되는 고정 업무 규칙 관리';
+
+  const introEl=document.createElement('div');introEl.className='dash-date';
+  introEl.textContent='여기서 수정하면 전 지점 월간 캘린더에 즉시 반영됩니다. 공휴일은 자동으로 조회되어 표시되니 따로 입력하지 않아도 돼요.';
+  content.appendChild(introEl);
+
+  scheduleRules.forEach((rule,idx)=>{
+    const card=document.createElement('div');card.className='dash-card';card.style.marginBottom='10px';
+
+    const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
+    nameDiv.innerHTML=`${rule.task||'(제목없음)'} <span class="dash-store-badge" style="background:#f3f4f6;color:#555">${condSummary(rule)}</span>`;
+    card.appendChild(nameDiv);
+
+    if(rule.meta){
+      const metaEl=document.createElement('div');metaEl.style.cssText='font-size:12px;color:var(--text-sub);margin:4px 0 8px';
+      metaEl.textContent=rule.meta;
+      card.appendChild(metaEl);
+    }
+
+    const btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;';
+    const editBtn=document.createElement('button');editBtn.className='dash-toggle';editBtn.textContent='✏️ 수정';
+    const delBtn=document.createElement('button');delBtn.className='dash-toggle';delBtn.style.color='#e5433a';delBtn.textContent='🗑 삭제';
+    btnRow.appendChild(editBtn);btnRow.appendChild(delBtn);
+    card.appendChild(btnRow);
+
+    const formWrap=buildRuleForm(rule);
+    formWrap.style.display='none';
+    card.appendChild(formWrap);
+
+    editBtn.onclick=()=>{formWrap.style.display=formWrap.style.display==='none'?'block':'none';};
+    delBtn.onclick=async()=>{
+      if(!confirm(`"${rule.task}" 고정업무를 삭제할까요?`))return;
+      scheduleRules.splice(idx,1);
+      await saveScheduleRules();
+      renderDashboard();
+    };
+
+    content.appendChild(card);
+  });
+
+  const addBtn=document.createElement('button');
+  addBtn.className='dash-refresh';
+  addBtn.textContent='+ 새 고정업무 추가';
+  addBtn.onclick=async()=>{
+    scheduleRules.push({key:'custom_'+Date.now(),condType:'monthdays',days:[1],task:'새 고정업무',meta:'',col:'c-blue'});
+    await saveScheduleRules();
+    renderDashboard();
+  };
+  content.appendChild(addBtn);
+}
+
 async function renderMonthlyTab(content){
   document.getElementById('dash-sub').textContent='이번 달 지점별 누적 통계';
   const y=today.getFullYear(),m=today.getMonth();
@@ -4737,7 +4966,7 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
-loadStaffList().then(async()=>{
+Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays()]).then(async()=>{
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();
