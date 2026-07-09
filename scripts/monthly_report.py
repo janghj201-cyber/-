@@ -1,10 +1,14 @@
 """
-위베이프 월간 보고 스크립트 v3.0
+위베이프 월간 보고 스크립트 v4.0
 - 기업 보고서 형식
 - 6가지 역량 지표 (미완료 감점 없음)
 - 베스트 직원/매장 TOP3
 - Word(.docx) 첨부 발송
 - 게시판 공지 자동 등록 (순위만, 점수 없음)
+v4 추가:
+  - 청소 체크 타임스탬프 기반 "몰아치기" 패턴 월간 집계
+  - 인수인계 수신확인(다른 사람 인계를 내가 확인한 건수) → 협력도 점수에 반영
+  - Claude API를 통한 업무/인수인계 내용 질적 판단 (직원별 월간 요약)
 """
 import os, json, calendar, urllib.request, smtplib, io, time
 from datetime import datetime, timedelta
@@ -17,6 +21,7 @@ FIREBASE_API_KEY   = os.environ["FIREBASE_API_KEY"]
 GMAIL_USER         = os.environ["GMAIL_USER"]
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
 REPORT_TO          = os.environ["REPORT_TO_EMAIL"]
+ANTHROPIC_API_KEY  = os.environ.get("ANTHROPIC_API_KEY")  # 없으면 LLM 판단 단계는 건너뜀
 PROJECT_ID         = "wevape-schedule"
 BASE_URL           = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
 
@@ -58,6 +63,7 @@ def parse_value(v):
     if "stringValue"  in v: return v["stringValue"]
     if "booleanValue" in v: return v["booleanValue"]
     if "integerValue" in v: return int(v["integerValue"])
+    if "doubleValue"  in v: return v["doubleValue"]
     if "arrayValue"   in v: return [parse_value(x) for x in v["arrayValue"].get("values",[])]
     if "mapValue"     in v: return parse_fields(v["mapValue"].get("fields",{}))
     return None
@@ -66,13 +72,34 @@ def parse_fields(f): return {k: parse_value(v) for k,v in f.items()}
 
 def get_todos(name, dk):
     d = fb_get(f"staff_todos/{name}_{dk}"); return (d.get("items") or []) if d else []
+
+# 청소 체크값 판독 (구버전 boolean / 신버전 {v,t} 객체 모두 지원)
+def ck_val(x):
+    if isinstance(x, dict): return x.get("v") is True
+    return x is True
+def ck_time(x):
+    if isinstance(x, dict): return x.get("t")
+    return None
+
 def get_clean(sid, dk):
     d = fb_get(f"checks/{sid}/{dk}/clean")
-    if not d: return 0,0
-    keys=[k for k in d if k.startswith("item_")]; total=len(keys) or 6
-    return sum(1 for k in keys if d.get(k) is True), total
+    if not d: return 0, 0, []
+    keys = [k for k in d if k.startswith("item_")]
+    total = len(keys) or 6
+    done = sum(1 for k in keys if ck_val(d.get(k)))
+    times = sorted([ck_time(d.get(k)) for k in keys if ck_time(d.get(k))])
+    return done, total, times
+
+def check_clean_pattern(times, total):
+    """청소 체크 타임스탬프가 비정상적으로 몰려서 찍혔는지(일괄 클릭 의심) 판단"""
+    if len(times) < max(3, total // 2):
+        return False
+    span_sec = (max(times) - min(times)) / 1000
+    return len(times) >= 4 and span_sec < 60
+
 def get_handover(sid, dk):
     d = fb_get(f"handover/{sid}_{dk}"); return (d.get("items") or []) if d else []
+
 def get_dayoff():
     d = fb_get("config/dayoff"); return d or {}
 def get_projects(name):
@@ -88,12 +115,25 @@ def get_prev_month_dates():
     dates = [f"{y}-{m:02d}-{d:02d}" for d in range(1, num_days+1)]
     return dates, y, m
 
+# ── 인수인계 수신확인 집계 (월간, 전 매장) ───────
+def build_handover_receipt_map(dates):
+    """{이름: 그 달에 확인 처리한 인수인계 건수} - 수신 성실도"""
+    counts = {}
+    for dk in dates:
+        for s in STORES:
+            for it in get_handover(s["id"], dk):
+                if it.get("confirmed") and it.get("confirmedBy"):
+                    who = it["confirmedBy"]
+                    counts[who] = counts.get(who, 0) + 1
+    return counts
+
 # ── 직원 분석 ───────────────────────────────────
-def analyze_staff(name, dates, dayoff_data):
+def analyze_staff(name, dates, dayoff_data, handover_recv_map):
     my_dayoffs = dayoff_data.get(name, {})
     work_days, used_days = 0, 0
     total_todos, done_todos, kept_count, carry_count, carry_done = 0,0,0,0,0
     handover_written, handover_confirmed = 0,0
+    sample_todos, sample_handovers = [], []
 
     for dk in dates:
         is_dayoff = my_dayoffs.get(dk) == "dayoff"
@@ -110,14 +150,21 @@ def analyze_staff(name, dates, dayoff_data):
                     carry_count += 1
                     if t.get("done"): carry_done += 1
                     if t.get("kept"): kept_count += 1
+            if len(sample_todos) < 20:
+                sample_todos += [t.get("text","") for t in todos][:3]
 
-    # 인수인계 확인률
+    # 인수인계 확인률 (내가 쓴 것이 확인됐는지 = 발신측)
     for s in STORES:
         for dk in dates:
             items = get_handover(s["id"], dk)
             mine = [i for i in items if i.get("author")==name]
             handover_written += len(mine)
             handover_confirmed += sum(1 for i in mine if i.get("confirmed"))
+            if len(sample_handovers) < 10:
+                sample_handovers += [i.get("text","") for i in mine][:2]
+
+    # 인수인계 수신확인 건수 (내가 남의 것을 확인한 = 수신측, 성실도)
+    handover_received = handover_recv_map.get(name, 0)
 
     # 프로젝트
     projs = get_projects(name)
@@ -127,16 +174,18 @@ def analyze_staff(name, dates, dayoff_data):
     # 6가지 역량 점수
     part_rate = used_days/work_days if work_days>0 else 0
     comp_rate = done_todos/total_todos if total_todos>0 else 0
-    # 이월 처리율 (완료+보관 모두 인정)
     carry_resolved = carry_done + kept_count
     carry_rate = carry_resolved/carry_count if carry_count>0 else 1.0
-    handover_rate = handover_confirmed/handover_written if handover_written>0 else 1.0
+    handover_send_rate = handover_confirmed/handover_written if handover_written>0 else 1.0
+    # 수신 성실도 보정치: 근무일 대비 수신확인 건수 (하루 1건 이상이면 만점 취급)
+    handover_recv_rate = min(handover_received/work_days, 1.0) if work_days>0 else 0
 
     s_steady     = int(part_rate * 20)                        # 꾸준함 20점
     s_diligence  = min(total_todos//3, 12) + int(comp_rate*13)# 충실도 25점
     s_resp       = int(carry_rate * 20)                       # 책임감 20점
     s_initiative = min(ongoing*4 + completed_p*2, 10)         # 주도성 10점
-    s_handover   = int(handover_rate * 15)                    # 협력도 15점
+    # 협력도 15점 = 발신측(내가 남긴 인계가 확인됐는지) 10점 + 수신측(내가 확인 처리했는지) 5점
+    s_handover   = int(handover_send_rate*10) + int(handover_recv_rate*5)
     s_growth     = 10                                         # 성장성 10점 (기본값)
     total_score  = s_steady+s_diligence+s_resp+s_initiative+s_handover+s_growth
 
@@ -155,7 +204,10 @@ def analyze_staff(name, dates, dayoff_data):
         "carry_count":carry_count, "carry_done":carry_done,
         "carry_rate":carry_rate, "kept_count":kept_count,
         "ongoing":ongoing, "completed_p":completed_p,
-        "handover_rate":handover_rate,
+        "handover_rate":handover_send_rate,
+        "handover_received":handover_received,
+        "handover_recv_rate":handover_recv_rate,
+        "sample_todos":sample_todos, "sample_handovers":sample_handovers,
         "scores":{"꾸준함":s_steady,"충실도":s_diligence,"책임감":s_resp,
                   "주도성":s_initiative,"협력도":s_handover,"성장성":s_growth}
     }
@@ -166,12 +218,14 @@ def analyze_store(store, dates, dayoff_data):
     clean_days=clean_total_days=0
     todo_total=todo_done=0
     hw_total=hw_confirmed=0
+    pattern_days=0
 
     for dk in dates:
-        cd,ct = get_clean(sid, dk)
+        cd,ct,ctimes = get_clean(sid, dk)
         if ct>0:
             clean_total_days+=1
             if cd>=ct: clean_days+=1
+            if check_clean_pattern(ctimes, ct): pattern_days+=1
 
         for name in STAFF:
             if dayoff_data.get(name,{}).get(dk)=="dayoff": continue
@@ -192,8 +246,58 @@ def analyze_store(store, dates, dayoff_data):
         "name":store["name"],"short":store["short"],"score":score,
         "clean_rate":clean_rate,"clean_days":clean_days,"clean_total":clean_total_days,
         "todo_rate":todo_rate,"todo_done":todo_done,"todo_total":todo_total,
-        "hw_rate":hw_rate
+        "hw_rate":hw_rate,"pattern_days":pattern_days
     }
+
+# ── Claude API를 통한 업무/인수인계 내용 질적 판단 (월간 요약) ──
+def llm_judge_monthly(staff_results):
+    """활동한 직원들만 대상으로, 한 달 샘플 텍스트 기반 한 줄 질적 평가"""
+    if not ANTHROPIC_API_KEY:
+        return {}
+    lines = []
+    for s in staff_results:
+        if s["used_days"] == 0:
+            continue
+        name = s["name"]
+        lines.append(f"[{name}] (근무 {s['used_days']}일, 업무 {s['total']}건)")
+        if s["sample_todos"]:
+            lines.append("업무 샘플: " + " / ".join(s["sample_todos"][:12]))
+        if s["sample_handovers"]:
+            lines.append("인수인계 샘플: " + " / ".join(s["sample_handovers"][:8]))
+    if not lines:
+        return {}
+
+    prompt = (
+        "다음은 위베이프 매장 직원들이 한 달 동안 입력한 '업무 내용'과 '인수인계 내용'의 샘플입니다.\n"
+        "각 직원별로 입력 내용이 한 달 동안 대체로 구체적이고 실질적이었는지, 형식적이거나 성의없이 "
+        "짧게만 썼는지를 한두 문장으로 담백하게 평가해 주세요. 과장하지 말고 샘플에 근거해서만 판단하세요.\n"
+        "반드시 아래 JSON 형식으로만 응답하세요 (다른 설명, 코드블록 없이 순수 JSON만):\n"
+        '{"직원이름": "한두 문장 평가"}\n\n'
+        + "\n".join(lines)
+    )
+    try:
+        body = json.dumps({
+            "model": "claude-sonnet-5",
+            "max_tokens": 2000,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=body, method="POST"
+        )
+        req.add_header("x-api-key", ANTHROPIC_API_KEY)
+        req.add_header("anthropic-version", "2023-06-01")
+        req.add_header("content-type", "application/json")
+        with urllib.request.urlopen(req, timeout=45) as r:
+            resp = json.load(r)
+        text = resp["content"][0]["text"].strip()
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.startswith("json"): text = text[4:]
+        return json.loads(text)
+    except Exception as e:
+        print(f"⚠️ LLM 월간 판단 실패(건너뜀): {e}")
+        return {}
 
 # ── 게시판 공지 등록 ────────────────────────────
 def post_board_notice(y, m, best_staff, best_stores):
@@ -240,12 +344,14 @@ def build_report():
     # 1. 경영진 요약
     L += ["[1] 이달의 경영 요약",""]
 
-    # 직원/매장 분석 (시간이 걸려서 먼저 수집)
+    print("인수인계 수신확인 집계 중...")
+    handover_recv_map = build_handover_receipt_map(dates)
+
     print("직원 데이터 수집 중...")
     staff_results = []
     for name in STAFF:
         print(f"  - {name}...")
-        r = analyze_staff(name, dates, dayoff)
+        r = analyze_staff(name, dates, dayoff, handover_recv_map)
         staff_results.append(r)
 
     print("매장 데이터 수집 중...")
@@ -259,17 +365,20 @@ def build_report():
     store_sorted = sorted(store_results, key=lambda x:x["score"], reverse=True)
     active = [s for s in staff_sorted if s["used_days"]>0]
 
-    # 전체 지표 요약
     total_todos_all = sum(s["total"] for s in staff_results)
     total_done_all  = sum(s["done"] for s in staff_results)
     overall_comp    = int(total_done_all/total_todos_all*100) if total_todos_all>0 else 0
     no_show = [s for s in staff_results if s["used_days"]==0]
     leaders = [s for s in staff_results if s["type"]=="🌟 주도형"]
+    pattern_stores = [s for s in store_results if s["pattern_days"]>0]
 
     L.append(f"  전체 업무 완료율: {overall_comp}% ({total_done_all}/{total_todos_all}건)")
     L.append(f"  앱 참여 직원: {len(active)}/{len(STAFF)}명")
     if leaders: L.append(f"  이달의 주도형 직원: {', '.join(s['name'] for s in leaders)}")
     if no_show: L.append(f"  ⚠️ 앱 미참여: {', '.join(s['name'] for s in no_show)}")
+    if pattern_stores:
+        pat_str = ', '.join(f"{s['short']}({s['pattern_days']}일)" for s in pattern_stores)
+        L.append(f"  ⚠️ 청소체크 일괄처리 의심 매장: {pat_str}")
     L += ["","="*55,""]
 
     # 2. 매장별 월간 현황
@@ -278,6 +387,8 @@ def build_report():
         bar = "■"*(s["score"]//10) + "□"*(10-s["score"]//10)
         L.append(f"  {s['name']}  [{bar}] {s['score']}점")
         L.append(f"    청소완료율  {int(s['clean_rate']*100):3d}%  ({s['clean_days']}/{s['clean_total']}일)")
+        if s["pattern_days"]>0:
+            L.append(f"    ⚠️ 청소체크 일괄처리 의심 {s['pattern_days']}일")
         L.append(f"    업무완료율  {int(s['todo_rate']*100):3d}%  ({s['todo_done']}/{s['todo_total']}건)")
         L.append(f"    인수인계확인 {int(s['hw_rate']*100):3d}%")
         L.append("")
@@ -285,7 +396,8 @@ def build_report():
 
     # 3. 직원별 역량 분석 (관리자 전용)
     L += ["[3] 직원별 역량 분석  ※ 관리자 전용","",
-          "  ※ 미완료 업무 자체는 감점 없음 — 이월 후 처리 여부로 책임감 평가",""]
+          "  ※ 미완료 업무 자체는 감점 없음 — 이월 후 처리 여부로 책임감 평가",
+          "  ※ 협력도(15점) = 인계 발신 확인률(10점) + 인계 수신확인 성실도(5점)",""]
 
     for s in staff_sorted:
         bar = "■"*(s["score"]//10) + "□"*(10-s["score"]//10)
@@ -298,6 +410,7 @@ def build_report():
             txt = f"    이월    {s['carry_count']}건 중 처리 {s['carry_done']}건"
             if s["kept_count"]>0: txt += f" / 보관 {s['kept_count']}건(합리적사유)"
             L.append(txt)
+        L.append(f"    인수인계  발신확인률 {int(s['handover_rate']*100)}% · 수신확인 {s['handover_received']}건")
         if s["ongoing"] or s["completed_p"]:
             L.append(f"    프로젝트 진행중 {s['ongoing']}건 · 완료 {s['completed_p']}건")
         sc = s["scores"]
@@ -305,8 +418,19 @@ def build_report():
         L.append("")
     L += ["="*55,""]
 
-    # 4. 이달의 베스트 TOP3
-    L += ["[4] 이달의 베스트",""]
+    # 4. AI 업무 내용 판단 (월간)
+    L += ["[4] AI 업무 내용 판단 (월간 샘플 기반)",""]
+    judgments = llm_judge_monthly(staff_results)
+    if judgments:
+        for s in staff_sorted:
+            if s["name"] in judgments:
+                L.append(f"  · {s['name']}: {judgments[s['name']]}")
+    else:
+        L.append("  (판단 불가 — ANTHROPIC_API_KEY 미설정 또는 오류)")
+    L += ["","="*55,""]
+
+    # 5. 이달의 베스트 TOP3
+    L += ["[5] 이달의 베스트",""]
     L.append(f"  🏆 베스트 직원 TOP3")
     for i,s in enumerate(active[:3]):
         comp=int(s["comp_rate"]*100)
@@ -319,13 +443,16 @@ def build_report():
         L.append(f"         청소 {int(s['clean_rate']*100)}% · 업무 {int(s['todo_rate']*100)}% · 인수인계 {int(s['hw_rate']*100)}%")
     L += ["","="*55,""]
 
-    # 5. 종합 의견
-    L += ["[5] 월간 종합 의견",""]
+    # 6. 종합 의견
+    L += ["[6] 월간 종합 의견",""]
     opinions = []
     low_stores = [s for s in store_results if s["clean_rate"]<0.8]
     if low_stores: opinions.append(f"• 청소 수행률 부진 매장: {', '.join(s['short'] for s in low_stores)} — 점검 필요")
+    if pattern_stores: opinions.append(f"• 청소체크 일괄처리 의심 매장: {', '.join(s['short'] for s in pattern_stores)} — 현장 확인 권장")
     low_carry = [s for s in staff_results if s["carry_count"]>=5 and s["carry_rate"]<0.4]
     if low_carry: opinions.append(f"• 이월 미처리 누적: {', '.join(s['name'] for s in low_carry)} — 업무 부하 점검")
+    low_recv = [s for s in staff_results if s["used_days"]>=5 and s["handover_recv_rate"]<0.2]
+    if low_recv: opinions.append(f"• 인수인계 수신확인 저조: {', '.join(s['name'] for s in low_recv)} — 인계 확인 습관 점검 필요")
     if no_show: opinions.append(f"• 앱 미참여 직원 {len(no_show)}명 — 현장 확인 필요")
     if leaders: opinions.append(f"• 우수 활약: {', '.join(s['name'] for s in leaders)} — 사례 공유 권장")
     if not opinions: opinions.append("• 전반적으로 양호한 한 달이었습니다.")
@@ -376,7 +503,6 @@ def send():
         msg.attach(part)
     with smtplib.SMTP("smtp.gmail.com",587) as sv:
         sv.starttls(); sv.login(GMAIL_USER,GMAIL_APP_PASSWORD); sv.send_message(msg)
-    # 게시판 공지
     posted = post_board_notice(y, m, active, store_sorted)
     print(f"✅ 월간보고 발송 완료: {month_label}")
     print(f"{'✅' if posted else '⚠️'} 게시판 공지 {'등록 완료' if posted else '등록 실패'}")
