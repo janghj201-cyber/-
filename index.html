@@ -5025,6 +5025,7 @@ Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays()]).then(async()
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();
+  await autoPostMemoNotice();
   await autoPostDayoffNotice();
 });
 
@@ -5054,6 +5055,32 @@ async function autoPostNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
+
+async function autoPostMemoNotice(){
+  const noticeId='notice_memo_0709';
+  const seen=localStorage.getItem(noticeId);
+  if(seen)return;
+  try{
+    const ref=doc(db,'board/posts');
+    const snap=await getDoc(ref);
+    const items=snap.exists()?(snap.data().items||[]):[];
+    if(items.find(i=>i.id===noticeId))return;
+    const now=new Date();
+    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const newPost={
+      id:noticeId,
+      cat:'notice',
+      title:'📝 개인 메모장 기능 추가',
+      body:`내 업무 화면에 "📝 개인 메모" 섹션이 새로 생겼습니다.\n\n✅ 무엇인가요\n• 나만 보는 자유 메모장이에요 (다른 직원·관리자에게 안 보입니다)\n• 이번 주 주문 필요사항처럼 개인적으로 기억해두고 싶은 걸 자유롭게 적어두는 용도\n• 자유 텍스트 1개, 계속 고쳐쓰고 저장하는 방식\n\n📍 위치\n내 업무 → 진행중 프로젝트 아래, 인수인계 메모 위\n\n💡 참고\n인수인계는 다음 근무자에게 전달할 내용을 남기는 공유용 공간이에요. 개인적으로 기억할 것들은 이제 개인 메모에 적어주시면 인수인계가 더 깔끔해집니다 🙂`,
+      author:'관리자',
+      date:dateStr
+    };
+    items.unshift(newPost);
+    await setDoc(ref,{items});
+    localStorage.setItem(noticeId,'done');
+  }catch(e){}
+}
+
 </script>
 </body>
 </html>
