@@ -878,6 +878,21 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
     </div>
   </div>
 
+  <!-- 개인 메모장 (나만 보는 공간, 인수인계와 구분) -->
+  <div class="my-section">
+    <div class="my-section-header">
+      <span>📝 개인 메모</span>
+      <span style="font-size:11px;color:var(--text-mute);font-weight:400;">나만 보여요</span>
+    </div>
+    <div style="padding:8px 16px 12px;">
+      <textarea id="my-memo-textarea" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;min-height:90px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="이번 주 주문 필요사항 등 개인적으로 기억할 걸 자유롭게 적어두세요 (인수인계와 달리 나만 봅니다)"></textarea>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px;">
+        <span id="my-memo-saved" style="font-size:11px;color:var(--green);"></span>
+        <button onclick="saveMyMemo()" style="background:var(--navy);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">💾 저장</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 인수인계 -->
   <div class="my-section">
     <div class="my-section-header">🔄 인수인계 메모</div>
@@ -1316,6 +1331,31 @@ function renderMyPage(){
   }
 }
 
+// 개인 메모장 (staff_memo/{name}) — 인수인계와 별개로 본인만 보는 자유메모
+async function loadMyMemo(){
+  const ta=document.getElementById('my-memo-textarea');
+  if(!ta||!myStaff)return;
+  ta.value='';
+  try{
+    const snap=await getDoc(doc(db,`staff_memo/${myStaff}`));
+    if(snap.exists())ta.value=snap.data().text||'';
+  }catch(e){}
+}
+window.saveMyMemo=async function(){
+  if(!myStaff)return;
+  const ta=document.getElementById('my-memo-textarea');
+  const savedEl=document.getElementById('my-memo-saved');
+  if(!ta)return;
+  if(savedEl)savedEl.textContent='저장 중...';
+  try{
+    await setDoc(doc(db,`staff_memo/${myStaff}`),{text:ta.value,updatedAt:Date.now()});
+    if(savedEl){savedEl.textContent='✓ 저장됨';setTimeout(()=>savedEl.textContent='',2000);}
+  }catch(e){
+    if(savedEl)savedEl.textContent='⚠ 저장 실패';
+  }
+};
+function saveMyMemo(){window.saveMyMemo();}
+
 function enterMyWork(name){
   myStaff=name;
   myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
@@ -1377,6 +1417,7 @@ function renderMyWorkScreen(){
 
   renderMyTodoList();
   renderMyHandoverList();
+  loadMyMemo();
   loadMyStats();
   checkLastMonthCarry();
   checkHandoverUnread();
@@ -1818,6 +1859,7 @@ const GUIDE_SECTIONS = [
       '여러 개 한번에 입력 버튼으로 한 줄에 하나씩 일괄 등록 가능',
       '전체 삭제 버튼으로 오늘 업무 한 번에 정리',
       '📊 내 전체 업무 히스토리: 이번 달 전체 업무 날짜별 조회 가능',
+      '📝 개인 메모: 온전히 본인만 보는 자유 메모장 (인수인계와 달리 다른 직원·관리자에게 안 보임). 주문 필요사항 등 개인적으로 기억할 것을 자유롭게 적어두는 용도',
       '(관리자 전용) 직원 블록 오른쪽 위 × 버튼으로 퇴사자 삭제 가능 — 삭제 시 일일/월간 보고서 대상에서도 함께 제외됨',
     ]
   },
