@@ -734,6 +734,9 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
       <button class="board-tab" id="btab-history" onclick="switchBoardTab('history')">📌 히스토리</button>
     </div>
     <div class="board-list" id="board-list"><div class="board-empty">불러오는 중...</div></div>
+    <div id="board-expand-row" style="display:none;text-align:center;padding:8px 0 12px;">
+      <button id="board-expand-btn" onclick="toggleBoardExpand()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;"></button>
+    </div>
   </div>
   <!-- 오늘 전체 매장 현황 -->
   <div class="dashboard-today">
@@ -1806,7 +1809,7 @@ async function autoPostDayoffNotice(){
     const now=new Date();
     const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     const newPost={
-      id:noticeId, cat:'notice',
+      id:noticeId, cat:'notice', ts:now.getTime(),
       title:'📢 [필독] 이번 달 휴무 설정 해주세요',
       body:`안녕하세요 😊\n\n앱에 휴무 설정 기능이 추가되었습니다.\n본인의 이번 달 휴무일을 직접 등록해주세요!\n\n━━━━━━━━━━━━━━━━\n📍 설정 방법\n━━━━━━━━━━━━━━━━\n\n1. 하단 👤 내 업무 탭 클릭\n2. 본인 이름 블록 선택\n3. 상단 🏖️ 휴무 설정 버튼 클릭\n4. 달력에서 휴무인 날짜 클릭 (노란색으로 표시)\n5. 다시 클릭하면 해제\n\n━━━━━━━━━━━━━━━━\n❓ 왜 필요한가요?\n━━━━━━━━━━━━━━━━\n\n휴무 설정을 하지 않으면 쉬는 날도 "앱 미사용"으로 기록됩니다.\n설정해두면 보고서에 휴무로 정확하게 구분되어 표시됩니다.\n\n⏰ 이번 달 안에 꼭 설정 부탁드립니다!\n\n궁금한 점은 업무공유 게시판에 남겨주세요 🙏`,
       author:'관리자', date:dateStr
@@ -3056,22 +3059,32 @@ async function renderDashboardHome(){
 let boardTab='all'; // 현재 게시판 탭
 let boardWriteCat='notice'; // 작성 중인 카테고리
 let boardViewPost=null; // 현재 보고 있는 게시글
+let boardExpanded=false; // 게시판 목록 펼침 여부 (기본: 최신 1건만)
 
 async function loadBoard(){
   const listEl=document.getElementById('board-list');
+  const expandRow=document.getElementById('board-expand-row');
+  const expandBtn=document.getElementById('board-expand-btn');
   if(!listEl)return;
   listEl.innerHTML='<div class="board-empty">불러오는 중...</div>';
+  if(expandRow)expandRow.style.display='none';
   try{
     const snap=await getDoc(doc(db,'board/posts'));
-    const items=snap.exists()?(snap.data().items||[]):[];
-    const filtered=boardTab==='all'?items:items.filter(i=>i.cat===boardTab);
+    const rawItems=snap.exists()?(snap.data().items||[]):[];
+    // 최신순 정렬: ts(생성시각) 있으면 그 값으로, 없는 과거 글은 배열 인덱스를 보조키로 사용
+    const sorted=rawItems
+      .map((item,idx)=>({item,key:(typeof item.ts==='number')?item.ts:idx}))
+      .sort((a,b)=>b.key-a.key)
+      .map(x=>x.item);
+    const filtered=boardTab==='all'?sorted:sorted.filter(i=>i.cat===boardTab);
     if(filtered.length===0){
       listEl.innerHTML='<div class="board-empty">게시글이 없습니다</div>';
       return;
     }
+    const visible=boardExpanded?filtered:filtered.slice(0,1);
     listEl.innerHTML='';
-    [...filtered].reverse().forEach((item,ri)=>{
-      const realIdx=items.indexOf(item);
+    visible.forEach(item=>{
+      const realIdx=rawItems.indexOf(item);
       const catLabel=item.cat==='notice'?'📢 공지':item.cat==='history'?'📌 히스토리':'💬 업무공유';
       const catClass=item.cat==='notice'?'board-cat-notice':item.cat==='history'?'board-cat-history':'board-cat-share';
       const div=document.createElement('div');div.className='board-item';
@@ -3084,10 +3097,20 @@ async function loadBoard(){
       div.onclick=()=>openBoardDetail(item,realIdx);
       listEl.appendChild(div);
     });
+    if(expandRow&&expandBtn&&filtered.length>1){
+      expandRow.style.display='block';
+      expandBtn.textContent=boardExpanded?'▲ 접기':`▼ 전체보기 (${filtered.length}건)`;
+    }
   }catch(e){
     listEl.innerHTML='<div class="board-empty">불러오기 실패</div>';
   }
 }
+
+window.toggleBoardExpand=function(){
+  boardExpanded=!boardExpanded;
+  loadBoard();
+};
+function toggleBoardExpand(){window.toggleBoardExpand();}
 
 window.switchBoardTab = function(tab){
   boardTab=tab;
@@ -3178,7 +3201,7 @@ window.submitBoardPost=async function(){
   const ref=doc(db,'board/posts');
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date,...extra});
+  items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date,ts:now.getTime(),...extra});
   await setDoc(ref,{items});
   closeBoardWrite();
   loadBoard();
@@ -5045,6 +5068,7 @@ async function autoPostNotice(){
     const newPost={
       id:noticeId,
       cat:'notice',
+      ts:now.getTime(),
       title:'📱 앱 업데이트 안내 (7월 3일)',
       body:`안녕하세요! 여러분의 피드백을 반영해 앱을 업데이트했습니다.\n\n✅ 수정된 사항\n\n[버그 수정]\n• 전날 미완료 업무가 다음날로 이월되지 않던 문제 수정\n  → 이제 미완료 업무가 다음날 자동으로 이월됩니다\n\n[인수인계]\n• 확인자 이름 표시 추가 (누가 확인했는지 바로 확인)\n• 완료된 인수인계 자동 숨김 + 보관함 기능\n• 매장 고정 정보 펼치기/접기 방식으로 개선\n\n[게시판]\n• 본인 작성 글 수정 기능 추가\n• 📌 히스토리 카테고리 추가\n\n[대시보드]\n• 매장 블록에 상세 현황 표시\n  (청소 완료 / 업무 완료율 / 오늘 근무자 / 미확인 인수인계)\n\n[내 업무]\n• 📋 오늘 업무 / 🔄 진행중 프로젝트 타입 구분 추가\n\n궁금한 점은 업무공유 게시판에 남겨주세요 😊`,
       author:'관리자',
@@ -5070,6 +5094,7 @@ async function autoPostMemoNotice(){
     const newPost={
       id:noticeId,
       cat:'notice',
+      ts:now.getTime(),
       title:'📝 개인 메모장 기능 추가',
       body:`내 업무 화면에 "📝 개인 메모" 섹션이 새로 생겼습니다.\n\n✅ 무엇인가요\n• 나만 보는 자유 메모장이에요 (다른 직원·관리자에게 안 보입니다)\n• 이번 주 주문 필요사항처럼 개인적으로 기억해두고 싶은 걸 자유롭게 적어두는 용도\n• 자유 텍스트 1개, 계속 고쳐쓰고 저장하는 방식\n\n📍 위치\n내 업무 → 진행중 프로젝트 아래, 인수인계 메모 위\n\n💡 참고\n인수인계는 다음 근무자에게 전달할 내용을 남기는 공유용 공간이에요. 개인적으로 기억할 것들은 이제 개인 메모에 적어주시면 인수인계가 더 깔끔해집니다 🙂`,
       author:'관리자',
