@@ -340,6 +340,14 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .project-overview-fill{height:100%;background:var(--purple);border-radius:4px;transition:width 0.2s;}
 .project-overview-empty{font-size:12px;color:var(--text-mute);padding:14px;text-align:center;}
 
+.project-group{background:var(--card);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);overflow:hidden;}
+.project-group-header{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;}
+.project-group-name{font-size:13px;font-weight:700;color:var(--text);flex-shrink:0;}
+.project-group-count{font-size:11px;color:var(--text-sub);flex:1;}
+.project-group-toggle{font-size:11px;color:var(--purple);font-weight:700;}
+.project-group-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;}
+.project-group-body .project-overview-row{margin-bottom:0;box-shadow:none;border:1px solid var(--border);background:#faf9f6;}
+
 @media(min-width:768px){
   .dashboard-store-grid{grid-template-columns:repeat(3,1fr);gap:12px;}
   .dashboard-store-block{padding:16px 14px;}
@@ -546,7 +554,13 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-name{font-size:18px;font-weight:700;}
 .my-name-sub{font-size:12px;opacity:0.7;margin-top:2px;}
 .my-change-btn{margin-left:auto;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
-.my-section{background:var(--card);border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 4px rgba(26,35,50,0.07);border:1px solid var(--border);}
+.my-section{background:var(--card);border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 3px 10px rgba(26,35,50,0.10);border:1px solid var(--border);border-left:4px solid var(--border);transition:box-shadow 0.15s;}
+.my-section:hover{box-shadow:0 4px 14px rgba(26,35,50,0.14);}
+.my-section.sec-todo{border-left-color:var(--gold);}
+.my-section.sec-project{border-left-color:var(--purple);}
+.my-section.sec-memo{border-left-color:var(--teal);}
+.my-section.sec-handover{border-left-color:var(--blue);}
+.my-section.sec-history{border-left-color:var(--green);}
 .my-section-header{font-size:13px;font-weight:700;color:var(--text);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .my-date-nav{display:flex;align-items:center;gap:8px;}
 .my-date-nav button{background:#f0f0ee;border:none;border-radius:6px;width:28px;height:28px;font-size:14px;cursor:pointer;color:var(--text);}
@@ -866,7 +880,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div id="handover-unread-banner" style="display:none;"></div>
 
   <!-- 오늘의 업무 (핵심 최상단) -->
-  <div class="my-section" style="margin-top:12px;">
+  <div class="my-section sec-todo" style="margin-top:12px;">
     <div class="my-section-header">
       <span>📝 <span id="my-task-date-label">오늘</span>의 업무</span>
     </div>
@@ -893,7 +907,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 
   <!-- 진행중 프로젝트 (기본 접힘) -->
-  <div class="my-section">
+  <div class="my-section sec-project">
     <div class="my-section-header">
       <span>🔄 진행중 프로젝트</span>
       <button id="project-banner-toggle" onclick="toggleProjectBanner()" style="background:none;border:none;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">펼치기 ▼</button>
@@ -904,7 +918,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 
   <!-- 개인 메모장 (나만 보는 공간, 인수인계와 구분) -->
-  <div class="my-section">
+  <div class="my-section sec-memo">
     <div class="my-section-header">
       <span>📝 개인 메모</span>
       <span style="font-size:11px;color:var(--text-mute);font-weight:400;">나만 보여요</span>
@@ -919,7 +933,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 
   <!-- 인수인계 -->
-  <div class="my-section">
+  <div class="my-section sec-handover">
     <div class="my-section-header">🔄 인수인계 메모</div>
     <div id="my-handover-list" style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:6px;"><div class="my-empty">불러오는 중...</div></div>
     <div class="my-input-row">
@@ -929,7 +943,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   </div>
 
   <!-- 개인 업무 전체 히스토리 -->
-  <div class="my-section">
+  <div class="my-section sec-history">
     <div class="my-section-header">
       <span>📊 내 전체 업무 히스토리</span>
       <button onclick="toggleMyHistory()" id="my-history-toggle-btn" style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">펼치기 ▼</button>
@@ -3091,7 +3105,7 @@ async function renderDashboardHome(){
   await renderDashboardProjects();
 }
 
-// 🔄 장기 프로젝트 현황 (전 직원 진행중 프로젝트, 진행률순)
+// 🔄 장기 프로젝트 현황 (담당자별 그룹, 접기/펼치기)
 async function renderDashboardProjects(){
   const listEl=document.getElementById('dashboard-project-list');
   if(!listEl)return;
@@ -3108,21 +3122,46 @@ async function renderDashboardProjects(){
       listEl.innerHTML='<div class="project-overview-empty">진행중인 장기 프로젝트가 없습니다</div>';
       return;
     }
-    all.sort((a,b)=>b.progress-a.progress);
+    // 담당자별 그룹핑
+    const grouped={};
+    all.forEach(p=>{(grouped[p.name]=grouped[p.name]||[]).push(p);});
+    const names=Object.keys(grouped).sort((a,b)=>grouped[b].length-grouped[a].length);
+
     listEl.innerHTML='';
-    all.forEach(p=>{
-      const store=STORES.find(s=>s.id===p.storeId);
-      const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
-      const row=document.createElement('div');
-      row.className='project-overview-row';
-      row.innerHTML=`
-        <div class="project-overview-top">
-          <span class="project-overview-name">${p.text||'(제목없음)'}</span>
-          <span class="project-overview-pct">${p.progress}%</span>
-        </div>
-        <div class="project-overview-meta">👤 ${p.name} · ${storeLabel}</div>
-        <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>`;
-      listEl.appendChild(row);
+    names.forEach(name=>{
+      const projs=grouped[name].sort((a,b)=>b.progress-a.progress);
+      const avgPct=Math.round(projs.reduce((s,p)=>s+p.progress,0)/projs.length);
+
+      const groupWrap=document.createElement('div');groupWrap.className='project-group';
+      const header=document.createElement('div');header.className='project-group-header';
+      header.innerHTML=`<span class="project-group-name">👤 ${name}</span>
+        <span class="project-group-count">${projs.length}건 · 평균 ${avgPct}%</span>
+        <span class="project-group-toggle">▼</span>`;
+      groupWrap.appendChild(header);
+
+      const body=document.createElement('div');body.className='project-group-body';body.style.display='none';
+      projs.forEach(p=>{
+        const store=STORES.find(s=>s.id===p.storeId);
+        const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
+        const row=document.createElement('div');row.className='project-overview-row';
+        row.innerHTML=`
+          <div class="project-overview-top">
+            <span class="project-overview-name">${p.text||'(제목없음)'}</span>
+            <span class="project-overview-pct">${p.progress}%</span>
+          </div>
+          <div class="project-overview-meta">${storeLabel}</div>
+          <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>`;
+        body.appendChild(row);
+      });
+      groupWrap.appendChild(body);
+
+      header.onclick=()=>{
+        const isOpen=body.style.display!=='none';
+        body.style.display=isOpen?'none':'flex';
+        header.querySelector('.project-group-toggle').textContent=isOpen?'▼':'▲';
+      };
+
+      listEl.appendChild(groupWrap);
     });
   }catch(e){
     listEl.innerHTML='<div class="project-overview-empty">불러오기 실패</div>';
