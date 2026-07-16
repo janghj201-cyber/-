@@ -331,6 +331,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .dsb-project-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .dsb-project-pct{font-weight:700;color:var(--purple);flex-shrink:0;}
 
+.project-overview-row{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);}
+.project-overview-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.project-overview-name{font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;}
+.project-overview-pct{font-size:13px;font-weight:800;color:var(--purple);flex-shrink:0;}
+.project-overview-meta{font-size:11px;color:var(--text-sub);margin-bottom:6px;}
+.project-overview-bar{height:6px;border-radius:4px;background:var(--purple-light);overflow:hidden;}
+.project-overview-fill{height:100%;background:var(--purple);border-radius:4px;transition:width 0.2s;}
+.project-overview-empty{font-size:12px;color:var(--text-mute);padding:14px;text-align:center;}
+
 @media(min-width:768px){
   .dashboard-store-grid{grid-template-columns:repeat(3,1fr);gap:12px;}
   .dashboard-store-block{padding:16px 14px;}
@@ -751,6 +760,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div class="dashboard-today">
     <div class="dashboard-today-header">📍 오늘의 매장 현황</div>
     <div class="dashboard-store-grid" id="dashboard-store-list"></div>
+  </div>
+  <div class="dashboard-today">
+    <div class="dashboard-today-header">🔄 장기 프로젝트 현황</div>
+    <div id="dashboard-project-list"></div>
   </div>
   <div class="pb"></div>
 </div>
@@ -2987,14 +3000,13 @@ async function renderDashboardHome(){
     let handoverUnchecked=0;
     let workers=[];
     let taskLines=[];
-    let projectLines=[];
 
     try{
       const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
       if(cs.exists())cleanDone=Object.values(cs.data()).filter(Boolean).length;
     }catch(e){}
 
-    // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황 + 진행중 프로젝트
+    // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황
     try{
       for(const name of staffList){
         const items=await loadStaffTodos(name,tKey);
@@ -3005,10 +3017,6 @@ async function renderDashboardHome(){
           todoDone+=storeItems.filter(i=>i.done).length;
           storeItems.forEach(it=>taskLines.push({name,text:it.text||'',done:!!it.done}));
         }
-        const projs=await loadProjects(name);
-        projs.filter(p=>!p.done&&p.storeId===store.id).forEach(p=>{
-          projectLines.push({name,text:p.text||'',progress:p.progress||0});
-        });
       }
     }catch(e){}
 
@@ -3065,17 +3073,6 @@ async function renderDashboardHome(){
       ?`<div class="dsb-workers">👤 ${workers.slice(0,3).join(' · ')}${workers.length>3?` 외 ${workers.length-3}명`:''}</div>`
       :`<div class="dsb-workers" style="color:var(--text-mute);">오늘 근무자 없음</div>`;
 
-    // 대표 진행중 프로젝트 (진행률 높은 순으로 1건 대표 노출)
-    const sortedProjects=[...projectLines].sort((a,b)=>b.progress-a.progress);
-    const projectHtml=sortedProjects.length>0
-      ?(()=>{
-          const top=sortedProjects[0];
-          const txt=top.text.length>14?top.text.slice(0,14)+'…':top.text;
-          const more=sortedProjects.length>1?`<span style="color:var(--text-mute);flex-shrink:0;"> 외 ${sortedProjects.length-1}건</span>`:'';
-          return `<div class="dsb-project-line"><span>🔄</span><span class="dsb-project-name">${top.name}: ${txt}</span><span class="dsb-project-pct">${top.progress}%</span>${more}</div>`;
-        })()
-      :'';
-
     block.innerHTML=`
       <div class="dsb-header">
         <span class="dsb-name">${store.icon} ${shortName}</span>
@@ -3084,11 +3081,50 @@ async function renderDashboardHome(){
       ${todoRow}
       ${taskListHtml}
       ${handoverRow}
-      ${workerRow}
-      ${projectHtml}`;
+      ${workerRow}`;
 
     block.onclick=()=>{curStore=store;switchTab('monthly');};
     listEl.appendChild(block);
+  }
+
+  await renderDashboardProjects();
+}
+
+// 🔄 장기 프로젝트 현황 (전 직원 진행중 프로젝트, 진행률순)
+async function renderDashboardProjects(){
+  const listEl=document.getElementById('dashboard-project-list');
+  if(!listEl)return;
+  listEl.innerHTML='<div class="project-overview-empty">불러오는 중...</div>';
+  try{
+    let all=[];
+    for(const name of staffList){
+      const projs=await loadProjects(name);
+      projs.filter(p=>!p.done).forEach(p=>{
+        all.push({name,text:p.text||'',progress:p.progress||0,storeId:p.storeId});
+      });
+    }
+    if(all.length===0){
+      listEl.innerHTML='<div class="project-overview-empty">진행중인 장기 프로젝트가 없습니다</div>';
+      return;
+    }
+    all.sort((a,b)=>b.progress-a.progress);
+    listEl.innerHTML='';
+    all.forEach(p=>{
+      const store=STORES.find(s=>s.id===p.storeId);
+      const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
+      const row=document.createElement('div');
+      row.className='project-overview-row';
+      row.innerHTML=`
+        <div class="project-overview-top">
+          <span class="project-overview-name">${p.text||'(제목없음)'}</span>
+          <span class="project-overview-pct">${p.progress}%</span>
+        </div>
+        <div class="project-overview-meta">👤 ${p.name} · ${storeLabel}</div>
+        <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>`;
+      listEl.appendChild(row);
+    });
+  }catch(e){
+    listEl.innerHTML='<div class="project-overview-empty">불러오기 실패</div>';
   }
 }
 
