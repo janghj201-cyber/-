@@ -322,6 +322,11 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .dsb-row-val{font-size:11px;font-weight:600;color:var(--text);}
 .dsb-alert{color:var(--red);font-weight:700;}
 .dsb-workers{font-size:10px;color:var(--text-sub);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.dsb-tasklist{margin-top:4px;display:flex;flex-direction:column;gap:2px;}
+.dsb-task-line{font-size:10px;color:var(--text-sub);display:flex;gap:4px;overflow:hidden;white-space:nowrap;}
+.dsb-task-name{color:var(--gold);font-weight:700;flex-shrink:0;}
+.dsb-task-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dsb-task-more{font-size:10px;color:var(--text-mute);}
 
 @media(min-width:768px){
   .dashboard-store-grid{grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -329,6 +334,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   .dsb-name{font-size:14px;}
   .dsb-row{font-size:12px;padding:4px 0;}
   .dsb-workers{font-size:11px;}
+  .dsb-task-line{font-size:11px;}
 }
 
 /* ── 모달 공통 ── */
@@ -2977,6 +2983,7 @@ async function renderDashboardHome(){
     let todoDone=0,todoTotal=0;
     let handoverUnchecked=0;
     let workers=[];
+    let taskLines=[];
 
     try{
       const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
@@ -2992,6 +2999,7 @@ async function renderDashboardHome(){
           workers.push(name);
           todoTotal+=storeItems.length;
           todoDone+=storeItems.filter(i=>i.done).length;
+          storeItems.forEach(it=>taskLines.push({name,text:it.text||'',done:!!it.done}));
         }
       }
     }catch(e){}
@@ -3024,6 +3032,19 @@ async function renderDashboardHome(){
         </div>`
       :`<div class="dsb-row"><span class="dsb-row-icon">📝</span><span class="dsb-row-label" style="color:var(--text-mute);">오늘 업무 없음</span></div>`;
 
+    // 진행중(미완료) 업무 — 누가 무엇을 하고 있는지 바로 보이도록
+    const undoneTasks=taskLines.filter(t=>!t.done);
+    const taskListMax=3;
+    const taskListHtml=undoneTasks.length>0
+      ?`<div class="dsb-tasklist">
+          ${undoneTasks.slice(0,taskListMax).map(t=>{
+            const txt=t.text.length>16?t.text.slice(0,16)+'…':t.text;
+            return `<div class="dsb-task-line"><span class="dsb-task-name">${t.name}</span><span class="dsb-task-text">${txt}</span></div>`;
+          }).join('')}
+          ${undoneTasks.length>taskListMax?`<div class="dsb-task-more">외 진행중 ${undoneTasks.length-taskListMax}건</div>`:''}
+        </div>`
+      :'';
+
     const handoverRow=handoverUnchecked>0
       ?`<div class="dsb-row">
           <span class="dsb-row-icon">🔄</span>
@@ -3042,6 +3063,7 @@ async function renderDashboardHome(){
         ${cleanBadge}
       </div>
       ${todoRow}
+      ${taskListHtml}
       ${handoverRow}
       ${workerRow}`;
 
@@ -4087,11 +4109,74 @@ function buildHandoverSection(y,m,d){
       const confirmInfo=item.confirmed&&item.confirmedBy
         ?`<span class="confirm-tag">✅ ${item.confirmedBy} 확인</span>`
         :item.confirmed?`<span class="confirm-tag">✅ 확인됨</span>`:'';
+      const myName=getUsername();
+      const feedbacks=item.feedbacks||[];
+      const feedbacksHtml=feedbacks.length>0?`<div class="handover-feedbacks" style="margin-top:4px;padding-left:8px;display:flex;flex-direction:column;gap:3px;">
+          ${feedbacks.map((f,fi)=>`<div style="font-size:11px;color:var(--text-sub);display:flex;gap:4px;align-items:flex-start;">
+            <span style="color:var(--gold);font-weight:700;flex-shrink:0;font-size:10px;">${f.author||'익명'}</span>
+            <span style="flex:1;">${f.text}</span>
+            ${f.author===myName?`<button data-del-fb="${fi}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-mute);padding:0 2px;">🗑️</button>`:''}
+          </div>`).join('')}
+        </div>`:'';
       row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
-        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmInfo}<div class="todo-author">작성: ${item.author||'익명'}</div></div>
-        ${!locked?`<div class="todo-actions"><button class="todo-action-btn" data-act="edit">✏️</button><button class="todo-action-btn" data-act="del">🗑️</button></div>`:''}`;
+        <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmInfo}<div class="todo-author">작성: ${item.author||'익명'}</div>
+          ${feedbacksHtml}
+          <div class="feedback-input-wrap" style="display:none;margin-top:6px;padding-left:8px;gap:4px;">
+            <input type="text" class="feedback-input" placeholder="피드백 입력..." style="flex:1;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;">
+            <button class="feedback-submit" style="background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">등록</button>
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="todo-action-btn feedback-toggle-btn" title="피드백">💬</button>
+          ${!locked?`<button class="todo-action-btn" data-act="edit">✏️</button><button class="todo-action-btn" data-act="del">🗑️</button>`:''}
+        </div>`;
+
+      // 피드백 펼치기/접기
+      const fbWrap=row.querySelector('.feedback-input-wrap');
+      row.querySelector('.feedback-toggle-btn').onclick=()=>{
+        const isOpen=fbWrap.style.display==='flex';
+        fbWrap.style.display=isOpen?'none':'flex';
+        if(!isOpen)setTimeout(()=>fbWrap.querySelector('.feedback-input').focus(),0);
+      };
+      // 피드백 등록
+      const fbInput=row.querySelector('.feedback-input');
+      const doSubmitFb=()=>{
+        const text=fbInput.value.trim();
+        if(!text)return;
+        ensureUsername(async(author)=>{
+          const ref=doc(db,`handover/${curStore.id}_${dateKey}`);
+          const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];
+          const target=its.find(x=>x.id===item.id);
+          if(target){
+            if(!target.feedbacks)target.feedbacks=[];
+            target.feedbacks.push({author,text,ts:Date.now()});
+            await setDoc(ref,{items:its});
+            await render();
+          }
+        });
+      };
+      row.querySelector('.feedback-submit').onclick=doSubmitFb;
+      fbInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSubmitFb();});
+      // 피드백 삭제
+      row.querySelectorAll('[data-del-fb]').forEach(btn=>{
+        btn.onclick=async(e)=>{
+          e.stopPropagation();
+          const fi=parseInt(btn.dataset.delFb,10);
+          const ref=doc(db,`handover/${curStore.id}_${dateKey}`);
+          const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];
+          const target=its.find(x=>x.id===item.id);
+          if(target&&target.feedbacks){
+            target.feedbacks.splice(fi,1);
+            await setDoc(ref,{items:its});
+            await render();
+          }
+        };
+      });
+
       if(!locked){
-        row.querySelector('input').onchange=async(e)=>{
+        row.querySelector('input[type="checkbox"]').onchange=async(e)=>{
           try{
             await toggleHandoverItem(curStore.id,dateKey,item.id,e.target.checked);
             await render();
