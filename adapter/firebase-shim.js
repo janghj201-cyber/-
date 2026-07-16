@@ -3,7 +3,7 @@
 // Supabase를 씀. 원본 코드는 이 파일 존재를 몰라도 되게(=고칠 필요 없게) 설계함.
 //
 // 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
-// staff_memo/{name} (2단계).
+// staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기전용 (3단계 1/4).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -145,10 +145,40 @@ async function writeStaffMemo(ctx, { text }) {
   if (error) throw error
 }
 
+// ── handover/{storeId}_{dateKey} (V-Flow 기존 handovers 테이블, 1항목=1행) ──
+// 1단계: 목록 표시(읽기전용)만. 원본은 "어제 미확인 항목을 오늘 문서로 복사"해서 이월을
+// 흉내내는데(그러면 어제/오늘 두 개 사본이 따로 놀 수 있는 버그 소지가 있음), 관계형에서는
+// 그럴 필요 없이 "확인 안 된 과거 항목은 오늘 목록에도 계속 포함" 쿼리 하나로 똑같은
+// 이월 UX를 낸다 — 사본이 없으니 오히려 더 정확하다. 그래서 write(setDoc)는 아직 라우팅
+// 안 함: 원본이 이월 감지 후 호출하는 setDoc은 조용히 무시돼도 다음 읽기가 항상 같은
+// 쿼리로 정확히 재계산하므로 결과에 영향 없다.
+async function readHandoverItems(ctx, originalStoreId, dateKey) {
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) return []
+  const { data, error } = await supabase
+    .from('handovers')
+    .select('id, content, handover_date, confirmed, confirmed_at, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name)')
+    .eq('store_id', storeId)
+    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,handover_date.lt.${dateKey})`)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((h) => ({
+    id: h.id,
+    text: h.content,
+    author: h.author?.name ?? '익명',
+    confirmed: h.confirmed,
+    confirmedBy: h.confirmer?.name ?? null,
+    confirmedAt: h.confirmed_at ? new Date(h.confirmed_at).getTime() : null,
+    fromDate: h.handover_date !== dateKey ? h.handover_date : null,
+    feedbacks: [], // 3단계에서 채움
+  }))
+}
+
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
 const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
+const HANDOVER_RE = /^handover\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
 
 export async function getDoc(ref) {
   const ctx = await getContext()
@@ -173,6 +203,12 @@ export async function getDoc(ref) {
   if (STAFF_MEMO_RE.test(ref.path)) {
     const data = await readStaffMemo(ctx)
     return { exists: () => data !== null, data: () => data ?? undefined }
+  }
+
+  const handoverMatch = HANDOVER_RE.exec(ref.path)
+  if (handoverMatch) {
+    const items = await readHandoverItems(ctx, handoverMatch[1], handoverMatch[2])
+    return { exists: () => true, data: () => ({ items }) }
   }
 
   console.info(`[adapter] 아직 미구현 경로(read, 기본값 폴백으로 넘어감): ${ref.path}`)
