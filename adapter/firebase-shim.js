@@ -2,7 +2,8 @@
 // (initializeApp/getFirestore/doc/getDoc/setDoc/onSnapshot)를 흉내내면서 실제로는
 // Supabase를 씀. 원본 코드는 이 파일 존재를 몰라도 되게(=고칠 필요 없게) 설계함.
 //
-// 구현된 경로: board/posts (1단계), storeinfo/{storeId} (2단계).
+// 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
+// staff_memo/{name} (2단계).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -128,9 +129,26 @@ async function writeFeedback(ctx, originalStoreId, dateKey, { text }) {
   if (error) throw error
 }
 
+// ── staff_memo/{name} (V-Flow 신규 staff_memos 테이블, 본인당 1행) ──
+// 원본은 myStaff(이름 문자열)로 경로를 만들지만, "본인만 보는 메모"라는 의도상
+// 실제로는 항상 지금 로그인한 세션 본인의 메모다 — store-bridge 같은 매핑이 필요 없다.
+async function readStaffMemo(ctx) {
+  const { data, error } = await supabase.from('staff_memos').select('content, updated_at').eq('profile_id', ctx.profileId).maybeSingle()
+  if (error) throw error
+  return data ? { text: data.content, updatedAt: new Date(data.updated_at).getTime() } : null
+}
+
+async function writeStaffMemo(ctx, { text }) {
+  const { error } = await supabase
+    .from('staff_memos')
+    .upsert({ profile_id: ctx.profileId, tenant_id: ctx.tenantId, content: text, updated_at: new Date().toISOString() }, { onConflict: 'profile_id' })
+  if (error) throw error
+}
+
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
+const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
 
 export async function getDoc(ref) {
   const ctx = await getContext()
@@ -149,6 +167,11 @@ export async function getDoc(ref) {
   const feedbackMatch = FEEDBACK_RE.exec(ref.path)
   if (feedbackMatch) {
     const data = await readFeedback(ctx, feedbackMatch[1], feedbackMatch[2])
+    return { exists: () => data !== null, data: () => data ?? undefined }
+  }
+
+  if (STAFF_MEMO_RE.test(ref.path)) {
+    const data = await readStaffMemo(ctx)
     return { exists: () => data !== null, data: () => data ?? undefined }
   }
 
@@ -173,6 +196,11 @@ export async function setDoc(ref, data) {
   const feedbackMatch = FEEDBACK_RE.exec(ref.path)
   if (feedbackMatch) {
     await writeFeedback(ctx, feedbackMatch[1], feedbackMatch[2], data)
+    return
+  }
+
+  if (STAFF_MEMO_RE.test(ref.path)) {
+    await writeStaffMemo(ctx, data)
     return
   }
 
