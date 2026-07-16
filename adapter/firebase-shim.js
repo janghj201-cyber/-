@@ -3,7 +3,8 @@
 // Supabase를 씀. 원본 코드는 이 파일 존재를 몰라도 되게(=고칠 필요 없게) 설계함.
 //
 // 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
-// staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기전용 (3단계 1/4).
+// staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기+쓰기(피드백 스레드 제외,
+// 3단계 2/4).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -146,12 +147,70 @@ async function writeStaffMemo(ctx, { text }) {
 }
 
 // ── handover/{storeId}_{dateKey} (V-Flow 기존 handovers 테이블, 1항목=1행) ──
-// 1단계: 목록 표시(읽기전용)만. 원본은 "어제 미확인 항목을 오늘 문서로 복사"해서 이월을
-// 흉내내는데(그러면 어제/오늘 두 개 사본이 따로 놀 수 있는 버그 소지가 있음), 관계형에서는
-// 그럴 필요 없이 "확인 안 된 과거 항목은 오늘 목록에도 계속 포함" 쿼리 하나로 똑같은
-// 이월 UX를 낸다 — 사본이 없으니 오히려 더 정확하다. 그래서 write(setDoc)는 아직 라우팅
-// 안 함: 원본이 이월 감지 후 호출하는 setDoc은 조용히 무시돼도 다음 읽기가 항상 같은
-// 쿼리로 정확히 재계산하므로 결과에 영향 없다.
+// 원본은 "어제 미확인 항목을 오늘 문서로 복사"해서 이월을 흉내내는데(그러면 어제/오늘 두
+// 사본이 따로 놀 수 있는 버그 소지가 있음), 관계형에서는 그럴 필요 없이 "확인 안 된 과거
+// 항목은 오늘 목록에도 계속 포함" 쿼리 하나로 같은 이월 UX를 낸다 — 사본이 없으니 오히려
+// 더 정확하다.
+//
+// 원본의 add/toggle/edit/delete 4개 함수는 전부 "배열 전체를 읽고 → 수정 → 배열 전체를
+// setDoc" 패턴(게시판과 동일)이라, writeHandoverItems() 하나가 diff-sync로 4개 다 처리한다.
+// 새 항목의 id는 원본이 만드는 Date.now()+'_'+random 문자열이라 실제 uuid와 형태가 달라
+// insert/update를 구분하는 열쇠로 쓴다. 값이 실제로 바뀐 필드만 patch하는 게 중요한데,
+// 안 그러면 "새 항목 추가" 저장에 같이 실려오는 이미 확인된 예전 항목의 confirmed_by가
+// 지금 저장한 사람으로 덮어써지는 버그가 생긴다.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) return
+
+  // 읽기와 동일한 범위로 diff 대상을 좁힌다 — 다른 날짜의 확인된 항목까지 삭제 후보로
+  // 잡히면 안 되므로.
+  const { data: currentRows, error: selErr } = await supabase
+    .from('handovers')
+    .select('id, content, confirmed')
+    .eq('store_id', storeId)
+    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,handover_date.lt.${dateKey})`)
+  if (selErr) throw selErr
+  const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
+  const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
+
+  for (const id of currentById.keys()) {
+    if (!incomingRealIds.has(id)) {
+      const { error } = await supabase.from('handovers').delete().eq('id', id)
+      if (error) throw error
+    }
+  }
+
+  for (const item of items) {
+    if (!UUID_RE.test(item.id)) {
+      const { error } = await supabase.from('handovers').insert({
+        tenant_id: ctx.tenantId,
+        store_id: storeId,
+        from_employee: ctx.profileId,
+        content: item.text,
+        handover_date: dateKey,
+        confirmed: item.confirmed ?? false,
+      })
+      if (error) throw error
+      continue
+    }
+    const current = currentById.get(item.id)
+    if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
+    const patch = {}
+    if (current.content !== item.text) patch.content = item.text
+    if (current.confirmed !== item.confirmed) {
+      patch.confirmed = item.confirmed
+      patch.confirmed_by = item.confirmed ? ctx.profileId : null
+      patch.confirmed_at = item.confirmed ? new Date().toISOString() : null
+    }
+    if (Object.keys(patch).length > 0) {
+      const { error } = await supabase.from('handovers').update(patch).eq('id', item.id)
+      if (error) throw error
+    }
+  }
+}
+
 async function readHandoverItems(ctx, originalStoreId, dateKey) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return []
@@ -237,6 +296,12 @@ export async function setDoc(ref, data) {
 
   if (STAFF_MEMO_RE.test(ref.path)) {
     await writeStaffMemo(ctx, data)
+    return
+  }
+
+  const handoverWriteMatch = HANDOVER_RE.exec(ref.path)
+  if (handoverWriteMatch) {
+    await writeHandoverItems(ctx, handoverWriteMatch[1], handoverWriteMatch[2], data)
     return
   }
 
