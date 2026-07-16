@@ -327,6 +327,9 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .dsb-task-name{color:var(--gold);font-weight:700;flex-shrink:0;}
 .dsb-task-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .dsb-task-more{font-size:10px;color:var(--text-mute);}
+.dsb-project-line{font-size:10px;color:var(--text-sub);margin-top:4px;padding-top:4px;border-top:1px solid var(--border);display:flex;align-items:center;gap:4px;overflow:hidden;}
+.dsb-project-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.dsb-project-pct{font-weight:700;color:var(--purple);flex-shrink:0;}
 
 @media(min-width:768px){
   .dashboard-store-grid{grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -2984,13 +2987,14 @@ async function renderDashboardHome(){
     let handoverUnchecked=0;
     let workers=[];
     let taskLines=[];
+    let projectLines=[];
 
     try{
       const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
       if(cs.exists())cleanDone=Object.values(cs.data()).filter(Boolean).length;
     }catch(e){}
 
-    // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황
+    // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황 + 진행중 프로젝트
     try{
       for(const name of staffList){
         const items=await loadStaffTodos(name,tKey);
@@ -3001,6 +3005,10 @@ async function renderDashboardHome(){
           todoDone+=storeItems.filter(i=>i.done).length;
           storeItems.forEach(it=>taskLines.push({name,text:it.text||'',done:!!it.done}));
         }
+        const projs=await loadProjects(name);
+        projs.filter(p=>!p.done&&p.storeId===store.id).forEach(p=>{
+          projectLines.push({name,text:p.text||'',progress:p.progress||0});
+        });
       }
     }catch(e){}
 
@@ -3057,6 +3065,17 @@ async function renderDashboardHome(){
       ?`<div class="dsb-workers">👤 ${workers.slice(0,3).join(' · ')}${workers.length>3?` 외 ${workers.length-3}명`:''}</div>`
       :`<div class="dsb-workers" style="color:var(--text-mute);">오늘 근무자 없음</div>`;
 
+    // 대표 진행중 프로젝트 (진행률 높은 순으로 1건 대표 노출)
+    const sortedProjects=[...projectLines].sort((a,b)=>b.progress-a.progress);
+    const projectHtml=sortedProjects.length>0
+      ?(()=>{
+          const top=sortedProjects[0];
+          const txt=top.text.length>14?top.text.slice(0,14)+'…':top.text;
+          const more=sortedProjects.length>1?`<span style="color:var(--text-mute);flex-shrink:0;"> 외 ${sortedProjects.length-1}건</span>`:'';
+          return `<div class="dsb-project-line"><span>🔄</span><span class="dsb-project-name">${top.name}: ${txt}</span><span class="dsb-project-pct">${top.progress}%</span>${more}</div>`;
+        })()
+      :'';
+
     block.innerHTML=`
       <div class="dsb-header">
         <span class="dsb-name">${store.icon} ${shortName}</span>
@@ -3065,7 +3084,8 @@ async function renderDashboardHome(){
       ${todoRow}
       ${taskListHtml}
       ${handoverRow}
-      ${workerRow}`;
+      ${workerRow}
+      ${projectHtml}`;
 
     block.onclick=()=>{curStore=store;switchTab('monthly');};
     listEl.appendChild(block);
