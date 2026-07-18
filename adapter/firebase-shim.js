@@ -451,6 +451,55 @@ async function readCleanZonesConfig(ctx) {
   return { zones: (data ?? []).map((r) => ({ title: r.title, items: r.items })) }
 }
 
+// ── config/schedule_rules (V-Flow 기존 calendar_event_types 테이블 — 읽기 전용) ──
+// 원본은 매주/매월 반복되는 고정업무(전체주문/재고실사/월마감보고 등)를 하드코딩
+// DEFAULT_SCHEDULE_RULES로 시작해서 config/schedule_rules로 덮어쓴다. V-Flow는 이미
+// calendar_event_types로 이 개념을 테넌트 범용화해뒀음(이번 세션 앞부분에서 만든 것) —
+// 위베이프 전용 규칙(팟기기점검/AS발송 등, vape 업계 특화)은 V-Flow 시드에 아예 없어서
+// 자연히 안 뜬다(깡통화). "대청소"는 재사용 안 함 — 청소 체크리스트 기능이 이미
+// cleaning_deep_clean_rule로 별도 처리 중이라, 여기서 같이 넣으면 배지가 중복된다.
+// 원본의 recurrence 조건 타입(weekday/monthdays)만 매핑 가능 — lastBizDayBefore
+// (AS발송일류)는 V-Flow 어휘에 없어서 자연히 빠짐(위베이프 전용 개념이라 정상).
+//
+// 편집(관리자 "고정업무 관리" 탭, saveScheduleRules)은 스코프 밖 — 관리자 커스터마이징
+// 묶음(설정편집+기능On/Off+컬러테마)에서 나중에 구현. 지금은 setDoc이 기존 관례대로
+// 조용히 무시되지만, 원본 UI는 저장 성공 여부를 확인 안 하고 항상 "✓ 저장됨"을 띄우므로
+// 실제로는 안 저장되는데 저장된 것처럼 보인다 — 커스터마이징 묶음 만들 때 같이 잡을 것.
+const SCHEDULE_RULE_COLOR_MAP = { blue: 'c-blue', orange: 'c-orange', purple: 'c-purple', pink: 'c-pink', teal: 'c-teal', green: 'c-green', red: 'c-red' }
+
+// 월간 캘린더 그리드(renderCal)의 날짜 배지는 rule.task를 안 쓰고, e.t(rule.key)가
+// 'order'/'stock'/... 같은 원본 고정 키일 때만 자기 하드코딩 텍스트("전체주문" 등)를
+// 보여주는 별도 switch문이다(관리자 "고정업무 관리" 탭은 반대로 rule.task를 그대로
+// 써서 이미 동적임). 그래서 라벨을 원본 키로 되돌려 매핑해야 그리드에 배지가 뜬다 —
+// 이 테넌트는 V-Flow 시드 라벨이 원본과 우연히 같아서(전체주문/재고실사) 잘 맞지만,
+// 다른 라벨(다른 업종 커스텀 규칙)은 매칭 키가 없어 그리드 배지만 조용히 안 뜬다
+// (고정업무 관리 탭 등 rule.task 기반 화면은 영향 없음 — 5단계 항목 아님, renderCal
+// 자체의 하드코딩 스코프 한계라 필요하면 별도로 다룰 것).
+const SCHEDULE_RULE_LABEL_TO_KEY = { 전체주문: 'order', 재고실사: 'stock', 월마감보고: 'report' }
+
+async function readScheduleRulesConfig(ctx) {
+  const { data, error } = await supabase
+    .from('calendar_event_types')
+    .select('label, color, recurrence')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('active', true)
+    .order('sort_order')
+  if (error) throw error
+  const rules = []
+  ;(data ?? []).forEach((row, i) => {
+    const rec = row.recurrence ?? {}
+    const col = SCHEDULE_RULE_COLOR_MAP[row.color] ?? 'c-blue'
+    const key = SCHEDULE_RULE_LABEL_TO_KEY[row.label] ?? `rule_${i}`
+    if (rec.type === 'weekly') {
+      rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, meta: '', col })
+    } else if (rec.type === 'monthly_day') {
+      rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, meta: '', col })
+    }
+    // 그 외(monthly_weekday_occurrences 등 대청소류)는 청소 체크리스트가 이미 처리 — 스킵
+  })
+  return { rules }
+}
+
 // ── config/clean_deep_clean_rule (V-Flow 기존 cleaning_deep_clean_rule 테이블 — 읽기전용) ──
 // getEvs()의 "몇 번째 일요일이 대청소일이냐" 판정을 원본 하드코딩(1~4번째 전부) 대신
 // 테넌트 실제 규칙(기본값: 1·3번째만)으로 덮어쓰는 데 쓴다. loadCleanConfig()가 앱 시작
@@ -749,6 +798,11 @@ export async function getDoc(ref) {
   if (ref.path === 'config/clean_deep_clean_rule') {
     const data = await readCleanDeepRuleConfig(ctx)
     return { exists: () => Array.isArray(data.occurrences) && data.occurrences.length > 0, data: () => data }
+  }
+
+  if (ref.path === 'config/schedule_rules') {
+    const data = await readScheduleRulesConfig(ctx)
+    return { exists: () => data.rules.length > 0, data: () => data }
   }
 
   const checksMatch = CHECKS_RE.exec(ref.path)
