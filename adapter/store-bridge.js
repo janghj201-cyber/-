@@ -5,7 +5,7 @@
 // 지금은 원본 STORES 배열 순서대로 실제 테넌트 매장에 매칭한다(테스트 테넌트는 매장 1개뿐이라
 // 전부 그 매장으로 수렴함 — 매장이 여러 개인 테넌트에서는 이 순서 매칭이 부정확할 수 있으므로
 // 5단계 전까지는 "화면이 동작하는지" 검증용 임시 방편임을 명확히 인지할 것).
-const ORIGINAL_STORE_IDS = ['yeonsu', 'nonhyeon', 'rodeo', 'gilbyeong', 'airport', 'geomdan', 'gyesan', 'sangdong', 'sijungdong']
+export const ORIGINAL_STORE_IDS = ['yeonsu', 'nonhyeon', 'rodeo', 'gilbyeong', 'airport', 'geomdan', 'gyesan', 'sangdong', 'sijungdong']
 
 // 원본 storeId 문자열 → 실제 stores.id(uuid)
 export function resolveStoreId(originalStoreId, ctx) {

@@ -4,13 +4,15 @@
 //
 // 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
 // staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기+쓰기 + 피드백 스레드
-// (3단계 3/4, 미확인 배너는 4/4에서 마저).
+// (3단계 완료 — 미확인 배너는 별도 코드 없이 기존 getDoc 경로 재사용으로 이미 동작),
+// staff_todos/{staffName}_{dateKey} 개인 업무 CRUD+순서변경 (4단계 1/4, 3일+ 이월
+// 액션·히스토리는 2/4에서, 매장 단위 공용 업무는 3/4에서).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
 import { supabase } from './supabase-client.js'
 import { getContext } from './context.js'
-import { resolveStoreId, reverseResolveStoreId } from './store-bridge.js'
+import { resolveStoreId, reverseResolveStoreId, ORIGINAL_STORE_IDS } from './store-bridge.js'
 
 // ── Firebase 앱/DB 핸들 흉내 (아무 것도 안 함, 시그니처만 맞춤) ──
 export function initializeApp(config) {
@@ -300,11 +302,86 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
   }))
 }
 
+// ── staff_todos/{staffName}_{dateKey} (V-Flow 기존 daily_tasks 테이블) ──
+// 원본은 "어제 문서만 보고 하루씩 체인 복사"해서 이월을 흉내내는데, 며칠 앱을 안 켜면
+// 중간 날짜 문서에 복사가 안 남아 이월이 조용히 끊기는 버그가 있다(B-5에서 겪었던 것과
+// 동일 계열 문제). handover와 같은 원칙으로, 물리적 복사 없이 "이 직원의 완료 안 된
+// 과거 항목은 오늘 목록에도 포함" 쿼리 하나로 재현 — 사본이 없어 그 버그 자체가 없다.
+// staff_memo와 같은 이유로 경로의 {staffName}은 신뢰하지 않고 항상 ctx.profileId로
+// 귀속시킨다(카드 선택=myStaff와 실제 로그인 프로필이 identity 통합 전까지는 분리돼 있음).
+//
+// 순서변경(↑/↓)은 원본이 배열 위치를 통째로 바꿔 setDoc하므로, 매 쓰기마다 들어온
+// 배열의 인덱스를 sort_order로 그대로 반영한다(재정렬 전용 diff를 따로 두지 않고
+// 모든 쓰기에서 동일하게 처리 — 더 단순하고, 결과도 항상 배열 순서와 일치).
+async function readStaffTodos(ctx, dateKey) {
+  const { data, error } = await supabase
+    .from('daily_tasks')
+    .select('id, content, store_id, status, task_date, sort_order')
+    .eq('employee_id', ctx.profileId)
+    .or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`)
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    text: r.content,
+    storeId: reverseResolveStoreId(r.store_id, ctx) ?? undefined,
+    done: r.status === 'done',
+    author: ctx.profile.name,
+    fromDate: r.task_date !== dateKey ? r.task_date : null,
+  }))
+}
+
+async function writeStaffTodos(ctx, dateKey, { items }) {
+  const { data: currentRows, error: selErr } = await supabase
+    .from('daily_tasks')
+    .select('id, content, status')
+    .eq('employee_id', ctx.profileId)
+    .or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`)
+  if (selErr) throw selErr
+  const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
+  const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
+
+  for (const id of currentById.keys()) {
+    if (!incomingRealIds.has(id)) {
+      const { error } = await supabase.from('daily_tasks').delete().eq('id', id)
+      if (error) throw error
+    }
+  }
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (!UUID_RE.test(item.id)) {
+      const storeId = resolveStoreId(item.storeId, ctx)
+      const { error } = await supabase.from('daily_tasks').insert({
+        tenant_id: ctx.tenantId,
+        store_id: storeId,
+        employee_id: ctx.profileId,
+        task_date: dateKey,
+        content: item.text,
+        status: item.done ? 'done' : 'pending',
+        sort_order: i,
+      })
+      if (error) throw error
+      continue
+    }
+    const current = currentById.get(item.id)
+    if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
+    const patch = { sort_order: i }
+    if (current.content !== item.text) patch.content = item.text
+    const wantStatus = item.done ? 'done' : 'pending'
+    if (current.status !== wantStatus) patch.status = wantStatus
+    const { error } = await supabase.from('daily_tasks').update(patch).eq('id', item.id)
+    if (error) throw error
+  }
+}
+
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
 const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
 const HANDOVER_RE = /^handover\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
+const STAFF_TODO_RE = /^staff_todos\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
 
 export async function getDoc(ref) {
   const ctx = await getContext()
@@ -334,6 +411,12 @@ export async function getDoc(ref) {
   const handoverMatch = HANDOVER_RE.exec(ref.path)
   if (handoverMatch) {
     const items = await readHandoverItems(ctx, handoverMatch[1], handoverMatch[2])
+    return { exists: () => true, data: () => ({ items }) }
+  }
+
+  const staffTodoMatch = STAFF_TODO_RE.exec(ref.path)
+  if (staffTodoMatch && !ORIGINAL_STORE_IDS.includes(staffTodoMatch[1])) {
+    const items = await readStaffTodos(ctx, staffTodoMatch[2])
     return { exists: () => true, data: () => ({ items }) }
   }
 
@@ -372,6 +455,12 @@ export async function setDoc(ref, data) {
     return
   }
 
+  const staffTodoWriteMatch = STAFF_TODO_RE.exec(ref.path)
+  if (staffTodoWriteMatch && !ORIGINAL_STORE_IDS.includes(staffTodoWriteMatch[1])) {
+    await writeStaffTodos(ctx, staffTodoWriteMatch[2], data)
+    return
+  }
+
   console.info(`[adapter] 아직 미구현 경로(write, 무시됨): ${ref.path}`)
 }
 
@@ -403,6 +492,16 @@ export function onSnapshot(ref, callback) {
       stopped = true
       if (channel) supabase.removeChannel(channel)
     }
+  }
+
+  // 대시보드 "오늘의 매장 현황" 위젯이 staffList(하드코딩 이름 목록) 전체를 순회하며
+  // staff_todos/{name}_{today}에 onSnapshot을 건다(4단계, 신원통합 이후 몫). 지금은
+  // 어떤 이름으로 조회해도 항상 ctx.profileId(실제 로그인 계정)로 귀속되므로, 이대로
+  // getDoc에 흘려보내면 같은 실제 데이터가 이름 개수만큼 중복 집계된다. 신원통합 전까지는
+  // 빈 배열로 조용히 폴백 — "내 업무" 화면(getDoc 경로)은 영향 없음, onSnapshot만 막는다.
+  if (STAFF_TODO_RE.test(ref.path)) {
+    callback({ exists: () => true, data: () => ({ items: [] }) })
+    return () => {}
   }
 
   // 그 외 경로는 원본에서 onSnapshot을 안 씀(read/write만) — 1회성 폴백으로 충분
