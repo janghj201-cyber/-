@@ -878,6 +878,22 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
   }
 }
 
+// ── config/staff (5-1 신원통합: 가짜 이름 16명 → 실제 테넌트 프로필) ──
+// 원본 loadStaffList()가 기대하는 {list:[이름...]} 모양을 실제 profiles로 채운다.
+// defaultStores(이름→원본 매장 슬러그)는 원본 STAFF_DEFAULT_STORE에 병합돼 이름카드의
+// 기본 매장 라벨/자동 선택에 쓰인다. store_id(uuid)→슬러그 변환은 store-bridge의
+// 위치기반 임시 매핑(STORES 자체 깡통화는 5-3에서 — 그때 이 변환도 사라짐).
+async function readStaffConfig(ctx) {
+  const { data, error } = await supabase.from('profiles').select('name, role, store_id').order('name')
+  if (error) throw error
+  const list = (data ?? []).map((p) => p.name)
+  const defaultStores = {}
+  for (const p of data ?? []) {
+    defaultStores[p.name] = p.store_id ? reverseResolveStoreId(p.store_id, ctx) : null
+  }
+  return { list, defaultStores }
+}
+
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
@@ -950,6 +966,11 @@ export async function getDoc(ref) {
     return { exists: () => data.rules.length > 0, data: () => data }
   }
 
+  if (ref.path === 'config/staff') {
+    const data = await readStaffConfig(ctx)
+    return { exists: () => data.list.length > 0, data: () => data }
+  }
+
   const checksMatch = CHECKS_RE.exec(ref.path)
   if (checksMatch) {
     const data = await readChecks(ctx, checksMatch[1], checksMatch[2])
@@ -1011,6 +1032,13 @@ export async function setDoc(ref, data) {
 
   if (STAFF_PROJECT_RE.test(ref.path)) {
     await writeStaffProjects(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/staff') {
+    // 5-1 신원통합: 직원 목록은 profiles가 원천 — 이름 리스트 쓰기는 의미가 없어졌다.
+    // 직원 추가/삭제는 V-Flow 초대/프로필 관리로(관리자 직원편집 UI는 5단계 후속에서 정리).
+    console.warn('[adapter] config/staff 쓰기 미지원 — 직원 추가/삭제는 V-Flow 초대/프로필 관리 사용')
     return
   }
 

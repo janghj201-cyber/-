@@ -1319,6 +1319,7 @@ async function loadStaffList(){
     const snap=await getDoc(doc(db,'config/staff'));
     if(snap.exists()&&snap.data().list){
       staffList=snap.data().list;
+      if(snap.data().defaultStores)Object.assign(STAFF_DEFAULT_STORE,snap.data().defaultStores);
     } else {
       await setDoc(doc(db,'config/staff'),{list:DEFAULT_STAFF});
     }
