@@ -685,7 +685,9 @@ async function projectedDeepCleanZoneNumber(ctx, storeId) {
 // 그 발생일에 daily_tasks를 남긴 직원(=근무자로 간주) 중 대청소를 가장 오래전에 맡은
 // 사람을 우선 배정. 후보가 없으면 null(관리자 수동 배정 필요, cleaningApi.js와 동일 로직).
 async function pickDeepCleanAssignee(ctx, storeId, dateKey) {
-  const { data: workers, error: workerErr } = await supabase.from('daily_tasks').select('employee_id').eq('store_id', storeId).eq('task_date', dateKey)
+  // daily_tasks SELECT가 본인+관리자로 잠겨서(20260718010000) staff 세션에선 직접 조회 불가.
+  // 업무 내용 없이 employee_id만 주는 security definer RPC로 근무자 목록을 얻는다.
+  const { data: workers, error: workerErr } = await supabase.rpc('store_worker_ids', { p_store_id: storeId, p_task_date: dateKey })
   if (workerErr) throw workerErr
   const candidates = [...new Set((workers ?? []).map((w) => w.employee_id))]
   if (candidates.length === 0) return null
