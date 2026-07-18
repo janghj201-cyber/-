@@ -14,6 +14,9 @@
 // 끝났고 5단계 때 그대로 재사용(vflow-porting-adapter-roadmap 메모리 참고): daily_tasks
 // employee_id nullable(이미 nullable 확인됨) + 정책에 "employee_id is null and
 // can_access_store(store_id)" OR 브랜치 추가하면 개인/공용 한 정책으로 커버됨).
+// config/clean_daily_items · config/clean_zones(라벨 설정, 읽기전용) + checks/{storeId}/
+// {dateKey}/clean(기본청소 체크, 1/3) — V-Flow 기존 cleaning_daily_items/cleaning_daily_logs
+// 연결(대청소 구역 레이어는 2/3에서).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -420,12 +423,104 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
   }
 }
 
+// ── config/clean_daily_items, config/clean_zones (V-Flow 기존 cleaning_daily_items/
+// cleaning_zones 테이블 — 읽기 전용) ──
+// 원본은 CLEAN_BASE/CSECTIONS를 자바스크립트 상수로 하드코딩해서 렌더링에 직접 쓴다
+// (Firestore 경유 안 함). scheduleRules와 같은 패턴으로 index.html에 loadCleanConfig()를
+// 최소로 추가해서, 앱 시작 시 이 두 경로를 한 번 읽어 CLEAN_BASE/CSECTIONS 배열 내용을
+// 테넌트의 실제 청소 항목으로 교체한다 — 위베이프 6항목/4구역 문구가 화면에 안 남게.
+// scheduleRules와 다르게 "없으면 기본값을 setDoc으로 되써넣기"는 안 한다 — 여기 항목은
+// 테넌트가 온보딩 때 이미 갖고 있는 실제 청소 목록이라, 못 불러왔다고 위베이프 기본값을
+// 저장소에 새로 쓰면 안 되기 때문(원본 UI는 이 두 경로에 setDoc을 아예 안 부른다).
+async function readCleanDailyItemsConfig(ctx) {
+  const { data, error } = await supabase.from('cleaning_daily_items').select('label').eq('tenant_id', ctx.tenantId).eq('active', true).order('sort_order')
+  if (error) throw error
+  return { items: (data ?? []).map((r) => r.label) }
+}
+
+async function readCleanZonesConfig(ctx) {
+  const { data, error } = await supabase.from('cleaning_zones').select('title, items').eq('tenant_id', ctx.tenantId).eq('active', true).order('zone_number')
+  if (error) throw error
+  return { zones: (data ?? []).map((r) => ({ title: r.title, items: r.items })) }
+}
+
+// ── checks/{storeId}/{dateKey}/clean (V-Flow 기존 cleaning_daily_items/cleaning_daily_logs
+// 테이블 — 1/3, 기본청소만. 대청소 구역 레이어는 2/3에서) ──
+// 원본은 {item_0:{v,t}, item_1:{v,t}, ...} 형태의 flat map 문서 하나를 통째로 읽고 쓴다.
+// item_0..N은 CLEAN_BASE(이제 테넌트의 cleaning_daily_items) 순서와 1:1 대응.
+async function readChecks(ctx, originalStoreId, dateKey) {
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) return {}
+  const { data: items, error: itemsErr } = await supabase
+    .from('cleaning_daily_items')
+    .select('id')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('active', true)
+    .order('sort_order')
+  if (itemsErr) throw itemsErr
+  const { data: logs, error: logsErr } = await supabase
+    .from('cleaning_daily_logs')
+    .select('item_id, done, completed_at')
+    .eq('store_id', storeId)
+    .eq('log_date', dateKey)
+  if (logsErr) throw logsErr
+  const logByItemId = new Map((logs ?? []).map((l) => [l.item_id, l]))
+
+  const result = {}
+  ;(items ?? []).forEach((item, i) => {
+    const log = logByItemId.get(item.id)
+    result[`item_${i}`] = log?.done ? { v: true, t: new Date(log.completed_at).getTime() } : { v: false, t: null }
+  })
+  return result
+}
+
+// 원본은 체크박스 하나 바뀔 때마다 문서 전체를 getDoc→해당 key만 patch→setDoc 하거나
+// (개별 체크), "초기화" 버튼에서 setDoc({})로 문서 전체를 비운다 — 둘 다 여기로 온다.
+// 들어온 data가 빈 객체면 초기화로 보고 이 매장·날짜의 모든 로그를 done=false로 되돌린다.
+async function writeChecks(ctx, originalStoreId, dateKey, data) {
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) return
+  const { data: items, error: itemsErr } = await supabase
+    .from('cleaning_daily_items')
+    .select('id')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('active', true)
+    .order('sort_order')
+  if (itemsErr) throw itemsErr
+
+  if (Object.keys(data).length === 0) {
+    const ids = (items ?? []).map((i) => i.id)
+    if (ids.length === 0) return
+    const { error } = await supabase
+      .from('cleaning_daily_logs')
+      .upsert(
+        ids.map((itemId) => ({ tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: itemId, done: false, completed_by: null, completed_at: null })),
+        { onConflict: 'store_id,log_date,item_id' }
+      )
+    if (error) throw error
+    return
+  }
+
+  for (const [key, val] of Object.entries(data)) {
+    const idx = Number(key.replace('item_', ''))
+    const item = (items ?? [])[idx]
+    if (!item) continue // 대청소 구역 항목 인덱스(2/3 이후) — 지금은 조용히 무시
+    const done = !!val?.v
+    const { error } = await supabase.from('cleaning_daily_logs').upsert(
+      { tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: item.id, done, completed_by: done ? ctx.profileId : null, completed_at: done ? new Date().toISOString() : null },
+      { onConflict: 'store_id,log_date,item_id' }
+    )
+    if (error) throw error
+  }
+}
+
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
 const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
 const HANDOVER_RE = /^handover\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
 const STAFF_TODO_RE = /^staff_todos\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
+const CHECKS_RE = /^checks\/([^/]+)\/(\d{4}-\d{2}-\d{2})\/clean$/
 
 export async function getDoc(ref) {
   const ctx = await getContext()
@@ -470,6 +565,22 @@ export async function getDoc(ref) {
     return { exists: () => true, data: () => ({ items }) }
   }
 
+  if (ref.path === 'config/clean_daily_items') {
+    const data = await readCleanDailyItemsConfig(ctx)
+    return { exists: () => data.items.length > 0, data: () => data }
+  }
+
+  if (ref.path === 'config/clean_zones') {
+    const data = await readCleanZonesConfig(ctx)
+    return { exists: () => data.zones.length > 0, data: () => data }
+  }
+
+  const checksMatch = CHECKS_RE.exec(ref.path)
+  if (checksMatch) {
+    const data = await readChecks(ctx, checksMatch[1], checksMatch[2])
+    return { exists: () => true, data: () => data }
+  }
+
   console.info(`[adapter] 아직 미구현 경로(read, 기본값 폴백으로 넘어감): ${ref.path}`)
   return { exists: () => false, data: () => undefined }
 }
@@ -509,6 +620,12 @@ export async function setDoc(ref, data) {
   const staffTodoWriteMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoWriteMatch) {
     await writeStaffTodos(ctx, staffTodoWriteMatch[2], data)
+    return
+  }
+
+  const checksWriteMatch = CHECKS_RE.exec(ref.path)
+  if (checksWriteMatch) {
+    await writeChecks(ctx, checksWriteMatch[1], checksWriteMatch[2], data)
     return
   }
 

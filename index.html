@@ -1096,6 +1096,23 @@ const CSECTIONS=[
   {title:"대청소 3구역 — 진열장",items:["외부 진열장 유리 닦기","진열장 내부 선반 닦기","하부 서랍장 정리·먼지 제거","진열 상품 정렬"]},
   {title:"대청소 4구역 — 데스크·창고",items:["컴퓨터 주변 먼지 제거","본체·프린터 외면 닦기","창고 바닥 청소","창고 재고 박스 정리"]},
 ];
+// scheduleRules와 같은 패턴: 하드코딩 기본값으로 시작해서, 있으면 실제 설정으로 덮어씀.
+// setDoc으로 기본값을 되써넣지 않음(scheduleRules와 다른 점) — 여기 항목은 각 사업장이
+// 이미 갖고 있는 실제 청소 목록이라, 못 불러왔다고 이 기본값을 저장소에 새로 쓰면 안 됨.
+async function loadCleanConfig(){
+  try{
+    const dSnap=await getDoc(doc(db,'config/clean_daily_items'));
+    if(dSnap.exists()&&Array.isArray(dSnap.data().items)&&dSnap.data().items.length){
+      CLEAN_BASE.splice(0,CLEAN_BASE.length,...dSnap.data().items);
+    }
+  }catch(e){}
+  try{
+    const zSnap=await getDoc(doc(db,'config/clean_zones'));
+    if(zSnap.exists()&&Array.isArray(zSnap.data().zones)&&zSnap.data().zones.length){
+      CSECTIONS.splice(0,CSECTIONS.length,...zSnap.data().zones);
+    }
+  }catch(e){}
+}
 
 // ══════════════════════════════════════
 // 상태
@@ -2980,7 +2997,7 @@ async function renderDashboardHome(){
 
     try{
       const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
-      if(cs.exists())cleanDone=Object.values(cs.data()).filter(Boolean).length;
+      if(cs.exists())cleanDone=Object.values(cs.data()).filter(ckVal).length;
     }catch(e){}
 
     // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황
@@ -4958,7 +4975,7 @@ async function renderMonthlyTab(content){
       cleanTotal+=getCleanItemCount(y,m,d);
       try{
         const cSnap=await getDoc(doc(db,`checks/${store.id}/${dateKey}/clean`));
-        if(cSnap.exists())cleanDone+=Object.values(cSnap.data()).filter(Boolean).length;
+        if(cSnap.exists())cleanDone+=Object.values(cSnap.data()).filter(ckVal).length;
       }catch(e){}
       try{
         const tSnap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
@@ -5044,7 +5061,7 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
-Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays()]).then(async()=>{
+Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig()]).then(async()=>{
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();
