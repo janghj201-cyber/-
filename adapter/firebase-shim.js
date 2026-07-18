@@ -14,9 +14,16 @@
 // 끝났고 5단계 때 그대로 재사용(vflow-porting-adapter-roadmap 메모리 참고): daily_tasks
 // employee_id nullable(이미 nullable 확인됨) + 정책에 "employee_id is null and
 // can_access_store(store_id)" OR 브랜치 추가하면 개인/공용 한 정책으로 커버됨).
-// config/clean_daily_items · config/clean_zones(라벨 설정, 읽기전용) + checks/{storeId}/
-// {dateKey}/clean(기본청소 체크, 1/3) — V-Flow 기존 cleaning_daily_items/cleaning_daily_logs
-// 연결(대청소 구역 레이어는 2/3에서).
+// config/clean_daily_items · config/clean_zones · config/clean_deep_clean_rule(라벨/규칙
+// 설정, 읽기전용) + checks/{storeId}/{dateKey}/clean(기본청소+대청소 구역, 1~2/3 완료) —
+// V-Flow 기존 cleaning_daily_items/cleaning_daily_logs/cleaning_zones/cleaning_deep_
+// clean_rule/cleaning_deep_logs/cleaning_deep_item_logs 연결. 구역 자동배정+담당자
+// 자동배정은 V-Flow 설계(cleaningApi.js) 그대로 재구현(별도 저장소라 import 불가).
+// ⚠ "대청소 N구역" 텍스트 라벨(달력 배지 등 8곳)은 원본의 날짜 전역계산(그 달 몇 번째
+// 발생이냐)을 그대로 쓰는데, 실제 배정은 V-Flow의 매장별 로테이션이라 서로 다를 수
+// 있다 — 4구역 항목 개수가 전부 같아서(현재 테넌트 기준) 완료율(N/M) 계산은 항상
+// 정확하고, 어긋나는 건 순수 텍스트뿐. staff_todos 공용업무 판별자와 같은 계열(원본
+// 날짜 전역계산 vs V-Flow 매장별 구조) 문제라 5단계(매장 구조 정리)로 미룸.
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -444,10 +451,127 @@ async function readCleanZonesConfig(ctx) {
   return { zones: (data ?? []).map((r) => ({ title: r.title, items: r.items })) }
 }
 
-// ── checks/{storeId}/{dateKey}/clean (V-Flow 기존 cleaning_daily_items/cleaning_daily_logs
-// 테이블 — 1/3, 기본청소만. 대청소 구역 레이어는 2/3에서) ──
+// ── config/clean_deep_clean_rule (V-Flow 기존 cleaning_deep_clean_rule 테이블 — 읽기전용) ──
+// getEvs()의 "몇 번째 일요일이 대청소일이냐" 판정을 원본 하드코딩(1~4번째 전부) 대신
+// 테넌트 실제 규칙(기본값: 1·3번째만)으로 덮어쓰는 데 쓴다. loadCleanConfig()가 앱 시작
+// 시 한 번 읽어 DEEP_CLEAN_OCCURRENCES를 채운다.
+async function readCleanDeepRuleConfig(ctx) {
+  const rule = await fetchDeepCleanRule(ctx)
+  return { occurrences: rule.occurrences }
+}
+
+async function fetchDeepCleanRule(ctx) {
+  const { data, error } = await supabase.from('cleaning_deep_clean_rule').select('recurrence').eq('tenant_id', ctx.tenantId).maybeSingle()
+  if (error) throw error
+  return data?.recurrence ?? { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] }
+}
+
+// schedule.js의 evalRecurrence('monthly_weekday_occurrences')와 동일 규칙(cleaningApi.js와
+// 판정 로직을 동일하게 맞춤 — 별도 저장소라 import 대신 로직만 그대로 재구현).
+function isDeepCleanDay(dateKey, rule) {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const dow = new Date(y, m - 1, d).getDay()
+  if (dow !== rule.weekday) return false
+  let count = 0
+  for (let dd = 1; dd <= d; dd++) {
+    if (new Date(y, m - 1, dd).getDay() === rule.weekday) count++
+  }
+  return (rule.occurrences ?? []).includes(count)
+}
+
+async function projectedDeepCleanZoneNumber(ctx, storeId) {
+  const { data: lastLog, error } = await supabase
+    .from('cleaning_deep_logs')
+    .select('zone_number')
+    .eq('store_id', storeId)
+    .order('log_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return lastLog ? (lastLog.zone_number % 4) + 1 : 1
+}
+
+// 그 발생일에 daily_tasks를 남긴 직원(=근무자로 간주) 중 대청소를 가장 오래전에 맡은
+// 사람을 우선 배정. 후보가 없으면 null(관리자 수동 배정 필요, cleaningApi.js와 동일 로직).
+async function pickDeepCleanAssignee(ctx, storeId, dateKey) {
+  const { data: workers, error: workerErr } = await supabase.from('daily_tasks').select('employee_id').eq('store_id', storeId).eq('task_date', dateKey)
+  if (workerErr) throw workerErr
+  const candidates = [...new Set((workers ?? []).map((w) => w.employee_id))]
+  if (candidates.length === 0) return null
+
+  const { data: history, error: histErr } = await supabase
+    .from('cleaning_deep_logs')
+    .select('assignee_id, log_date')
+    .eq('store_id', storeId)
+    .in('assignee_id', candidates)
+    .order('log_date', { ascending: false })
+  if (histErr) throw histErr
+  const lastAssignedDate = {}
+  for (const row of history ?? []) {
+    if (!lastAssignedDate[row.assignee_id]) lastAssignedDate[row.assignee_id] = row.log_date
+  }
+  candidates.sort((a, b) => (lastAssignedDate[a] ?? '0000-00-00').localeCompare(lastAssignedDate[b] ?? '0000-00-00'))
+  return candidates[0]
+}
+
+// 이미 있는 발생 건만 조회, 없으면 null(생성 안 함) — 훑어보기 화면에서 자동배정이
+// 트리거되면 안 되므로 읽기 경로는 항상 이걸 쓴다.
+async function fetchDeepCleanLogReadOnly(storeId, dateKey) {
+  const { data: existing, error: existingErr } = await supabase.from('cleaning_deep_logs').select('id, zone_number').eq('store_id', storeId).eq('log_date', dateKey).maybeSingle()
+  if (existingErr) throw existingErr
+  if (!existing) return null
+  const { data: itemLogs, error: itemsErr } = await supabase
+    .from('cleaning_deep_item_logs')
+    .select('id, item_label, done, completed_at')
+    .eq('deep_log_id', existing.id)
+    .order('sort_order')
+  if (itemsErr) throw itemsErr
+  return { ...existing, itemLogs: itemLogs ?? [] }
+}
+
+// 실제 발생 기록을 생성(자동배정+담당자배정)한다 — 대청소일이 아니면 null. 체크박스를
+// 처음 누르는 순간에만 호출됨(writeChecks에서만) — 읽기 경로는 절대 안 씀.
+async function getOrCreateDeepCleanLog(ctx, storeId, dateKey) {
+  const rule = await fetchDeepCleanRule(ctx)
+  if (!isDeepCleanDay(dateKey, rule)) return null
+
+  const existing = await fetchDeepCleanLogReadOnly(storeId, dateKey)
+  if (existing) return existing
+
+  const zoneNumber = await projectedDeepCleanZoneNumber(ctx, storeId)
+  const { data: zone, error: zoneErr } = await supabase
+    .from('cleaning_zones')
+    .select('items')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('zone_number', zoneNumber)
+    .eq('active', true)
+    .maybeSingle()
+  if (zoneErr) throw zoneErr
+  const assigneeId = await pickDeepCleanAssignee(ctx, storeId, dateKey)
+
+  const { data: created, error: createErr } = await supabase
+    .from('cleaning_deep_logs')
+    .insert({ tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, zone_number: zoneNumber, assignee_id: assigneeId, assignee_source: 'auto' })
+    .select('id, zone_number')
+    .single()
+  if (createErr) throw createErr
+
+  const itemRows = (zone?.items ?? []).map((label, i) => ({ tenant_id: ctx.tenantId, deep_log_id: created.id, item_label: label, sort_order: i }))
+  let itemLogs = []
+  if (itemRows.length > 0) {
+    const { data: inserted, error: insErr } = await supabase.from('cleaning_deep_item_logs').insert(itemRows).select('id, item_label, done, completed_at')
+    if (insErr) throw insErr
+    itemLogs = inserted ?? []
+  }
+  return { ...created, itemLogs }
+}
+
+// ── checks/{storeId}/{dateKey}/clean (V-Flow 기존 cleaning_daily_items/cleaning_daily_logs +
+// 대청소일이면 cleaning_deep_logs/cleaning_deep_item_logs) ──
 // 원본은 {item_0:{v,t}, item_1:{v,t}, ...} 형태의 flat map 문서 하나를 통째로 읽고 쓴다.
-// item_0..N은 CLEAN_BASE(이제 테넌트의 cleaning_daily_items) 순서와 1:1 대응.
+// item_0..(dailyCount-1)은 기본청소(cleaning_daily_items) 순서, 대청소일이면 그 뒤로
+// 배정된 구역의 항목이 이어붙는다 — 원본이 [...CLEAN_BASE, ...CSECTIONS[sec-1].items]로
+// 합치는 것과 동일한 순서.
 async function readChecks(ctx, originalStoreId, dateKey) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return {}
@@ -471,6 +595,31 @@ async function readChecks(ctx, originalStoreId, dateKey) {
     const log = logByItemId.get(item.id)
     result[`item_${i}`] = log?.done ? { v: true, t: new Date(log.completed_at).getTime() } : { v: false, t: null }
   })
+
+  const rule = await fetchDeepCleanRule(ctx)
+  if (isDeepCleanDay(dateKey, rule)) {
+    const existing = await fetchDeepCleanLogReadOnly(storeId, dateKey)
+    const base = (items ?? []).length
+    if (existing) {
+      existing.itemLogs.forEach((it, i) => {
+        result[`item_${base + i}`] = it.done ? { v: true, t: it.completed_at ? new Date(it.completed_at).getTime() : null } : { v: false, t: null }
+      })
+    } else {
+      // 아직 발생 기록 없음 — 배정될 구역 미리보기만(저장 안 함)
+      const zoneNumber = await projectedDeepCleanZoneNumber(ctx, storeId)
+      const { data: zone, error: zoneErr } = await supabase
+        .from('cleaning_zones')
+        .select('items')
+        .eq('tenant_id', ctx.tenantId)
+        .eq('zone_number', zoneNumber)
+        .eq('active', true)
+        .maybeSingle()
+      if (zoneErr) throw zoneErr
+      ;(zone?.items ?? []).forEach((_, i) => {
+        result[`item_${base + i}`] = { v: false, t: null }
+      })
+    }
+  }
   return result
 }
 
@@ -487,29 +636,51 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
     .eq('active', true)
     .order('sort_order')
   if (itemsErr) throw itemsErr
+  const dailyCount = (items ?? []).length
 
   if (Object.keys(data).length === 0) {
     const ids = (items ?? []).map((i) => i.id)
-    if (ids.length === 0) return
-    const { error } = await supabase
-      .from('cleaning_daily_logs')
-      .upsert(
-        ids.map((itemId) => ({ tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: itemId, done: false, completed_by: null, completed_at: null })),
-        { onConflict: 'store_id,log_date,item_id' }
-      )
-    if (error) throw error
+    if (ids.length > 0) {
+      const { error } = await supabase
+        .from('cleaning_daily_logs')
+        .upsert(
+          ids.map((itemId) => ({ tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: itemId, done: false, completed_by: null, completed_at: null })),
+          { onConflict: 'store_id,log_date,item_id' }
+        )
+      if (error) throw error
+    }
+    // 대청소 발생 기록이 이미 있으면 그 항목들도 초기화 — 없으면 새로 만들지 않는다
+    // (초기화 버튼을 누른 것만으로 자동배정이 트리거되면 안 되므로 읽기전용 조회로 확인).
+    const existing = await fetchDeepCleanLogReadOnly(storeId, dateKey)
+    if (existing && existing.itemLogs.length > 0) {
+      const { error } = await supabase
+        .from('cleaning_deep_item_logs')
+        .update({ done: false, completed_at: null })
+        .eq('deep_log_id', existing.id)
+      if (error) throw error
+    }
     return
   }
 
   for (const [key, val] of Object.entries(data)) {
     const idx = Number(key.replace('item_', ''))
-    const item = (items ?? [])[idx]
-    if (!item) continue // 대청소 구역 항목 인덱스(2/3 이후) — 지금은 조용히 무시
     const done = !!val?.v
-    const { error } = await supabase.from('cleaning_daily_logs').upsert(
-      { tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: item.id, done, completed_by: done ? ctx.profileId : null, completed_at: done ? new Date().toISOString() : null },
-      { onConflict: 'store_id,log_date,item_id' }
-    )
+    if (idx < dailyCount) {
+      const item = (items ?? [])[idx]
+      if (!item) continue
+      const { error } = await supabase.from('cleaning_daily_logs').upsert(
+        { tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: item.id, done, completed_by: done ? ctx.profileId : null, completed_at: done ? new Date().toISOString() : null },
+        { onConflict: 'store_id,log_date,item_id' }
+      )
+      if (error) throw error
+      continue
+    }
+    // 대청소 구역 항목 — 최초 체크 시점에만 실제 발생 기록을 생성(자동배정+담당자배정).
+    const deepLog = await getOrCreateDeepCleanLog(ctx, storeId, dateKey)
+    if (!deepLog) continue // 방어적: 대청소일이 아닌데 들어온 인덱스는 무시
+    const itemLog = deepLog.itemLogs[idx - dailyCount]
+    if (!itemLog) continue
+    const { error } = await supabase.from('cleaning_deep_item_logs').update({ done, completed_at: done ? new Date().toISOString() : null }).eq('id', itemLog.id)
     if (error) throw error
   }
 }
@@ -573,6 +744,11 @@ export async function getDoc(ref) {
   if (ref.path === 'config/clean_zones') {
     const data = await readCleanZonesConfig(ctx)
     return { exists: () => data.zones.length > 0, data: () => data }
+  }
+
+  if (ref.path === 'config/clean_deep_clean_rule') {
+    const data = await readCleanDeepRuleConfig(ctx)
+    return { exists: () => Array.isArray(data.occurrences) && data.occurrences.length > 0, data: () => data }
   }
 
   const checksMatch = CHECKS_RE.exec(ref.path)

@@ -1096,6 +1096,10 @@ const CSECTIONS=[
   {title:"대청소 3구역 — 진열장",items:["외부 진열장 유리 닦기","진열장 내부 선반 닦기","하부 서랍장 정리·먼지 제거","진열 상품 정렬"]},
   {title:"대청소 4구역 — 데스크·창고",items:["컴퓨터 주변 먼지 제거","본체·프린터 외면 닦기","창고 바닥 청소","창고 재고 박스 정리"]},
 ];
+// 대청소 발생 판정(몇 번째 일요일이 대청소일이냐) — V-Flow 테넌트 설정으로 덮어씀.
+// 기본값은 원본과 동일(1~4번째 전부)이라 설정을 못 불러와도 원본 그대로 동작한다.
+let DEEP_CLEAN_OCCURRENCES=[1,2,3,4];
+
 // scheduleRules와 같은 패턴: 하드코딩 기본값으로 시작해서, 있으면 실제 설정으로 덮어씀.
 // setDoc으로 기본값을 되써넣지 않음(scheduleRules와 다른 점) — 여기 항목은 각 사업장이
 // 이미 갖고 있는 실제 청소 목록이라, 못 불러왔다고 이 기본값을 저장소에 새로 쓰면 안 됨.
@@ -1110,6 +1114,12 @@ async function loadCleanConfig(){
     const zSnap=await getDoc(doc(db,'config/clean_zones'));
     if(zSnap.exists()&&Array.isArray(zSnap.data().zones)&&zSnap.data().zones.length){
       CSECTIONS.splice(0,CSECTIONS.length,...zSnap.data().zones);
+    }
+  }catch(e){}
+  try{
+    const rSnap=await getDoc(doc(db,'config/clean_deep_clean_rule'));
+    if(rSnap.exists()&&Array.isArray(rSnap.data().occurrences)&&rSnap.data().occurrences.length){
+      DEEP_CLEAN_OCCURRENCES=rSnap.data().occurrences;
     }
   }catch(e){}
 }
@@ -1170,7 +1180,14 @@ function getEvs(y,m,d){
     else if(rule.condType==='lastBizDayBefore') match = d===getLastBizDayOnOrBefore(y,m,rule.targetDay||16);
     if(match) ev.push({t:rule.key});
   });
-  if(dow===0){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&i<4)ev.push({t:'clean',sec:i+1});}
+  // 대청소 발생 요일은 원본 그대로(일요일) 유지하되, "그 달 몇 번째 일요일이냐"는
+  // DEEP_CLEAN_OCCURRENCES(V-Flow 테넌트 설정, loadCleanConfig가 채움)로 판정한다 —
+  // 원본은 1~4번째 일요일 전부(매주), V-Flow 기본값은 1·3번째만(격주).
+  // ⚠ sec(구역 번호)는 아직도 "몇 번째 발생이냐"는 날짜 전역계산 그대로라, V-Flow의
+  // 진짜 매장별 로테이션 배정과 다를 수 있다 — 텍스트 라벨만 어긋나고 실제 체크리스트
+  // 데이터/완료율은 항상 정확함(어댑터가 실제 배정 기준으로 채움). 매장 텍스트 슬러그
+  // 문제(staff_todos 공용업무)와 같은 계열이라 5단계(매장 구조 정리)로 미룸.
+  if(dow===0){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))ev.push({t:'clean',sec:i+1});}
   return ev;
 }
 
@@ -1181,7 +1198,7 @@ function getTodayCleanSec(){
   if(dow!==0)return -1;
   const ss=sundays(y,m);
   const i=ss.indexOf(d);
-  return (i>=0&&i<4)?i+1:-1;
+  return (i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))?i+1:-1;
 }
 
 // Firebase 체크 데이터 키
@@ -2941,6 +2958,7 @@ async function renderStoreGrid(){
       .then(snap=>{
         const data=snap.exists()?snap.data():{};
         const done=Object.values(data).filter(ckVal).length;
+        const el=document.getElementById(statusId);
         if(!el)return;
         if(done>=total&&total>0){
           el.className='store-today today-done';el.textContent=`✅ ${label} 완료`;
