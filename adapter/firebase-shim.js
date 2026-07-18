@@ -5,8 +5,13 @@
 // 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
 // staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기+쓰기 + 피드백 스레드
 // (3단계 완료 — 미확인 배너는 별도 코드 없이 기존 getDoc 경로 재사용으로 이미 동작),
-// staff_todos/{staffName}_{dateKey} 개인 업무 CRUD+순서변경 (4단계 1/4, 3일+ 이월
-// 액션·히스토리는 2/4에서, 매장 단위 공용 업무는 3/4에서).
+// staff_todos/{staffName}_{dateKey} 개인 업무 CRUD+순서변경+이월 특수액션+히스토리
+// (4단계 완료 — "매장 단위 공용 업무" 3/4는 스코프 제외: 원본 자체가 이미 죽은
+// 기능이고(addTodoItem이 storeId 태그와 무관하게 항상 author로 문서 키를 만들어서,
+// 추가한 항목이 자기 화면에 절대 안 뜸), 설령 살리려 해도 이 문제가 하필 히스토리
+// 화면의 원본 버그(2/4에서 고침, storeId를 이름 자리에 넘김)와 똑같은 경로 모양을
+// 만들어서 — 원본 경로 문자열만 보는 어댑터로는 "이건 개인" vs "이건 매장 공용"을
+// 원리적으로 구분할 수 없다. 5단계 신원통합 때 재검토).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -451,11 +456,12 @@ export async function getDoc(ref) {
     return { exists: () => true, data: () => ({ items }) }
   }
 
-  // TODO(3/4): 매장 공용 업무(staff_todos/{storeId}_{date})를 실제로 만들 때는 이름
-  // 부분이 직원명인지 매장id인지 구분할 진짜 판별자가 필요하다. 지금은 원본이 히스토리
-  // 화면의 체크/수정/삭제에서 직원명 대신 매장id를 잘못 넘기는 버그가 있고(carryItemToToday
-  // 만 정확히 myStaff를 씀), 매장 공용 업무 자체가 아직 없어 충돌 위험이 없으므로 이름
-  // 무관하게 전부 개인 업무로 라우팅 — 원본에서 안 되던 히스토리 편집이 오히려 정상화됨.
+  // 매장 공용 업무(staff_todos/{storeId}_{date})는 스코프에서 제외했다(4단계 3/4 검토
+  // 결과) — 판별자를 만들려 해도 히스토리 화면의 원본 버그(체크/수정/삭제에서 직원명
+  // 대신 매장id를 잘못 넘김)와 경로 모양이 완전히 같아서 원리적으로 구분이 불가능하고,
+  // 애초에 원본의 매장 공용 업무 자체도 addTodoItem이 항상 author로 문서 키를 만들어
+  // 이미 죽어있는 기능이었다(추가해도 자기 화면에 안 뜸). 이름 무관하게 전부 개인
+  // 업무로 라우팅 — 원본에서 안 되던 히스토리 편집도 이걸로 정상화됨(5단계에서 재검토).
   const staffTodoMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoMatch) {
     const items = await readStaffTodos(ctx, staffTodoMatch[2])
@@ -497,7 +503,7 @@ export async function setDoc(ref, data) {
     return
   }
 
-  // TODO(3/4): 위 getDoc의 동일 주석 참고 — 매장 공용 업무 만들 때 판별자 재검토.
+  // 위 getDoc의 동일 주석 참고 — 매장 공용 업무는 스코프 제외(5단계에서 재검토).
   const staffTodoWriteMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoWriteMatch) {
     await writeStaffTodos(ctx, staffTodoWriteMatch[2], data)
