@@ -24,6 +24,12 @@
 // 있다 — 4구역 항목 개수가 전부 같아서(현재 테넌트 기준) 완료율(N/M) 계산은 항상
 // 정확하고, 어긋나는 건 순수 텍스트뿐. staff_todos 공용업무 판별자와 같은 계열(원본
 // 날짜 전역계산 vs V-Flow 매장별 구조) 문제라 5단계(매장 구조 정리)로 미룸.
+// config/schedule_rules(고정업무 규칙, 읽기전용) — V-Flow 기존 calendar_event_types
+// 연결, 월간 캘린더 배지(전체주문/재고실사/월마감보고). 편집(고정업무 관리 탭)은
+// 관리자 커스터마이징 묶음으로 보류. staff_projects/{staffName}(진행중 프로젝트,
+// 개인용) — V-Flow 기존 projects/project_logs 테이블 연결(schema.sql에 이 포팅을
+// 염두에 두고 만들어둔 테이블이라 신규 마이그레이션 없이 어댑터 연결만 함). 관리자
+// 프로젝트탭(전직원 집계)은 5단계(다직원집계, 항목 A 계열)로 보류.
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -430,6 +436,142 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
   }
 }
 
+// ── staff_projects/{staffName} (V-Flow 기존 projects/project_logs 테이블) ──
+// schema.sql의 projects 테이블 주석이 "원본의 items[].doneDate 대응"이라고 직접 명시할
+// 정도로, 애초에 이 포팅을 염두에 두고 만들어진 테이블(V-Flow 자체 대시보드 myWork.js가
+// 진행률바/20%버튼/일지 CRUD까지 이미 구현해 씀) — 신규 테이블 없이 어댑터 연결만 한다.
+// staff_todos/staff_memo와 같은 이유로 경로의 {staffName}은 신뢰하지 않고 항상
+// ctx.profileId로 귀속시킨다.
+//
+// 원본 로그 항목({date,text,ts})엔 id가 없고 배열 인덱스로만 수정/삭제한다(원본
+// editLog/deleteLog가 target.logs[li]를 직접 조작). 읽을 때 실제 project_logs.id를
+// 각 로그 객체에 몰래 끼워넣어두면(원본은 l.date/l.text만 쓰므로 렌더링에 영향 없음),
+// 수정 시엔 그 객체가 그대로 mutate돼 id가 살아있고, 신규 addProjectLog가 만든 로그는
+// id가 아예 없다 — 이 유무로 update/insert를 구분한다(UUID_RE로 판별하는 다른 배열들과
+// 같은 원리, 다만 "형태가 다른 id" 대신 "id 유무"를 씀).
+async function readStaffProjects(ctx) {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, store_id, title, progress, status, done_date, created_at')
+    .eq('employee_id', ctx.profileId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  const projects = data ?? []
+  const ids = projects.map((p) => p.id)
+
+  const logsByProject = new Map()
+  if (ids.length > 0) {
+    const { data: logRows, error: logErr } = await supabase
+      .from('project_logs')
+      .select('id, project_id, log_date, content, created_at')
+      .in('project_id', ids)
+      .order('created_at', { ascending: true })
+    if (logErr) throw logErr
+    for (const l of logRows ?? []) {
+      const list = logsByProject.get(l.project_id) ?? []
+      list.push({ id: l.id, date: l.log_date, text: l.content, ts: new Date(l.created_at).getTime() })
+      logsByProject.set(l.project_id, list)
+    }
+  }
+
+  return {
+    items: projects.map((p) => ({
+      id: p.id,
+      text: p.title,
+      storeId: reverseResolveStoreId(p.store_id, ctx) ?? undefined,
+      done: p.status === 'done',
+      startDate: p.created_at ? p.created_at.slice(0, 10) : undefined,
+      doneDate: p.done_date ?? undefined,
+      progress: p.progress ?? 0,
+      logs: logsByProject.get(p.id) ?? [],
+    })),
+  }
+}
+
+async function writeProjectLogs(ctx, projectId, logs) {
+  const { data: currentRows, error: selErr } = await supabase.from('project_logs').select('id, content').eq('project_id', projectId)
+  if (selErr) throw selErr
+  const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
+  const incomingIds = new Set(logs.filter((l) => l.id && UUID_RE.test(l.id)).map((l) => l.id))
+
+  for (const id of currentById.keys()) {
+    if (!incomingIds.has(id)) {
+      const { error } = await supabase.from('project_logs').delete().eq('id', id)
+      if (error) throw error
+    }
+  }
+
+  for (const log of logs) {
+    if (!log.id || !UUID_RE.test(log.id)) {
+      const { error } = await supabase.from('project_logs').insert({
+        tenant_id: ctx.tenantId,
+        project_id: projectId,
+        author_id: ctx.profileId,
+        log_date: log.date,
+        content: log.text,
+      })
+      if (error) throw error
+      continue
+    }
+    const current = currentById.get(log.id)
+    if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
+    if (current.content !== log.text) {
+      const { error } = await supabase.from('project_logs').update({ content: log.text }).eq('id', log.id)
+      if (error) throw error
+    }
+  }
+}
+
+async function writeStaffProjects(ctx, { items }) {
+  const { data: currentRows, error: selErr } = await supabase
+    .from('projects')
+    .select('id, title, progress, status, done_date')
+    .eq('employee_id', ctx.profileId)
+  if (selErr) throw selErr
+  const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
+  const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
+
+  for (const id of currentById.keys()) {
+    if (!incomingRealIds.has(id)) {
+      const { error } = await supabase.from('projects').delete().eq('id', id)
+      if (error) throw error
+    }
+  }
+
+  for (const item of items) {
+    if (!UUID_RE.test(item.id)) {
+      // addProject가 만드는 새 항목은 항상 logs:[]라 로그 diff가 필요 없다(원본은
+      // addProjectLog를 addProject와 별개 호출로만 실행 — 이미 real id가 생긴 뒤).
+      const storeId = resolveStoreId(item.storeId, ctx)
+      const { error } = await supabase.from('projects').insert({
+        tenant_id: ctx.tenantId,
+        store_id: storeId,
+        employee_id: ctx.profileId,
+        title: item.text,
+        status: item.done ? 'done' : 'ongoing',
+        progress: item.progress ?? 0,
+        done_date: item.doneDate ?? null,
+      })
+      if (error) throw error
+      continue
+    }
+    const current = currentById.get(item.id)
+    if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
+    const patch = {}
+    if (current.title !== item.text) patch.title = item.text
+    const wantStatus = item.done ? 'done' : 'ongoing'
+    if (current.status !== wantStatus) patch.status = wantStatus
+    if ((current.progress ?? 0) !== (item.progress ?? 0)) patch.progress = item.progress ?? 0
+    const wantDoneDate = item.doneDate ?? null
+    if ((current.done_date ?? null) !== wantDoneDate) patch.done_date = wantDoneDate
+    if (Object.keys(patch).length > 0) {
+      const { error } = await supabase.from('projects').update(patch).eq('id', item.id)
+      if (error) throw error
+    }
+    await writeProjectLogs(ctx, item.id, item.logs || [])
+  }
+}
+
 // ── config/clean_daily_items, config/clean_zones (V-Flow 기존 cleaning_daily_items/
 // cleaning_zones 테이블 — 읽기 전용) ──
 // 원본은 CLEAN_BASE/CSECTIONS를 자바스크립트 상수로 하드코딩해서 렌더링에 직접 쓴다
@@ -741,6 +883,7 @@ const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
 const HANDOVER_RE = /^handover\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
 const STAFF_TODO_RE = /^staff_todos\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
 const CHECKS_RE = /^checks\/([^/]+)\/(\d{4}-\d{2}-\d{2})\/clean$/
+const STAFF_PROJECT_RE = /^staff_projects\/(.+)$/
 
 export async function getDoc(ref) {
   const ctx = await getContext()
@@ -811,6 +954,11 @@ export async function getDoc(ref) {
     return { exists: () => true, data: () => data }
   }
 
+  if (STAFF_PROJECT_RE.test(ref.path)) {
+    const data = await readStaffProjects(ctx)
+    return { exists: () => true, data: () => data }
+  }
+
   console.info(`[adapter] 아직 미구현 경로(read, 기본값 폴백으로 넘어감): ${ref.path}`)
   return { exists: () => false, data: () => undefined }
 }
@@ -856,6 +1004,11 @@ export async function setDoc(ref, data) {
   const checksWriteMatch = CHECKS_RE.exec(ref.path)
   if (checksWriteMatch) {
     await writeChecks(ctx, checksWriteMatch[1], checksWriteMatch[2], data)
+    return
+  }
+
+  if (STAFF_PROJECT_RE.test(ref.path)) {
+    await writeStaffProjects(ctx, data)
     return
   }
 
