@@ -3,8 +3,8 @@
 // Supabase를 씀. 원본 코드는 이 파일 존재를 몰라도 되게(=고칠 필요 없게) 설계함.
 //
 // 구현된 경로: board/posts (1단계), storeinfo/{storeId} · feedback/.../comment ·
-// staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기+쓰기(피드백 스레드 제외,
-// 3단계 2/4).
+// staff_memo/{name} (2단계), handover/{storeId}_{dateKey} 읽기+쓰기 + 피드백 스레드
+// (3단계 3/4, 미확인 배너는 4/4에서 마저).
 // 그 외 경로는 getDoc이 "문서 없음"을 반환하고 setDoc은 조용히 무시한다 — 원본의 각
 // 로드 함수가 전부 try/catch + "없으면 기본값 폴백" 패턴으로 짜여 있어(loadStaffList 등),
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
@@ -146,6 +146,48 @@ async function writeStaffMemo(ctx, { text }) {
   if (error) throw error
 }
 
+// ── handover/{storeId}_{dateKey}의 feedbacks 배열 (신규 handover_feedbacks 테이블) ──
+// 원본은 피드백에 id가 없고 배열 인덱스로만 삭제하므로, (작성자명, 내용) 쌍으로 DB 행과
+// 매칭해 diff한다. 같은 사람이 같은 문구를 두 번 남기는 드문 경우엔 먼저 생긴(오래된)
+// 행부터 순서대로 매칭해서, 매칭 안 된 나머지가 실제 삭제/추가 대상이 되게 한다.
+// 새로 추가되는(매칭 안 된) 항목은 항상 지금 세션 사용자가 쓴 것 — top-level 항목의
+// insert가 item.author를 무시하고 항상 ctx.profileId를 쓰는 것과 같은 이유로, 여기서도
+// 들어온 author 문자열을 신뢰하지 않고 ctx.profileId로 고정한다.
+async function writeHandoverFeedbacks(ctx, handoverId, feedbacks) {
+  const { data: currentRows, error: selErr } = await supabase
+    .from('handover_feedbacks')
+    .select('id, content, author:profiles!author_id(name)')
+    .eq('handover_id', handoverId)
+    .order('created_at', { ascending: true })
+  if (selErr) throw selErr
+
+  const remaining = [...(currentRows ?? [])]
+  const unmatched = []
+  for (const f of feedbacks) {
+    const idx = remaining.findIndex((r) => (r.author?.name ?? '익명') === (f.author ?? '익명') && r.content === f.text)
+    if (idx >= 0) {
+      remaining.splice(idx, 1)
+    } else {
+      unmatched.push(f)
+    }
+  }
+
+  for (const row of remaining) {
+    const { error } = await supabase.from('handover_feedbacks').delete().eq('id', row.id)
+    if (error) throw error
+  }
+
+  for (const f of unmatched) {
+    const { error } = await supabase.from('handover_feedbacks').insert({
+      tenant_id: ctx.tenantId,
+      handover_id: handoverId,
+      author_id: ctx.profileId,
+      content: f.text,
+    })
+    if (error) throw error
+  }
+}
+
 // ── handover/{storeId}_{dateKey} (V-Flow 기존 handovers 테이블, 1항목=1행) ──
 // 원본은 "어제 미확인 항목을 오늘 문서로 복사"해서 이월을 흉내내는데(그러면 어제/오늘 두
 // 사본이 따로 놀 수 있는 버그 소지가 있음), 관계형에서는 그럴 필요 없이 "확인 안 된 과거
@@ -183,31 +225,38 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
   }
 
   for (const item of items) {
+    let handoverId = item.id
     if (!UUID_RE.test(item.id)) {
-      const { error } = await supabase.from('handovers').insert({
-        tenant_id: ctx.tenantId,
-        store_id: storeId,
-        from_employee: ctx.profileId,
-        content: item.text,
-        handover_date: dateKey,
-        confirmed: item.confirmed ?? false,
-      })
+      const { data: inserted, error } = await supabase
+        .from('handovers')
+        .insert({
+          tenant_id: ctx.tenantId,
+          store_id: storeId,
+          from_employee: ctx.profileId,
+          content: item.text,
+          handover_date: dateKey,
+          confirmed: item.confirmed ?? false,
+        })
+        .select('id')
+        .single()
       if (error) throw error
-      continue
+      handoverId = inserted.id
+    } else {
+      const current = currentById.get(item.id)
+      if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
+      const patch = {}
+      if (current.content !== item.text) patch.content = item.text
+      if (current.confirmed !== item.confirmed) {
+        patch.confirmed = item.confirmed
+        patch.confirmed_by = item.confirmed ? ctx.profileId : null
+        patch.confirmed_at = item.confirmed ? new Date().toISOString() : null
+      }
+      if (Object.keys(patch).length > 0) {
+        const { error } = await supabase.from('handovers').update(patch).eq('id', item.id)
+        if (error) throw error
+      }
     }
-    const current = currentById.get(item.id)
-    if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
-    const patch = {}
-    if (current.content !== item.text) patch.content = item.text
-    if (current.confirmed !== item.confirmed) {
-      patch.confirmed = item.confirmed
-      patch.confirmed_by = item.confirmed ? ctx.profileId : null
-      patch.confirmed_at = item.confirmed ? new Date().toISOString() : null
-    }
-    if (Object.keys(patch).length > 0) {
-      const { error } = await supabase.from('handovers').update(patch).eq('id', item.id)
-      if (error) throw error
-    }
+    await writeHandoverFeedbacks(ctx, handoverId, item.feedbacks || [])
   }
 }
 
@@ -221,7 +270,25 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,handover_date.lt.${dateKey})`)
     .order('created_at', { ascending: true })
   if (error) throw error
-  return (data ?? []).map((h) => ({
+  const rows = data ?? []
+
+  const ids = rows.map((r) => r.id)
+  const feedbacksByHandover = new Map()
+  if (ids.length > 0) {
+    const { data: fbRows, error: fbErr } = await supabase
+      .from('handover_feedbacks')
+      .select('handover_id, content, created_at, author:profiles!author_id(name)')
+      .in('handover_id', ids)
+      .order('created_at', { ascending: true })
+    if (fbErr) throw fbErr
+    for (const f of fbRows ?? []) {
+      const list = feedbacksByHandover.get(f.handover_id) ?? []
+      list.push({ author: f.author?.name ?? '익명', text: f.content, ts: new Date(f.created_at).getTime() })
+      feedbacksByHandover.set(f.handover_id, list)
+    }
+  }
+
+  return rows.map((h) => ({
     id: h.id,
     text: h.content,
     author: h.author?.name ?? '익명',
@@ -229,7 +296,7 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     confirmedBy: h.confirmer?.name ?? null,
     confirmedAt: h.confirmed_at ? new Date(h.confirmed_at).getTime() : null,
     fromDate: h.handover_date !== dateKey ? h.handover_date : null,
-    feedbacks: [], // 3단계에서 채움
+    feedbacks: feedbacksByHandover.get(h.id) ?? [],
   }))
 }
 
