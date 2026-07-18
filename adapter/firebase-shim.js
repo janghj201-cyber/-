@@ -12,7 +12,7 @@
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
 import { supabase } from './supabase-client.js'
 import { getContext } from './context.js'
-import { resolveStoreId, reverseResolveStoreId, ORIGINAL_STORE_IDS } from './store-bridge.js'
+import { resolveStoreId, reverseResolveStoreId } from './store-bridge.js'
 
 // ── Firebase 앱/DB 핸들 흉내 (아무 것도 안 함, 시그니처만 맞춤) ──
 export function initializeApp(config) {
@@ -310,17 +310,25 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
 // staff_memo와 같은 이유로 경로의 {staffName}은 신뢰하지 않고 항상 ctx.profileId로
 // 귀속시킨다(카드 선택=myStaff와 실제 로그인 프로필이 identity 통합 전까지는 분리돼 있음).
 //
+// 이월 병합은 원본과 동일하게 "오늘 날짜를 볼 때만" 적용한다(과거 날짜를 그대로 반환).
+// 안 그러면 히스토리 화면처럼 이번 달 날짜를 하루씩 순회하며 매일 읽는 화면에서, 아직
+// 안 끝난 항목이 그 이후 모든 날짜에 중복으로 끼어드는 문제가 생긴다.
+//
 // 순서변경(↑/↓)은 원본이 배열 위치를 통째로 바꿔 setDoc하므로, 매 쓰기마다 들어온
 // 배열의 인덱스를 sort_order로 그대로 반영한다(재정렬 전용 diff를 따로 두지 않고
 // 모든 쓰기에서 동일하게 처리 — 더 단순하고, 결과도 항상 배열 순서와 일치).
+function todayDateKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+function isToday(dateKey) {
+  return dateKey === todayDateKey()
+}
+
 async function readStaffTodos(ctx, dateKey) {
-  const { data, error } = await supabase
-    .from('daily_tasks')
-    .select('id, content, store_id, status, task_date, sort_order')
-    .eq('employee_id', ctx.profileId)
-    .or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`)
-    .order('sort_order', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: true })
+  let query = supabase.from('daily_tasks').select('id, content, store_id, status, task_date, sort_order').eq('employee_id', ctx.profileId)
+  query = isToday(dateKey) ? query.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : query.eq('task_date', dateKey)
+  const { data, error } = await query.order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true })
   if (error) throw error
   return (data ?? []).map((r) => ({
     id: r.id,
@@ -332,12 +340,18 @@ async function readStaffTodos(ctx, dateKey) {
   }))
 }
 
+// 원본의 "오늘로 이동"(carryItemToToday)은 오늘 목록에 새 항목만 addTodoItem으로
+// 추가하고 원본 항목은 그대로 둔다 — B-5에서 겪은 것과 같은 이월 중복 생성 버그.
+// V-Flow 자체 대시보드(myWork.js)가 이미 쓰는 패턴을 그대로 재사용: 새 행을 넣고
+// 원본을 status='carried_over'로 마킹해서 다음 이월 대상에서 빠지게 한다. 새로
+// 추가되는 항목의 fromDate가 채워져 있고 오늘 날짜와 다르면 "이동" 케이스로 보고,
+// 같은 내용의 아직 pending인 원본을 그 날짜에서 찾아 연결한다(id가 없어 내용+날짜로
+// 매칭 — 원본도 애초에 id 없이 배열로만 다루던 것과 같은 한계).
 async function writeStaffTodos(ctx, dateKey, { items }) {
-  const { data: currentRows, error: selErr } = await supabase
-    .from('daily_tasks')
-    .select('id, content, status')
-    .eq('employee_id', ctx.profileId)
-    .or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`)
+  const today = isToday(dateKey)
+  let selQuery = supabase.from('daily_tasks').select('id, content, status, task_date').eq('employee_id', ctx.profileId)
+  selQuery = today ? selQuery.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : selQuery.eq('task_date', dateKey)
+  const { data: currentRows, error: selErr } = await selQuery
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
   const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
@@ -352,6 +366,29 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     if (!UUID_RE.test(item.id)) {
+      const isCarryMove = today && item.fromDate && item.fromDate !== dateKey
+      if (isCarryMove) {
+        const original = (currentRows ?? []).find((r) => r.content === item.text && r.task_date === item.fromDate && r.status === 'pending')
+        // 히스토리 화면의 "오늘로↑" 버튼이 클릭 후에도 원본 UI에서 안 사라지는 한계 때문에
+        // 재클릭될 수 있다 — 원본이 이미 carried_over로 마킹돼 더 이상 pending이 아니면
+        // "이미 이동된 것"으로 보고 조용히 건너뛴다. 그대로 insert하면 진짜 중복이 생긴다.
+        if (!original) continue
+        const storeId = resolveStoreId(item.storeId, ctx)
+        const { error } = await supabase.from('daily_tasks').insert({
+          tenant_id: ctx.tenantId,
+          store_id: storeId,
+          employee_id: ctx.profileId,
+          task_date: dateKey,
+          content: item.text,
+          status: item.done ? 'done' : 'pending',
+          sort_order: i,
+          carried_over_from: original.id,
+        })
+        if (error) throw error
+        const { error: markErr } = await supabase.from('daily_tasks').update({ status: 'carried_over' }).eq('id', original.id)
+        if (markErr) throw markErr
+        continue
+      }
       const storeId = resolveStoreId(item.storeId, ctx)
       const { error } = await supabase.from('daily_tasks').insert({
         tenant_id: ctx.tenantId,
@@ -369,7 +406,7 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
     if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
     const patch = { sort_order: i }
     if (current.content !== item.text) patch.content = item.text
-    const wantStatus = item.done ? 'done' : 'pending'
+    const wantStatus = item.kept ? 'kept' : item.done ? 'done' : 'pending'
     if (current.status !== wantStatus) patch.status = wantStatus
     const { error } = await supabase.from('daily_tasks').update(patch).eq('id', item.id)
     if (error) throw error
@@ -414,8 +451,13 @@ export async function getDoc(ref) {
     return { exists: () => true, data: () => ({ items }) }
   }
 
+  // TODO(3/4): 매장 공용 업무(staff_todos/{storeId}_{date})를 실제로 만들 때는 이름
+  // 부분이 직원명인지 매장id인지 구분할 진짜 판별자가 필요하다. 지금은 원본이 히스토리
+  // 화면의 체크/수정/삭제에서 직원명 대신 매장id를 잘못 넘기는 버그가 있고(carryItemToToday
+  // 만 정확히 myStaff를 씀), 매장 공용 업무 자체가 아직 없어 충돌 위험이 없으므로 이름
+  // 무관하게 전부 개인 업무로 라우팅 — 원본에서 안 되던 히스토리 편집이 오히려 정상화됨.
   const staffTodoMatch = STAFF_TODO_RE.exec(ref.path)
-  if (staffTodoMatch && !ORIGINAL_STORE_IDS.includes(staffTodoMatch[1])) {
+  if (staffTodoMatch) {
     const items = await readStaffTodos(ctx, staffTodoMatch[2])
     return { exists: () => true, data: () => ({ items }) }
   }
@@ -455,8 +497,9 @@ export async function setDoc(ref, data) {
     return
   }
 
+  // TODO(3/4): 위 getDoc의 동일 주석 참고 — 매장 공용 업무 만들 때 판별자 재검토.
   const staffTodoWriteMatch = STAFF_TODO_RE.exec(ref.path)
-  if (staffTodoWriteMatch && !ORIGINAL_STORE_IDS.includes(staffTodoWriteMatch[1])) {
+  if (staffTodoWriteMatch) {
     await writeStaffTodos(ctx, staffTodoWriteMatch[2], data)
     return
   }
