@@ -821,6 +821,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
     <div><div class="header-title">👤 내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
+    <button class="back-btn" onclick="doLogout()">🚪 로그아웃</button>
   </div>
   <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
   <div class="pb"></div>
@@ -999,7 +1000,8 @@ const db = getFirestore(app);
 // ══════════════════════════════════════
 // ★ 여기만 고치면 됩니다
 // ══════════════════════════════════════
-const ADMIN_PW = "682879";
+// 5-5 신원통합: ADMIN_PW(프론트 하드코딩 비밀번호) 제거 — 관리자 판별은 로그인 계정의
+// role(owner/manager)로. 진짜 경계는 RLS가 지키고, 프론트 판별은 화면 진입 편의용.
 
 // 5-3 깡통화: 매장은 실제 테넌트 데이터(config/stores → 어댑터가 stores 테이블로 응답).
 // 하드코딩 9개 매장 제거 — loadStores()가 시작 시 채운다.
@@ -1475,19 +1477,13 @@ function renderMyWorkScreen(){
 }
 
 // 관리자 — 직원 추가/삭제
+// 5-4 신원통합: 직원 목록은 실제 계정(profiles)이 원천 — 이름 타이핑 추가/삭제는 폐기.
+// 직원 추가 = V-Flow 초대(가입 시 카드 자동 생성), 삭제 = V-Flow 프로필 관리.
 async function addStaffMember(){
-  const name=prompt('추가할 직원 이름을 입력하세요:');
-  if(!name||!name.trim())return;
-  if(staffList.includes(name.trim())){alert('이미 등록된 직원입니다.');return;}
-  staffList.push(name.trim());
-  await saveStaffList();
-  renderMyPage();
+  alert('직원 추가는 V-Flow 초대로 진행됩니다.\n초대받은 직원이 가입하면 카드가 자동으로 생깁니다.');
 }
 window.deleteStaffMember=async function(name){
-  if(!confirm(`${name} 직원을 삭제할까요?`))return;
-  staffList=staffList.filter(s=>s!==name);
-  await saveStaffList();
-  renderMyPage();
+  alert(`직원 삭제는 V-Flow 프로필 관리에서 진행됩니다.\n(${name} 계정을 비활성화하면 카드가 사라집니다.)`);
 };
 
 async function renderMyTodoList(){
@@ -1871,7 +1867,7 @@ const GUIDE_SECTIONS = [
   {
     title: '🔐 관리자 대시보드',
     items: [
-      '상단 🔐 관리자 버튼 → 비밀번호 입력 시 진입',
+      '상단 🔐 관리자 버튼 → owner/manager 계정만 진입 (비밀번호 없음)',
       '📍 현황·보고 탭: 매장별 청소·업무·근무자·인수인계를 날짜 이동하며 실시간으로 확인 (오늘 뿐 아니라 과거 날짜도 실시간 반영)',
       '항목별 상세보기로 청소 체크리스트/업무 체크 여부 확인, 매장별 피드백 작성 가능',
       '📊 월간 통계: 이번 달 지점별 누적 현황',
@@ -5025,33 +5021,23 @@ async function renderMonthlyTab(content){
 // ══════════════════════════════════════
 // 비밀번호 모달
 // ══════════════════════════════════════
+// 5-5: 비밀번호 모달 대신 로그인 계정 role로 판별 (owner/manager만 진입)
 window.openPwModal=function(){
-  document.getElementById('pw-modal').style.display='flex';
-  document.getElementById('pw-input').value='';
-  document.getElementById('pw-err').textContent='';
-  setTimeout(()=>document.getElementById('pw-input').focus(),100);
-};
-window.closePwModal=function(){
-  document.getElementById('pw-modal').style.display='none';
-};
-window.checkPw=function(){
-  const val=document.getElementById('pw-input').value;
-  if(val===ADMIN_PW){
-    document.getElementById('pw-modal').style.display='none';
+  const role=window.__vflowProfile?.role;
+  if(role==='owner'||role==='manager'){
     isAdmin=true;
     dashTab='today';
     dashViewDate=null;
     showScreen('screen-admin');
     renderDashboard();
   } else {
-    document.getElementById('pw-err').textContent='비밀번호가 틀렸습니다';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-input').focus();
+    alert('관리자 권한이 없습니다.\n(관리자 화면은 owner/manager 계정만 볼 수 있어요)');
   }
 };
-document.getElementById('pw-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter')window.checkPw();
-});
+window.closePwModal=function(){
+  document.getElementById('pw-modal').style.display='none';
+};
+window.checkPw=function(){window.openPwModal();};
 document.getElementById('name-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')window.confirmName();
 });
@@ -5083,7 +5069,16 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
+// 5-5: 로그아웃 — 세션 정리 후 로그인 화면으로 (identity 통합 후 계정 전환 수단)
+window.doLogout=function(){
+  if(!confirm('로그아웃할까요?'))return;
+  Object.keys(localStorage).filter(k=>k.startsWith('sb-')).forEach(k=>localStorage.removeItem(k));
+  location.href='login.html';
+};
 Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig()]).then(async()=>{
+  // 5-5: 관리자 여부는 로그인 계정 role로 (renderMyPage의 관리자 전용 요소 등에 사용)
+  const _role=window.__vflowProfile?.role;
+  isAdmin=(_role==='owner'||_role==='manager');
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();
