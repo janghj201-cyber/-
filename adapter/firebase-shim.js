@@ -952,6 +952,25 @@ async function readStaffConfig(ctx) {
   return { list, defaultStores }
 }
 
+// ── config/holidays (공휴일 캐시: V-Flow 기존 public_holidays 테이블) ──
+// 원본은 nager.at에서 조회한 {날짜:이름} 맵을 통짜 캐시로 저장/로드한다.
+// 읽기: public_holidays 전체 → map. 쓰기: 새 날짜만 insert(중복 무시) — 전역 공용
+// 데이터라 라벨 덮어쓰기는 하지 않는다(먼저 캐시된 라벨 유지).
+async function readHolidaysConfig() {
+  const { data, error } = await supabase.from('public_holidays').select('date, label')
+  if (error) throw error
+  const map = {}
+  for (const r of data ?? []) map[r.date] = r.label
+  return { map }
+}
+
+async function writeHolidaysConfig(dataObj) {
+  const rows = Object.entries(dataObj?.map ?? {}).map(([date, label]) => ({ date, label }))
+  if (!rows.length) return
+  const { error } = await supabase.from('public_holidays').upsert(rows, { onConflict: 'date', ignoreDuplicates: true })
+  if (error) throw error
+}
+
 // ── config/dayoff (휴무: V-Flow 신규 dayoffs 테이블) ──
 // 원본은 {이름: {날짜: 'dayoff'|'work'}} 통짜 문서를 읽고 통째로 다시 쓴다.
 // 읽기: dayoffs 전체 → 원본 모양으로 조립. 쓰기: 현재 행과 diff해서 바뀐 것만
@@ -1104,6 +1123,11 @@ export async function getDoc(ref) {
     return { exists: () => Object.keys(data).length > 0, data: () => data }
   }
 
+  if (ref.path === 'config/holidays') {
+    const data = await readHolidaysConfig()
+    return { exists: () => Object.keys(data.map).length > 0, data: () => data }
+  }
+
   if (ref.path === 'config/stores') {
     // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다. 아이콘은 stores 테이블에
     // 없어서 순번 배정(관리자 커스터마이징 묶음에서 편집 가능하게 할 수 있음).
@@ -1200,6 +1224,11 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/schedule_rules') {
     await writeScheduleRulesConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/holidays') {
+    await writeHolidaysConfig(data)
     return
   }
 
