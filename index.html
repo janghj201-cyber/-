@@ -285,7 +285,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .pb{height:calc(20px + var(--safe-bot));}
 
 /* ── 하단 탭 네비게이션 ── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);display:flex;z-index:400;padding-bottom:var(--safe-bot);}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);display:flex;z-index:400;padding-bottom:var(--safe-bot);transform:translateZ(0);will-change:transform;backface-visibility:hidden;}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:inherit;color:rgba(255,255,255,0.45);transition:color 0.15s;position:relative;}
 .tab-badge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .tab-item.active{color:var(--gold);}
