@@ -626,6 +626,57 @@ const SCHEDULE_RULE_COLOR_MAP = { blue: 'c-blue', orange: 'c-orange', purple: 'c
 // (고정업무 관리 탭 등 rule.task 기반 화면은 영향 없음 — 5단계 항목 아님, renderCal
 // 자체의 하드코딩 스코프 한계라 필요하면 별도로 다룰 것).
 const SCHEDULE_RULE_LABEL_TO_KEY = { 전체주문: 'order', 재고실사: 'stock', 월마감보고: 'report' }
+const SCHEDULE_RULE_COLOR_REVERSE = Object.fromEntries(Object.entries(SCHEDULE_RULE_COLOR_MAP).map(([k, v]) => [v, k]))
+
+// 고정업무 편집 실저장 (커스터마이징 묶음 1번 — "✓저장됨" 가짜 메시지 해결).
+// 원본 rules 배열을 calendar_event_types와 diff-sync: 라벨(task) 기준 매칭,
+// 새 라벨 insert / 변경 update / 빠진 라벨 active=false(삭제 대신 비활성 — 안전).
+// 대청소류(monthly_weekday_*)는 읽기에서 스킵되는 것과 동일하게 diff 대상에서 제외.
+// 지원 조건은 편집 UI가 만드는 weekday/monthdays 둘 — 그 외(lastBizDayBefore 등
+// 원본 폴백 시드 전용)는 경고 후 생략. 쓰기 권한은 RLS(owner/manager)가 강제.
+async function writeScheduleRulesConfig(ctx, { rules }) {
+  const { data: rows, error } = await supabase
+    .from('calendar_event_types')
+    .select('id, label, color, recurrence, sort_order, active')
+    .eq('tenant_id', ctx.tenantId)
+  if (error) throw error
+  const editable = (rows ?? []).filter((r) => ['weekly', 'monthly_day'].includes(r.recurrence?.type))
+  const byLabel = new Map(editable.map((r) => [r.label, r]))
+  const wanted = new Set()
+  let i = 0
+  for (const rule of rules ?? []) {
+    let recurrence = null
+    if (rule.condType === 'weekday') recurrence = { type: 'weekly', weekday: rule.weekday }
+    else if (rule.condType === 'monthdays') recurrence = { type: 'monthly_day', days: rule.days ?? [] }
+    else {
+      console.warn(`[adapter] 고정업무 "${rule.task}" — 미지원 조건(${rule.condType}), 저장 생략`)
+      continue
+    }
+    const color = SCHEDULE_RULE_COLOR_REVERSE[rule.col] ?? 'blue'
+    const label = (rule.task ?? '').trim() || '(제목없음)'
+    wanted.add(label)
+    const cur = byLabel.get(label)
+    if (!cur) {
+      const { error: e } = await supabase
+        .from('calendar_event_types')
+        .insert({ tenant_id: ctx.tenantId, label, color, recurrence, sort_order: i, active: true })
+      if (e) throw e
+    } else if (cur.color !== color || JSON.stringify(cur.recurrence) !== JSON.stringify(recurrence) || cur.sort_order !== i || !cur.active) {
+      const { error: e } = await supabase
+        .from('calendar_event_types')
+        .update({ color, recurrence, sort_order: i, active: true })
+        .eq('id', cur.id)
+      if (e) throw e
+    }
+    i++
+  }
+  for (const r of editable) {
+    if (!wanted.has(r.label) && r.active) {
+      const { error: e } = await supabase.from('calendar_event_types').update({ active: false }).eq('id', r.id)
+      if (e) throw e
+    }
+  }
+}
 
 async function readScheduleRulesConfig(ctx) {
   const { data, error } = await supabase
@@ -1144,6 +1195,11 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/dayoff') {
     await writeDayoffConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/schedule_rules') {
+    await writeScheduleRulesConfig(ctx, data)
     return
   }
 
