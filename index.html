@@ -563,6 +563,21 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .staff-name{font-size:13px;font-weight:700;color:var(--text);}
 .staff-add-block{background:var(--gold-light);border:2px dashed var(--gold);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;}
 .staff-add-block:active{transform:scale(0.95);}
+/* 5-2 조회 전용(타인 카드 열람) — 쓰기 UI 숨김. 인수인계는 매장 공유 기능이라 그대로 둔다 */
+#screen-my-work.view-only .my-section .my-input-row,
+#screen-my-work.view-only #task-type-select,
+#screen-my-work.view-only #my-bulk-wrap,
+#screen-my-work.view-only .my-todo-list button,
+#screen-my-work.view-only #my-project-banner button,
+#screen-my-work.view-only #my-project-banner input,
+#screen-my-work.view-only #my-project-banner textarea,
+#screen-my-work.view-only button[onclick="openMyDayoffModal()"],
+#screen-my-work.view-only button[onclick="toggleMyDayoff()"],
+#screen-my-work.view-only button[onclick="toggleMyBulk()"],
+#screen-my-work.view-only .my-section:has(#my-memo-textarea){display:none!important}
+#screen-my-work.view-only .my-todo-list input[type=checkbox]{pointer-events:none;opacity:.55}
+/* 인수인계 입력줄은 예외로 다시 살림 */
+#screen-my-work.view-only .my-section:has(#my-handover-input) .my-input-row{display:flex!important}
 </style>
 </head>
 <body>
@@ -1396,6 +1411,9 @@ function saveMyMemo(){window.saveMyMemo();}
 
 function enterMyWork(name){
   myStaff=name;
+  // 5-2: 타인 카드는 조회 전용(보기 O, 수정 X) — 어댑터도 타인 쓰기를 차단함
+  const _vSelf=window.__vflowProfile;
+  document.getElementById('screen-my-work').classList.toggle('view-only',!!(_vSelf&&_vSelf.name!==name));
   myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
   // 직원 기본 매장 자동 설정
   const defaultStoreId=STAFF_DEFAULT_STORE[name];
@@ -1422,7 +1440,7 @@ function renderMyWorkScreen(){
   const isToday=myDate.getTime()===new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
   const isFuture=myDate>new Date(today.getFullYear(),today.getMonth(),today.getDate());
 
-  document.getElementById('my-work-name').textContent=`👤 ${myStaff}`;
+  document.getElementById('my-work-name').textContent=document.getElementById('screen-my-work').classList.contains('view-only')?`👁 ${myStaff} (조회 전용)`:`👤 ${myStaff}`;
   document.getElementById('my-work-sub').textContent=`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
 
   const dateLabel=document.getElementById('my-date-label');

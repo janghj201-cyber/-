@@ -348,8 +348,12 @@ function isToday(dateKey) {
   return dateKey === todayDateKey()
 }
 
-async function readStaffTodos(ctx, dateKey) {
-  let query = supabase.from('daily_tasks').select('id, content, store_id, status, task_date, sort_order').eq('employee_id', ctx.profileId)
+async function readStaffTodos(ctx, dateKey, target) {
+  // 5-2: target = 경로의 {staffName}을 해석한 조회대상 프로필(없으면 본인).
+  // "서로 보기는 되고 수정은 본인 것만" — 읽기는 조회대상, 쓰기는 setDoc 라우터에서 본인만.
+  const targetId = target?.id ?? ctx.profileId
+  const targetName = target?.name ?? ctx.profile.name
+  let query = supabase.from('daily_tasks').select('id, content, store_id, status, task_date, sort_order').eq('employee_id', targetId)
   query = isToday(dateKey) ? query.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : query.eq('task_date', dateKey)
   const { data, error } = await query.order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true })
   if (error) throw error
@@ -358,7 +362,7 @@ async function readStaffTodos(ctx, dateKey) {
     text: r.content,
     storeId: reverseResolveStoreId(r.store_id, ctx) ?? undefined,
     done: r.status === 'done',
-    author: ctx.profile.name,
+    author: targetName,
     fromDate: r.task_date !== dateKey ? r.task_date : null,
   }))
 }
@@ -449,11 +453,12 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
 // 수정 시엔 그 객체가 그대로 mutate돼 id가 살아있고, 신규 addProjectLog가 만든 로그는
 // id가 아예 없다 — 이 유무로 update/insert를 구분한다(UUID_RE로 판별하는 다른 배열들과
 // 같은 원리, 다만 "형태가 다른 id" 대신 "id 유무"를 씀).
-async function readStaffProjects(ctx) {
+async function readStaffProjects(ctx, target) {
+  // 5-2: readStaffTodos와 같은 원리 — 읽기는 조회대상(없으면 본인), 쓰기는 본인만.
   const { data, error } = await supabase
     .from('projects')
     .select('id, store_id, title, progress, status, done_date, created_at')
-    .eq('employee_id', ctx.profileId)
+    .eq('employee_id', target?.id ?? ctx.profileId)
     .order('created_at', { ascending: true })
   if (error) throw error
   const projects = data ?? []
@@ -884,14 +889,31 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
 // 기본 매장 라벨/자동 선택에 쓰인다. store_id(uuid)→슬러그 변환은 store-bridge의
 // 위치기반 임시 매핑(STORES 자체 깡통화는 5-3에서 — 그때 이 변환도 사라짐).
 async function readStaffConfig(ctx) {
-  const { data, error } = await supabase.from('profiles').select('name, role, store_id').order('name')
-  if (error) throw error
+  const data = await loadProfiles()
   const list = (data ?? []).map((p) => p.name)
   const defaultStores = {}
   for (const p of data ?? []) {
     defaultStores[p.name] = p.store_id ? reverseResolveStoreId(p.store_id, ctx) : null
   }
   return { list, defaultStores }
+}
+
+// ── 이름 → 프로필 해석 (5-2: 카드=조회대상) ──
+// 5-1부터 경로의 {staffName}이 실제 프로필 이름이라 조회대상으로 해석 가능해졌다.
+// 못 찾으면 null(호출부가 본인으로 폴백 — 전환기의 옛 이름 경로 대비).
+// 같은 테넌트 내 동명이인은 미지원(먼저 찾은 프로필) — 필요해지면 경로를 id로 전환.
+let _profilesCache = null
+async function loadProfiles() {
+  if (!_profilesCache) {
+    const { data, error } = await supabase.from('profiles').select('id, name, role, store_id').order('name')
+    if (error) throw error
+    _profilesCache = data ?? []
+  }
+  return _profilesCache
+}
+async function resolveProfileByName(name) {
+  const profiles = await loadProfiles()
+  return profiles.find((p) => p.name === name) ?? null
 }
 
 // ── 경로 라우팅 ──
@@ -942,7 +964,9 @@ export async function getDoc(ref) {
   // 업무로 라우팅 — 원본에서 안 되던 히스토리 편집도 이걸로 정상화됨(5단계에서 재검토).
   const staffTodoMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoMatch) {
-    const items = await readStaffTodos(ctx, staffTodoMatch[2])
+    // 5-2: 경로의 이름을 조회대상으로 해석(못 찾으면 본인) — "서로 보기"는 여기서 열린다.
+    const target = await resolveProfileByName(staffTodoMatch[1])
+    const items = await readStaffTodos(ctx, staffTodoMatch[2], target)
     return { exists: () => true, data: () => ({ items }) }
   }
 
@@ -977,8 +1001,11 @@ export async function getDoc(ref) {
     return { exists: () => true, data: () => data }
   }
 
-  if (STAFF_PROJECT_RE.test(ref.path)) {
-    const data = await readStaffProjects(ctx)
+  const staffProjectMatch = STAFF_PROJECT_RE.exec(ref.path)
+  if (staffProjectMatch) {
+    // 5-2: staff_todos와 동일 — 카드의 이름을 조회대상으로 해석.
+    const target = await resolveProfileByName(staffProjectMatch[1])
+    const data = await readStaffProjects(ctx, target)
     return { exists: () => true, data: () => data }
   }
 
@@ -1020,6 +1047,13 @@ export async function setDoc(ref, data) {
   // 위 getDoc의 동일 주석 참고 — 매장 공용 업무는 스코프 제외(5단계에서 재검토).
   const staffTodoWriteMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoWriteMatch) {
+    // 5-2: 쓰기는 본인만 — 타인 카드에서의 쓰기는 무시(RLS도 막지만 여기서 먼저 차단해
+    // "본인 명의로 잘못 생성"되는 것까지 방지). UI도 조회 전용으로 숨김 처리됨.
+    const target = await resolveProfileByName(staffTodoWriteMatch[1])
+    if (target && target.id !== ctx.profileId) {
+      console.warn(`[adapter] 조회 전용 — ${target.name}의 업무는 본인만 수정할 수 있습니다`)
+      return
+    }
     await writeStaffTodos(ctx, staffTodoWriteMatch[2], data)
     return
   }
@@ -1030,7 +1064,14 @@ export async function setDoc(ref, data) {
     return
   }
 
-  if (STAFF_PROJECT_RE.test(ref.path)) {
+  const staffProjectWriteMatch = STAFF_PROJECT_RE.exec(ref.path)
+  if (staffProjectWriteMatch) {
+    // 5-2: staff_todos 쓰기와 동일 — 타인 카드에서의 쓰기는 무시.
+    const target = await resolveProfileByName(staffProjectWriteMatch[1])
+    if (target && target.id !== ctx.profileId) {
+      console.warn(`[adapter] 조회 전용 — ${target.name}의 프로젝트는 본인만 수정할 수 있습니다`)
+      return
+    }
     await writeStaffProjects(ctx, data)
     return
   }

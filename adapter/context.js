@@ -27,5 +27,7 @@ export async function getContext() {
   if (storesError) throw storesError
 
   cached = { session, profile, tenantId: profile.tenant_id, profileId: profile.id, stores: stores ?? [] }
+  // 5-2: 원본 UI가 "지금 보는 카드가 본인인지"(조회 전용 표시) 판단할 최소 정보만 노출
+  window.__vflowProfile = { id: profile.id, name: profile.name, role: profile.role }
   return cached
 }
