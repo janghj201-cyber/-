@@ -1001,17 +1001,18 @@ const db = getFirestore(app);
 // ══════════════════════════════════════
 const ADMIN_PW = "682879";
 
-const STORES = [
-  { id:"yeonsu",     name:"인천 연수점",       icon:"🏪", area:"인천" },
-  { id:"nonhyeon",   name:"인천 논현점",       icon:"🏬", area:"인천" },
-  { id:"rodeo",      name:"구월 로데오점",     icon:"🎯", area:"인천" },
-  { id:"gilbyeong",  name:"구월 길병원점",     icon:"🏥", area:"인천" },
-  { id:"airport",    name:"인천공항점",        icon:"✈️", area:"인천" },
-  { id:"geomdan",    name:"검단점",           icon:"🌱", area:"인천" },
-  { id:"gyesan",     name:"계산점",           icon:"🏙️", area:"인천" },
-  { id:"sangdong",   name:"부천 상동점",       icon:"🌿", area:"부천" },
-  { id:"sijungdong", name:"부천 신중동점",     icon:"⭐", area:"부천" },
-];
+// 5-3 깡통화: 매장은 실제 테넌트 데이터(config/stores → 어댑터가 stores 테이블로 응답).
+// 하드코딩 9개 매장 제거 — loadStores()가 시작 시 채운다.
+const STORES = [];
+async function loadStores(){
+  try{
+    const snap=await getDoc(doc(db,'config/stores'));
+    if(snap.exists()&&Array.isArray(snap.data().list)){
+      STORES.length=0;
+      snap.data().list.forEach(s=>STORES.push(s));
+    }
+  }catch(e){console.error('[app] 매장 목록 로드 실패',e);}
+}
 
 const DAILY=[
   {task:"오픈 준비 / 재고 확인",meta:"베스트셀러·일회용 진열 보충, POS 점검",col:"c-blue"},
@@ -1264,24 +1265,8 @@ window.closeNameModal=function(){
 };
 function closeNameModal(){window.closeNameModal();}
 // 직원별 기본 매장 (null = 순환근무)
-const STAFF_DEFAULT_STORE = {
-  '오명록': 'yeonsu',
-  '고아현': 'nonhyeon',
-  '장현진': null,
-  '장대운': 'gilbyeong',
-  '신재현': null,
-  '정희경': 'rodeo',
-  '조효정': 'rodeo',
-  '홍다운': 'sijungdong',
-  '이종혁': 'airport',
-  '원주현': 'sangdong',
-  '김형진': null,
-  '윤하람': null,
-  '차영근': 'geomdan',
-  '정유진': 'gyesan',
-  '안태민': null,
-  '김다정': 'gyesan',
-};
+// 5-3 깡통화: 가짜 이름 16명 제거 — loadStaffList()가 실제 프로필의 store_id로 채운다.
+const STAFF_DEFAULT_STORE = {};
 // ══════════════════════════════════════
 // 앱 버전 & 업데이트 알림
 // ══════════════════════════════════════
@@ -5098,7 +5083,7 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
-Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig()]).then(async()=>{
+Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig()]).then(async()=>{
   switchTab('dashboard');
   checkUpdateNotice();
   await autoPostNotice();

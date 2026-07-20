@@ -35,7 +35,10 @@
 // 이렇게만 해도 앱 전체가 크래시 없이 부팅된다.
 import { supabase } from './supabase-client.js'
 import { getContext } from './context.js'
-import { resolveStoreId, reverseResolveStoreId } from './store-bridge.js'
+// 5-3 깡통화: 원본 STORES가 실제 테넌트 매장(uuid)이 되면서 슬러그↔uuid 변환이
+// 불필요해짐 — store-bridge.js 삭제. 호출부 호환을 위한 항등 함수만 남긴다.
+const resolveStoreId = (id) => id
+const reverseResolveStoreId = (id) => id
 
 // ── Firebase 앱/DB 핸들 흉내 (아무 것도 안 함, 시그니처만 맞춤) ──
 export function initializeApp(config) {
@@ -893,7 +896,7 @@ async function readStaffConfig(ctx) {
   const list = (data ?? []).map((p) => p.name)
   const defaultStores = {}
   for (const p of data ?? []) {
-    defaultStores[p.name] = p.store_id ? reverseResolveStoreId(p.store_id, ctx) : null
+    defaultStores[p.name] = p.store_id ?? null // 5-3부터 실제 stores.id(uuid) 그대로
   }
   return { list, defaultStores }
 }
@@ -993,6 +996,14 @@ export async function getDoc(ref) {
   if (ref.path === 'config/staff') {
     const data = await readStaffConfig(ctx)
     return { exists: () => data.list.length > 0, data: () => data }
+  }
+
+  if (ref.path === 'config/stores') {
+    // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다. 아이콘은 stores 테이블에
+    // 없어서 순번 배정(관리자 커스터마이징 묶음에서 편집 가능하게 할 수 있음).
+    const ICONS = ['🏪', '🏬', '🎯', '🏥', '✈️', '🌱', '🏙️', '🌿', '⭐', '🏢']
+    const list = ctx.stores.map((s, i) => ({ id: s.id, name: s.name, icon: ICONS[i % ICONS.length], area: s.address ?? '' }))
+    return { exists: () => list.length > 0, data: () => ({ list }) }
   }
 
   const checksMatch = CHECKS_RE.exec(ref.path)
