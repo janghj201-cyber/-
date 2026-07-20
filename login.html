@@ -18,14 +18,15 @@
 </head>
 <body>
   <div class="card">
-    <h2>WeVape 스케줄 앱</h2>
-    <p>Supabase 어댑터 검증용 로그인 (1단계: 게시판)</p>
+    <h2>매장 스케줄 앱</h2>
+    <p>로그인하고 오늘 업무를 시작하세요.</p>
     <form id="login-form">
-      <label>이메일<input type="email" id="email" required placeholder="test2@vflow.com" /></label>
+      <label>이메일<input type="email" id="email" required placeholder="you@example.com" /></label>
       <label>비밀번호<input type="password" id="password" required /></label>
       <p class="error" id="error" hidden></p>
       <button type="submit" id="submitBtn">로그인</button>
     </form>
+    <p style="text-align:center;margin:16px 0 0;font-size:13px;color:#6b7a8d;">처음이세요? <a href="onboarding.html" style="color:#f5a623;font-weight:700;">회원가입하고 시작하기</a></p>
   </div>
 
   <script type="module">

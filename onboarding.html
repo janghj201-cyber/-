@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>시작하기 — 매장 스케줄 앱</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8f7f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+  .card{background:#fff;border-radius:14px;padding:32px;width:100%;max-width:420px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+  h2{margin:0 0 8px;color:#1a2332;}
+  p.sub{color:#6b7a8d;font-size:14px;margin:0 0 20px;}
+  label{display:block;font-size:13px;color:#1a2332;margin-bottom:6px;margin-top:14px;font-weight:600;}
+  input,select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e8e4dc;border-radius:8px;font-size:14px;background:#fff;}
+  button.primary{width:100%;margin-top:20px;padding:12px;border:none;border-radius:8px;background:#1a2332;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
+  button:disabled{opacity:0.6;cursor:default;}
+  .error{color:#c0392b;font-size:13px;margin-top:10px;}
+  .steps{display:flex;gap:6px;margin-bottom:18px;}
+  .step-dot{flex:1;height:5px;border-radius:3px;background:#e8e4dc;}
+  .step-dot.on{background:#f5a623;}
+  .store-row{display:flex;gap:6px;margin-top:8px;}
+  .store-row input{flex:1;}
+  .store-row button{border:1px solid #e8e4dc;background:#fff;border-radius:8px;padding:0 12px;cursor:pointer;color:#c0392b;font-size:16px;}
+  .add-store{margin-top:10px;background:none;border:none;color:#f5a623;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;}
+  .hint{font-size:12px;color:#a0aab4;margin-top:6px;}
+  .login-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:#6b7a8d;}
+  .login-link a{color:#f5a623;font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="steps"><div class="step-dot on" id="dot1"></div><div class="step-dot" id="dot2"></div><div class="step-dot" id="dot3"></div></div>
+
+    <!-- 1단계: 회원가입 -->
+    <div id="step1">
+      <h2>시작하기</h2>
+      <p class="sub">대표자(관리자) 계정을 만듭니다. 직원은 나중에 초대로 가입해요.</p>
+      <form id="signup-form">
+        <label>이름<input type="text" id="su-name" required placeholder="예) 장현진" /></label>
+        <label>이메일<input type="email" id="su-email" required placeholder="you@example.com" /></label>
+        <label>비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" /></label>
+        <p class="error" id="su-error" hidden></p>
+        <button type="submit" class="primary" id="su-btn">계정 만들기</button>
+      </form>
+      <span class="login-link">이미 계정이 있으세요? <a href="login.html">로그인</a></span>
+    </div>
+
+    <!-- 2단계: 회사 정보 -->
+    <div id="step2" hidden>
+      <h2>회사(브랜드) 정보</h2>
+      <p class="sub">업종을 고르면 청소 체크리스트·고정업무 기본값을 맞춰드려요. 나중에 관리자 설정에서 자유롭게 수정됩니다.</p>
+      <form id="company-form">
+        <label>회사/브랜드 이름<input type="text" id="co-name" required placeholder="예) 위베이프" /></label>
+        <label>업종
+          <select id="co-industry">
+            <option value="cafe">카페</option>
+            <option value="convenience">편의점</option>
+            <option value="beauty">뷰티</option>
+            <option value="academy">학원</option>
+            <option value="etc" selected>기타</option>
+          </select>
+        </label>
+        <p class="error" id="co-error" hidden></p>
+        <button type="submit" class="primary" id="co-btn">다음</button>
+      </form>
+    </div>
+
+    <!-- 3단계: 매장 등록 -->
+    <div id="step3" hidden>
+      <h2>매장 등록</h2>
+      <p class="sub">운영 중인 매장을 등록해 주세요. 나중에 추가할 수도 있어요.</p>
+      <div id="store-list"></div>
+      <button class="add-store" id="add-store-btn">+ 매장 추가</button>
+      <p class="hint">매장 이름만 필수예요 (주소는 선택).</p>
+      <p class="error" id="st-error" hidden></p>
+      <button class="primary" id="st-btn">설정 완료하고 시작하기</button>
+    </div>
+
+    <!-- 완료 -->
+    <div id="step-done" hidden>
+      <h2>🎉 준비 완료!</h2>
+      <p class="sub" id="done-msg">회사와 매장이 만들어졌어요. 이제 앱으로 이동합니다.</p>
+      <button class="primary" onclick="location.href='index.html'">앱 시작하기</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './adapter/supabase-client.js'
+
+    // 이미 온보딩까지 끝난 계정이면 앱으로
+    const { data: { session: existing } } = await supabase.auth.getSession()
+    if (existing) {
+      const { data: prof } = await supabase.from('profiles').select('id').eq('id', existing.user.id).maybeSingle()
+      if (prof) location.href = 'index.html'
+    }
+
+    const $ = (id) => document.getElementById(id)
+    let userId = existing?.user?.id ?? null
+    let contactName = ''
+    let tenantInfo = null // {name, industry}
+
+    function showStep(n) {
+      ;['step1','step2','step3','step-done'].forEach((id,i)=>{ $(id).hidden = (id !== (n===4?'step-done':'step'+n)) })
+      ;[1,2,3].forEach(i=>$('dot'+i).classList.toggle('on', i<=Math.min(n,3)))
+    }
+    // 가입만 하고 이탈했던 계정이면 2단계부터
+    if (userId) { contactName = existing.user.email.split('@')[0]; showStep(2) }
+
+    // ── 1단계: 가입 ──
+    $('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn=$('su-btn'), err=$('su-error'); err.hidden=true; btn.disabled=true; btn.textContent='만드는 중...'
+      try {
+        contactName = $('su-name').value.trim()
+        const { data, error } = await supabase.auth.signUp({ email: $('su-email').value.trim(), password: $('su-password').value })
+        if (error) throw error
+        if (!data.session) {
+          err.textContent='가입 확인 메일이 발송됐어요. 메일의 링크를 누른 뒤 이 페이지에서 새로고침 해주세요.'
+          err.hidden=false; btn.disabled=false; btn.textContent='계정 만들기'; return
+        }
+        userId = data.user.id
+        showStep(2)
+      } catch (e2) {
+        err.textContent = e2.message || '가입에 실패했습니다.'; err.hidden=false; btn.disabled=false; btn.textContent='계정 만들기'
+      }
+    })
+
+    // ── 2단계: 회사 ──
+    $('company-form').addEventListener('submit', (e) => {
+      e.preventDefault()
+      tenantInfo = { name: $('co-name').value.trim(), industry: $('co-industry').value }
+      if (!tenantInfo.name) return
+      showStep(3)
+      if (!$('store-list').children.length) addStoreRow()
+    })
+
+    // ── 3단계: 매장 ──
+    function addStoreRow(){
+      const row=document.createElement('div'); row.className='store-row'
+      row.innerHTML=`<input type="text" class="st-name" placeholder="매장 이름 (필수)"><input type="text" class="st-addr" placeholder="주소 (선택)"><button type="button" title="삭제">×</button>`
+      row.querySelector('button').onclick=()=>{ if($('store-list').children.length>1) row.remove() }
+      $('store-list').appendChild(row)
+    }
+    $('add-store-btn').onclick=addStoreRow
+
+    $('st-btn').onclick = async () => {
+      const btn=$('st-btn'), err=$('st-error'); err.hidden=true
+      const stores=[...document.querySelectorAll('.store-row')].map(r=>({name:r.querySelector('.st-name').value.trim(),address:r.querySelector('.st-addr').value.trim()})).filter(s=>s.name)
+      if(!stores.length){ err.textContent='매장을 최소 1개 등록해 주세요.'; err.hidden=false; return }
+      btn.disabled=true; btn.textContent='만드는 중...'
+      try {
+        // 업종 템플릿 로드
+        const { data: tpl, error: tplErr } = await supabase.from('industry_templates').select('template_type, content').eq('industry', tenantInfo.industry)
+        if (tplErr) throw tplErr
+        const pick=(t)=>tpl.find(r=>r.template_type===t)?.content ?? []
+        const metrics=pick('evaluation_metrics'), checklist=pick('cleaning_checklist'), calendarEvents=pick('calendar_events'), zones=pick('cleaning_zones')
+
+        // 테넌트 + owner 프로필 (id를 미리 만들어 select 되읽기 없이 진행 — RLS 부트스트랩 순서)
+        const tenantId = crypto.randomUUID()
+        const { error: tErr } = await supabase.from('tenants').insert({ id: tenantId, name: tenantInfo.name, industry: tenantInfo.industry, evaluation_metric_labels: metrics })
+        if (tErr) throw tErr
+        const { error: pErr } = await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, name: contactName, role: 'owner' })
+        if (pErr) throw pErr
+
+        // 매장
+        const { error: sErr } = await supabase.from('stores').insert(stores.map(s=>({ tenant_id: tenantId, name: s.name, address: s.address || null })))
+        if (sErr) throw sErr
+
+        // 업종 템플릿 시드: 고정업무(캘린더 규칙) / 대청소 구역 / 대청소 발생규칙 / 기본청소 항목
+        if (calendarEvents.length) {
+          const { error } = await supabase.from('calendar_event_types').insert(calendarEvents.map((ev,i)=>({ tenant_id: tenantId, label: ev.label, color: ev.color, recurrence: ev.recurrence, sort_order: i })))
+          if (error) throw error
+        }
+        if (zones.length) {
+          const { error } = await supabase.from('cleaning_zones').insert(zones.map(z=>({ tenant_id: tenantId, zone_number: z.zone_number, title: z.title, items: z.items })))
+          if (error) throw error
+        }
+        { // 대청소 발생 규칙 기본값 (V-Flow DEFAULT_DEEP_CLEAN_RULE와 동일)
+          const { error } = await supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: tenantId, recurrence: { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] } }, { onConflict: 'tenant_id' })
+          if (error) throw error
+        }
+        if (checklist.length) {
+          const { error } = await supabase.from('cleaning_daily_items').insert(checklist.map((item,i)=>({ tenant_id: tenantId, label: item.name, sort_order: i })))
+          if (error) throw error
+        }
+
+        $('done-msg').textContent=`"${tenantInfo.name}" 준비 완료! 매장 ${stores.length}개가 등록됐어요. 직원 초대는 관리자 → 설정에서 할 수 있어요.`
+        showStep(4)
+      } catch (e3) {
+        err.textContent = e3.message || '설정에 실패했습니다.'; err.hidden=false; btn.disabled=false; btn.textContent='설정 완료하고 시작하기'
+      }
+    }
+  </script>
+</body>
+</html>

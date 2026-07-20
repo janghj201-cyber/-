@@ -952,6 +952,37 @@ async function readStaffConfig(ctx) {
   return { list, defaultStores }
 }
 
+// ── 직원 초대 (V-Flow 기존 invitations 테이블 — firebase 흉내가 아니라 직접 export) ──
+// 초대 링크 방식: 이메일 발송(Edge Function) 없이 링크를 관리자가 직접 전달한다.
+// 생성/목록/취소는 RLS(owner/manager)가 강제, 수락은 invite.html에서 본인 이메일 기준.
+export async function createInvitation({ name, email, role, storeId }) {
+  const ctx = await getContext()
+  const { data, error } = await supabase
+    .from('invitations')
+    .insert({ tenant_id: ctx.tenantId, store_id: storeId || null, role: role || 'staff', name, email, invited_by: ctx.profileId })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function listPendingInvitations() {
+  const ctx = await getContext()
+  const { data, error } = await supabase
+    .from('invitations')
+    .select('id, name, email, role, store_id, created_at')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function cancelInvitation(id) {
+  const { error } = await supabase.from('invitations').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ── config/settings (기능 On/Off + 컬러테마: V-Flow 신규 tenant_settings 테이블) ──
 // {features:{cleaning:bool,...}, theme:'default'|...} 통짜 저장 — 테넌트당 1행 upsert.
 // 읽기는 전 직원(적용 대상이니까), 쓰기는 RLS가 owner/manager만 허용.

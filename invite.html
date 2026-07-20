@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>초대 수락 — 매장 스케줄 앱</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8f7f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+  .card{background:#fff;border-radius:14px;padding:32px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+  h2{margin:0 0 8px;color:#1a2332;}
+  p.sub{color:#6b7a8d;font-size:14px;margin:0 0 18px;}
+  label{display:block;font-size:13px;color:#1a2332;margin-bottom:6px;margin-top:14px;font-weight:600;}
+  input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e8e4dc;border-radius:8px;font-size:14px;}
+  button.primary{width:100%;margin-top:20px;padding:12px;border:none;border-radius:8px;background:#1a2332;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
+  button:disabled{opacity:0.6;cursor:default;}
+  .error{color:#c0392b;font-size:13px;margin-top:10px;}
+  .toggle{display:block;text-align:center;margin-top:14px;font-size:13px;color:#6b7a8d;}
+  .toggle a{color:#f5a623;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>👋 초대를 받으셨어요</h2>
+    <p class="sub" id="sub">초대받은 이메일로 계정을 만들면 바로 팀에 합류됩니다.</p>
+    <form id="form">
+      <label>이메일<input type="email" id="email" required placeholder="초대받은 이메일" /></label>
+      <label>비밀번호<input type="password" id="password" required minlength="6" placeholder="6자 이상" /></label>
+      <p class="error" id="error" hidden></p>
+      <button type="submit" class="primary" id="btn">가입하고 합류하기</button>
+    </form>
+    <span class="toggle" id="toggle-wrap">이미 계정이 있으세요? <a id="toggle">로그인으로 합류</a></span>
+  </div>
+
+  <script type="module">
+    import { supabase } from './adapter/supabase-client.js'
+    const $ = (id) => document.getElementById(id)
+    const inviteId = new URLSearchParams(location.search).get('id')
+    if (!inviteId) { $('sub').textContent='초대 링크가 올바르지 않아요. 관리자에게 링크를 다시 받아주세요.'; $('form').style.display='none'; $('toggle-wrap').style.display='none' }
+
+    let mode = 'signup'
+    $('toggle').onclick = () => {
+      mode = mode==='signup' ? 'login' : 'signup'
+      $('btn').textContent = mode==='signup' ? '가입하고 합류하기' : '로그인하고 합류하기'
+      $('toggle').textContent = mode==='signup' ? '로그인으로 합류' : '가입으로 합류'
+    }
+
+    async function acceptFlow() {
+      // 로그인된 본인 이메일 기준으로 초대 조회(RLS: 본인 이메일 초대만 보임)
+      const { data: inv, error } = await supabase.from('invitations').select('*').eq('id', inviteId).maybeSingle()
+      if (error) throw error
+      if (!inv) throw new Error('이 계정 이메일로 온 초대가 아니에요. 초대받은 이메일로 로그인해 주세요.')
+      if (inv.status !== 'pending') throw new Error('이미 사용됐거나 만료된 초대예요.')
+      const { data: { user } } = await supabase.auth.getUser()
+      // 프로필 생성(초대 조건과 일치해야 RLS 통과) + 초대 수락 처리
+      const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, tenant_id: inv.tenant_id, store_id: inv.store_id, name: inv.name, role: inv.role })
+      if (pErr && !String(pErr.message).includes('duplicate')) throw pErr
+      const { error: uErr } = await supabase.from('invitations').update({ status: 'accepted' }).eq('id', inv.id)
+      if (uErr) throw uErr
+    }
+
+    // 이미 로그인된 상태로 링크를 열었으면 바로 수락 시도
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session && inviteId) {
+      const { data: prof } = await supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle()
+      if (prof) { location.href='index.html' }
+      else {
+        try { await acceptFlow(); location.href='index.html' } catch(e){ $('error').textContent=e.message; $('error').hidden=false }
+      }
+    }
+
+    $('form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn=$('btn'), err=$('error'); err.hidden=true; btn.disabled=true; btn.textContent='처리 중...'
+      try {
+        const email=$('email').value.trim(), password=$('password').value
+        if (mode==='signup') {
+          const { data, error } = await supabase.auth.signUp({ email, password })
+          if (error) throw error
+          if (!data.session) { err.textContent='가입 확인 메일이 발송됐어요. 메일 링크 확인 후 이 초대 링크를 다시 열어주세요.'; err.hidden=false; btn.disabled=false; btn.textContent='가입하고 합류하기'; return }
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) throw error
+        }
+        await acceptFlow()
+        location.href='index.html'
+      } catch (e2) {
+        err.textContent = e2.message || '합류에 실패했습니다.'; err.hidden=false; btn.disabled=false
+        btn.textContent = mode==='signup' ? '가입하고 합류하기' : '로그인하고 합류하기'
+      }
+    })
+  </script>
+</body>
+</html>

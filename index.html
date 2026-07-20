@@ -1000,7 +1000,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -5044,6 +5044,62 @@ async function renderSettingsTab(content){
     secS.appendChild(row);
   });
   content.appendChild(secS);
+
+  // 직원 초대
+  const secI=document.createElement('div');secI.className='dash-card';secI.style.marginTop='12px';
+  secI.innerHTML=`<div class="dash-store-name">👥 직원 초대</div>
+    <div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;">초대를 만들면 <b>초대 링크</b>가 생겨요. 링크를 직원에게 보내면(카톡 등) 직원이 그 링크로 가입하는 순간 팀에 합류됩니다.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <input type="text" id="inv-name" placeholder="직원 이름" style="flex:1;min-width:100px;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;">
+      <input type="email" id="inv-email" placeholder="직원 이메일" style="flex:2;min-width:160px;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;">
+      <select id="inv-role" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 6px;font-size:13px;font-family:inherit;"><option value="staff">직원</option><option value="manager">매니저</option></select>
+      <select id="inv-store" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 6px;font-size:13px;font-family:inherit;"><option value="">🔄 순환근무</option></select>
+      <button id="inv-btn" style="background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">초대 만들기</button>
+    </div>
+    <div id="inv-result" style="margin-top:8px;"></div>
+    <div id="inv-list" style="margin-top:10px;"></div>`;
+  content.appendChild(secI);
+  const invStoreSel=secI.querySelector('#inv-store');
+  STORES.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.icon} ${s.name}`;invStoreSel.appendChild(o);});
+  const inviteLink=(id)=>`${location.origin}${location.pathname.replace(/index\.html$/,'')}invite.html?id=${id}`;
+  async function renderInvList(){
+    const listEl=secI.querySelector('#inv-list');
+    try{
+      const pend=await listPendingInvitations();
+      listEl.innerHTML=pend.length?'<div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:4px;">⏳ 수락 대기 중</div>':'';
+      pend.forEach(inv=>{
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+        row.innerHTML=`<span style="font-weight:700;">${inv.name}</span><span style="color:var(--text-sub);">${inv.email} · ${inv.role==='manager'?'매니저':'직원'}</span>
+          <button data-copy style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit;">🔗 링크 복사</button>
+          <button data-cancel style="background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;">취소</button>`;
+        row.querySelector('[data-copy]').onclick=async(e)=>{
+          try{await navigator.clipboard.writeText(inviteLink(inv.id));e.target.textContent='✓ 복사됨';setTimeout(()=>e.target.textContent='🔗 링크 복사',1500);}
+          catch(err){prompt('아래 링크를 복사해서 직원에게 보내주세요:',inviteLink(inv.id));}
+        };
+        row.querySelector('[data-cancel]').onclick=async()=>{
+          if(!confirm(`${inv.name} 초대를 취소할까요?`))return;
+          await cancelInvitation(inv.id);renderInvList();
+        };
+        listEl.appendChild(row);
+      });
+    }catch(e){listEl.innerHTML='<div style="font-size:12px;color:var(--text-mute);">초대 목록을 불러오지 못했어요.</div>';}
+  }
+  secI.querySelector('#inv-btn').onclick=async()=>{
+    const name=secI.querySelector('#inv-name').value.trim();
+    const email=secI.querySelector('#inv-email').value.trim();
+    const resEl=secI.querySelector('#inv-result');
+    if(!name||!email){resEl.innerHTML='<span style="font-size:12px;color:var(--red);">이름과 이메일을 입력해 주세요.</span>';return;}
+    try{
+      const inv=await createInvitation({name,email,role:secI.querySelector('#inv-role').value,storeId:secI.querySelector('#inv-store').value||null});
+      resEl.innerHTML=`<div style="background:var(--gold-light);border:1px solid var(--gold);border-radius:8px;padding:8px 10px;font-size:12px;word-break:break-all;">✅ 초대 생성! 이 링크를 ${name}님께 보내주세요:<br><b>${inviteLink(inv.id)}</b></div>`;
+      try{await navigator.clipboard.writeText(inviteLink(inv.id));}catch(e){}
+      secI.querySelector('#inv-name').value='';secI.querySelector('#inv-email').value='';
+      renderInvList();
+    }catch(e){resEl.innerHTML=`<span style="font-size:12px;color:var(--red);">초대 생성 실패: ${e.message||e}</span>`;}
+  };
+  renderInvList();
+
   content.appendChild(savedEl);
 }
 
