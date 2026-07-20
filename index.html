@@ -354,6 +354,11 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .project-group-toggle{font-size:11px;color:var(--purple);font-weight:700;}
 .project-group-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;}
 .project-group-body .project-overview-row{margin-bottom:0;box-shadow:none;border:1px solid var(--border);background:#faf9f6;}
+.project-log-toggle{color:var(--purple);font-weight:700;}
+.project-log-list{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);flex-direction:column;gap:5px;}
+.project-log-entry{display:flex;gap:8px;font-size:11px;color:var(--text-sub);}
+.project-log-date{color:var(--purple);font-weight:700;flex-shrink:0;white-space:nowrap;}
+.project-log-text{color:var(--text);}
 
 @media(min-width:768px){
   .dashboard-store-grid{grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -3176,7 +3181,7 @@ async function renderDashboardProjects(){
     for(const name of staffList){
       const projs=await loadProjects(name);
       projs.filter(p=>!p.done).forEach(p=>{
-        all.push({name,text:p.text||'',progress:p.progress||0,storeId:p.storeId});
+        all.push({name,text:p.text||'',progress:p.progress||0,storeId:p.storeId,logs:p.logs||[]});
       });
     }
     if(all.length===0){
@@ -3204,14 +3209,30 @@ async function renderDashboardProjects(){
       projs.forEach(p=>{
         const store=STORES.find(s=>s.id===p.storeId);
         const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
-        const row=document.createElement('div');row.className='project-overview-row';
+        const row=document.createElement('div');row.className='project-overview-row';row.style.cursor='pointer';
+        const sortedLogs=[...(p.logs||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
         row.innerHTML=`
           <div class="project-overview-top">
             <span class="project-overview-name">${p.text||'(제목없음)'}</span>
             <span class="project-overview-pct">${p.progress}%</span>
           </div>
-          <div class="project-overview-meta">${storeLabel}</div>
-          <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>`;
+          <div class="project-overview-meta">${storeLabel} ${sortedLogs.length?`· 일지 ${sortedLogs.length}건 <span class="project-log-toggle">▼</span>`:''}</div>
+          <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>
+          <div class="project-log-list" style="display:none;"></div>`;
+        if(sortedLogs.length){
+          const logWrap=row.querySelector('.project-log-list');
+          sortedLogs.forEach(log=>{
+            const logRow=document.createElement('div');logRow.className='project-log-entry';
+            logRow.innerHTML=`<span class="project-log-date">${log.date}</span><span class="project-log-text">${log.text}</span>`;
+            logWrap.appendChild(logRow);
+          });
+          row.onclick=()=>{
+            const isOpen=logWrap.style.display!=='none';
+            logWrap.style.display=isOpen?'none':'flex';
+            const toggleIcon=row.querySelector('.project-log-toggle');
+            if(toggleIcon)toggleIcon.textContent=isOpen?'▼':'▲';
+          };
+        }
         body.appendChild(row);
       });
       groupWrap.appendChild(body);
