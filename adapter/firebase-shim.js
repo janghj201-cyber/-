@@ -901,6 +901,56 @@ async function readStaffConfig(ctx) {
   return { list, defaultStores }
 }
 
+// ── config/dayoff (휴무: V-Flow 신규 dayoffs 테이블) ──
+// 원본은 {이름: {날짜: 'dayoff'|'work'}} 통짜 문서를 읽고 통째로 다시 쓴다.
+// 읽기: dayoffs 전체 → 원본 모양으로 조립. 쓰기: 현재 행과 diff해서 바뀐 것만
+// insert/update/delete — 본인 변경만 있으면 본인 행만 건드려 RLS(본인+관리자)와 맞는다.
+async function readDayoffConfig(ctx) {
+  const profiles = await loadProfiles()
+  const nameById = new Map(profiles.map((p) => [p.id, p.name]))
+  const { data, error } = await supabase.from('dayoffs').select('profile_id, dayoff_date, status')
+  if (error) throw error
+  const out = {}
+  for (const r of data ?? []) {
+    const name = nameById.get(r.profile_id)
+    if (!name) continue
+    ;(out[name] ??= {})[r.dayoff_date] = r.status
+  }
+  return out
+}
+
+async function writeDayoffConfig(ctx, dataMap) {
+  const profiles = await loadProfiles()
+  const idByName = new Map(profiles.map((p) => [p.name, p.id]))
+  const { data: rows, error } = await supabase.from('dayoffs').select('id, profile_id, dayoff_date, status')
+  if (error) throw error
+  const current = new Map((rows ?? []).map((r) => [`${r.profile_id}|${r.dayoff_date}`, r]))
+  const wanted = new Set()
+  for (const [name, days] of Object.entries(dataMap ?? {})) {
+    const pid = idByName.get(name)
+    if (!pid) continue // 해석 안 되는 이름(옛 가짜 이름 등)은 건드리지 않음
+    for (const [dateKey, status] of Object.entries(days ?? {})) {
+      if (status !== 'dayoff' && status !== 'work') continue
+      const key = `${pid}|${dateKey}`
+      wanted.add(key)
+      const cur = current.get(key)
+      if (!cur) {
+        const { error: e } = await supabase.from('dayoffs').insert({ tenant_id: ctx.tenantId, profile_id: pid, dayoff_date: dateKey, status })
+        if (e) throw e
+      } else if (cur.status !== status) {
+        const { error: e } = await supabase.from('dayoffs').update({ status, updated_at: new Date().toISOString() }).eq('id', cur.id)
+        if (e) throw e
+      }
+    }
+  }
+  for (const [key, r] of current) {
+    if (!wanted.has(key) && idByName.has((profiles.find((p) => p.id === r.profile_id) ?? {}).name)) {
+      const { error: e } = await supabase.from('dayoffs').delete().eq('id', r.id)
+      if (e) throw e
+    }
+  }
+}
+
 // ── 이름 → 프로필 해석 (5-2: 카드=조회대상) ──
 // 5-1부터 경로의 {staffName}이 실제 프로필 이름이라 조회대상으로 해석 가능해졌다.
 // 못 찾으면 null(호출부가 본인으로 폴백 — 전환기의 옛 이름 경로 대비).
@@ -998,6 +1048,11 @@ export async function getDoc(ref) {
     return { exists: () => data.list.length > 0, data: () => data }
   }
 
+  if (ref.path === 'config/dayoff') {
+    const data = await readDayoffConfig(ctx)
+    return { exists: () => Object.keys(data).length > 0, data: () => data }
+  }
+
   if (ref.path === 'config/stores') {
     // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다. 아이콘은 stores 테이블에
     // 없어서 순번 배정(관리자 커스터마이징 묶음에서 편집 가능하게 할 수 있음).
@@ -1084,6 +1139,11 @@ export async function setDoc(ref, data) {
       return
     }
     await writeStaffProjects(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/dayoff') {
+    await writeDayoffConfig(ctx, data)
     return
   }
 
