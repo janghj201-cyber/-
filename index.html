@@ -1023,7 +1023,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 </div>
 
 <!-- ⑥ 메신저 — 채팅 화면 -->
-<div class="screen" id="screen-chat" style="display:none;position:fixed;inset:0;z-index:400;background:var(--bg);flex-direction:column;">
+<div class="screen" id="screen-chat" style="display:none;position:fixed;inset:0;inset-bottom:calc(64px + var(--safe-bot));z-index:350;background:var(--bg);flex-direction:column;">
   <div class="header" style="flex-shrink:0;">
     <div><div class="header-title" id="chat-title">-</div><div class="header-sub" id="chat-sub"></div></div>
     <button class="back-btn" onclick="closeChatScreen()">← 목록</button>
@@ -3226,6 +3226,13 @@ function showScreen(id){
 }
 
 window.switchTab = function(tab){
+  // 메신저 채팅 화면이 열려있으면 다른 탭으로 이동 시 항상 닫기
+  const chatScreen=document.getElementById('screen-chat');
+  if(chatScreen&&chatScreen.style.display!=='none'){
+    if(chatUnsub){chatUnsub();chatUnsub=null;}
+    chatScreen.style.display='none';
+    curChat=null;
+  }
   curTab=tab;
   ['dashboard','monthly','my','messenger'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
