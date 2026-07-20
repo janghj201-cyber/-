@@ -578,6 +578,19 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 #screen-my-work.view-only .my-todo-list input[type=checkbox]{pointer-events:none;opacity:.55}
 /* 인수인계 입력줄은 예외로 다시 살림 */
 #screen-my-work.view-only .my-section:has(#my-handover-input) .my-input-row{display:flex!important}
+/* 커스터마이징: 컬러테마 프리셋 */
+body[data-theme="blue"]{--navy:#143a5c;--navy-mid:#1d4a73;--navy-light:#265a8a;--gold:#38a1f0;--gold-light:rgba(56,161,240,0.12);}
+body[data-theme="green"]{--navy:#1e3a2c;--navy-mid:#27492f;--navy-light:#2f5a3d;--gold:#34a166;--gold-light:rgba(52,161,102,0.12);}
+body[data-theme="purple"]{--navy:#2d2350;--navy-mid:#3a2d66;--navy-light:#47387c;--gold:#9d7bff;--gold-light:rgba(157,123,255,0.12);}
+body[data-theme="dark"]{--navy:#101216;--navy-mid:#16181d;--navy-light:#1d2026;--gold:#7f8ea3;--gold-light:rgba(127,142,163,0.12);}
+/* 커스터마이징: 기능 Off 숨김 (데이터는 유지, 화면만 숨김) */
+body.feat-off-board .board-section{display:none!important}
+body.feat-off-memo .my-section:has(#my-memo-textarea){display:none!important}
+body.feat-off-projects .my-section:has(#my-project-banner-wrap){display:none!important}
+body.feat-off-projects #type-project{display:none!important}
+body.feat-off-dayoff button[onclick="openMyDayoffModal()"],body.feat-off-dayoff #my-dayoff-banner{display:none!important}
+body.feat-off-handover .my-section:has(#my-handover-list),body.feat-off-handover #handover-unread-banner,body.feat-off-handover .handover-day-header,body.feat-off-handover #handover-list-box,body.feat-off-handover #handover-archive-box,body.feat-off-handover .todo-input-row:has(#handover-input-box){display:none!important}
+body.feat-off-cleaning .dsb-clean-badge{display:none!important}
 </style>
 </head>
 <body>
@@ -1002,6 +1015,40 @@ const db = getFirestore(app);
 // ══════════════════════════════════════
 // 5-5 신원통합: ADMIN_PW(프론트 하드코딩 비밀번호) 제거 — 관리자 판별은 로그인 계정의
 // role(owner/manager)로. 진짜 경계는 RLS가 지키고, 프론트 판별은 화면 진입 편의용.
+
+// 커스터마이징: 기능 On/Off + 컬러테마 (config/settings → 어댑터가 tenant_settings로 저장)
+const FEATURE_DEFS=[
+  {key:'cleaning',label:'🧹 청소 체크리스트'},
+  {key:'projects',label:'🔄 진행중 프로젝트'},
+  {key:'memo',label:'📝 개인 메모'},
+  {key:'board',label:'📋 게시판'},
+  {key:'dayoff',label:'🏖️ 휴무 관리'},
+  {key:'handover',label:'📝 인수인계'},
+];
+const THEME_DEFS=[
+  {key:'default',label:'클래식 네이비',navy:'#1a2332',gold:'#f5a623'},
+  {key:'blue',label:'오션 블루',navy:'#143a5c',gold:'#38a1f0'},
+  {key:'green',label:'포레스트 그린',navy:'#1e3a2c',gold:'#34a166'},
+  {key:'purple',label:'로열 퍼플',navy:'#2d2350',gold:'#9d7bff'},
+  {key:'dark',label:'미드나잇 다크',navy:'#101216',gold:'#7f8ea3'},
+];
+let appSettings={features:{},theme:'default'};
+function featOn(key){return appSettings.features[key]!==false;} // 미설정=켜짐
+function applySettings(){
+  FEATURE_DEFS.forEach(f=>document.body.classList.toggle('feat-off-'+f.key,!featOn(f.key)));
+  document.body.setAttribute('data-theme',appSettings.theme||'default');
+}
+async function loadSettings(){
+  try{
+    const snap=await getDoc(doc(db,'config/settings'));
+    if(snap.exists())appSettings={features:{},theme:'default',...snap.data()};
+  }catch(e){}
+  applySettings();
+}
+async function saveSettings(){
+  await setDoc(doc(db,'config/settings'),appSettings);
+  applySettings();
+}
 
 // 5-3 깡통화: 매장은 실제 테넌트 데이터(config/stores → 어댑터가 stores 테이블로 응답).
 // 하드코딩 9개 매장 제거 — loadStores()가 시작 시 채운다.
@@ -3362,7 +3409,7 @@ function renderDailyScreen(){
     :{task:"청소 및 매장 정리",meta:"기본 청소 6항목 체크리스트",col:"c-green",cleanTask:true,mode:'base',secIdx:null};
   const specs=[];
   evs.forEach(e=>{if(SPECIALS[e.t])specs.push({...SPECIALS[e.t]});});
-  [...specs,cleanTaskObj,...DAILY].forEach(t=>{
+  [...specs,...(featOn('cleaning')?[cleanTaskObj]:[]),...DAILY].forEach(t=>{
     const row=document.createElement('div');row.className='task';
     row.innerHTML=`<div class="task-dot ${t.col}"></div>
       <div style="flex:1"><div class="task-name">${t.task}</div>${t.meta?`<div class="task-meta">${t.meta}</div>`:''}</div>
@@ -3573,7 +3620,7 @@ function showDetail(y,m,d){
   const cleanTaskObj=cleanEv
     ? {task:`🧹 대청소 ${cleanEv.sec}구역`,meta:`기본 청소 6항목 + ${cleanEv.sec}구역 추가 청소`,col:"c-green",cleanTask:true,mode:'combined',secIdx:cleanEv.sec-1}
     : {task:"청소 및 매장 정리",meta:"기본 청소 6항목 체크리스트",col:"c-green",cleanTask:true,mode:'base',secIdx:null};
-  [...specs,cleanTaskObj,...DAILY].forEach(t=>{
+  [...specs,...(featOn('cleaning')?[cleanTaskObj]:[]),...DAILY].forEach(t=>{
     const row=document.createElement('div');row.className='task';
     row.innerHTML=`<div class="task-dot ${t.col}"></div>
       <div style="flex:1"><div class="task-name">${t.task}</div>${t.meta?`<div class="task-meta">${t.meta}</div>`:''}</div>
@@ -4041,6 +4088,7 @@ function buildHandoverSection(y,m,d){
 
   // 📝 인수인계 헤더 + 완료 숨기기 토글
   const headerRow=document.createElement('div');
+  headerRow.className='handover-day-header';
   headerRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px;';
   headerRow.innerHTML=`<div class="handover-sub" style="margin:0;">📝 인수인계 메모</div>
     <div style="display:flex;align-items:center;gap:8px;">
@@ -4336,8 +4384,10 @@ async function renderDashboard(){
     {id:'monthly',label:'📊 월간 통계'},
     {id:'projects',label:'🔄 프로젝트'},
     {id:'dayoff',label:'🏖️ 휴무 관리'},
-    {id:'fixedtasks',label:'⚙️ 고정업무'}
-  ];
+    {id:'fixedtasks',label:'⚙️ 고정업무'},
+    {id:'settings',label:'🎨 설정'}
+  ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
+  if(!tabDefs.some(td=>td.id===dashTab))dashTab='today';
   tabDefs.forEach(td=>{
     const b=document.createElement('button');
     b.className='dash-tab'+(dashTab===td.id?' active':'');
@@ -4354,6 +4404,7 @@ async function renderDashboard(){
   else if(dashTab==='projects')await renderProjectsTab(content);
   else if(dashTab==='dayoff')await renderDayoffTab(content);
   else if(dashTab==='fixedtasks')await renderFixedTasksTab(content);
+  else if(dashTab==='settings')await renderSettingsTab(content);
   else await renderMonthlyTab(content);
 
   if(dashTab!=='monthly'&&dashTab!=='fixedtasks'){
@@ -4920,6 +4971,49 @@ function buildRuleForm(rule){
 
   return box;
 }
+// ── 탭: 설정 (기능 On/Off + 컬러테마 — 커스터마이징 묶음) ──
+async function renderSettingsTab(content){
+  document.getElementById('dash-sub').textContent='기능 켜기/끄기 · 컬러테마 (전 직원 적용)';
+  const savedEl=document.createElement('div');savedEl.className='feedback-saved';savedEl.style.cssText='margin:8px 0;min-height:16px;';
+
+  const secF=document.createElement('div');secF.className='dash-card';secF.style.marginBottom='12px';
+  secF.innerHTML='<div class="dash-store-name">🧩 기능 켜기 / 끄기</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">끈 기능은 전 직원 화면에서 숨겨집니다. 데이터는 지워지지 않아요 — 다시 켜면 그대로 돌아옵니다.</div>';
+  FEATURE_DEFS.forEach(f=>{
+    const row=document.createElement('label');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;';
+    row.innerHTML=`<span>${f.label}</span><input type="checkbox" ${featOn(f.key)?'checked':''} style="accent-color:var(--gold);width:18px;height:18px;">`;
+    row.querySelector('input').onchange=async(e)=>{
+      const prev=appSettings.features[f.key];
+      appSettings.features={...appSettings.features,[f.key]:e.target.checked};
+      savedEl.textContent='저장 중...';
+      try{await saveSettings();savedEl.textContent='✓ 저장됨';setTimeout(()=>savedEl.textContent='',1500);}
+      catch(err){appSettings.features={...appSettings.features,[f.key]:prev};e.target.checked=prev!==false;applySettings();savedEl.textContent='⚠ 저장 실패 (권한/네트워크 확인)';}
+    };
+    secF.appendChild(row);
+  });
+  content.appendChild(secF);
+
+  const secT=document.createElement('div');secT.className='dash-card';
+  secT.innerHTML='<div class="dash-store-name">🎨 컬러테마</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;">선택하면 바로 저장되고 전 직원에게 적용됩니다.</div>';
+  const sw=document.createElement('div');sw.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
+  THEME_DEFS.forEach(t=>{
+    const active=(appSettings.theme||'default')===t.key;
+    const b=document.createElement('button');
+    b.style.cssText=`flex:1;min-width:110px;border-radius:10px;padding:12px 8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;border:3px solid ${active?'var(--gold)':'transparent'};background:${t.navy};color:#fff;`;
+    b.innerHTML=`${t.label}${active?' ✓':''}<div style="margin-top:6px;height:8px;border-radius:4px;background:${t.gold};"></div>`;
+    b.onclick=async()=>{
+      const prev=appSettings.theme;
+      appSettings.theme=t.key;
+      try{await saveSettings();renderDashboard();}
+      catch(err){appSettings.theme=prev;applySettings();alert('테마 저장 실패 (권한/네트워크 확인)');}
+    };
+    sw.appendChild(b);
+  });
+  secT.appendChild(sw);
+  content.appendChild(secT);
+  content.appendChild(savedEl);
+}
+
 async function renderFixedTasksTab(content){
   document.getElementById('dash-sub').textContent='매월 반복되는 고정 업무 규칙 관리';
 
@@ -5024,6 +5118,7 @@ async function renderMonthlyTab(content){
 // 5-5: 비밀번호 모달 대신 로그인 계정 role로 판별 (owner/manager만 진입)
 window.openPwModal=function(){
   const role=window.__vflowProfile?.role;
+  if(role==null){alert('로그인 정보를 불러오는 중이에요.\n잠시 후 다시 눌러주세요.');return;}
   if(role==='owner'||role==='manager'){
     isAdmin=true;
     dashTab='today';
@@ -5075,7 +5170,7 @@ window.doLogout=function(){
   Object.keys(localStorage).filter(k=>k.startsWith('sb-')).forEach(k=>localStorage.removeItem(k));
   location.href='login.html';
 };
-Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig()]).then(async()=>{
+Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(), loadCleanConfig(), loadSettings()]).then(async()=>{
   // 5-5: 관리자 여부는 로그인 계정 role로 (renderMyPage의 관리자 전용 요소 등에 사용)
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');

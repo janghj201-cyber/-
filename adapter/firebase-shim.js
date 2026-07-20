@@ -952,6 +952,25 @@ async function readStaffConfig(ctx) {
   return { list, defaultStores }
 }
 
+// ── config/settings (기능 On/Off + 컬러테마: V-Flow 신규 tenant_settings 테이블) ──
+// {features:{cleaning:bool,...}, theme:'default'|...} 통짜 저장 — 테넌트당 1행 upsert.
+// 읽기는 전 직원(적용 대상이니까), 쓰기는 RLS가 owner/manager만 허용.
+async function readSettingsConfig(ctx) {
+  const { data, error } = await supabase.from('tenant_settings').select('features, theme').eq('tenant_id', ctx.tenantId).maybeSingle()
+  if (error) throw error
+  return data ? { features: data.features ?? {}, theme: data.theme ?? 'default' } : null
+}
+
+async function writeSettingsConfig(ctx, dataObj) {
+  const { error } = await supabase
+    .from('tenant_settings')
+    .upsert(
+      { tenant_id: ctx.tenantId, features: dataObj?.features ?? {}, theme: dataObj?.theme ?? 'default', updated_at: new Date().toISOString() },
+      { onConflict: 'tenant_id' },
+    )
+  if (error) throw error
+}
+
 // ── config/holidays (공휴일 캐시: V-Flow 기존 public_holidays 테이블) ──
 // 원본은 nager.at에서 조회한 {날짜:이름} 맵을 통짜 캐시로 저장/로드한다.
 // 읽기: public_holidays 전체 → map. 쓰기: 새 날짜만 insert(중복 무시) — 전역 공용
@@ -1128,6 +1147,11 @@ export async function getDoc(ref) {
     return { exists: () => Object.keys(data.map).length > 0, data: () => data }
   }
 
+  if (ref.path === 'config/settings') {
+    const data = await readSettingsConfig(ctx)
+    return { exists: () => data !== null, data: () => data ?? undefined }
+  }
+
   if (ref.path === 'config/stores') {
     // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다. 아이콘은 stores 테이블에
     // 없어서 순번 배정(관리자 커스터마이징 묶음에서 편집 가능하게 할 수 있음).
@@ -1229,6 +1253,11 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/holidays') {
     await writeHolidaysConfig(data)
+    return
+  }
+
+  if (ref.path === 'config/settings') {
+    await writeSettingsConfig(ctx, data)
     return
   }
 
