@@ -1060,6 +1060,9 @@ async function resolveProfileByName(name) {
 
 // ── 경로 라우팅 ──
 const STOREINFO_RE = /^storeinfo\/(.+)$/
+// 월간 통계 탭의 매장×날짜 업무 집계 — 원본에선 아무도 안 쓰던 죽은 경로였지만,
+// daily_tasks를 매장 기준으로 집계해 돌려주면 실데이터로 살아난다(읽기는 테넌트 공유라 가능).
+const STORE_TODOS_RE = /^todos\/([0-9a-f-]{36})_(\d{4}-\d{2}-\d{2})$/
 const FEEDBACK_RE = /^feedback\/([^/]+)\/([^/]+)\/comment$/
 const STAFF_MEMO_RE = /^staff_memo\/(.+)$/
 const HANDOVER_RE = /^handover\/([^_]+)_(\d{4}-\d{2}-\d{2})$/
@@ -1104,6 +1107,18 @@ export async function getDoc(ref) {
   // 애초에 원본의 매장 공용 업무 자체도 addTodoItem이 항상 author로 문서 키를 만들어
   // 이미 죽어있는 기능이었다(추가해도 자기 화면에 안 뜸). 이름 무관하게 전부 개인
   // 업무로 라우팅 — 원본에서 안 되던 히스토리 편집도 이걸로 정상화됨(5단계에서 재검토).
+  const storeTodosMatch = STORE_TODOS_RE.exec(ref.path)
+  if (storeTodosMatch) {
+    const { data, error } = await supabase
+      .from('daily_tasks')
+      .select('id, status')
+      .eq('store_id', storeTodosMatch[1])
+      .eq('task_date', storeTodosMatch[2])
+    if (error) throw error
+    const items = (data ?? []).map((r) => ({ id: r.id, done: r.status === 'done' }))
+    return { exists: () => items.length > 0, data: () => ({ items }) }
+  }
+
   const staffTodoMatch = STAFF_TODO_RE.exec(ref.path)
   if (staffTodoMatch) {
     // 5-2: 경로의 이름을 조회대상으로 해석(못 찾으면 본인) — "서로 보기"는 여기서 열린다.
@@ -1153,10 +1168,10 @@ export async function getDoc(ref) {
   }
 
   if (ref.path === 'config/stores') {
-    // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다. 아이콘은 stores 테이블에
-    // 없어서 순번 배정(관리자 커스터마이징 묶음에서 편집 가능하게 할 수 있음).
+    // 5-3: 원본 STORES 배열을 실제 테넌트 매장으로 채운다.
+    // 아이콘은 stores.icon(관리자 설정 탭에서 편집) 우선, 없으면 순번 기본값.
     const ICONS = ['🏪', '🏬', '🎯', '🏥', '✈️', '🌱', '🏙️', '🌿', '⭐', '🏢']
-    const list = ctx.stores.map((s, i) => ({ id: s.id, name: s.name, icon: ICONS[i % ICONS.length], area: s.address ?? '' }))
+    const list = ctx.stores.map((s, i) => ({ id: s.id, name: s.name, icon: s.icon || ICONS[i % ICONS.length], area: s.address ?? '' }))
     return { exists: () => list.length > 0, data: () => ({ list }) }
   }
 
@@ -1258,6 +1273,18 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/settings') {
     await writeSettingsConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/stores') {
+    // 매장 아이콘 편집(설정 탭) — 바뀐 아이콘만 stores.icon에 반영. 쓰기는 RLS(owner/manager).
+    for (const s of data?.list ?? []) {
+      const cur = ctx.stores.find((x) => x.id === s.id)
+      if (!cur || (cur.icon ?? null) === (s.icon ?? null)) continue
+      const { error } = await supabase.from('stores').update({ icon: s.icon }).eq('id', s.id)
+      if (error) throw error
+      cur.icon = s.icon // 세션 캐시(ctx.stores) 동기화
+    }
     return
   }
 

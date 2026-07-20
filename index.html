@@ -591,6 +591,12 @@ body.feat-off-projects #type-project{display:none!important}
 body.feat-off-dayoff button[onclick="openMyDayoffModal()"],body.feat-off-dayoff #my-dayoff-banner{display:none!important}
 body.feat-off-handover .my-section:has(#my-handover-list),body.feat-off-handover #handover-unread-banner,body.feat-off-handover .handover-day-header,body.feat-off-handover #handover-list-box,body.feat-off-handover #handover-archive-box,body.feat-off-handover .todo-input-row:has(#handover-input-box){display:none!important}
 body.feat-off-cleaning .dsb-clean-badge{display:none!important}
+/* 기능 Off — 관리자 현황 탭의 청소 요소들 (게이지·통계·상세 청소목록·완료배지) */
+body.feat-off-cleaning #dash-content .progress-bar,
+body.feat-off-cleaning #dash-content .dash-stats,
+body.feat-off-cleaning #dash-content .dash-detail .dash-detail-title:first-child,
+body.feat-off-cleaning #dash-content .dash-items,
+body.feat-off-cleaning [id^="badge-"]{display:none!important}
 </style>
 </head>
 <body>
@@ -3106,7 +3112,7 @@ async function renderDashboardHome(){
         </div>`
       :`<div class="dsb-row"><span class="dsb-row-icon">📝</span><span class="dsb-row-label" style="color:var(--text-mute);">오늘 업무 없음</span></div>`;
 
-    const handoverRow=handoverUnchecked>0
+    const handoverRow=!featOn('handover')?'':handoverUnchecked>0
       ?`<div class="dsb-row">
           <span class="dsb-row-icon">🔄</span>
           <span class="dsb-row-label">인수인계</span>
@@ -4471,6 +4477,7 @@ async function renderTodayTab(content){
   const dayLabel=isToday?'오늘':`${m+1}/${d}`;
   const dateEl=document.createElement('div');dateEl.className='dash-date';
   dateEl.textContent=cleanEv?`${dayLabel}은 대청소 ${cleanEv.sec}구역 날입니다`:`${dayLabel}은 기본 청소만 진행하는 날입니다`;
+  if(!featOn('cleaning'))dateEl.style.display='none';
   content.appendChild(dateEl);
 
   for(const store of STORES){
@@ -5011,6 +5018,32 @@ async function renderSettingsTab(content){
   });
   secT.appendChild(sw);
   content.appendChild(secT);
+
+  // 매장 아이콘 편집
+  const secS=document.createElement('div');secS.className='dash-card';secS.style.marginTop='12px';
+  secS.innerHTML='<div class="dash-store-name">🏪 매장 아이콘</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">매장마다 아이콘을 골라주세요. 누르면 바로 저장됩니다.</div>';
+  const ICON_CHOICES=['🏪','🏬','🎯','🏥','✈️','🌱','🏙️','🌿','⭐','🏢','🛍️','💈'];
+  STORES.forEach(st=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+    row.innerHTML=`<span style="font-size:13px;font-weight:700;min-width:120px;">${st.icon} ${st.name}</span>`;
+    const pal=document.createElement('div');pal.style.cssText='display:flex;gap:4px;flex-wrap:wrap;';
+    ICON_CHOICES.forEach(ic=>{
+      const b=document.createElement('button');
+      b.style.cssText=`font-size:16px;padding:4px 7px;border-radius:8px;cursor:pointer;background:var(--card);border:2px solid ${st.icon===ic?'var(--gold)':'var(--border)'};`;
+      b.textContent=ic;
+      b.onclick=async()=>{
+        const prev=st.icon;st.icon=ic;
+        savedEl.textContent='저장 중...';
+        try{await setDoc(doc(db,'config/stores'),{list:STORES});savedEl.textContent='✓ 저장됨';renderDashboard();}
+        catch(err){st.icon=prev;savedEl.textContent='⚠ 저장 실패 (권한/네트워크 확인)';}
+      };
+      pal.appendChild(b);
+    });
+    row.appendChild(pal);
+    secS.appendChild(row);
+  });
+  content.appendChild(secS);
   content.appendChild(savedEl);
 }
 
@@ -5102,11 +5135,12 @@ async function renderMonthlyTab(content){
   }
 
   let html=`<div class="dash-date">${mns[m]} 1일 ~ ${lastDay}일 누적</div>`;
-  html+=`<table class="monthly-table"><tr><th>지점</th><th>청소</th><th>오늘의 업무</th></tr>`;
+  const showClean=featOn('cleaning');
+  html+=`<table class="monthly-table"><tr><th>지점</th>${showClean?'<th>청소</th>':''}<th>오늘의 업무</th></tr>`;
   results.forEach(r=>{
     const cleanPct=r.cleanTotal>0?Math.round(r.cleanDone/r.cleanTotal*100):0;
     const todoPct=r.todoTotal>0?Math.round(r.todoDone/r.todoTotal*100):0;
-    html+=`<tr><td>${r.store.icon} ${r.store.name}</td><td>${r.cleanDone}/${r.cleanTotal} (${cleanPct}%)</td><td>${r.todoTotal>0?`${r.todoDone}/${r.todoTotal} (${todoPct}%)`:'-'}</td></tr>`;
+    html+=`<tr><td>${r.store.icon} ${r.store.name}</td>${showClean?`<td>${r.cleanDone}/${r.cleanTotal} (${cleanPct}%)</td>`:''}<td>${r.todoTotal>0?`${r.todoDone}/${r.todoTotal} (${todoPct}%)`:'-'}</td></tr>`;
   });
   html+=`</table>`;
   content.innerHTML=html;
