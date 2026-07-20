@@ -5583,27 +5583,6 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 }
 
 // ══════════════════════════════════════
-// 모바일 크롬 주소창 접힘/펼침 시 하단 탭바(position:fixed) 위치 오류 보정
-// ══════════════════════════════════════
-function fixTabBarPosition(){
-  const tabBar=document.getElementById('tab-bar');
-  if(!tabBar)return;
-  if(window.visualViewport){
-    const vv=window.visualViewport;
-    const bottomOffset=window.innerHeight-(vv.height+vv.offsetTop);
-    tabBar.style.bottom=Math.max(bottomOffset,0)+'px';
-  }
-}
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',fixTabBarPosition);
-  window.visualViewport.addEventListener('scroll',fixTabBarPosition);
-}
-window.addEventListener('scroll',fixTabBarPosition,{passive:true});
-window.addEventListener('load',fixTabBarPosition);
-setTimeout(fixTabBarPosition,300);
-setTimeout(fixTabBarPosition,1000);
-
-// ══════════════════════════════════════
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
@@ -5613,7 +5592,6 @@ Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays()]).then(async()
   await autoPostNotice();
   await autoPostMemoNotice();
   await autoPostDayoffNotice();
-  fixTabBarPosition();
 });
 
 // 앱 업데이트 공지 자동 등록 (한 번만)
