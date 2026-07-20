@@ -289,7 +289,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 /* ── 하단 탭 네비게이션 ── */
 .tab-bar{flex-shrink:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);display:flex;z-index:400;padding-bottom:var(--safe-bot);}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:inherit;color:rgba(255,255,255,0.45);transition:color 0.15s;position:relative;}
-.tab-badge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .tab-item.active{color:var(--gold);}
 .tab-icon{font-size:20px;margin-bottom:3px;}
 .tab-label{font-size:10px;font-weight:600;}
@@ -347,30 +346,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .app-footer-copyright{font-size:12px;color:rgba(255,255,255,0.75);}
 .app-footer-copyright b{color:var(--gold);font-weight:800;}
 .app-footer-disclaimer{font-size:11px;color:rgba(255,255,255,0.45);margin-top:6px;}
-
-/* 메신저 */
-.msg-contact-row{display:flex;align-items:center;gap:10px;padding:12px 10px;border-radius:12px;cursor:pointer;margin-bottom:4px;}
-.msg-contact-row:active{background:var(--card2,#f4f2ee);}
-.msg-contact-avatar{width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
-.msg-contact-avatar.grp{background:var(--purple);}
-.msg-contact-info{flex:1;min-width:0;}
-.msg-contact-name{font-size:14px;font-weight:700;color:var(--text);}
-.msg-contact-preview{font-size:12px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;}
-.msg-contact-badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;}
-
-.chat-bubble-row{display:flex;flex-direction:column;max-width:78%;}
-.chat-bubble-row.mine{align-self:flex-end;align-items:flex-end;}
-.chat-bubble-row.theirs{align-self:flex-start;align-items:flex-start;}
-.chat-sender-name{font-size:11px;color:var(--text-sub);margin-bottom:2px;padding:0 4px;}
-.chat-bubble{padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.4;word-break:break-word;}
-.chat-bubble-row.mine .chat-bubble{background:var(--gold);color:var(--navy);border-bottom-right-radius:4px;}
-.chat-bubble-row.theirs .chat-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
-.chat-meta{font-size:10px;color:var(--text-mute);margin-top:3px;padding:0 4px;}
-.chat-task-card{background:#fff8e6;border:1.5px solid var(--gold);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--text);}
-.chat-task-card-title{font-size:11px;font-weight:800;color:var(--orange);margin-bottom:4px;}
-.chat-task-accept-btn{margin-top:8px;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
-.chat-task-accepted-tag{margin-top:6px;font-size:11px;color:var(--green);font-weight:700;}
-.chat-empty{text-align:center;color:var(--text-mute);font-size:13px;padding:40px 20px;}
 
 .project-group{background:var(--card);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);overflow:hidden;}
 .project-group-header{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;}
@@ -1013,37 +988,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <div class="pb"></div>
 </div>
 
-<!-- ⑤ 메신저 — 대화 목록 -->
-<div class="screen has-tab-bar" id="screen-messenger">
-  <div class="header">
-    <div><div class="header-title">💬 메신저</div><div class="header-sub" id="messenger-my-name">-</div></div>
-  </div>
-  <div style="padding:14px 16px 4px;font-size:12px;font-weight:700;color:var(--text-sub);">🏢 그룹채팅</div>
-  <div id="messenger-group-list" style="padding:0 12px;"></div>
-  <div style="padding:14px 16px 4px;font-size:12px;font-weight:700;color:var(--text-sub);">👤 개인 메시지</div>
-  <div id="messenger-dm-list" style="padding:0 12px;"></div>
-  <div class="pb"></div>
-</div>
-
-<!-- ⑥ 메신저 — 채팅 화면 -->
-<div class="screen" id="screen-chat" style="display:none;position:fixed;inset:0;inset-bottom:calc(64px + var(--safe-bot));z-index:350;background:var(--bg);flex-direction:column;">
-  <div class="header" style="flex-shrink:0;">
-    <div><div class="header-title" id="chat-title">-</div><div class="header-sub" id="chat-sub"></div></div>
-    <button class="back-btn" onclick="closeChatScreen()">← 목록</button>
-  </div>
-  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;"></div>
-  <div id="chat-input-row" style="flex-shrink:0;border-top:1px solid var(--border);background:var(--card);padding:8px 10px calc(10px + var(--safe-bot));">
-    <div id="chat-task-mode-bar" style="display:none;background:var(--gold-light);border-radius:8px;padding:6px 10px;margin-bottom:6px;font-size:11px;color:var(--orange);font-weight:700;">🔔 업무요청 모드 — 매장을 선택하고 내용을 입력하세요
-      <select id="chat-task-store-select" style="margin-left:6px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);font-size:11px;"></select>
-    </div>
-    <div style="display:flex;gap:6px;align-items:flex-end;">
-      <button id="chat-task-toggle-btn" title="업무요청 모드" style="background:none;border:1px solid var(--border);border-radius:8px;width:36px;height:36px;font-size:16px;cursor:pointer;flex-shrink:0;">🔔</button>
-      <input type="text" id="chat-text-input" placeholder="메시지 입력..." style="flex:1;border:1px solid var(--border);border-radius:18px;padding:9px 14px;font-size:14px;font-family:inherit;outline:none;">
-      <button id="chat-send-btn" style="background:var(--navy);color:#fff;border:none;border-radius:18px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;">전송</button>
-    </div>
-  </div>
-</div>
-
 <!-- 관리자 대시보드 화면 -->
 <div class="screen has-tab-bar" id="screen-admin">
   <div class="header">
@@ -1067,11 +1011,6 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
   <button class="tab-item" id="tab-my" onclick="switchTab('my')">
     <div class="tab-icon">👤</div>
     <div class="tab-label">내 업무</div>
-  </button>
-  <button class="tab-item" id="tab-messenger" onclick="switchTab('messenger')">
-    <div class="tab-icon">💬</div>
-    <div class="tab-label">메신저</div>
-    <div class="tab-badge" id="messenger-tab-badge" style="display:none;"></div>
   </button>
 </div>
 </div>
@@ -2011,18 +1950,6 @@ const GUIDE_SECTIONS = [
       '📌 히스토리: 신제품 입고/이벤트/매장이슈 등 데이터 기록용',
       '히스토리 작성 시 카테고리와 해당 매장 선택 가능',
       '본인이 작성한 글은 수정/삭제 가능',
-    ]
-  },
-  {
-    title: '💬 메신저',
-    items: [
-      '하단 탭바에서 바로 진입 (별도 로그인 불필요, 이름만 등록하면 됨)',
-      '🏢 그룹채팅: 전체 채팅 1개 + 매장별 채팅 9개, 항상 존재',
-      '👤 개인 메시지: 전 직원과 1:1 대화 가능',
-      '실시간으로 메시지 주고받기, 안 읽은 메시지는 탭 아이콘에 빨간 배지로 표시',
-      '1:1 대화에서는 상대방이 읽으면 "읽음" 표시',
-      '🔔 업무요청 모드: 입력창 왼쪽 🔔 버튼 클릭 → 매장 선택 후 요청 내용 전송',
-      '업무요청을 받은 사람은 "내 업무에 추가" 버튼으로 바로 본인 오늘 업무에 반영 가능',
     ]
   },
   {
@@ -2999,224 +2926,6 @@ function ensureUsername(cb){
 }
 
 // ══════════════════════════════════════
-// 💬 메신저
-// ══════════════════════════════════════
-let curChat=null; // {kind:'dm'|'group', id, title}
-let chatUnsub=null;
-let chatTaskMode=false;
-
-function dmConvId(a,b){return [a,b].sort().join('__');}
-
-function chatRef(kind,id){
-  return kind==='dm' ? doc(db,`dm/${id}`) : doc(db,`chat_group/${id}`);
-}
-
-async function loadChatItems(kind,id){
-  const snap=await getDoc(chatRef(kind,id));
-  return snap.exists()?(snap.data().items||[]):[];
-}
-
-// 대화목록 화면 (그룹 + 개인)
-async function renderMessengerList(){
-  const myName=getUsername();
-  const grpWrap=document.getElementById('messenger-group-list');
-  const dmWrap=document.getElementById('messenger-dm-list');
-  if(!grpWrap||!dmWrap)return;
-  grpWrap.innerHTML='<div class="chat-empty">불러오는 중...</div>';
-  dmWrap.innerHTML='';
-
-  // 그룹: 전체 + 매장별
-  const groups=[{id:'all',title:'🏢 전체 채팅',icon:'🏢'},...STORES.map(s=>({id:s.id,title:`${s.icon} ${s.name}`,icon:s.icon}))];
-  grpWrap.innerHTML='';
-  let totalUnread=0;
-  for(const g of groups){
-    const items=await loadChatItems('group',g.id);
-    const last=items[items.length-1];
-    const unread=items.filter(m=>m.from!==myName&&!(m.readBy||[]).includes(myName)).length;
-    totalUnread+=unread;
-    const row=document.createElement('div');row.className='msg-contact-row';
-    row.innerHTML=`<div class="msg-contact-avatar grp">${g.icon}</div>
-      <div class="msg-contact-info">
-        <div class="msg-contact-name">${g.title}</div>
-        <div class="msg-contact-preview">${last?(last.type==='task_request'?'🔔 업무요청: '+last.taskText:last.text):'대화 없음'}</div>
-      </div>
-      ${unread>0?`<div class="msg-contact-badge">${unread}</div>`:''}`;
-    row.onclick=()=>openChatScreen('group',g.id,g.title);
-    grpWrap.appendChild(row);
-  }
-
-  // 개인 메시지: 나 제외 전 직원
-  dmWrap.innerHTML='';
-  for(const name of staffList){
-    if(name===myName)continue;
-    const convId=dmConvId(myName,name);
-    const items=await loadChatItems('dm',convId);
-    const last=items[items.length-1];
-    const unread=items.filter(m=>m.from!==myName&&!(m.readBy||[]).includes(myName)).length;
-    totalUnread+=unread;
-    const row=document.createElement('div');row.className='msg-contact-row';
-    row.innerHTML=`<div class="msg-contact-avatar">${name[0]}</div>
-      <div class="msg-contact-info">
-        <div class="msg-contact-name">${name}</div>
-        <div class="msg-contact-preview">${last?(last.type==='task_request'?'🔔 업무요청: '+last.taskText:last.text):'대화 없음'}</div>
-      </div>
-      ${unread>0?`<div class="msg-contact-badge">${unread}</div>`:''}`;
-    row.onclick=()=>openChatScreen('dm',convId,name);
-    dmWrap.appendChild(row);
-  }
-
-  updateMessengerBadge(totalUnread);
-}
-
-function updateMessengerBadge(count){
-  const badge=document.getElementById('messenger-tab-badge');
-  if(!badge)return;
-  if(count>0){badge.style.display='flex';badge.textContent=count>99?'99+':count;}
-  else{badge.style.display='none';}
-}
-
-// 채팅 화면 열기
-window.openChatScreen=function(kind,id,title){
-  curChat={kind,id,title};
-  document.getElementById('chat-title').textContent=title;
-  document.getElementById('chat-sub').textContent=kind==='group'?'그룹채팅':'개인 메시지';
-  document.getElementById('screen-chat').style.display='flex';
-
-  // 업무요청 매장 선택 옵션 채우기
-  const storeSel=document.getElementById('chat-task-store-select');
-  storeSel.innerHTML=STORES.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('');
-
-  chatTaskMode=false;
-  document.getElementById('chat-task-mode-bar').style.display='none';
-  document.getElementById('chat-text-input').value='';
-
-  if(chatUnsub)chatUnsub();
-  const ref=chatRef(kind,id);
-  chatUnsub=onSnapshot(ref,async(snap)=>{
-    const items=snap.exists()?(snap.data().items||[]):[];
-    renderChatMessages(items);
-    // 읽음 처리
-    const myName=getUsername();
-    let changed=false;
-    items.forEach(m=>{
-      if(m.from!==myName){
-        if(!m.readBy)m.readBy=[];
-        if(!m.readBy.includes(myName)){m.readBy.push(myName);changed=true;}
-      }
-    });
-    if(changed){
-      try{await setDoc(ref,{items});}catch(e){}
-    }
-  });
-};
-
-function closeChatScreen(){
-  if(chatUnsub){chatUnsub();chatUnsub=null;}
-  document.getElementById('screen-chat').style.display='none';
-  curChat=null;
-  renderMessengerList();
-}
-window.closeChatScreen=closeChatScreen;
-
-function renderChatMessages(items){
-  const wrap=document.getElementById('chat-messages');
-  if(!wrap)return;
-  const myName=getUsername();
-  const isGroup=curChat&&curChat.kind==='group';
-  wrap.innerHTML='';
-  if(items.length===0){
-    wrap.innerHTML='<div class="chat-empty">아직 메시지가 없습니다. 첫 메시지를 보내보세요!</div>';
-    return;
-  }
-  items.forEach((m,idx)=>{
-    const mine=m.from===myName;
-    const row=document.createElement('div');
-    row.className='chat-bubble-row '+(mine?'mine':'theirs');
-    const senderTag=(isGroup&&!mine)?`<div class="chat-sender-name">${m.from}</div>`:'';
-    const time=m.ts?new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'';
-
-    let bubbleHtml;
-    if(m.type==='task_request'){
-      const store=STORES.find(s=>s.id===m.taskStoreId);
-      const storeLabel=store?`${store.icon} ${store.name}`:'';
-      const canAccept=!mine&&!m.accepted;
-      bubbleHtml=`<div class="chat-task-card">
-        <div class="chat-task-card-title">🔔 업무요청 ${storeLabel?'· '+storeLabel:''}</div>
-        <div>${m.taskText}</div>
-        ${m.accepted?`<div class="chat-task-accepted-tag">✅ ${m.acceptedBy||''}님이 받았어요</div>`:canAccept?`<button class="chat-task-accept-btn" data-idx="${idx}">내 업무에 추가</button>`:''}
-      </div>`;
-    } else {
-      bubbleHtml=`<div class="chat-bubble">${m.text}</div>`;
-    }
-
-    const readTag=(mine&&!isGroup&&m.readBy&&curChat&&m.readBy.includes(curChat.title))?'읽음 · ':'';
-    row.innerHTML=`${senderTag}${bubbleHtml}<div class="chat-meta">${readTag}${time}</div>`;
-    wrap.appendChild(row);
-  });
-
-  // 업무요청 수락 버튼 연결
-  wrap.querySelectorAll('.chat-task-accept-btn').forEach(btn=>{
-    btn.onclick=async()=>{
-      const idx=parseInt(btn.dataset.idx,10);
-      const myName=getUsername();
-      btn.disabled=true;btn.textContent='처리중...';
-      try{
-        const ref=chatRef(curChat.kind,curChat.id);
-        const snap=await getDoc(ref);
-        const its=snap.exists()?(snap.data().items||[]):[];
-        const target=its[idx];
-        if(target&&!target.accepted){
-          const todayKey=dk(today.getFullYear(),today.getMonth(),today.getDate());
-          await addTodoItem(target.taskStoreId,todayKey,target.taskText,myName,null);
-          target.accepted=true;target.acceptedBy=myName;
-          await setDoc(ref,{items:its});
-        }
-      }catch(e){alert('처리 실패');btn.disabled=false;btn.textContent='내 업무에 추가';}
-    };
-  });
-
-  wrap.scrollTop=wrap.scrollHeight;
-}
-
-// 업무요청 모드 토글
-function setupChatInputHandlers(){
-  const taskBtn=document.getElementById('chat-task-toggle-btn');
-  const taskBar=document.getElementById('chat-task-mode-bar');
-  const textInput=document.getElementById('chat-text-input');
-  const sendBtn=document.getElementById('chat-send-btn');
-  if(!taskBtn||taskBtn.dataset.bound)return;
-  taskBtn.dataset.bound='1';
-
-  taskBtn.onclick=()=>{
-    chatTaskMode=!chatTaskMode;
-    taskBar.style.display=chatTaskMode?'block':'none';
-    taskBtn.style.background=chatTaskMode?'var(--gold)':'none';
-    textInput.placeholder=chatTaskMode?'업무 요청 내용 입력...':'메시지 입력...';
-  };
-
-  const doSend=()=>{
-    const text=textInput.value.trim();
-    if(!text||!curChat)return;
-    ensureUsername(async(myName)=>{
-      const ref=chatRef(curChat.kind,curChat.id);
-      const snap=await getDoc(ref);
-      const its=snap.exists()?(snap.data().items||[]):[];
-      if(chatTaskMode){
-        const storeId=document.getElementById('chat-task-store-select').value;
-        its.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,6),from:myName,type:'task_request',taskText:text,taskStoreId:storeId,accepted:false,ts:Date.now(),readBy:[myName]});
-      } else {
-        its.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,6),from:myName,type:'text',text,ts:Date.now(),readBy:[myName]});
-      }
-      await setDoc(ref,{items:its});
-      textInput.value='';
-    });
-  };
-  sendBtn.onclick=doSend;
-  textInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSend();});
-}
-setupChatInputHandlers();
-
-// ══════════════════════════════════════
 // 화면 전환
 // ══════════════════════════════════════
 // ══════════════════════════════════════
@@ -3230,15 +2939,8 @@ function showScreen(id){
 }
 
 window.switchTab = function(tab){
-  // 메신저 채팅 화면이 열려있으면 다른 탭으로 이동 시 항상 닫기
-  const chatScreen=document.getElementById('screen-chat');
-  if(chatScreen&&chatScreen.style.display!=='none'){
-    if(chatUnsub){chatUnsub();chatUnsub=null;}
-    chatScreen.style.display='none';
-    curChat=null;
-  }
   curTab=tab;
-  ['dashboard','monthly','my','messenger'].forEach(t=>{
+  ['dashboard','monthly','my'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
@@ -3256,12 +2958,6 @@ window.switchTab = function(tab){
     myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     if(!myStore)myStore=STORES[0];
     renderMyPage();
-  } else if(tab==='messenger'){
-    showScreen('screen-messenger');
-    ensureUsername(name=>{
-      document.getElementById('messenger-my-name').textContent=`${name}님으로 접속`;
-      renderMessengerList();
-    });
   }
 }
 function switchTab(tab){window.switchTab(tab);}
@@ -5587,36 +5283,6 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 }
 
 // ══════════════════════════════════════
-// [임시] 모바일 탭바 사라짐 버그 진단용 디버그 패널
-// ══════════════════════════════════════
-function setupDebugPanel(){
-  const panel=document.createElement('div');
-  panel.id='debug-panel';
-  panel.style.cssText='position:fixed;top:4px;left:4px;right:4px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f0;font-size:10px;font-family:monospace;padding:6px 8px;border-radius:6px;line-height:1.5;pointer-events:none;white-space:pre-wrap;';
-  document.body.appendChild(panel);
-  function update(){
-    const tb=document.getElementById('tab-bar');
-    const shell=document.querySelector('.app-shell');
-    if(!tb||!shell)return;
-    const r=tb.getBoundingClientRect();
-    const vv=window.visualViewport;
-    panel.textContent=
-      `tabBar top:${r.top.toFixed(0)} bottom:${r.bottom.toFixed(0)} h:${r.height.toFixed(0)}\n`+
-      `innerH:${window.innerHeight} vvH:${vv?vv.height.toFixed(0):'-'} vvOffsetTop:${vv?vv.offsetTop.toFixed(0):'-'}\n`+
-      `shellH:${getComputedStyle(shell).height} scrollY:${window.scrollY} bodyScrollH:${document.body.scrollHeight}\n`+
-      `visible:${r.bottom>0&&r.top<window.innerHeight?'YES':'NO — 화면밖!'}`;
-  }
-  update();
-  setInterval(update,300);
-  window.addEventListener('scroll',update,{passive:true});
-  window.addEventListener('resize',update);
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',update);
-    window.visualViewport.addEventListener('scroll',update);
-  }
-}
-
-// ══════════════════════════════════════
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
@@ -5626,7 +5292,6 @@ Promise.all([loadStaffList(), loadScheduleRules(), loadHolidays()]).then(async()
   await autoPostNotice();
   await autoPostMemoNotice();
   await autoPostDayoffNotice();
-  setupDebugPanel();
 });
 
 // 앱 업데이트 공지 자동 등록 (한 번만)
