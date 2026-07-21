@@ -591,6 +591,40 @@ body.feat-off-projects #type-project{display:none!important}
 body.feat-off-dayoff button[onclick="openMyDayoffModal()"],body.feat-off-dayoff #my-dayoff-banner{display:none!important}
 body.feat-off-handover .my-section:has(#my-handover-list),body.feat-off-handover #handover-unread-banner,body.feat-off-handover .handover-day-header,body.feat-off-handover #handover-list-box,body.feat-off-handover #handover-archive-box,body.feat-off-handover .todo-input-row:has(#handover-input-box){display:none!important}
 body.feat-off-cleaning .dsb-clean-badge{display:none!important}
+/* 최신 원본 이식: 지점카드 진행중 업무 리스트 */
+.dsb-tasklist{margin-top:4px;display:flex;flex-direction:column;gap:2px;}
+.dsb-task-line{font-size:10px;color:var(--text-sub);display:flex;gap:4px;overflow:hidden;white-space:nowrap;}
+.dsb-task-name{color:var(--gold);font-weight:700;flex-shrink:0;}
+.dsb-task-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dsb-task-more{font-size:10px;color:var(--text-mute);}
+/* 최신 원본 이식: 대시보드 장기 프로젝트 현황 */
+.project-overview-row{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);}
+.project-overview-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.project-overview-name{font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;}
+.project-overview-pct{font-size:13px;font-weight:800;color:var(--purple);flex-shrink:0;}
+.project-overview-meta{font-size:11px;color:var(--text-sub);margin-bottom:6px;}
+.project-overview-bar{height:6px;border-radius:4px;background:var(--purple-light);overflow:hidden;}
+.project-overview-fill{height:100%;background:var(--purple);border-radius:4px;transition:width 0.2s;}
+.project-overview-empty{font-size:12px;color:var(--text-mute);padding:14px;text-align:center;}
+.project-group{background:var(--card);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);overflow:hidden;}
+.project-group-header{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;}
+.project-group-name{font-size:13px;font-weight:700;color:var(--text);flex-shrink:0;}
+.project-group-count{font-size:11px;color:var(--text-sub);flex:1;}
+.project-group-toggle{font-size:11px;color:var(--purple);font-weight:700;}
+.project-group-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;}
+.project-group-body .project-overview-row{margin-bottom:0;box-shadow:none;border:1px solid var(--border);background:#faf9f6;}
+.project-log-toggle{color:var(--purple);font-weight:700;}
+.project-log-list{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);flex-direction:column;gap:5px;}
+.project-log-entry{display:flex;gap:8px;font-size:11px;color:var(--text-sub);}
+/* 최신 원본 이식: 푸터 + 이어받기 버튼 */
+.app-footer{background:var(--navy);color:rgba(255,255,255,0.85);text-align:center;padding:22px 16px;margin-top:8px;}
+.app-footer-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:8px;}
+.app-footer-copyright{font-size:12px;color:rgba(255,255,255,0.75);}
+.app-footer-copyright b{color:var(--gold);font-weight:800;}
+.app-footer-disclaimer{font-size:11px;color:rgba(255,255,255,0.45);margin-top:6px;}
+.carry-move-btn{background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px;}
+body.feat-off-projects #dashboard-project-section{display:none!important}
+#screen-my-work.view-only #prevday-incomplete-wrap{display:none!important}
 /* 기능 Off — 관리자 현황 탭의 청소 요소들 (게이지·통계·상세 청소목록·완료배지) */
 body.feat-off-cleaning #dash-content .progress-bar,
 body.feat-off-cleaning #dash-content .dash-stats,
@@ -777,6 +811,15 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div class="dashboard-today-header">📍 오늘의 매장 현황</div>
     <div class="dashboard-store-grid" id="dashboard-store-list"></div>
   </div>
+  <div class="dashboard-today" id="dashboard-project-section">
+    <div class="dashboard-today-header">🔄 장기 프로젝트 현황</div>
+    <div id="dashboard-project-list"></div>
+  </div>
+  <div class="app-footer">
+    <div class="app-footer-title" id="footer-app-name">매장 운영 스케줄 시스템</div>
+    <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
+    <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지</div>
+  </div>
   <div class="pb"></div>
 </div>
 
@@ -855,6 +898,8 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
   <!-- 지난달 미완료 알림 배너 (월 첫날에만 표시) -->
   <div id="carry-banner-wrap"></div>
+  <!-- 어제 이 매장 미완료 업무 알림 (다른 근무자 것도 포함) -->
+  <div id="prevday-incomplete-wrap"></div>
 
   <!-- 매장 선택 -->
   <div style="background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;">
@@ -1517,6 +1562,7 @@ function renderMyWorkScreen(){
   loadMyStats();
   checkLastMonthCarry();
   checkHandoverUnread();
+  checkPrevDayStoreIncomplete();
   // 프로젝트 배너 기본 접힘
   const projWrap=document.getElementById('my-project-banner-wrap');
   const projBtn=document.getElementById('project-banner-toggle');
@@ -2899,6 +2945,49 @@ async function carryItemToToday(item){
   await addTodoItem(item.storeId,todayDateKey,item.text,myStaff,item.dateKey);
 }
 
+// 어제 이 매장에서 (다른 근무자 포함) 미완료된 업무 알림 — 순환근무자가 이어받을 수 있도록 (최신 원본 이식)
+async function checkPrevDayStoreIncomplete(){
+  const wrap=document.getElementById('prevday-incomplete-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  if(!myStaff||!myStore)return;
+  const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const yest=new Date(myDate.getFullYear(),myDate.getMonth(),myDate.getDate()-1);
+  const yKey=dk(yest.getFullYear(),yest.getMonth(),yest.getDate());
+
+  let found=[];
+  try{
+    for(const name of staffList){
+      const items=await loadStaffTodos(name,yKey);
+      items.filter(it=>it.storeId===myStore.id&&!it.done).forEach(it=>{
+        found.push({name,...it,dateKey:yKey});
+      });
+    }
+  }catch(e){return;}
+  if(found.length===0)return;
+
+  const banner=document.createElement('div');
+  banner.className='carry-banner';
+  banner.innerHTML=`<div class="carry-banner-title">⚠️ 어제 ${myStore.name}에서 미완료된 업무 ${found.length}건</div>`;
+  found.forEach(it=>{
+    const row=document.createElement('div');row.className='carry-banner-item';
+    row.innerHTML=`<span>${it.name}: ${it.text}</span>`;
+    const btn=document.createElement('button');btn.className='carry-move-btn';btn.textContent='오늘로 이어받기';
+    btn.onclick=async()=>{
+      btn.disabled=true;btn.textContent='처리중...';
+      try{
+        await addTodoItem(myStore.id,dateKey,it.text,myStaff,it.dateKey);
+        row.remove();
+        renderMyTodoList();
+        if(!wrap.querySelector('.carry-banner-item'))wrap.innerHTML='';
+      }catch(e){btn.disabled=false;btn.textContent='오늘로 이어받기';alert('처리 실패');}
+    };
+    row.appendChild(btn);
+    banner.appendChild(row);
+  });
+  wrap.appendChild(banner);
+}
+
 window.confirmName=function(){
   const val=document.getElementById('name-input').value.trim();
   if(!val)return;
@@ -3065,6 +3154,7 @@ async function renderDashboardHome(){
     let todoDone=0,todoTotal=0;
     let handoverUnchecked=0;
     let workers=[];
+    let taskLines=[];
 
     try{
       const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
@@ -3080,6 +3170,7 @@ async function renderDashboardHome(){
           workers.push(name);
           todoTotal+=storeItems.length;
           todoDone+=storeItems.filter(i=>i.done).length;
+          storeItems.forEach(it=>taskLines.push({name,text:it.text||'',done:!!it.done}));
         }
       }
     }catch(e){}
@@ -3112,6 +3203,19 @@ async function renderDashboardHome(){
         </div>`
       :`<div class="dsb-row"><span class="dsb-row-icon">📝</span><span class="dsb-row-label" style="color:var(--text-mute);">오늘 업무 없음</span></div>`;
 
+    // 진행중(미완료) 업무 — 누가 무엇을 하고 있는지 바로 보이도록 (최신 원본 이식)
+    const undoneTasks=taskLines.filter(t=>!t.done);
+    const taskListMax=3;
+    const taskListHtml=undoneTasks.length>0
+      ?`<div class="dsb-tasklist">
+          ${undoneTasks.slice(0,taskListMax).map(t=>{
+            const txt=t.text.length>16?t.text.slice(0,16)+'…':t.text;
+            return `<div class="dsb-task-line"><span class="dsb-task-name">${t.name}</span><span class="dsb-task-text">${txt}</span></div>`;
+          }).join('')}
+          ${undoneTasks.length>taskListMax?`<div class="dsb-task-more">외 진행중 ${undoneTasks.length-taskListMax}건</div>`:''}
+        </div>`
+      :'';
+
     const handoverRow=!featOn('handover')?'':handoverUnchecked>0
       ?`<div class="dsb-row">
           <span class="dsb-row-icon">🔄</span>
@@ -3130,11 +3234,93 @@ async function renderDashboardHome(){
         ${cleanBadge}
       </div>
       ${todoRow}
+      ${taskListHtml}
       ${handoverRow}
       ${workerRow}`;
 
     block.onclick=()=>{curStore=store;switchTab('monthly');};
     listEl.appendChild(block);
+  }
+
+  await renderDashboardProjects();
+}
+
+// 🔄 장기 프로젝트 현황 (담당자별 그룹, 접기/펼치기) — 최신 원본 이식
+async function renderDashboardProjects(){
+  const listEl=document.getElementById('dashboard-project-list');
+  if(!listEl)return;
+  if(!featOn('projects')){listEl.innerHTML='';return;}
+  listEl.innerHTML='<div class="project-overview-empty">불러오는 중...</div>';
+  try{
+    let all=[];
+    for(const name of staffList){
+      const projs=await loadProjects(name);
+      projs.filter(p=>!p.done).forEach(p=>{
+        all.push({name,text:p.text||'',progress:p.progress||0,storeId:p.storeId,logs:p.logs||[]});
+      });
+    }
+    if(all.length===0){
+      listEl.innerHTML='<div class="project-overview-empty">진행중인 장기 프로젝트가 없습니다</div>';
+      return;
+    }
+    const grouped={};
+    all.forEach(p=>{(grouped[p.name]=grouped[p.name]||[]).push(p);});
+    const names=Object.keys(grouped).sort((a,b)=>grouped[b].length-grouped[a].length);
+
+    listEl.innerHTML='';
+    names.forEach(name=>{
+      const projs=grouped[name].sort((a,b)=>b.progress-a.progress);
+      const avgPct=Math.round(projs.reduce((s,p)=>s+p.progress,0)/projs.length);
+
+      const groupWrap=document.createElement('div');groupWrap.className='project-group';
+      const header=document.createElement('div');header.className='project-group-header';
+      header.innerHTML=`<span class="project-group-name">👤 ${name}</span>
+        <span class="project-group-count">${projs.length}건 · 평균 ${avgPct}%</span>
+        <span class="project-group-toggle">▼</span>`;
+      groupWrap.appendChild(header);
+
+      const body=document.createElement('div');body.className='project-group-body';body.style.display='none';
+      projs.forEach(p=>{
+        const store=STORES.find(s=>s.id===p.storeId);
+        const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
+        const row=document.createElement('div');row.className='project-overview-row';row.style.cursor='pointer';
+        const sortedLogs=[...(p.logs||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
+        row.innerHTML=`
+          <div class="project-overview-top">
+            <span class="project-overview-name">${p.text||'(제목없음)'}</span>
+            <span class="project-overview-pct">${p.progress}%</span>
+          </div>
+          <div class="project-overview-meta">${storeLabel} ${sortedLogs.length?`· 일지 ${sortedLogs.length}건 <span class="project-log-toggle">▼</span>`:''}</div>
+          <div class="project-overview-bar"><div class="project-overview-fill" style="width:${p.progress}%"></div></div>
+          <div class="project-log-list" style="display:none;"></div>`;
+        if(sortedLogs.length){
+          const logWrap=row.querySelector('.project-log-list');
+          sortedLogs.forEach(log=>{
+            const logRow=document.createElement('div');logRow.className='project-log-entry';
+            logRow.innerHTML=`<span class="project-log-date">${log.date}</span><span class="project-log-text">${log.text}</span>`;
+            logWrap.appendChild(logRow);
+          });
+          row.onclick=()=>{
+            const isOpen=logWrap.style.display!=='none';
+            logWrap.style.display=isOpen?'none':'flex';
+            const toggleIcon=row.querySelector('.project-log-toggle');
+            if(toggleIcon)toggleIcon.textContent=isOpen?'▼':'▲';
+          };
+        }
+        body.appendChild(row);
+      });
+      groupWrap.appendChild(body);
+
+      header.onclick=()=>{
+        const isOpen=body.style.display!=='none';
+        body.style.display=isOpen?'none':'flex';
+        header.querySelector('.project-group-toggle').textContent=isOpen?'▼':'▲';
+      };
+
+      listEl.appendChild(groupWrap);
+    });
+  }catch(e){
+    listEl.innerHTML='<div class="project-overview-empty">불러오기 실패</div>';
   }
 }
 
@@ -5262,6 +5448,8 @@ function applyTenantBranding(){
   document.querySelectorAll('.header-title').forEach(el=>{
     if(el.textContent.includes('위베이프'))el.textContent=`📋 ${name}`;
   });
+  const footerName=document.getElementById('footer-app-name');
+  if(footerName)footerName.textContent=`${name} — 매장 운영 스케줄 시스템`;
 }
 
 // 5-5: 로그아웃 — 세션 정리 후 로그인 화면으로 (identity 통합 후 계정 전환 수단)
