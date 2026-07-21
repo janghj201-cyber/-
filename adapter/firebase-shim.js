@@ -691,10 +691,13 @@ async function readScheduleRulesConfig(ctx) {
     const rec = row.recurrence ?? {}
     const col = SCHEDULE_RULE_COLOR_MAP[row.color] ?? 'c-blue'
     const key = SCHEDULE_RULE_LABEL_TO_KEY[row.label] ?? `rule_${i}`
+    // 원본 '월간 보고 마감' 배지의 안내 패널(작성 가이드)은 rule.report 플래그로 열린다 —
+    // 라벨이 보고 계열로 매핑되면 플래그를 되살린다(최종점검에서 발견·복원).
+    const report = key === 'report'
     if (rec.type === 'weekly') {
-      rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, meta: '', col })
+      rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, meta: '', col, report })
     } else if (rec.type === 'monthly_day') {
-      rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, meta: '', col })
+      rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, meta: '', col, report })
     }
     // 그 외(monthly_weekday_occurrences 등 대청소류)는 청소 체크리스트가 이미 처리 — 스킵
   })
