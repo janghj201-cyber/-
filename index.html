@@ -34,7 +34,9 @@
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
-body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-top:var(--safe-top);}
+html,body{height:100%;overflow:hidden;}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding-top:var(--safe-top);margin:0;}
+.app-shell{display:flex;flex-direction:column;height:calc(100dvh - var(--safe-top));overflow:hidden;}
 
 /* ── 공통 헤더 ── */
 .header{background:var(--navy);color:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -48,7 +50,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .admin-btn{background:rgba(245,166,35,0.2);border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;}
 
 /* ── 화면 전환 ── */
-.screen{display:none;}
+.screen{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;}
 .screen.active{display:block;}
 
 /* ── 지점 선택 ── */
@@ -285,7 +287,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .pb{height:calc(20px + var(--safe-bot));}
 
 /* ── 하단 탭 네비게이션 ── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);display:flex;z-index:400;padding-bottom:var(--safe-bot);}
+.tab-bar{flex-shrink:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);display:flex;z-index:400;padding-bottom:var(--safe-bot);}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:inherit;color:rgba(255,255,255,0.45);transition:color 0.15s;}
 .tab-item.active{color:var(--gold);}
 .tab-icon{font-size:20px;margin-bottom:3px;}
@@ -634,6 +636,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 </style>
 </head>
 <body>
+<div class="app-shell">
 
 <!-- 설치 배너 -->
 <div id="ibanner" class="install-banner" style="display:none">
@@ -1042,6 +1045,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div class="tab-label">내 업무</div>
   </button>
 </div>
+</div><!-- /app-shell -->
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
