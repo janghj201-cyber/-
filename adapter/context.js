@@ -29,5 +29,8 @@ export async function getContext() {
   cached = { session, profile, tenantId: profile.tenant_id, profileId: profile.id, stores: stores ?? [] }
   // 5-2: 원본 UI가 "지금 보는 카드가 본인인지"(조회 전용 표시) 판단할 최소 정보만 노출
   window.__vflowProfile = { id: profile.id, name: profile.name, role: profile.role }
+  // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', profile.tenant_id).maybeSingle()
+  window.__vflowTenant = { name: tenant?.name ?? '' }
   return cached
 }

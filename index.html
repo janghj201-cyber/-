@@ -5254,6 +5254,16 @@ if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
 // 초기 실행
 // ══════════════════════════════════════
 curStore=STORES[0];
+// 최종점검: 헤더/문서 제목을 테넌트(회사) 이름으로 — "위베이프" 하드코딩 대체
+function applyTenantBranding(){
+  const name=window.__vflowTenant?.name;
+  if(!name)return;
+  document.title=`${name} 일정표`;
+  document.querySelectorAll('.header-title').forEach(el=>{
+    if(el.textContent.includes('위베이프'))el.textContent=`📋 ${name}`;
+  });
+}
+
 // 5-5: 로그아웃 — 세션 정리 후 로그인 화면으로 (identity 통합 후 계정 전환 수단)
 window.doLogout=function(){
   if(!confirm('로그아웃할까요?'))return;
@@ -5265,10 +5275,9 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');
   switchTab('dashboard');
-  checkUpdateNotice();
-  await autoPostNotice();
-  await autoPostMemoNotice();
-  await autoPostDayoffNotice();
+  // 최종점검: 위베이프 전용 1회성 공지(v1.4 모달·게시판 자동등록 3종) 호출 제거 —
+  // 신규 테넌트 게시판에 위베이프 업데이트 공지가 자동 등록되던 문제. 함수는 무해하게 남김.
+  applyTenantBranding();
 });
 
 // 앱 업데이트 공지 자동 등록 (한 번만)
