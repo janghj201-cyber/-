@@ -1,0 +1,8 @@
+# 배포 제외 — 앱 파일(html/adapter)만 올라간다
+scripts/
+wevape-pos/
+.github/
+_to_delete/
+*.py
+*.bat
+*.md
