@@ -5221,30 +5221,62 @@ async function renderSettingsTab(content){
   secT.appendChild(sw);
   content.appendChild(secT);
 
-  // 매장 아이콘 편집
+  // 매장 아이콘 편집 — 아코디언 + 카테고리 슬라이드 (72종)
   const secS=document.createElement('div');secS.className='dash-card';secS.style.marginTop='12px';
-  secS.innerHTML='<div class="dash-store-name">🏪 매장 아이콘</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">매장마다 아이콘을 골라주세요. 누르면 바로 저장됩니다.</div>';
-  const ICON_CHOICES=['🏪','🏬','🎯','🏥','✈️','🌱','🏙️','🌿','⭐','🏢','🛍️','💈'];
-  STORES.forEach(st=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap;';
-    row.innerHTML=`<span style="font-size:13px;font-weight:700;min-width:120px;">${st.icon} ${st.name}</span>`;
-    const pal=document.createElement('div');pal.style.cssText='display:flex;gap:4px;flex-wrap:wrap;';
-    ICON_CHOICES.forEach(ic=>{
-      const b=document.createElement('button');
-      b.style.cssText=`font-size:16px;padding:4px 7px;border-radius:8px;cursor:pointer;background:var(--card);border:2px solid ${st.icon===ic?'var(--gold)':'var(--border)'};`;
-      b.textContent=ic;
-      b.onclick=async()=>{
-        const prev=st.icon;st.icon=ic;
-        savedEl.textContent='저장 중...';
-        try{await setDoc(doc(db,'config/stores'),{list:STORES});savedEl.textContent='✓ 저장됨';renderDashboard();}
-        catch(err){st.icon=prev;savedEl.textContent='⚠ 저장 실패 (권한/네트워크 확인)';}
-      };
-      pal.appendChild(b);
+  secS.innerHTML='<div class="dash-store-name">🏪 매장 아이콘</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">매장을 누르면 펼쳐집니다. 카테고리를 옆으로 밀어 고르면 바로 저장돼요.</div>';
+  const ICON_GROUPS=[
+    {label:'매장·건물',icons:['🏪','🏬','🏢','🏦','🏨','🏛️','🏠','🏡','🛖','🏭','🏰','⛺']},
+    {label:'쇼핑·뷰티',icons:['🛍️','🛒','🎁','📦','💎','💈','💄','👜','🧢','👟','🕶️','⌚']},
+    {label:'음식·카페',icons:['☕','🍰','🧁','🍔','🍕','🍜','🍱','🍎','🍦','🥤','🍺','🍷']},
+    {label:'장소·탈것',icons:['✈️','🚗','🛵','🚲','🚉','⛽','🗼','🎡','🏖️','⛱️','🌉','🗺️']},
+    {label:'자연',icons:['🌱','🌿','🌳','🌸','🌻','🍀','⛰️','🌊','🌙','☀️','❄️','🔥']},
+    {label:'포인트',icons:['⭐','🎯','⚡','💡','🏆','👑','🚀','🎵','🎮','🎬','🔮','🧿']},
+  ];
+  const storeRows=new Map();
+  function buildIconRow(st){
+    const wrap=document.createElement('div');
+    wrap.style.cssText='border-bottom:1px solid var(--border);';
+    const head=document.createElement('button');
+    head.style.cssText='width:100%;display:flex;align-items:center;gap:10px;padding:11px 4px;background:none;border:none;cursor:pointer;font-family:inherit;';
+    head.innerHTML=`<span style="font-size:20px;" data-cur>${st.icon||'🏪'}</span><span style="font-size:13px;font-weight:700;color:var(--text);">${st.name}</span><span style="margin-left:auto;color:var(--text-sub);font-size:12px;" data-arrow>▾</span>`;
+    const body=document.createElement('div');
+    body.style.cssText='display:none;padding:2px 0 10px;';
+    ICON_GROUPS.forEach(g=>{
+      const lab=document.createElement('div');lab.textContent=g.label;
+      lab.style.cssText='font-size:11px;font-weight:700;color:var(--text-sub);margin:8px 2px 4px;';
+      const strip=document.createElement('div');
+      strip.style.cssText='display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;';
+      strip.addEventListener('wheel',e=>{if(e.deltaY){strip.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+      g.icons.forEach(ic=>{
+        const b=document.createElement('button');
+        b.dataset.ic=ic;
+        b.style.cssText=`flex:0 0 auto;font-size:20px;padding:7px 9px;border-radius:10px;cursor:pointer;background:var(--card);border:2px solid ${st.icon===ic?'var(--gold)':'var(--border)'};`;
+        b.textContent=ic;
+        b.onclick=async()=>{
+          const prev=st.icon;st.icon=ic;
+          savedEl.textContent='저장 중...';
+          try{
+            await setDoc(doc(db,'config/stores'),{list:STORES});
+            savedEl.textContent='✓ 저장됨';
+            head.querySelector('[data-cur]').textContent=ic;
+            body.querySelectorAll('button[data-ic]').forEach(x=>{x.style.borderColor=x.dataset.ic===ic?'var(--gold)':'var(--border)';});
+            renderDashboard();
+          }catch(err){st.icon=prev;savedEl.textContent='⚠ 저장 실패 (권한/네트워크 확인)';}
+        };
+        strip.appendChild(b);
+      });
+      body.appendChild(lab);body.appendChild(strip);
     });
-    row.appendChild(pal);
-    secS.appendChild(row);
-  });
+    head.onclick=()=>{
+      const isOpen=body.style.display!=='none';
+      storeRows.forEach(r=>{r.body.style.display='none';r.head.querySelector('[data-arrow]').textContent='▾';});
+      if(!isOpen){body.style.display='block';head.querySelector('[data-arrow]').textContent='▴';}
+    };
+    wrap.appendChild(head);wrap.appendChild(body);
+    storeRows.set(st.id,{head,body});
+    return wrap;
+  }
+  STORES.forEach(st=>secS.appendChild(buildIconRow(st)));
   content.appendChild(secS);
 
   // 직원 초대
