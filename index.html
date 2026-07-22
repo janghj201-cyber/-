@@ -5463,7 +5463,7 @@ function applyTenantBranding(){
   if(!name)return;
   document.title=`${name} 일정표`;
   document.querySelectorAll('.header-title').forEach(el=>{
-    if(el.textContent.includes('위베이프'))el.textContent=`📋 ${name}`;
+    if(el.textContent.includes('위베이프')||el.textContent.includes('V-Flow'))el.textContent=`📋 ${name}`;
   });
   const footerName=document.getElementById('footer-app-name');
   if(footerName)footerName.textContent=`${name} — 매장 운영 스케줄 시스템`;
