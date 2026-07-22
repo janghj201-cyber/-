@@ -10,3 +10,6 @@ __pycache__/
 # 환경
 .env
 *.log
+
+# V-Flow PWA manifest는 예외적으로 커밋
+!/manifest.json

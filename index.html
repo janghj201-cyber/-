@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>위베이프 일정표</title>
-<meta name="theme-color" content="#0f7a6b">
+<title>V-Flow</title>
+<meta name="theme-color" content="#1a2332">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="위베이프 일정">
+<meta name="apple-mobile-web-app-title" content="V-Flow">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -786,7 +788,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <!-- ① 대시보드 화면 (첫 화면) -->
 <div class="screen active has-tab-bar" id="screen-dashboard">
   <div class="header">
-    <div><div class="header-title">📋 위베이프</div><div class="header-sub" id="dashboard-date-sub"></div></div>
+    <div><div class="header-title">📋 V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <div style="display:flex;gap:6px;">
       <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📖 가이드</button>
       <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
@@ -5443,6 +5445,8 @@ window.addEventListener('beforeinstallprompt',e=>{
   ib.onclick=()=>{dp.prompt();document.getElementById('ibanner').style.display='none';};
   document.getElementById('ibanner').style.display='flex';
 });
+// PWA: 서비스워커 등록 — 설치 요건(항상 network-first라 옛 버전 고정 없음)
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 if(isIOS&&!window.matchMedia('(display-mode:standalone)').matches){
   document.getElementById('ibanner').style.display='flex';

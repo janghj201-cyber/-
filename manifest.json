@@ -1,0 +1,17 @@
+{
+  "name": "V-Flow 매장 스케줄",
+  "short_name": "V-Flow",
+  "description": "매장 업무·스케줄 관리 앱",
+  "lang": "ko",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f7f2",
+  "theme_color": "#1a2332",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
