@@ -26,6 +26,7 @@
     <form id="login-form">
       <label>이메일<input type="email" id="email" required placeholder="you@example.com" /></label>
       <label>비밀번호<input type="password" id="password" required /></label>
+      <label style="display:flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;cursor:pointer;"><input type="checkbox" id="remember" style="width:auto;margin:0;" /> 이메일 기억하기</label>
       <p class="error" id="error" hidden></p>
       <button type="submit" id="submitBtn">로그인</button>
     </form>
@@ -43,6 +44,11 @@
     const errorEl = document.getElementById('error')
     const submitBtn = document.getElementById('submitBtn')
 
+    // 이메일 기억하기: 저장된 값 복원
+    const rememberEl = document.getElementById('remember')
+    const savedEmail = localStorage.getItem('vflow_saved_email')
+    if (savedEmail) { document.getElementById('email').value = savedEmail; rememberEl.checked = true; document.getElementById('password').focus() }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault()
       errorEl.hidden = true
@@ -54,6 +60,8 @@
           password: document.getElementById('password').value,
         })
         if (error) throw error
+        if (rememberEl.checked) localStorage.setItem('vflow_saved_email', document.getElementById('email').value.trim())
+        else localStorage.removeItem('vflow_saved_email')
         location.href = 'index.html'
       } catch (err) {
         errorEl.textContent = err.message || '로그인에 실패했습니다.'
