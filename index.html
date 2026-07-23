@@ -718,7 +718,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="update-modal" style="max-height:88vh;">
     <div class="update-modal-header">
       <h3>📖 사용 가이드</h3>
-      <span class="update-modal-version">v2.0</span>
+      <span class="update-modal-version">v2.1</span>
       <button onclick="closeGuideModal()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
     </div>
     <div class="update-modal-body" id="guide-modal-body"></div>
@@ -1959,7 +1959,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.0';
+const GUIDE_VERSION = 'v2.1';
 const GUIDE_SECTIONS = [
   {
     title: '🚀 시작하기 (처음이라면)',
@@ -1968,6 +1968,17 @@ const GUIDE_SECTIONS = [
       '업종을 고르면 청소 체크리스트·고정업무 기본값이 자동으로 세팅돼요 (나중에 자유롭게 수정 가능)',
       '직원은 따로 가입하지 않아요 — 관리자가 보낸 초대 링크로 가입하면 자동으로 팀에 합류됩니다',
       '📖 이 가이드는 상단 가이드 버튼으로 언제든 다시 볼 수 있어요',
+      '📱 폰에 앱처럼 설치하기 — 브라우저에서 홈 화면에 추가하면 아이콘으로 바로 실행돼요 (안드로이드: 메뉴 → 홈 화면에 추가 / 아이폰: Safari 공유 → 홈 화면에 추가)',
+    ]
+  },
+  {
+    title: '🔑 로그인 & 계정',
+    items: [
+      '로그인 화면에서 이메일·비밀번호를 입력해 시작합니다',
+      '☑️ 이메일 기억하기 — 체크하면 다음부터 이메일이 자동으로 채워져요 (비밀번호는 보안상 저장하지 않습니다)',
+      '🔒 비밀번호를 잊으셨나요? — 이메일을 입력하고 이 링크를 누르면 재설정 링크가 메일로 와요. 메일의 링크를 열어 새 비밀번호를 정하면 됩니다 (스팸함도 확인!)',
+      '🔑 비밀번호 변경 — 로그인된 상태에서 내 업무 화면 상단 🔑 비밀번호 버튼으로 본인이 직접 바꿀 수 있어요',
+      '🚪 로그아웃 — 내 업무 화면 상단. 다른 계정으로 바꿀 때 사용해요',
     ]
   },
   {
@@ -2051,6 +2062,8 @@ const GUIDE_SECTIONS = [
       'Q. 직원을 추가하고 싶어요 → 관리자 → 🎨 설정 → 👥 직원 초대에서 초대 링크를 만들어 보내주세요.',
       'Q. 안 쓰는 기능이 있어요 → 관리자 → 🎨 설정에서 끄면 전 직원 화면에서 숨겨져요 (데이터는 유지).',
       'Q. 계정을 바꾸고 싶어요 → 내 업무 화면 상단 🚪 로그아웃 후 다시 로그인하세요.',
+      'Q. 비밀번호를 잊어버렸어요 → 로그인 화면에서 이메일 입력 후 "비밀번호를 잊으셨나요?"를 누르면 재설정 링크가 메일로 와요.',
+      'Q. 비밀번호를 바꾸고 싶어요 → 내 업무 화면 상단 🔑 비밀번호 버튼으로 바로 변경할 수 있어요.',
       'Q. 앱이 예전 버전으로 보여요 → Ctrl+Shift+R (강제 새로고침)',
       'Q. 인수인계가 안 보여요 → 완료 숨기기가 켜진 상태예요. 보관함 버튼을 확인하세요.',
     ]
