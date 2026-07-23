@@ -889,7 +889,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
     <div><div class="header-title">👤 내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
-    <button class="back-btn" onclick="doLogout()">🚪 로그아웃</button>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="doChangePw()">🔑 비밀번호</button><button class="back-btn" onclick="doLogout()">🚪 로그아웃</button></div>
   </div>
   <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
   <div class="pb"></div>
@@ -5502,6 +5502,21 @@ function applyTenantBranding(){
   if(footerName)footerName.textContent=`${name} — 매장 운영 스케줄 시스템`;
 }
 
+// 비밀번호 변경 — 로그인된 본인이 직접 (모달 없이 안전하게 prompt 2회)
+window.doChangePw=async function(){
+  const p1=prompt('새 비밀번호를 입력하세요 (6자 이상)');
+  if(p1===null)return;
+  if(!p1||p1.length<6){alert('비밀번호는 6자 이상이어야 해요.');return;}
+  const p2=prompt('확인을 위해 새 비밀번호를 한 번 더 입력하세요');
+  if(p2===null)return;
+  if(p1!==p2){alert('두 번 입력한 비밀번호가 서로 달라요.');return;}
+  try{
+    const mod=await import('./adapter/supabase-client.js');
+    const {error}=await mod.supabase.auth.updateUser({password:p1});
+    if(error)throw error;
+    alert('\u2713 \ube44\ubc00\ubc88\ud638\uac00 \ubcc0\uacbd\ub410\uc5b4\uc694. \ub2e4\uc74c \ub85c\uadf8\uc778\ubd80\ud130 \uc0c8 \ube44\ubc00\ubc88\ud638\ub97c \uc0ac\uc6a9\ud558\uc138\uc694.');
+  }catch(err){alert('\ubcc0\uacbd \uc2e4\ud328: '+(err.message||'\uad8c\ud55c/\ub124\ud2b8\uc6cc\ud06c \ud655\uc778'));}
+};
 // 5-5: 로그아웃 — 세션 정리 후 로그인 화면으로 (identity 통합 후 계정 전환 수단)
 window.doLogout=function(){
   if(!confirm('로그아웃할까요?'))return;

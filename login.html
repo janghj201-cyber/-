@@ -29,6 +29,7 @@
       <p class="error" id="error" hidden></p>
       <button type="submit" id="submitBtn">로그인</button>
     </form>
+    <p style="text-align:center;margin:14px 0 0;font-size:13px;"><a href="#" id="forgot-link" style="color:#6b7a8d;text-decoration:underline;">비밀번호를 잊으셨나요?</a></p>
     <p style="text-align:center;margin:16px 0 0;font-size:13px;color:#6b7a8d;">처음이세요? <a href="onboarding.html" style="color:#f5a623;font-weight:700;">회원가입하고 시작하기</a></p>
   </div>
 
@@ -59,6 +60,27 @@
         errorEl.hidden = false
         submitBtn.disabled = false
         submitBtn.textContent = '로그인'
+      }
+    })
+
+    // 비밀번호 찾기 — 이메일로 재설정 링크 발송
+    document.getElementById('forgot-link').addEventListener('click', async (e) => {
+      e.preventDefault()
+      const email = (document.getElementById('email').value || '').trim()
+      if (!email) { errorEl.textContent = '먼저 이메일을 입력한 뒤 눌러주세요.'; errorEl.hidden = false; return }
+      errorEl.hidden = true
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: location.origin + location.pathname.replace(/login\.html$/, '') + 'reset-password.html',
+        })
+        if (error) throw error
+        errorEl.style.color = '#0f766e'
+        errorEl.textContent = '✓ ' + email + ' 로 재설정 링크를 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.'
+        errorEl.hidden = false
+      } catch (err) {
+        errorEl.style.color = '#c0392b'
+        errorEl.textContent = err.message || '메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        errorEl.hidden = false
       }
     })
   </script>
