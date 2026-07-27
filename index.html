@@ -311,6 +311,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 
 .dashboard-today{margin:0 12px 12px;}
 .dashboard-today-header{font-size:14px;font-weight:700;color:var(--text);padding:4px 2px 10px;}
+.collab-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+.collab-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
+.collab-card-title{font-size:14px;font-weight:700;color:var(--text);}
+.collab-card-pct{font-size:13px;font-weight:800;color:var(--gold);flex-shrink:0;}
+.collab-bar{background:var(--border);border-radius:6px;height:8px;overflow:hidden;}
+.collab-bar-fill{background:linear-gradient(90deg,var(--gold),#ffcf6b);height:100%;border-radius:6px;transition:width .3s;}
+.collab-card-members{font-size:11px;color:var(--text-sub);margin-top:7px;}
+.collab-mem-chip{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text-sub);}
+.collab-mem-chip.on{border-color:var(--gold);background:var(--gold-light);color:var(--orange);font-weight:700;}
 .dashboard-store-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .dashboard-store-block{background:var(--card);border-radius:14px;padding:14px 12px;cursor:pointer;border:2px solid var(--border);box-shadow:0 1px 4px rgba(26,35,50,0.07);transition:border-color 0.15s,transform 0.12s;}
 .dashboard-store-block:active{transform:scale(0.97);}
@@ -639,6 +648,7 @@ body.feat-off-cleaning .dsb-clean-badge{display:none!important}
 .app-footer-disclaimer{font-size:11px;color:rgba(255,255,255,0.45);margin-top:6px;}
 .carry-move-btn{background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px;}
 body.feat-off-projects #dashboard-project-section{display:none!important}
+body.feat-off-collab #dashboard-collab-section{display:none!important}
 #screen-my-work.view-only #prevday-incomplete-wrap{display:none!important}
 /* 기능 Off — 관리자 현황 탭의 청소 요소들 (게이지·통계·상세 청소목록·완료배지) */
 body.feat-off-cleaning #dash-content .progress-bar,
@@ -738,6 +748,37 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
 </div>
 
+<!-- 🤝 협업 프로젝트 생성 모달 -->
+<div class="update-modal-bg" id="collab-create-modal">
+  <div class="update-modal" style="max-height:88vh;">
+    <div class="update-modal-header">
+      <h3>🤝 새 협업 프로젝트</h3>
+      <button onclick="closeCollabCreate()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
+    </div>
+    <div class="update-modal-body">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">프로젝트명</label>
+      <input type="text" id="collab-title-input" placeholder="예) 매장 자동화 프로그램 제작" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin:14px 0 6px;">참여 직원 (여러 명 선택)</label>
+      <div id="collab-member-picker" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div class="update-modal-footer" style="display:flex;gap:8px;">
+      <button onclick="closeCollabCreate()" style="flex:0 0 auto;background:#f0f0ee;color:var(--text-sub);border:none;border-radius:8px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+      <button class="update-confirm-btn" style="flex:1;" onclick="submitCollab()">만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🤝 협업 프로젝트 상세 모달 -->
+<div class="update-modal-bg" id="collab-detail-modal">
+  <div class="update-modal" style="max-height:90vh;">
+    <div class="update-modal-header">
+      <h3 id="collab-detail-title">협업 프로젝트</h3>
+      <button onclick="closeCollabDetail()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
+    </div>
+    <div class="update-modal-body" id="collab-detail-body"></div>
+  </div>
+</div>
+
 <!-- 게시글 작성 모달 -->
 <div class="board-write-modal-bg" id="board-write-modal" onclick="if(event.target===this)closeBoardWrite()">
   <div class="board-write-modal">
@@ -832,6 +873,13 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="dashboard-today" id="dashboard-project-section">
     <div class="dashboard-today-header">🔄 장기 프로젝트 현황</div>
     <div id="dashboard-project-list"></div>
+  </div>
+  <div class="dashboard-today" id="dashboard-collab-section">
+    <div class="dashboard-today-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>🤝 협업 프로젝트</span>
+      <button onclick="openCollabCreate()" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ 새 협업</button>
+    </div>
+    <div id="dashboard-collab-list"></div>
   </div>
   <div class="app-footer">
     <div class="app-footer-title" id="footer-app-name">매장 운영 스케줄 시스템</div>
@@ -1094,6 +1142,7 @@ const db = getFirestore(app);
 const FEATURE_DEFS=[
   {key:'cleaning',label:'🧹 청소 체크리스트'},
   {key:'projects',label:'🔄 진행중 프로젝트'},
+  {key:'collab',label:'🤝 협업 프로젝트'},
   {key:'memo',label:'📝 개인 메모'},
   {key:'board',label:'📋 게시판'},
   {key:'dayoff',label:'🏖️ 휴무 관리'},
@@ -3303,7 +3352,158 @@ async function renderDashboardHome(){
   }
 
   await renderDashboardProjects();
+  await renderCollabProjects();
 }
+
+// ══════════════════════════════════════
+// 🤝 협업 프로젝트 (collab_projects 등 전용 테이블, 회사 전체 공용)
+// ══════════════════════════════════════
+let _collabSupa=null, _collabCtx=null;
+async function collabApi(){
+  if(!_collabSupa){ _collabSupa=(await import('./adapter/supabase-client.js')).supabase; }
+  if(!_collabCtx){ _collabCtx=await (await import('./adapter/context.js')).getContext(); }
+  return {sb:_collabSupa, T:_collabCtx.tenantId, me:_collabCtx.profileId};
+}
+async function collabProfiles(){
+  const {sb}=await collabApi();
+  const {data}=await sb.from('profiles').select('id,name').order('name');
+  return data||[];
+}
+async function loadCollabList(){
+  const {sb,T}=await collabApi();
+  const {data,error}=await sb.from('collab_projects')
+    .select('id,title,progress,status,done_date,created_at,created_by,collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
+    .eq('tenant_id',T).order('created_at',{ascending:false});
+  if(error){console.warn('collab load',error);return null;}
+  return data||[];
+}
+window.renderCollabProjects=async function(){
+  const listEl=document.getElementById('dashboard-collab-list');
+  if(!listEl)return;
+  if(!featOn('collab')){listEl.innerHTML='';return;}
+  listEl.innerHTML='<div class="project-overview-empty">불러오는 중...</div>';
+  const rows=await loadCollabList();
+  if(rows===null){ listEl.innerHTML='<div class="project-overview-empty">협업 프로젝트 테이블이 아직 없어요. (관리자: 협업 테이블 생성 SQL 실행 필요)</div>'; return; }
+  const ongoing=rows.filter(r=>r.status!=='done');
+  if(ongoing.length===0){ listEl.innerHTML='<div class="project-overview-empty">진행중인 협업 프로젝트가 없습니다. "+ 새 협업"으로 시작해보세요</div>'; return; }
+  listEl.innerHTML='';
+  ongoing.forEach(r=>{
+    const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
+    const pct=Math.max(0,Math.min(100,r.progress||0));
+    const card=document.createElement('div');
+    card.className='collab-card';
+    card.innerHTML=`
+      <div class="collab-card-top">
+        <span class="collab-card-title">${r.title}</span>
+        <span class="collab-card-pct">${pct}%</span>
+      </div>
+      <div class="collab-bar"><div class="collab-bar-fill" style="width:${pct}%;"></div></div>
+      <div class="collab-card-members">👥 ${members.length?members.join(' · '):'참여자 없음'}</div>`;
+    card.onclick=()=>openCollabDetail(r.id);
+    listEl.appendChild(card);
+  });
+};
+
+window.openCollabCreate=async function(){
+  const picker=document.getElementById('collab-member-picker');
+  document.getElementById('collab-title-input').value='';
+  picker.innerHTML='불러오는 중...';
+  const profs=await collabProfiles();
+  picker.innerHTML='';
+  profs.forEach(pr=>{
+    const chip=document.createElement('button');
+    chip.type='button';
+    chip.className='collab-mem-chip';
+    chip.dataset.id=pr.id;
+    chip.textContent=pr.name;
+    chip.onclick=()=>chip.classList.toggle('on');
+    picker.appendChild(chip);
+  });
+  document.getElementById('collab-create-modal').classList.add('open');
+};
+window.closeCollabCreate=function(){ document.getElementById('collab-create-modal').classList.remove('open'); };
+window.submitCollab=async function(){
+  const title=document.getElementById('collab-title-input').value.trim();
+  if(!title){alert('프로젝트명을 입력해 주세요.');return;}
+  const memberIds=[...document.querySelectorAll('#collab-member-picker .collab-mem-chip.on')].map(c=>c.dataset.id);
+  const {sb,T,me}=await collabApi();
+  try{
+    const {data:proj,error}=await sb.from('collab_projects').insert({tenant_id:T,title,progress:0,status:'ongoing',created_by:me}).select('id').single();
+    if(error)throw error;
+    const ids=[...new Set([me,...memberIds])]; // 생성자도 참여자에 포함
+    if(ids.length){
+      const {error:me2}=await sb.from('collab_project_members').insert(ids.map(pid=>({collab_project_id:proj.id,profile_id:pid,tenant_id:T})));
+      if(me2)throw me2;
+    }
+    closeCollabCreate();
+    renderCollabProjects();
+  }catch(err){ alert('생성 실패: '+(err.message||'권한/네트워크 확인')); }
+};
+
+let _collabCur=null;
+window.openCollabDetail=async function(id){
+  _collabCur=id;
+  const rows=await loadCollabList();
+  const r=(rows||[]).find(x=>x.id===id);
+  if(!r){alert('불러오지 못했어요.');return;}
+  document.getElementById('collab-detail-title').textContent='🤝 '+r.title;
+  const {me}=await collabApi();
+  const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
+  const pct=Math.max(0,Math.min(100,r.progress||0));
+  const logs=(r.collab_project_logs||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const body=document.getElementById('collab-detail-body');
+  body.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div class="collab-bar" style="flex:1;"><div class="collab-bar-fill" style="width:${pct}%;"></div></div>
+      <span style="font-weight:800;color:var(--gold);min-width:44px;text-align:right;">${pct}%</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button onclick="collabProgress(-10)" style="flex:1;background:#f0f0ee;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">− 10%</button>
+      <button onclick="collabProgress(10)" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">+ 10%</button>
+      <button onclick="collabDone()" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✓ 완료</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">👥 참여 직원</div>
+    <div style="font-size:13px;margin-bottom:14px;">${members.length?members.join(' · '):'참여자 없음'}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">📝 진행 일지</div>
+    <div id="collab-log-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+      ${logs.length?logs.map(l=>`<div style="background:var(--bg);border-radius:8px;padding:8px 10px;font-size:13px;"><span style="color:var(--gold);font-weight:700;font-size:11px;">${l.profiles?.name||'익명'}</span><div style="margin-top:2px;">${l.content}</div></div>`).join(''):'<div style="font-size:12px;color:var(--text-mute);">아직 일지가 없어요</div>'}
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input type="text" id="collab-log-input" placeholder="진행 상황 기록..." style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')collabAddLog()">
+      <button onclick="collabAddLog()" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">기록</button>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="collabDelete()" style="background:none;border:none;color:var(--text-mute);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;">이 협업 프로젝트 삭제</button>
+    </div>`;
+  document.getElementById('collab-detail-modal').classList.add('open');
+};
+window.closeCollabDetail=function(){ document.getElementById('collab-detail-modal').classList.remove('open'); };
+window.collabProgress=async function(delta){
+  const rows=await loadCollabList();
+  const r=(rows||[]).find(x=>x.id===_collabCur); if(!r)return;
+  let pct=Math.max(0,Math.min(100,(r.progress||0)+delta));
+  const {sb}=await collabApi();
+  await sb.from('collab_projects').update({progress:pct,status:pct>=100?'done':'ongoing',done_date:pct>=100?new Date().toISOString().slice(0,10):null}).eq('id',_collabCur);
+  await openCollabDetail(_collabCur); renderCollabProjects();
+};
+window.collabDone=async function(){
+  const {sb}=await collabApi();
+  await sb.from('collab_projects').update({progress:100,status:'done',done_date:new Date().toISOString().slice(0,10)}).eq('id',_collabCur);
+  closeCollabDetail(); renderCollabProjects();
+};
+window.collabAddLog=async function(){
+  const inp=document.getElementById('collab-log-input');
+  const text=inp?.value.trim(); if(!text)return;
+  const {sb,T,me}=await collabApi();
+  await sb.from('collab_project_logs').insert({collab_project_id:_collabCur,tenant_id:T,author_id:me,content:text});
+  await openCollabDetail(_collabCur);
+};
+window.collabDelete=async function(){
+  if(!confirm('이 협업 프로젝트를 삭제할까요? (참여자·일지도 함께 삭제됩니다)'))return;
+  const {sb}=await collabApi();
+  await sb.from('collab_projects').delete().eq('id',_collabCur);
+  closeCollabDetail(); renderCollabProjects();
+};
 
 // 🔄 장기 프로젝트 현황 (담당자별 그룹, 접기/펼치기) — 최신 원본 이식
 async function renderDashboardProjects(){
