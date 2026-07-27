@@ -468,6 +468,15 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 
 /* 내 업무 진행중 프로젝트 고정 배너 */
 .my-project-banner{background:var(--purple-light);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--purple);}
+/* #3 인수인계 스티커 메모 스타일 — 시인성 개선 */
+.my-todo-note{display:flex;align-items:flex-start;gap:9px;background:#fff8dc;border:1px solid #f2e6a8;border-left:5px solid var(--gold);border-radius:10px;padding:11px 12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);position:relative;}
+.my-todo-note::before{content:"";position:absolute;top:8px;right:10px;width:9px;height:9px;border-radius:50%;background:#e9c94a;box-shadow:0 0 0 2px rgba(255,255,255,.6);}
+.my-todo-note .my-todo-text{font-size:14px;font-weight:600;line-height:1.5;color:#2a2410;word-break:break-word;}
+.my-todo-note .my-todo-meta{font-size:11px;color:#9a8b4e;margin-top:3px;}
+.my-todo-note.done{background:#eef1f4;border-color:#dde2e8;border-left-color:#b6c0cc;box-shadow:none;opacity:0.75;}
+.my-todo-note.done::before{background:var(--green);}
+.my-todo-note.done .my-todo-text{color:#7a828c;text-decoration:line-through;font-weight:500;}
+.my-todo-note input[type=checkbox]{margin-top:2px;flex-shrink:0;width:18px;height:18px;accent-color:var(--gold);}
 .my-project-banner-title{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;}
 .my-project-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(167,139,250,0.2);font-size:12px;color:var(--text);}
 .my-project-item:last-child{border-bottom:none;}
@@ -517,6 +526,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .board-cat-btn{flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-sub);}
 .board-cat-btn.selected{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
 .board-cat-btn.selected-notice{border-color:var(--gold);color:var(--orange);background:var(--orange-light);}
+.board-cat-suggest{background:#e6f4ea;color:#137a43;}
 .board-cat-btn.selected-history{border-color:var(--purple);color:var(--purple);background:var(--purple-light);}
 .board-write-modal input,.board-write-modal textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;color:var(--text);}
 .board-write-modal input:focus,.board-write-modal textarea:focus{border-color:var(--gold);}
@@ -740,6 +750,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
         <button class="board-cat-btn selected-notice selected" id="bcat-notice" onclick="selectBoardCat('notice')">📢 공지</button>
         <button class="board-cat-btn" id="bcat-share" onclick="selectBoardCat('share')">💬 업무공유</button>
         <button class="board-cat-btn" id="bcat-history" onclick="selectBoardCat('history')">📌 히스토리</button>
+        <button class="board-cat-btn" id="bcat-suggest" onclick="selectBoardCat('suggest')">💡 건의/문의</button>
       </div>
       <!-- 히스토리 전용 폼 -->
       <div id="history-form-wrap" style="display:none;" class="history-form">
@@ -806,6 +817,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <button class="board-tab" id="btab-notice" onclick="switchBoardTab('notice')">📢 공지</button>
       <button class="board-tab" id="btab-share" onclick="switchBoardTab('share')">💬 업무공유</button>
       <button class="board-tab" id="btab-history" onclick="switchBoardTab('history')">📌 히스토리</button>
+      <button class="board-tab" id="btab-suggest" onclick="switchBoardTab('suggest')">💡 건의/문의</button>
     </div>
     <div class="board-list" id="board-list"><div class="board-empty">불러오는 중...</div></div>
     <div id="board-expand-row" style="display:none;text-align:center;padding:8px 0 12px;">
@@ -962,6 +974,10 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <span>🔄 진행중 프로젝트</span>
       <button id="project-banner-toggle" onclick="toggleProjectBanner()" style="background:none;border:none;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">펼치기 ▼</button>
     </div>
+    <div class="proj-quick-add" style="display:flex;gap:6px;padding:8px 16px 4px;">
+      <input type="text" id="proj-quick-input" placeholder="새 프로젝트명 입력 (장기 진행)" style="flex:1;border:1.5px solid var(--purple);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')addProjectQuick()">
+      <button onclick="addProjectQuick()" style="background:var(--purple);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 프로젝트</button>
+    </div>
     <div id="my-project-banner-wrap" style="display:none;">
       <div id="my-project-banner" style="padding:0 4px;"></div>
     </div>
@@ -985,7 +1001,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <!-- 인수인계 -->
   <div class="my-section">
     <div class="my-section-header">🔄 인수인계 메모</div>
-    <div id="my-handover-list" style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:6px;"><div class="my-empty">불러오는 중...</div></div>
+    <div id="my-handover-list" style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:10px;"><div class="my-empty">불러오는 중...</div></div>
     <div class="my-input-row">
       <input type="text" class="my-input" id="my-handover-input" placeholder="인수인계 내용 입력" onkeydown="if(event.key==='Enter')addMyHandover()">
       <button class="my-add-btn" onclick="addMyHandover()">+ 추가</button>
@@ -1771,7 +1787,7 @@ async function renderMyHandoverList(){
 
     sorted.forEach(item=>{
       const row=document.createElement('div');
-      row.className='my-todo-item'+(item.confirmed?' done':'');
+      row.className='my-todo-note'+(item.confirmed?' done':'');
       const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
       const confirmInfo=item.confirmed
         ?`<span style="font-size:10px;color:var(--green);font-weight:600;"> ✅ ${item.confirmedBy||'확인됨'}</span>`:'';
@@ -2539,6 +2555,21 @@ async function addProject(name,text,storeId){
   });
   await setDoc(ref,{items});
 }
+
+// #2 진행중 프로젝트 섹션에서 바로 추가 (버튼이 잘 안 보인다는 피드백 반영)
+window.addProjectQuick=async function(){
+  const input=document.getElementById('proj-quick-input');
+  const text=input?.value.trim();
+  if(!text)return;
+  if(!myStaff){alert('먼저 내 이름을 선택해 주세요.');return;}
+  if(!myStore){alert('먼저 근무 매장을 선택해 주세요.');return;}
+  await addProject(myStaff,text,myStore.id);
+  if(input)input.value='';
+  // 섹션이 접혀 있으면 펼쳐서 방금 추가한 걸 바로 보여줌
+  const wrap=document.getElementById('my-project-banner-wrap');
+  if(wrap&&wrap.style.display==='none')toggleProjectBanner();
+  else renderMyProjectBanner();
+};
 
 async function toggleProject(name,itemId,doneVal){
   const ref=projectRef(name);
@@ -3388,8 +3419,8 @@ async function loadBoard(){
     listEl.innerHTML='';
     visible.forEach(item=>{
       const realIdx=rawItems.indexOf(item);
-      const catLabel=item.cat==='notice'?'📢 공지':item.cat==='history'?'📌 히스토리':'💬 업무공유';
-      const catClass=item.cat==='notice'?'board-cat-notice':item.cat==='history'?'board-cat-history':'board-cat-share';
+      const catLabel=item.cat==='notice'?'📢 공지':item.cat==='history'?'📌 히스토리':item.cat==='suggest'?'💡 건의/문의':'💬 업무공유';
+      const catClass=item.cat==='notice'?'board-cat-notice':item.cat==='history'?'board-cat-history':item.cat==='suggest'?'board-cat-suggest':'board-cat-share';
       const div=document.createElement('div');div.className='board-item';
       div.innerHTML=`<div class="board-item-top">
           <span class="board-cat-badge ${catClass}">${catLabel}</span>
@@ -3417,7 +3448,7 @@ function toggleBoardExpand(){window.toggleBoardExpand();}
 
 window.switchBoardTab = function(tab){
   boardTab=tab;
-  ['all','notice','share','history'].forEach(t=>{
+  ['all','notice','share','history','suggest'].forEach(t=>{
     const btn=document.getElementById(`btab-${t}`);
     if(btn)btn.className='board-tab'+(t===tab?' active':'');
   });
@@ -3469,8 +3500,9 @@ window.selectBoardCat=function(cat){
   const nb=document.getElementById('bcat-notice');
   const sb=document.getElementById('bcat-share');
   const hb=document.getElementById('bcat-history');
+  const gb=document.getElementById('bcat-suggest');
   const hw=document.getElementById('history-form-wrap');
-  nb.className='board-cat-btn';sb.className='board-cat-btn';hb.className='board-cat-btn';
+  nb.className='board-cat-btn';sb.className='board-cat-btn';hb.className='board-cat-btn';if(gb)gb.className='board-cat-btn';
   if(cat==='notice'){
     nb.className='board-cat-btn selected-notice selected';
     if(hw)hw.style.display='none';
@@ -3481,6 +3513,9 @@ window.selectBoardCat=function(cat){
   } else if(cat==='history'){
     hb.className='board-cat-btn selected-history selected';
     if(hw)hw.style.display='block';
+  } else if(cat==='suggest'){
+    if(gb)gb.className='board-cat-btn selected';
+    if(hw)hw.style.display='none';
   }
 };
 window.submitBoardPost=async function(){
@@ -3516,6 +3551,7 @@ function openBoardDetail(item,idx){
   let catLabel,catClass;
   if(item.cat==='notice'){catLabel='📢 공지';catClass='board-cat-notice';}
   else if(item.cat==='history'){catLabel='📌 히스토리';catClass='board-cat-history';}
+  else if(item.cat==='suggest'){catLabel='💡 건의/문의';catClass='board-cat-suggest';}
   else{catLabel='💬 업무공유';catClass='board-cat-share';}
   document.getElementById('board-detail-cat').textContent=catLabel;
   document.getElementById('board-detail-cat').className=`board-detail-cat ${catClass}`;
