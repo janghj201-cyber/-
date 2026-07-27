@@ -616,6 +616,59 @@ async function readCleanZonesConfig(ctx) {
   return { zones: (data ?? []).map((r) => ({ title: r.title, items: r.items })) }
 }
 
+// 청소 항목 편집 저장(관리자) — 기본청소/대청소 구역을 diff-sync
+async function writeCleanDailyItemsConfig(ctx, { items }) {
+  const list = (items ?? []).map((x) => String(x).trim()).filter(Boolean)
+  const { data: rows, error } = await supabase.from('cleaning_daily_items').select('id, label, sort_order, active').eq('tenant_id', ctx.tenantId)
+  if (error) throw error
+  const byLabel = new Map((rows ?? []).map((r) => [r.label, r]))
+  const wanted = new Set()
+  for (let i = 0; i < list.length; i++) {
+    const label = list[i]; wanted.add(label)
+    const cur = byLabel.get(label)
+    if (!cur) {
+      const { error: e } = await supabase.from('cleaning_daily_items').insert({ tenant_id: ctx.tenantId, label, sort_order: i, active: true })
+      if (e) throw e
+    } else if (cur.sort_order !== i || !cur.active) {
+      const { error: e } = await supabase.from('cleaning_daily_items').update({ sort_order: i, active: true }).eq('id', cur.id)
+      if (e) throw e
+    }
+  }
+  for (const r of rows ?? []) {
+    if (!wanted.has(r.label) && r.active) {
+      const { error: e } = await supabase.from('cleaning_daily_items').update({ active: false }).eq('id', r.id)
+      if (e) throw e
+    }
+  }
+}
+
+async function writeCleanZonesConfig(ctx, { zones }) {
+  const list = (zones ?? []).filter((z) => z && (z.title || (z.items && z.items.length)))
+  const { data: rows, error } = await supabase.from('cleaning_zones').select('id, zone_number, title, items, active').eq('tenant_id', ctx.tenantId)
+  if (error) throw error
+  const byNum = new Map((rows ?? []).map((r) => [r.zone_number, r]))
+  const wantedNums = new Set()
+  for (let i = 0; i < list.length; i++) {
+    const zone_number = i + 1; wantedNums.add(zone_number)
+    const title = String(list[i].title ?? '').trim() || `${zone_number}구역`
+    const items = (list[i].items ?? []).map((x) => String(x).trim()).filter(Boolean)
+    const cur = byNum.get(zone_number)
+    if (!cur) {
+      const { error: e } = await supabase.from('cleaning_zones').insert({ tenant_id: ctx.tenantId, zone_number, title, items, active: true })
+      if (e) throw e
+    } else if (cur.title !== title || JSON.stringify(cur.items) !== JSON.stringify(items) || !cur.active) {
+      const { error: e } = await supabase.from('cleaning_zones').update({ title, items, active: true }).eq('id', cur.id)
+      if (e) throw e
+    }
+  }
+  for (const r of rows ?? []) {
+    if (!wantedNums.has(r.zone_number) && r.active) {
+      const { error: e } = await supabase.from('cleaning_zones').update({ active: false }).eq('id', r.id)
+      if (e) throw e
+    }
+  }
+}
+
 // ── config/schedule_rules (V-Flow 기존 calendar_event_types 테이블 — 읽기 전용) ──
 // 원본은 매주/매월 반복되는 고정업무(전체주문/재고실사/월마감보고 등)를 하드코딩
 // DEFAULT_SCHEDULE_RULES로 시작해서 config/schedule_rules로 덮어쓴다. V-Flow는 이미
@@ -1310,6 +1363,16 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/dayoff') {
     await writeDayoffConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/clean_daily_items') {
+    await writeCleanDailyItemsConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/clean_zones') {
+    await writeCleanZonesConfig(ctx, data)
     return
   }
 

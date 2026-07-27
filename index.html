@@ -501,6 +501,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .ho-btn-undo{background:#eef1f4;color:var(--text-sub);}
 .ho-btn-fb{background:var(--gold-light);color:var(--orange);}
 .ho-btn-close{background:#f3ede0;color:#8a6d2f;}
+.ho-btn-edit{background:#eaf1fb;color:#2c5aa0;}
 .ho-btn-del{background:none;color:var(--text-mute);padding:7px 8px;}
 .my-project-banner-title{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;}
 .my-project-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(167,139,250,0.2);font-size:12px;color:var(--text);}
@@ -754,7 +755,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="update-modal" style="max-height:88vh;">
     <div class="update-modal-header">
       <h3>📖 사용 가이드</h3>
-      <span class="update-modal-version">v2.2</span>
+      <span class="update-modal-version">v2.3</span>
       <button onclick="closeGuideModal()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
     </div>
     <div class="update-modal-body" id="guide-modal-body"></div>
@@ -1894,6 +1895,7 @@ async function renderMyHandoverList(){
               : `<button class="ho-btn ho-btn-confirm" data-act="confirm">✓ 확인</button>`}
             <button class="ho-btn ho-btn-fb" data-act="fb">💬 피드백</button>
             ${(!item.confirmed&&(isMine||isAdminUser))?`<button class="ho-btn ho-btn-close" data-act="close">확인없이 종료</button>`:''}
+            ${isMine?`<button class="ho-btn ho-btn-edit" data-act="edit">✏️ 수정</button>`:''}
             ${isMine?`<button class="ho-btn ho-btn-del" data-act="del">🗑️</button>`:''}
           </div>
         </div>`;
@@ -1911,6 +1913,22 @@ async function renderMyHandoverList(){
       row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
         if(!confirm('삭제할까요?'))return;
         await deleteHandoverItem(myStore.id,dateKey,item.id); row.remove();
+      });
+      row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{
+        const textEl=row.querySelector('.my-todo-text');
+        const ta=document.createElement('textarea');
+        ta.className='ho-edit-ta';
+        ta.style.cssText='width:100%;box-sizing:border-box;border:1.5px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:14px;font-family:inherit;outline:none;min-height:44px;';
+        ta.value=item.text;
+        const btns=document.createElement('div');
+        btns.style.cssText='display:flex;gap:6px;margin-top:6px;';
+        btns.innerHTML='<button class="ho-btn ho-btn-confirm ho-edit-save">저장</button><button class="ho-btn ho-btn-undo ho-edit-cancel">취소</button>';
+        textEl.innerHTML=''; textEl.appendChild(ta); textEl.appendChild(btns); ta.focus();
+        btns.querySelector('.ho-edit-save').onclick=async()=>{
+          const v=ta.value.trim(); if(!v)return;
+          await editHandoverItem(myStore.id,dateKey,item.id,v); renderMyHandoverList();
+        };
+        btns.querySelector('.ho-edit-cancel').onclick=()=>renderMyHandoverList();
       });
       const fbWrap=row.querySelector('.feedback-input-wrap');
       row.querySelector('[data-act="fb"]')?.addEventListener('click',()=>{
@@ -2042,7 +2060,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.2';
+const GUIDE_VERSION = 'v2.3';
 const GUIDE_SECTIONS = [
   {
     title: '🚀 시작하기 (처음이라면)',
@@ -2106,6 +2124,7 @@ const GUIDE_SECTIONS = [
       '👤 받는 사람 지정: 작성할 때 "다음 근무자 누구나" 또는 특정 직원을 고를 수 있어요. 나에게 지정된 인수인계는 노란색으로 강조되어 맨 위에 떠요',
       '✓ 확인: 각 인수인계의 초록색 [✓ 확인] 버튼을 누르면 확인 처리 + 확인한 사람 이름이 자동 기록돼요 (미확인은 빨간 "확인 필요" 배지)',
       '🚫 확인 없이 종료: 받을 사람이 없거나 더 볼 필요가 없어진 건 작성자·관리자가 [확인없이 종료]로 마감 → 목록에서 사라져 쌓이지 않아요',
+      '✏️ 수정: 본인이 작성한 인수인계는 [✏️ 수정] 버튼으로 내용을 고칠 수 있어요',
       '💬 각 항목에 피드백을 댓글처럼 남길 수 있어요',
       '📌 매장 고정 정보: 와이파이·도어락 등 자주 찾는 정보 저장',
       '미확인 인수인계는 다음날 자동 이월 (종료한 건 제외)',
@@ -2147,6 +2166,7 @@ const GUIDE_SECTIONS = [
       '📊 월간 통계: 이번 달 매장별 청소·업무 누적 현황',
       '🔄 프로젝트: 전 직원 진행중 프로젝트 한눈에',
       '⚙️ 고정업무: 매월 반복되는 업무 규칙(요일/날짜 조건)을 직접 추가·수정·삭제 — 달력에 자동 반영. 공휴일은 자동 조회',
+      '🧹 청소 항목 편집: 고정업무 탭 아래에서 매일 기본 청소·대청소 구역별 항목을 직접 추가·수정·삭제 — 전 지점 체크리스트에 바로 반영',
       '🎨 설정: 기능 켜기/끄기(청소·프로젝트·메모·게시판·휴무·인수인계), 컬러테마 5종, 매장 아이콘 — 전 직원에게 바로 적용',
       '👥 직원 초대: 설정 탭에서 이름·이메일 입력 → 초대 링크 생성 → 카톡 등으로 전달하면 직원이 그 링크로 가입',
     ]
@@ -5677,6 +5697,100 @@ async function renderFixedTasksTab(content){
     renderDashboard();
   };
   content.appendChild(addBtn);
+
+  renderCleanEditor(content);
+}
+
+// ── 청소 항목 편집(관리자) — 기본청소/대청소 구역 ──
+function renderCleanEditor(content){
+  const card=document.createElement('div');card.className='dash-card';card.style.marginTop='16px';
+  const savedMsg=document.createElement('span');savedMsg.style.cssText='font-size:12px;color:var(--green);margin-left:8px;';
+  const h=document.createElement('div');h.className='dash-store-name';h.innerHTML='🧹 청소 항목 편집';
+  card.appendChild(h);
+  const desc=document.createElement('div');desc.style.cssText='font-size:12px;color:var(--text-sub);margin:4px 0 10px;';
+  desc.textContent='매일 기본 청소 항목과 대청소 구역별 항목을 직접 수정할 수 있어요. 저장하면 전 지점 체크리스트에 바로 반영됩니다.';
+  card.appendChild(desc);
+
+  // 작업용 복사본
+  const base=CLEAN_BASE.map(x=>x);
+  const zones=CSECTIONS.map(z=>({title:z.title,items:(z.items||[]).map(x=>x)}));
+
+  const inputCss='flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none;';
+  const rowCss='display:flex;gap:6px;align-items:center;margin-bottom:5px;';
+  const delCss='background:none;border:none;color:#e5433a;font-size:14px;cursor:pointer;padding:2px 6px;flex-shrink:0;';
+  const addCss='background:var(--gold-light);color:var(--orange);border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px;';
+
+  // 기본 청소
+  const baseH=document.createElement('div');baseH.style.cssText='font-size:12px;font-weight:700;color:var(--text-sub);margin:8px 0 6px;';baseH.textContent='📋 매일 기본 청소';
+  card.appendChild(baseH);
+  const baseWrap=document.createElement('div');card.appendChild(baseWrap);
+  function drawBase(){
+    baseWrap.innerHTML='';
+    base.forEach((txt,i)=>{
+      const row=document.createElement('div');row.style.cssText=rowCss;
+      const inp=document.createElement('input');inp.type='text';inp.value=txt;inp.style.cssText=inputCss;
+      inp.oninput=()=>{base[i]=inp.value;};
+      const del=document.createElement('button');del.textContent='🗑';del.style.cssText=delCss;
+      del.onclick=()=>{base.splice(i,1);drawBase();};
+      row.appendChild(inp);row.appendChild(del);baseWrap.appendChild(row);
+    });
+    const add=document.createElement('button');add.textContent='+ 기본 청소 항목';add.style.cssText=addCss;
+    add.onclick=()=>{base.push('');drawBase();};
+    baseWrap.appendChild(add);
+  }
+  drawBase();
+
+  // 대청소 구역
+  const zoneH=document.createElement('div');zoneH.style.cssText='font-size:12px;font-weight:700;color:var(--text-sub);margin:16px 0 6px;';zoneH.textContent='🧽 대청소 구역';
+  card.appendChild(zoneH);
+  const zoneWrap=document.createElement('div');card.appendChild(zoneWrap);
+  function drawZones(){
+    zoneWrap.innerHTML='';
+    zones.forEach((z,zi)=>{
+      const zc=document.createElement('div');zc.style.cssText='border:1px solid var(--border);border-radius:9px;padding:9px;margin-bottom:8px;background:var(--bg);';
+      const titleRow=document.createElement('div');titleRow.style.cssText=rowCss;
+      const tinp=document.createElement('input');tinp.type='text';tinp.value=z.title;tinp.placeholder='구역 이름 (예: 1구역 — 외부·내부)';tinp.style.cssText=inputCss+'font-weight:700;';
+      tinp.oninput=()=>{z.title=tinp.value;};
+      const zdel=document.createElement('button');zdel.textContent='구역삭제';zdel.style.cssText='background:none;border:none;color:#e5433a;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;';
+      zdel.onclick=()=>{zones.splice(zi,1);drawZones();};
+      titleRow.appendChild(tinp);titleRow.appendChild(zdel);zc.appendChild(titleRow);
+      z.items.forEach((it,ii)=>{
+        const row=document.createElement('div');row.style.cssText=rowCss+'margin-left:10px;';
+        const inp=document.createElement('input');inp.type='text';inp.value=it;inp.style.cssText=inputCss;
+        inp.oninput=()=>{z.items[ii]=inp.value;};
+        const del=document.createElement('button');del.textContent='🗑';del.style.cssText=delCss;
+        del.onclick=()=>{z.items.splice(ii,1);drawZones();};
+        row.appendChild(inp);row.appendChild(del);zc.appendChild(row);
+      });
+      const addItem=document.createElement('button');addItem.textContent='+ 항목';addItem.style.cssText=addCss+'margin-left:10px;';
+      addItem.onclick=()=>{z.items.push('');drawZones();};
+      zc.appendChild(addItem);
+      zoneWrap.appendChild(zc);
+    });
+    const addZone=document.createElement('button');addZone.textContent='+ 대청소 구역 추가';addZone.style.cssText=addCss;
+    addZone.onclick=()=>{zones.push({title:`${zones.length+1}구역`,items:['']});drawZones();};
+    zoneWrap.appendChild(addZone);
+  }
+  drawZones();
+
+  // 저장
+  const saveBtn=document.createElement('button');saveBtn.className='dash-refresh';saveBtn.style.marginTop='12px';saveBtn.textContent='💾 청소 항목 저장';
+  saveBtn.onclick=async()=>{
+    const cleanBase=base.map(x=>x.trim()).filter(Boolean);
+    const cleanZones=zones.map(z=>({title:(z.title||'').trim(),items:z.items.map(x=>x.trim()).filter(Boolean)})).filter(z=>z.title||z.items.length);
+    savedMsg.textContent='저장 중...';
+    try{
+      await setDoc(doc(db,'config/clean_daily_items'),{items:cleanBase});
+      await setDoc(doc(db,'config/clean_zones'),{zones:cleanZones});
+      CLEAN_BASE.splice(0,CLEAN_BASE.length,...cleanBase);
+      CSECTIONS.splice(0,CSECTIONS.length,...cleanZones);
+      savedMsg.textContent='✓ 저장됨';
+    }catch(err){ savedMsg.textContent='⚠ 저장 실패 (권한/네트워크 확인)'; console.warn(err); }
+  };
+  const saveRow=document.createElement('div');saveRow.style.cssText='display:flex;align-items:center;';
+  saveRow.appendChild(saveBtn);saveRow.appendChild(savedMsg);
+  card.appendChild(saveRow);
+  content.appendChild(card);
 }
 
 async function renderMonthlyTab(content){
