@@ -238,9 +238,9 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
   // 잡히면 안 되므로.
   const { data: currentRows, error: selErr } = await supabase
     .from('handovers')
-    .select('id, content, confirmed')
+    .select('id, content, confirmed, closed')
     .eq('store_id', storeId)
-    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,handover_date.lt.${dateKey})`)
+    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
   const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
@@ -255,6 +255,11 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
   for (const item of items) {
     let handoverId = item.id
     if (!UUID_RE.test(item.id)) {
+      let recipientId = null
+      if (item.recipient) {
+        const rp = await resolveProfileByName(item.recipient)
+        recipientId = rp?.id ?? null
+      }
       const { data: inserted, error } = await supabase
         .from('handovers')
         .insert({
@@ -264,6 +269,8 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
           content: item.text,
           handover_date: dateKey,
           confirmed: item.confirmed ?? false,
+          recipient_id: recipientId,
+          closed: item.closed ?? false,
         })
         .select('id')
         .single()
@@ -279,6 +286,11 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
         patch.confirmed_by = item.confirmed ? ctx.profileId : null
         patch.confirmed_at = item.confirmed ? new Date().toISOString() : null
       }
+      if ((current.closed ?? false) !== (item.closed ?? false)) {
+        patch.closed = item.closed ?? false
+        patch.closed_by = item.closed ? ctx.profileId : null
+        patch.closed_at = item.closed ? new Date().toISOString() : null
+      }
       if (Object.keys(patch).length > 0) {
         const { error } = await supabase.from('handovers').update(patch).eq('id', item.id)
         if (error) throw error
@@ -293,9 +305,9 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
   if (!storeId) return []
   const { data, error } = await supabase
     .from('handovers')
-    .select('id, content, handover_date, confirmed, confirmed_at, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name)')
+    .select('id, content, handover_date, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
     .eq('store_id', storeId)
-    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,handover_date.lt.${dateKey})`)
+    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
     .order('created_at', { ascending: true })
   if (error) throw error
   const rows = data ?? []
@@ -324,6 +336,9 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     confirmedBy: h.confirmer?.name ?? null,
     confirmedAt: h.confirmed_at ? new Date(h.confirmed_at).getTime() : null,
     fromDate: h.handover_date !== dateKey ? h.handover_date : null,
+    recipient: h.recip?.name ?? null,
+    closed: h.closed ?? false,
+    closedBy: h.closer?.name ?? null,
     feedbacks: feedbacksByHandover.get(h.id) ?? [],
   }))
 }

@@ -486,6 +486,22 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .my-todo-note.done::before{background:var(--green);}
 .my-todo-note.done .my-todo-text{color:#7a828c;text-decoration:line-through;font-weight:500;}
 .my-todo-note input[type=checkbox]{margin-top:2px;flex-shrink:0;width:18px;height:18px;accent-color:var(--gold);}
+.my-todo-note{flex-direction:column;}
+.ho-toprow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px;}
+.ho-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+.ho-badge-need{background:#ffe1e1;color:#c0392b;}
+.ho-badge-done{background:#e3f4e8;color:#1f8a4c;}
+.ho-recip{font-size:11px;font-weight:700;color:var(--text-sub);}
+.ho-recip-any{color:var(--text-mute);font-weight:600;}
+.ho-recip-me{color:var(--orange);}
+.my-todo-note.recip-me{background:#fff2d8;border-color:var(--gold);border-left-width:6px;}
+.ho-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+.ho-btn{border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.ho-btn-confirm{background:var(--green,#2e9e57);color:#fff;}
+.ho-btn-undo{background:#eef1f4;color:var(--text-sub);}
+.ho-btn-fb{background:var(--gold-light);color:var(--orange);}
+.ho-btn-close{background:#f3ede0;color:#8a6d2f;}
+.ho-btn-del{background:none;color:var(--text-mute);padding:7px 8px;}
 .my-project-banner-title{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;}
 .my-project-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(167,139,250,0.2);font-size:12px;color:var(--text);}
 .my-project-item:last-child{border-bottom:none;}
@@ -1045,6 +1061,11 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="my-section">
     <div class="my-section-header">🔄 인수인계 메모</div>
     <div id="my-handover-list" style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:10px;"><div class="my-empty">불러오는 중...</div></div>
+    <div style="padding:0 16px;">
+      <select id="my-handover-recipient" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;margin-bottom:6px;background:#fff;color:var(--text);">
+        <option value="">받는 사람: 다음 근무자 누구나</option>
+      </select>
+    </div>
     <div class="my-input-row">
       <input type="text" class="my-input" id="my-handover-input" placeholder="인수인계 내용 입력" onkeydown="if(event.key==='Enter')addMyHandover()">
       <button class="my-add-btn" onclick="addMyHandover()">+ 추가</button>
@@ -1821,93 +1842,94 @@ async function renderMyHandoverList(){
   const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
   const listEl=document.getElementById('my-handover-list');
   if(!listEl)return;
+  const recSel=document.getElementById('my-handover-recipient');
+  if(recSel && recSel.dataset.filled!=='1'){
+    recSel.innerHTML='<option value="">받는 사람: 다음 근무자 누구나</option>'+staffList.map(n=>`<option value="${n}">받는 사람: ${n}</option>`).join('');
+    recSel.dataset.filled='1';
+  }
   try{
     const items=await loadHandoverItems(myStore.id,dateKey);
     if(items.length===0){
       listEl.innerHTML='<div class="my-empty">이 매장의 인수인계 메모가 없습니다</div>';return;
     }
     listEl.innerHTML='';
-    const sorted=[...items.filter(i=>!i.confirmed),...items.filter(i=>i.confirmed)];
+    const isAdminUser=(window.__vflowProfile?.role==='owner'||window.__vflowProfile?.role==='manager');
+    const forMeUnc=items.filter(i=>!i.confirmed && i.recipient===myStaff);
+    const otherUnc=items.filter(i=>!i.confirmed && i.recipient!==myStaff);
+    const doneItems=items.filter(i=>i.confirmed);
+    const sorted=[...forMeUnc,...otherUnc,...doneItems];
 
     sorted.forEach(item=>{
       const row=document.createElement('div');
-      row.className='my-todo-note'+(item.confirmed?' done':'');
-      const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
-      const confirmInfo=item.confirmed
-        ?`<span style="font-size:10px;color:var(--green);font-weight:600;"> ✅ ${item.confirmedBy||'확인됨'}</span>`:'';
       const isMine=item.author===myStaff;
+      const forMe=item.recipient && item.recipient===myStaff;
+      row.className='my-todo-note'+(item.confirmed?' done':'')+((forMe&&!item.confirmed)?' recip-me':'');
+      const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
       const feedbacks=item.feedbacks||[];
-
+      const recipLine=item.recipient
+        ? `<span class="ho-recip${forMe?' ho-recip-me':''}">→ ${item.recipient}${forMe?' (나)':''}</span>`
+        : `<span class="ho-recip ho-recip-any">→ 다음 근무자 누구나</span>`;
+      const statusTop=item.confirmed
+        ? `<span class="ho-badge ho-badge-done">✅ ${item.confirmedBy||'확인'} 확인함</span>`
+        : `<span class="ho-badge ho-badge-need">확인 필요</span>`;
       row.innerHTML=`
-        <input type="checkbox" ${item.confirmed?'checked':''}>
         <div style="flex:1">
-          <div class="my-todo-text">${item.text}${carry}${confirmInfo}</div>
+          <div class="ho-toprow">${statusTop}${recipLine}</div>
+          <div class="my-todo-text">${item.text}${carry}</div>
           <div class="my-todo-meta">작성: ${item.author||'익명'}${isMine?' (내 글)':''}</div>
-          ${feedbacks.length>0?`<div class="handover-feedbacks" style="margin-top:4px;padding-left:8px;display:flex;flex-direction:column;gap:3px;">
+          ${feedbacks.length>0?`<div class="handover-feedbacks" style="margin-top:5px;padding-left:8px;display:flex;flex-direction:column;gap:3px;">
             ${feedbacks.map((f,fi)=>`<div style="font-size:11px;color:var(--text-sub);display:flex;gap:4px;align-items:flex-start;">
               <span style="color:var(--gold);font-weight:700;flex-shrink:0;font-size:10px;">${f.author||'익명'}</span>
               <span style="flex:1;">${f.text}</span>
               ${f.author===myStaff?`<button data-del-fb="${fi}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-mute);padding:0 2px;">🗑️</button>`:''}
             </div>`).join('')}
           </div>`:''}
-          <div class="feedback-input-wrap" style="display:none;margin-top:6px;padding-left:8px;display:flex;gap:4px;">
+          <div class="feedback-input-wrap" style="display:none;margin-top:6px;padding-left:8px;gap:4px;">
             <input type="text" class="feedback-input" placeholder="피드백 입력..." style="flex:1;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;">
             <button class="feedback-submit" style="background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">등록</button>
           </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
-          <button class="todo-action-btn feedback-toggle-btn" title="피드백">💬</button>
-          ${isMine?'<button class="todo-action-btn" data-act="del">🗑️</button>':''}
+          <div class="ho-actions">
+            ${item.confirmed
+              ? `<button class="ho-btn ho-btn-undo" data-act="unconfirm">확인 취소</button>`
+              : `<button class="ho-btn ho-btn-confirm" data-act="confirm">✓ 확인</button>`}
+            <button class="ho-btn ho-btn-fb" data-act="fb">💬 피드백</button>
+            ${(!item.confirmed&&(isMine||isAdminUser))?`<button class="ho-btn ho-btn-close" data-act="close">확인없이 종료</button>`:''}
+            ${isMine?`<button class="ho-btn ho-btn-del" data-act="del">🗑️</button>`:''}
+          </div>
         </div>`;
 
-      // 체크박스
-      row.querySelector('input').onchange=async(e)=>{
-        await toggleHandoverItem(myStore.id,dateKey,item.id,e.target.checked,myStaff);
-        row.className='my-todo-item'+(e.target.checked?' done':'');
-      };
-
-      // 삭제
-      const delBtn=row.querySelector('[data-act="del"]');
-      if(delBtn)delBtn.onclick=async()=>{
+      row.querySelector('[data-act="confirm"]')?.addEventListener('click',async()=>{
+        await toggleHandoverItem(myStore.id,dateKey,item.id,true,myStaff); renderMyHandoverList();
+      });
+      row.querySelector('[data-act="unconfirm"]')?.addEventListener('click',async()=>{
+        await toggleHandoverItem(myStore.id,dateKey,item.id,false,myStaff); renderMyHandoverList();
+      });
+      row.querySelector('[data-act="close"]')?.addEventListener('click',async()=>{
+        if(!confirm('이 인수인계를 "확인 없이 종료"할까요? 목록에서 사라집니다.'))return;
+        await closeHandoverItem(myStore.id,dateKey,item.id); renderMyHandoverList();
+      });
+      row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
         if(!confirm('삭제할까요?'))return;
-        await deleteHandoverItem(myStore.id,dateKey,item.id);
-        row.remove();
-      };
-
-      // 피드백 입력 토글
+        await deleteHandoverItem(myStore.id,dateKey,item.id); row.remove();
+      });
       const fbWrap=row.querySelector('.feedback-input-wrap');
-      const fbToggle=row.querySelector('.feedback-toggle-btn');
-      fbToggle.onclick=()=>{
-        const isOpen=fbWrap.style.display==='flex';
-        fbWrap.style.display=isOpen?'none':'flex';
-        if(!isOpen)setTimeout(()=>fbWrap.querySelector('.feedback-input').focus(),0);
-      };
-
-      // 피드백 등록
+      row.querySelector('[data-act="fb"]')?.addEventListener('click',()=>{
+        const open=fbWrap.style.display==='flex';
+        fbWrap.style.display=open?'none':'flex';
+        if(!open)setTimeout(()=>fbWrap.querySelector('.feedback-input').focus(),0);
+      });
       const fbInput=row.querySelector('.feedback-input');
-      const fbSubmit=row.querySelector('.feedback-submit');
       const doSubmit=async()=>{
-        const text=fbInput.value.trim();
-        if(!text)return;
-        // Firebase 피드백 추가
+        const text=fbInput.value.trim(); if(!text)return;
         const ref=doc(db,`handover/${myStore.id}_${dateKey}`);
         const snap=await getDoc(ref);
         const its=snap.exists()?(snap.data().items||[]):[];
         const target=its.find(x=>x.id===item.id);
-        if(target){
-          if(!target.feedbacks)target.feedbacks=[];
-          target.feedbacks.push({author:myStaff,text,ts:Date.now()});
-          await setDoc(ref,{items:its});
-        }
-        fbInput.value='';
-        fbWrap.style.display='none';
-        // 리렌더
-        renderMyHandoverList();
+        if(target){ if(!target.feedbacks)target.feedbacks=[]; target.feedbacks.push({author:myStaff,text,ts:Date.now()}); await setDoc(ref,{items:its}); }
+        fbInput.value=''; fbWrap.style.display='none'; renderMyHandoverList();
       };
-      fbSubmit.onclick=doSubmit;
-      fbInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSubmit();});
-
-      // 피드백 삭제
+      row.querySelector('.feedback-submit')?.addEventListener('click',doSubmit);
+      fbInput?.addEventListener('keydown',e=>{if(e.key==='Enter')doSubmit();});
       row.querySelectorAll('[data-del-fb]').forEach(btn=>{
         btn.onclick=async()=>{
           const fi=parseInt(btn.dataset.delFb);
@@ -1920,7 +1942,6 @@ async function renderMyHandoverList(){
           renderMyHandoverList();
         };
       });
-
       listEl.appendChild(row);
     });
   }catch(e){listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';}
@@ -1991,8 +2012,10 @@ function addMyBulk(){window.addMyBulk();}
 window.addMyHandover=async function(){
   const input=document.getElementById('my-handover-input');
   const text=input?.value.trim();if(!text||!myStore||!myStaff)return;
+  const recSel=document.getElementById('my-handover-recipient');
+  const recipient=recSel?recSel.value:'';
   const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-  await addHandoverItem(myStore.id,dateKey,text,myStaff);
+  await addHandoverItem(myStore.id,dateKey,text,myStaff,recipient);
   if(input)input.value='';renderMyHandoverList();
 };
 function addMyHandover(){window.addMyHandover();}
@@ -4451,11 +4474,20 @@ async function loadHandoverItems(storeId,dateKey){
   }
   return items;
 }
-async function addHandoverItem(storeId,dateKey,text,author){
+async function addHandoverItem(storeId,dateKey,text,author,recipient){
   const ref=doc(db,`handover/${storeId}_${dateKey}`);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null});
+  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false});
+  await setDoc(ref,{items});
+}
+// 확인 없이 종료(마감) — 못 받아서 영영 미확인으로 쌓이는 것 방지
+async function closeHandoverItem(storeId,dateKey,itemId){
+  const ref=doc(db,`handover/${storeId}_${dateKey}`);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item)item.closed=true;
   await setDoc(ref,{items});
 }
 async function toggleHandoverItem(storeId,dateKey,itemId,val,confirmerName=null){
