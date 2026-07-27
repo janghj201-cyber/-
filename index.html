@@ -995,11 +995,6 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <span>📝 <span id="my-task-date-label">오늘</span>의 업무</span>
     </div>
     <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
-    <!-- 업무 타입 선택 -->
-    <div class="task-type-select" id="task-type-select">
-      <button class="task-type-btn active-daily" id="type-daily" onclick="setTaskType('daily')">📋 오늘 업무</button>
-      <button class="task-type-btn" id="type-project" onclick="setTaskType('project')">🔄 진행중 프로젝트</button>
-    </div>
     <div class="my-input-row">
       <input type="text" class="my-input" id="my-todo-input" placeholder="할 일을 입력하세요" onkeydown="if(event.key==='Enter')addMyTodo()">
       <button class="my-add-btn" onclick="addMyTodo()">+ 추가</button>

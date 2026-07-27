@@ -640,7 +640,7 @@ async function writeScheduleRulesConfig(ctx, { rules }) {
     .select('id, label, color, recurrence, sort_order, active')
     .eq('tenant_id', ctx.tenantId)
   if (error) throw error
-  const editable = (rows ?? []).filter((r) => ['weekly', 'monthly_day'].includes(r.recurrence?.type))
+  const editable = (rows ?? []).filter((r) => ['weekly', 'monthly_day', 'last_biz_day_before'].includes(r.recurrence?.type))
   const byLabel = new Map(editable.map((r) => [r.label, r]))
   const wanted = new Set()
   let i = 0
@@ -648,6 +648,7 @@ async function writeScheduleRulesConfig(ctx, { rules }) {
     let recurrence = null
     if (rule.condType === 'weekday') recurrence = { type: 'weekly', weekday: rule.weekday }
     else if (rule.condType === 'monthdays') recurrence = { type: 'monthly_day', days: rule.days ?? [] }
+    else if (rule.condType === 'lastBizDayBefore') recurrence = { type: 'last_biz_day_before', targetDay: rule.targetDay ?? 16 }
     else {
       console.warn(`[adapter] 고정업무 "${rule.task}" — 미지원 조건(${rule.condType}), 저장 생략`)
       continue
@@ -698,6 +699,8 @@ async function readScheduleRulesConfig(ctx) {
       rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, meta: '', col, report })
     } else if (rec.type === 'monthly_day') {
       rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, meta: '', col, report })
+    } else if (rec.type === 'last_biz_day_before') {
+      rules.push({ key, condType: 'lastBizDayBefore', targetDay: rec.targetDay ?? 16, task: row.label, meta: '', col, report })
     }
     // 그 외(monthly_weekday_occurrences 등 대청소류)는 청소 체크리스트가 이미 처리 — 스킵
   })
