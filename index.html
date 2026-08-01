@@ -3054,7 +3054,7 @@ async function checkLastMonthCarry(){
     const dateKey=dk(py,pm,d);
     try{
       const items=await loadStaffTodos(myStaff,dateKey);
-      items.filter(i=>!i.done).forEach(item=>{
+      items.filter(i=>(i.status?i.status==='pending':!i.done)).forEach(item=>{
         const store=STORES.find(s=>s.id===item.storeId)||STORES[0];
         undoneItems.push({...item,storeId:item.storeId,storeName:store.name,storeIcon:store.icon,dateKey});
       });

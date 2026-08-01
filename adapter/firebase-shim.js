@@ -380,6 +380,7 @@ async function readStaffTodos(ctx, dateKey, target) {
     text: r.content,
     storeId: reverseResolveStoreId(r.store_id, ctx) ?? undefined,
     done: r.status === 'done',
+    status: r.status,
     author: targetName,
     fromDate: r.task_date !== dateKey ? r.task_date : null,
   }))
