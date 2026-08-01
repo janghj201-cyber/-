@@ -13,3 +13,6 @@ __pycache__/
 
 # V-Flow PWA manifest는 예외적으로 커밋
 !/manifest.json
+
+# Vercel 크론 설정
+!vercel.json
