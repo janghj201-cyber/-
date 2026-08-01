@@ -6,3 +6,6 @@ _to_delete/
 *.py
 *.bat
 *.md
+
+# 크론 설정은 배포 필요
+!vercel.json
