@@ -1153,9 +1153,10 @@ async function writeDayoffConfig(ctx, dataMap) {
 let _profilesCache = null
 async function loadProfiles() {
   if (!_profilesCache) {
-    const { data, error } = await supabase.from('profiles').select('id, name, role, store_id').order('name')
+    const { data, error } = await supabase.from('profiles').select('id, name, role, store_id, status').order('name')
+    const activeOnly = (data ?? []).filter((p) => (p.status ?? 'active') !== 'inactive')
     if (error) throw error
-    _profilesCache = data ?? []
+    _profilesCache = activeOnly
   }
   return _profilesCache
 }

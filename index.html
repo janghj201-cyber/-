@@ -755,7 +755,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="update-modal" style="max-height:88vh;">
     <div class="update-modal-header">
       <h3>📖 사용 가이드</h3>
-      <span class="update-modal-version">v2.3</span>
+      <span class="update-modal-version">v2.4</span>
       <button onclick="closeGuideModal()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
     </div>
     <div class="update-modal-body" id="guide-modal-body"></div>
@@ -1671,7 +1671,19 @@ async function addStaffMember(){
   alert('직원 추가는 V-Flow 초대로 진행됩니다.\n초대받은 직원이 가입하면 카드가 자동으로 생깁니다.');
 }
 window.deleteStaffMember=async function(name){
-  alert(`직원 삭제는 V-Flow 프로필 관리에서 진행됩니다.\n(${name} 계정을 비활성화하면 카드가 사라집니다.)`);
+  if(!isAdmin){alert("관리자만 퇴사 처리할 수 있어요.");return;}
+  if(!confirm(`${name} 님을 퇴사 처리할까요?\n\n• 직원 목록·카드에서 사라집니다\n• 그동안의 업무·인수인계 기록은 그대로 보존됩니다\n• 나중에 관리자 → 설정에서 되살릴 수 있어요`))return;
+  try{
+    const {supabase}=await import("./adapter/supabase-client.js");
+    const {getContext}=await import("./adapter/context.js");
+    const ctx=await getContext();
+    const {data:prof,error:e0}=await supabase.from("profiles").select("id").eq("tenant_id",ctx.tenantId).eq("name",name).maybeSingle();
+    if(e0||!prof)throw new Error("프로필을 찾을 수 없어요");
+    const {error}=await supabase.from("profiles").update({status:"inactive"}).eq("id",prof.id);
+    if(error)throw error;
+    alert(`${name} 님을 퇴사 처리했어요. 목록에서 사라집니다.`);
+    location.reload();
+  }catch(err){alert("퇴사 처리 실패: "+(err.message||"권한/네트워크 확인"));}
 };
 
 async function renderMyTodoList(){
@@ -2060,7 +2072,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.3';
+const GUIDE_VERSION = 'v2.4';
 const GUIDE_SECTIONS = [
   {
     title: '🚀 시작하기 (처음이라면)',
@@ -2169,6 +2181,7 @@ const GUIDE_SECTIONS = [
       '🧹 청소 항목 편집: 고정업무 탭 아래에서 매일 기본 청소·대청소 구역별 항목을 직접 추가·수정·삭제 — 전 지점 체크리스트에 바로 반영',
       '🎨 설정: 기능 켜기/끄기(청소·프로젝트·메모·게시판·휴무·인수인계), 컬러테마 5종, 매장 아이콘 — 전 직원에게 바로 적용',
       '👥 직원 초대: 설정 탭에서 이름·이메일 입력 → 초대 링크 생성 → 카톡 등으로 전달하면 직원이 그 링크로 가입',
+      '👋 퇴사 처리: 내 업무 화면의 직원 카드 × 버튼 → 퇴사 처리(비활성화). 목록에서 사라지지만 그동안의 업무·인수인계 기록은 보존돼요. 설정 → 퇴사자 관리에서 복직 가능',
     ]
   },
   {
@@ -5643,6 +5656,29 @@ async function renderSettingsTab(content){
     }catch(e){resEl.innerHTML=`<span style="font-size:12px;color:var(--red);">초대 생성 실패: ${e.message||e}</span>`;}
   };
   renderInvList();
+
+  // ── 퇴사자 관리(복직) ──
+  const secR=document.createElement('div');secR.className='dash-card';secR.style.marginTop='12px';
+  secR.innerHTML='<div class="dash-store-name">👋 퇴사자 관리</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">퇴사 처리한 직원이에요. 되살리면 다시 직원 목록에 나타납니다.</div><div id="inactive-list"></div>';
+  content.appendChild(secR);
+  (async()=>{
+    try{
+      const {supabase}=await import('./adapter/supabase-client.js');
+      const {getContext}=await import('./adapter/context.js');
+      const ctx=await getContext();
+      const listEl=secR.querySelector('#inactive-list');
+      const {data}=await supabase.from('profiles').select('id,name').eq('tenant_id',ctx.tenantId).eq('status','inactive').order('name');
+      if(!data||!data.length){listEl.innerHTML='<div style="font-size:12px;color:var(--text-mute);">퇴사 처리한 직원이 없습니다</div>';return;}
+      listEl.innerHTML='';
+      data.forEach(p=>{
+        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);';
+        row.innerHTML=`<span style="font-size:13px;font-weight:600;">${p.name}</span>`;
+        const btn=document.createElement('button');btn.textContent='복직';btn.style.cssText='background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;';
+        btn.onclick=async()=>{ if(!confirm(`${p.name} 님을 복직 처리할까요? 다시 직원 목록에 나타납니다.`))return; const {error}=await supabase.from('profiles').update({status:'active'}).eq('id',p.id); if(error){alert('복직 실패: '+error.message);return;} alert(`${p.name} 님 복직 완료.`); location.reload(); };
+        row.appendChild(btn);listEl.appendChild(row);
+      });
+    }catch(e){}
+  })();
 
   content.appendChild(savedEl);
 }
