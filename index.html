@@ -4509,7 +4509,7 @@ async function loadHandoverItems(storeId,dateKey){
       const prevSnap=await getDoc(doc(db,`handover/${storeId}_${prevKey}`));
       if(prevSnap.exists()){
         const prevItems=prevSnap.data().items||[];
-        const unconfirmed=prevItems.filter(it=>!it.confirmed);
+        const unconfirmed=prevItems.filter(it=>!it.confirmed&&!it.closed);
         let changed=false;
         unconfirmed.forEach(it=>{
           if(!items.find(x=>x.id===it.id)){
@@ -4657,7 +4657,7 @@ function buildHandoverSection(y,m,d){
   async function render(){
     try{
       allItems=await loadHandoverItems(curStore.id,dateKey);
-      const active=allItems.filter(i=>!i.confirmed);
+      const active=allItems.filter(i=>!i.confirmed&&!i.closed);
       const done=allItems.filter(i=>i.confirmed);
       const show=hideDone?active:allItems;
 
