@@ -4037,6 +4037,7 @@ function renderCal(){
         else if(e.t==='as_deadline'){b.className+=' b-teal';b.textContent='AS접수마감';}
         else if(e.t==='as_send'){b.className+=' b-teal2';b.textContent='AS발송일';}
         else if(e.t==='clean'){b.className+=' b-green';b.textContent='대청소'+e.sec;}
+        else if(SPECIALS[e.t]){b.className+=' '+((SPECIALS[e.t].col||'c-blue').replace('c-','b-'));b.textContent=SPECIALS[e.t].task.replace(/\([^)]*\)/g,'').replace(/\s+/g,'').slice(0,7);}
         bd.appendChild(b);
       });
       div.appendChild(bd);
@@ -4127,6 +4128,7 @@ function showDetail(y,m,d){
     else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='📦 A/S 접수 마감일';}
     else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일 (→로데오점)';}
     else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
+    else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
     tg.appendChild(t);
   });
   // ① 오늘의 업무 (읽기 전용 — 입력은 일일 스케줄에서)
