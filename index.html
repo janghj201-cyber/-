@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://vbuhueykvizmnrfvkehq.supabase.co" crossorigin>
+<link rel="preconnect" href="https://esm.sh" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>V-Flow</title>
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192-v2.png">
@@ -3319,6 +3321,16 @@ async function renderDashboardHome(){
   const total=getCleanItemCount(ty,tm,td);
   const sec=getTodayCleanSec();
 
+  // 성능: 매장 루프 안에서 하나씩 await하면 요청 ~160개가 순차 대기(수십 초).
+  // 청소/인수인계는 매장별 1개씩, 직원 업무는 매장 공통이라 딱 1번씩만 — 전부 병렬 선조회.
+  const [dashCleanSnaps,dashHoSnaps,dashTodosByName]=await Promise.all([
+    Promise.all(STORES.map(s=>getDoc(doc(db,`checks/${s.id}/${tKey}/clean`)).catch(()=>null))),
+    Promise.all(STORES.map(s=>getDoc(doc(db,`handover/${s.id}_${tKey}`)).catch(()=>null))),
+    Promise.all(staffList.map(async name=>{try{return [name,await loadStaffTodos(name,tKey)];}catch(e){return [name,[]];}})),
+  ]);
+  const dashCleanByStore=new Map(STORES.map((s,i)=>[s.id,dashCleanSnaps[i]]));
+  const dashHoByStore=new Map(STORES.map((s,i)=>[s.id,dashHoSnaps[i]]));
+
   for(const store of STORES){
     const block=document.createElement('div');
     block.className='dashboard-store-block status-none';
@@ -3331,14 +3343,13 @@ async function renderDashboardHome(){
     let taskLines=[];
 
     try{
-      const cs=await getDoc(doc(db,`checks/${store.id}/${tKey}/clean`));
-      if(cs.exists())cleanDone=Object.values(cs.data()).filter(ckVal).length;
+      const cs=dashCleanByStore.get(store.id);
+      if(cs&&cs.exists())cleanDone=Object.values(cs.data()).filter(ckVal).length;
     }catch(e){}
 
     // staff_todos에서 오늘 이 매장 근무한 직원 + 업무 현황
     try{
-      for(const name of staffList){
-        const items=await loadStaffTodos(name,tKey);
+      for(const [name,items] of dashTodosByName){
         const storeItems=items.filter(i=>i.storeId===store.id);
         if(storeItems.length>0){
           workers.push(name);
@@ -3351,8 +3362,8 @@ async function renderDashboardHome(){
 
     // 미확인 인수인계
     try{
-      const hs=await getDoc(doc(db,`handover/${store.id}_${tKey}`));
-      if(hs.exists()){
+      const hs=dashHoByStore.get(store.id);
+      if(hs&&hs.exists()){
         handoverUnchecked=(hs.data().items||[]).filter(i=>!i.confirmed).length;
       }
     }catch(e){}
