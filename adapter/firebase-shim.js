@@ -1151,12 +1151,14 @@ async function writeDayoffConfig(ctx, dataMap) {
 // 못 찾으면 null(호출부가 본인으로 폴백 — 전환기의 옛 이름 경로 대비).
 // 같은 테넌트 내 동명이인은 미지원(먼저 찾은 프로필) — 필요해지면 경로를 id로 전환.
 let _profilesCache = null
-async function loadProfiles() {
+function loadProfiles() {
+  // 프라미스 자체를 캐시 — 동시 호출(대시보드 직원 16명 병렬 조회)이 쿼리 1개를 공유한다.
   if (!_profilesCache) {
-    const { data, error } = await supabase.from('profiles').select('id, name, role, store_id, status').order('name')
-    const activeOnly = (data ?? []).filter((p) => (p.status ?? 'active') !== 'inactive')
-    if (error) throw error
-    _profilesCache = activeOnly
+    _profilesCache = (async () => {
+      const { data, error } = await supabase.from('profiles').select('id, name, role, store_id, status').order('name')
+      if (error) { _profilesCache = null; throw error }
+      return (data ?? []).filter((p) => (p.status ?? 'active') !== 'inactive')
+    })()
   }
   return _profilesCache
 }
