@@ -2182,8 +2182,16 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.9';
+const GUIDE_VERSION = 'v3.0';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.0 — 고정 직원 "오늘만 예외 출근"',
+    items: [
+      '📌 고정 직원이 특이사항으로 다른 매장에 출근하는 날엔, 홈 입장 카드의 🔁 오늘만 다른 매장 출근에서 매장을 선택하세요',
+      '선택하면 오늘 하루 그 매장의 업무·인수인계 권한이 열리고, 내일이 되면 자동으로 원래 매장으로 돌아갑니다 (되돌리는 걸 잊어도 안전)',
+      '당일에 취소하려면 입장 카드의 원래 매장으로 버튼을 누르면 됩니다',
+    ]
+  },
   {
     title: '🆕 v2.9 — 협업 프로젝트 도움 요청',
     items: [
@@ -3640,9 +3648,12 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
   if(!me)return;
 
   // 0) 매장 입장 카드 — 고정직원은 배정 매장 고정, 순환직원은 "오늘 근무 매장"을 직접 선택(당일 기억)
-  const _fixedId=window.__vflowProfile?.storeId||null;
+  const _vp=window.__vflowProfile||{};
+  const _isFixed=!!_vp.baseStoreId;
+  const _ovOn=!!_vp.overrideActive;
+  const _fixedId=_vp.storeId||null;
   const _todayKey='vflow_todaystore_'+todayKey();
-  const _savedId=_fixedId?null:localStorage.getItem(_todayKey);
+  const _savedId=_isFixed?null:localStorage.getItem(_todayKey);
   const _entry=STORES.find(s=>s.id===(_fixedId||_savedId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
   if(_entry){
     const ec=document.createElement('div');
@@ -3653,12 +3664,12 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
     const topRow=document.createElement('div');
     topRow.style.cssText='display:flex;align-items:center;gap:10px;cursor:pointer;';
     topRow.innerHTML=`<div style="width:38px;height:38px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">${_entry.icon}</div>
-      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:#fff;">${_entry.name} 입장${_fixedId?' <span style="font-size:10px;color:#93a1b5;font-weight:700;">📌 고정</span>':''}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:#fff;">${_entry.name} 입장${_isFixed?(_ovOn?' <span style="font-size:10px;color:var(--gold);font-weight:700;">🔁 예외출근</span>':' <span style="font-size:10px;color:#93a1b5;font-weight:700;">📌 고정</span>'):''}</div>
       <div style="font-size:11px;color:#93a1b5;margin-top:1px;">${_ws.length?`👥 오늘 근무자: ${_ws.join(' · ')}`:'👥 오늘 근무자 없음'}</div></div>
       <span style="background:var(--gold);color:var(--navy);font-size:11.5px;font-weight:800;border-radius:9px;padding:8px 12px;white-space:nowrap;">들어가기 →</span>`;
     topRow.onclick=()=>openStoreRoom(_entry);
     ec.appendChild(topRow);
-    if(!_fixedId){
+    if(!_isFixed){
       const selRow=document.createElement('div');
       selRow.style.cssText='display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.12);';
       selRow.innerHTML='<span style="font-size:11px;color:#93a1b5;font-weight:700;white-space:nowrap;">📍 오늘 근무 매장</span>';
@@ -3672,6 +3683,46 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
       };
       selRow.appendChild(sel);
       ec.appendChild(selRow);
+    } else {
+      // 고정 직원: 특이사항으로 다른 매장 출근 시 "오늘만 예외" (내일 자동 복귀)
+      const exRow=document.createElement('div');
+      exRow.style.cssText='display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.12);';
+      if(_ovOn){
+        exRow.innerHTML='<span style="font-size:11px;color:var(--gold);font-weight:800;">🔁 오늘 예외 출근 — 내일 원래 매장 자동 복귀</span>';
+        const back=document.createElement('button');
+        back.textContent='원래 매장으로';
+        back.style.cssText='margin-left:auto;background:rgba(255,255,255,0.12);color:#fff;border:1px solid #34435c;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';
+        back.onclick=async(e)=>{
+          e.stopPropagation();
+          if(!confirm('오늘 예외 출근을 취소하고 원래 매장으로 돌아갈까요?'))return;
+          try{
+            const mod=await import('./adapter/supabase-client.js');
+            const {error}=await mod.supabase.rpc('set_today_workplace',{target_store:null});
+            if(error)throw error;
+            location.reload();
+          }catch(err){alert('처리 실패 — 네트워크를 확인해주세요');}
+        };
+        exRow.appendChild(back);
+      } else {
+        exRow.innerHTML='<span style="font-size:11px;color:#93a1b5;font-weight:700;white-space:nowrap;">🔁 오늘만 다른 매장 출근</span>';
+        const sel=document.createElement('select');
+        sel.style.cssText='flex:1;background:var(--navy-mid);color:#fff;border:1px solid #34435c;border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;';
+        sel.innerHTML='<option value="">선택...</option>'+STORES.filter(s=>s.id!==_vp.baseStoreId).map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('');
+        sel.onclick=(e)=>e.stopPropagation();
+        sel.onchange=async()=>{
+          if(!sel.value)return;
+          const st=STORES.find(s=>s.id===sel.value);
+          if(!confirm(`오늘 하루 ${st?st.name:''}(으)로 출근 처리할까요?\n내일 자동으로 원래 매장으로 돌아갑니다.`)){sel.value='';return;}
+          try{
+            const mod=await import('./adapter/supabase-client.js');
+            const {error}=await mod.supabase.rpc('set_today_workplace',{target_store:sel.value});
+            if(error)throw error;
+            location.reload();
+          }catch(err){alert('처리 실패 — 네트워크를 확인해주세요');sel.value='';}
+        };
+        exRow.appendChild(sel);
+      }
+      ec.appendChild(exRow);
     }
     wrap.appendChild(ec);
   }

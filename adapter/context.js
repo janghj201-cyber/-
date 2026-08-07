@@ -32,7 +32,16 @@ export async function getContext() {
 
   cached = { session, profile, tenantId: profile.tenant_id, profileId: profile.id, stores: storesRes.data ?? [] }
   // 5-2: 원본 UI가 "지금 보는 카드가 본인인지"(조회 전용 표시) 판단할 최소 정보만 노출
-  window.__vflowProfile = { id: profile.id, name: profile.name, role: profile.role, storeId: profile.store_id ?? null }
+  const _pad = (n) => String(n).padStart(2, '0')
+  const _now = new Date()
+  const _todayLocal = `${_now.getFullYear()}-${_pad(_now.getMonth() + 1)}-${_pad(_now.getDate())}`
+  const _ovActive = profile.store_override_date === _todayLocal && !!profile.store_override_id
+  window.__vflowProfile = {
+    id: profile.id, name: profile.name, role: profile.role,
+    storeId: (_ovActive ? profile.store_override_id : null) ?? profile.store_id ?? null,
+    baseStoreId: profile.store_id ?? null,
+    overrideActive: _ovActive,
+  }
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
   window.__vflowTenant = { name: tenantRes.data?.name ?? '' }
   return cached
