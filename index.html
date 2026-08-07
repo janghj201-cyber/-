@@ -2120,8 +2120,18 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.6';
+const GUIDE_VERSION = 'v2.7';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v2.7 — 직원 근무지 설정 (관리자)',
+    items: [
+      '관리자 → 설정 탭에 🧑‍💼 직원 근무지 설정이 생겼어요',
+      '직원마다 🔄 순환근무(전 매장) 또는 📌 특정 매장 고정을 선택할 수 있어요',
+      '📌 고정 직원은 배정 매장의 업무·인수인계만 보고 확인합니다 (다른 매장은 확인 불가 — 의도된 동작)',
+      '고정 직원은 홈의 "입장" 카드가 자동으로 배정 매장으로 잡혀요',
+      '변경하면 해당 직원은 앱을 껐다 켜야(새로고침) 반영됩니다',
+    ]
+  },
   {
     title: '🆕 v2.6 — 매장 "방"이 생겼어요',
     items: [
@@ -3540,7 +3550,7 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
   if(!me)return;
 
   // 0) 매장 입장 카드 — 내 기본 매장(없으면 마지막 선택/첫 매장)의 "방"으로 바로
-  const _entry=STORES.find(s=>s.id===(STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
+  const _entry=STORES.find(s=>s.id===(window.__vflowProfile?.storeId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
   if(_entry){
     const ec=document.createElement('div');
     ec.className='hp-card';
@@ -5958,6 +5968,41 @@ async function renderSettingsTab(content){
     }catch(e){resEl.innerHTML=`<span style="font-size:12px;color:var(--red);">초대 생성 실패: ${e.message||e}</span>`;}
   };
   renderInvList();
+
+  // ── 직원 근무지 설정 (고정/순환) ──
+  const secW=document.createElement('div');secW.className='dash-card';secW.style.marginTop='12px';
+  secW.innerHTML='<div class="dash-store-name">🧑‍💼 직원 근무지 설정</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">📌 고정 직원은 배정 매장의 업무·인수인계만 보고 확인할 수 있어요. 🔄 순환 직원은 전 매장 접근. 변경 후 해당 직원은 앱을 새로고침해야 반영됩니다.</div><div id="workplace-list"></div>';
+  content.appendChild(secW);
+  (async()=>{
+    try{
+      const {supabase}=await import('./adapter/supabase-client.js');
+      const {getContext}=await import('./adapter/context.js');
+      const ctx=await getContext();
+      const listEl=secW.querySelector('#workplace-list');
+      const {data}=await supabase.from('profiles').select('id,name,role,store_id,status').eq('tenant_id',ctx.tenantId).order('name');
+      const act=(data||[]).filter(p=>(p.status??'active')!=='inactive');
+      listEl.innerHTML='';
+      act.forEach(p=>{
+        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);';
+        const roleTag=p.role==='owner'?' <span style="font-size:10px;color:var(--gold);font-weight:800;">대표</span>':p.role==='manager'?' <span style="font-size:10px;color:var(--blue);font-weight:800;">매니저</span>':'';
+        row.innerHTML=`<span style="font-size:13px;font-weight:600;">${p.name}${roleTag}</span>`;
+        const sel=document.createElement('select');
+        sel.style.cssText='border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;background:#fff;max-width:190px;';
+        sel.innerHTML=`<option value="">🔄 순환근무 (전 매장)</option>`+STORES.map(s=>`<option value="${s.id}" ${p.store_id===s.id?'selected':''}>📌 ${s.name} 고정</option>`).join('');
+        if(!p.store_id)sel.value='';
+        sel.onchange=async()=>{
+          const target=sel.value||null;
+          const label=target?`📌 ${(STORES.find(s=>s.id===target)||{}).name} 고정`:'🔄 순환근무(전 매장)';
+          if(!confirm(`${p.name} 님을 ${label}(으)로 변경할까요?`)){sel.value=p.store_id||'';return;}
+          const {error,count}=await supabase.from('profiles').update({store_id:target},{count:'exact'}).eq('id',p.id);
+          if(error||count===0){alert('변경 실패'+(error?': '+error.message:' — 저장된 행이 없습니다(권한 확인)'));sel.value=p.store_id||'';return;}
+          p.store_id=target;
+          alert(`${p.name} 님 → ${label} 변경 완료.\n해당 직원은 앱 새로고침 후 반영됩니다.`);
+        };
+        row.appendChild(sel);listEl.appendChild(row);
+      });
+    }catch(e){const le=secW.querySelector('#workplace-list');if(le)le.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패 — 새로고침 후 다시 시도해주세요</div>';}
+  })();
 
   // ── 퇴사자 관리(복직) ──
   const secR=document.createElement('div');secR.className='dash-card';secR.style.marginTop='12px';
