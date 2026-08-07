@@ -2182,8 +2182,17 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.8';
+const GUIDE_VERSION = 'v2.9';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v2.9 — 협업 프로젝트 도움 요청',
+    items: [
+      '협업 프로젝트에서 막히면 🙋 도움/피드백 요청 버튼을 누르세요 — 막힌 내용을 한 줄로 적으면 됩니다',
+      '요청하면 전 직원 홈 맨 위에 🚨 붉은 카드로 표시되고, 협업 카드에도 붉은 테두리가 생겨요',
+      '동료·관리자는 카드를 눌러 프로젝트로 이동한 뒤 일지에 피드백을 남겨주세요',
+      '도움이 해결되면 ✅ 해결됨 버튼으로 요청을 내리면 됩니다',
+    ]
+  },
   {
     title: '🆕 v2.8 — 업무별 세부 체크리스트',
     items: [
@@ -3848,7 +3857,7 @@ async function collabProfiles(){
 async function loadCollabList(){
   const {sb,T}=await collabApi();
   const {data,error}=await sb.from('collab_projects')
-    .select('id,title,progress,status,done_date,created_at,created_by,collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
+    .select('id,title,progress,status,done_date,created_at,created_by,help_message,help_requested_at,helper:profiles!help_requested_by(name),collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
     .eq('tenant_id',T).order('created_at',{ascending:false});
   if(error){console.warn('collab load',error);return null;}
   return data||[];
@@ -3861,6 +3870,30 @@ window.renderCollabProjects=async function(){
   const rows=await loadCollabList();
   if(rows===null){ listEl.innerHTML='<div class="project-overview-empty">협업 프로젝트 테이블이 아직 없어요. (관리자: 협업 테이블 생성 SQL 실행 필요)</div>'; return; }
   const ongoing=rows.filter(r=>r.status!=='done');
+
+  // 🚨 도움 요청 알림 — 홈 개인 섹션 최상단에 붉은 카드로
+  const _hp=document.getElementById('home-personal');
+  const _oldHelp=document.getElementById('home-help-alerts');
+  if(_oldHelp)_oldHelp.remove();
+  const _helped=ongoing.filter(r=>r.help_message);
+  if(_hp&&_helped.length){
+    const box=document.createElement('div');
+    box.id='home-help-alerts';
+    _helped.forEach(r=>{
+      const c=document.createElement('div');
+      c.className='hp-card';
+      c.style.border='2px solid var(--red)';
+      c.style.background='var(--red-light)';
+      c.style.cursor='pointer';
+      c.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 — ${r.helper?.name||'요청자'}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:3px;">🤝 ${r.title}</div>
+        <div style="font-size:12.5px;margin-top:2px;color:var(--text);">${r.help_message}</div>
+        <div style="font-size:10.5px;color:var(--text-sub);margin-top:4px;">누르면 프로젝트로 이동 — 일지에 피드백을 남겨주세요</div>`;
+      c.onclick=()=>openCollabDetail(r.id);
+      box.appendChild(c);
+    });
+    _hp.insertBefore(box,_hp.firstChild);
+  }
   if(ongoing.length===0){ listEl.innerHTML='<div class="project-overview-empty">진행중인 협업 프로젝트가 없습니다. "+ 새 협업"으로 시작해보세요</div>'; return; }
   listEl.innerHTML='';
   ongoing.forEach(r=>{
@@ -3868,9 +3901,10 @@ window.renderCollabProjects=async function(){
     const pct=Math.max(0,Math.min(100,r.progress||0));
     const card=document.createElement('div');
     card.className='collab-card';
+    if(r.help_message){card.style.border='2px solid var(--red)';}
     card.innerHTML=`
       <div class="collab-card-top">
-        <span class="collab-card-title">${r.title}</span>
+        <span class="collab-card-title">${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 7px;vertical-align:1px;">🚨 도움 요청</span>':''}</span>
         <span class="collab-card-pct">${pct}%</span>
       </div>
       <div class="collab-bar"><div class="collab-bar-fill" style="width:${pct}%;"></div></div>
@@ -3938,6 +3972,12 @@ window.openCollabDetail=async function(id){
       <button onclick="collabProgress(10)" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">+ 10%</button>
       <button onclick="collabDone()" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✓ 완료</button>
     </div>
+    ${r.help_message?`<div style="background:var(--red-light);border:1.5px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 중 — ${r.helper?.name||'요청자'}</div>
+      <div style="font-size:13px;margin-top:3px;">${r.help_message}</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">아래 일지에 피드백을 남겨주세요. 해결되면 요청을 내려주세요.</div>
+      <button onclick="collabHelpResolve()" style="margin-top:8px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 해결됨 (요청 내리기)</button>
+    </div>`:`<button onclick="collabHelpRequest()" style="width:100%;margin-bottom:14px;background:var(--red-light);color:var(--red);border:1.5px dashed var(--red);border-radius:8px;padding:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🙋 도움/피드백 요청 — 막힌 부분을 전 직원에게 알려요</button>`}
     <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">👥 참여 직원</div>
     <div style="font-size:13px;margin-bottom:14px;">${members.length?members.join(' · '):'참여자 없음'}</div>
     <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">📝 진행 일지</div>
@@ -3973,6 +4013,23 @@ window.collabAddLog=async function(){
   const {sb,T,me}=await collabApi();
   await sb.from('collab_project_logs').insert({collab_project_id:_collabCur,tenant_id:T,author_id:me,content:text});
   await openCollabDetail(_collabCur);
+};
+window.collabHelpRequest=async function(){
+  const msg=prompt('어떤 도움이 필요한가요? 막힌 부분을 한 줄로 적어주세요.\n(홈 화면에 전 직원에게 표시됩니다)');
+  if(msg===null)return;
+  const t=msg.trim();
+  if(!t){alert('내용을 입력해주세요.');return;}
+  const {sb,me}=await collabApi();
+  const {error,count}=await sb.from('collab_projects').update({help_message:t,help_requested_by:me,help_requested_at:new Date().toISOString()},{count:'exact'}).eq('id',_collabCur);
+  if(error||count===0){alert('요청 실패 — 네트워크/권한을 확인해주세요');return;}
+  await openCollabDetail(_collabCur); renderCollabProjects();
+};
+window.collabHelpResolve=async function(){
+  if(!confirm('도움 요청을 내릴까요? (해결됨 처리)'))return;
+  const {sb}=await collabApi();
+  const {error,count}=await sb.from('collab_projects').update({help_message:null,help_requested_by:null,help_requested_at:null},{count:'exact'}).eq('id',_collabCur);
+  if(error||count===0){alert('처리 실패 — 네트워크/권한을 확인해주세요');return;}
+  await openCollabDetail(_collabCur); renderCollabProjects();
 };
 window.collabDelete=async function(){
   if(!confirm('이 협업 프로젝트를 삭제할까요? (참여자·일지도 함께 삭제됩니다)'))return;
