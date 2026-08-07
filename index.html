@@ -2608,7 +2608,13 @@ window.openMyDayoffModal=async function(){
         } else {
           dayoffData[myStaff][dateKey]='dayoff';
         }
-        await setDoc(doc(db,'config/dayoff'),dayoffData);
+        try{
+          await setDoc(doc(db,'config/dayoff'),dayoffData);
+        }catch(err){
+          if(isDayoff)dayoffData[myStaff][dateKey]='dayoff';else delete dayoffData[myStaff][dateKey];
+          alert('휴무 저장 실패 — 네트워크를 확인하고 다시 시도해주세요');
+          return;
+        }
         // 로컬 반영 후 다시 렌더
         myData[dateKey]=isDayoff?undefined:'dayoff';
         if(isDayoff)delete myData[dateKey];
@@ -2742,7 +2748,10 @@ async function setMyDayoffStatus(name, dateKey, status){
       data[name][dateKey]=status;
     }
     await setDoc(doc(db,'config/dayoff'),data);
-  }catch(e){}
+  }catch(e){
+    alert('휴무 저장 실패 — 네트워크를 확인하고 다시 시도해주세요');
+    throw e;
+  }
 }
 
 window.toggleMyDayoff=async function(){
@@ -5704,7 +5713,12 @@ async function renderDayoffTab(content){
   }
 
   async function saveDayoffData(){
-    await setDoc(doc(db,'config/dayoff'),dayoffData);
+    try{
+      await setDoc(doc(db,'config/dayoff'),dayoffData);
+    }catch(e){
+      alert('휴무 저장 실패 — 네트워크를 확인하고 다시 시도해주세요');
+      throw e;
+    }
   }
 
   await loadDayoffData();

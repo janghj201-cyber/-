@@ -110,8 +110,9 @@ async function writeBoardPosts(ctx, { items }) {
       legacy_id: item.id,
     }
     if (byLegacyId.has(item.id)) {
-      const { error } = await supabase.from('board_posts').update(row).eq('id', byLegacyId.get(item.id))
+      const { error, count } = await supabase.from('board_posts').update(row, { count: 'exact' }).eq('id', byLegacyId.get(item.id))
       if (error) throw error
+      assertAffected(count, '게시글')
     } else {
       const { error } = await supabase.from('board_posts').insert(row)
       if (error) throw error
@@ -230,6 +231,12 @@ async function writeHandoverFeedbacks(ctx, handoverId, feedbacks) {
 // 지금 저장한 사람으로 덮어써지는 버그가 생긴다.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// update가 RLS에 막히면 "0행 + 무에러"로 조용히 성공한 척한다 — 인수인계 확인 버그의 근본 패턴.
+// count:'exact'로 바뀐 행 수를 받아 0이면 throw → 앱의 기존 catch(알림)가 사용자에게 보여준다.
+const assertAffected = (count, what) => {
+  if (count === 0) throw new Error(`${what} 저장이 반영되지 않았습니다 (권한 또는 대상 없음)`)
+}
+
 async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return
@@ -292,8 +299,9 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
         patch.closed_at = item.closed ? new Date().toISOString() : null
       }
       if (Object.keys(patch).length > 0) {
-        const { error } = await supabase.from('handovers').update(patch).eq('id', item.id)
+        const { error, count } = await supabase.from('handovers').update(patch, { count: 'exact' }).eq('id', item.id)
         if (error) throw error
+        assertAffected(count, '인수인계')
       }
     }
     await writeHandoverFeedbacks(ctx, handoverId, item.feedbacks || [])
@@ -433,8 +441,9 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
           carried_over_from: original.id,
         })
         if (error) throw error
-        const { error: markErr } = await supabase.from('daily_tasks').update({ status: 'carried_over' }).eq('id', original.id)
+        const { error: markErr, count: markCnt } = await supabase.from('daily_tasks').update({ status: 'carried_over' }, { count: 'exact' }).eq('id', original.id)
         if (markErr) throw markErr
+        assertAffected(markCnt, '업무 이월처리')
         continue
       }
       const storeId = resolveStoreId(item.storeId, ctx)
@@ -458,8 +467,9 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
     const wantStatus = item.kept ? 'kept' : item.done ? 'done' : 'pending'
     if (current.status !== wantStatus) patch.status = wantStatus
     if (JSON.stringify(current.subs ?? []) !== JSON.stringify(item.subs ?? [])) patch.subs = item.subs ?? []
-    const { error } = await supabase.from('daily_tasks').update(patch).eq('id', item.id)
+    const { error, count } = await supabase.from('daily_tasks').update(patch, { count: 'exact' }).eq('id', item.id)
     if (error) throw error
+    assertAffected(count, '개인 업무')
   }
 }
 
@@ -544,8 +554,9 @@ async function writeProjectLogs(ctx, projectId, logs) {
     const current = currentById.get(log.id)
     if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
     if (current.content !== log.text) {
-      const { error } = await supabase.from('project_logs').update({ content: log.text }).eq('id', log.id)
+      const { error, count } = await supabase.from('project_logs').update({ content: log.text }, { count: 'exact' }).eq('id', log.id)
       if (error) throw error
+      assertAffected(count, '프로젝트 일지')
     }
   }
 }
@@ -593,8 +604,9 @@ async function writeStaffProjects(ctx, { items }) {
     const wantDoneDate = item.doneDate ?? null
     if ((current.done_date ?? null) !== wantDoneDate) patch.done_date = wantDoneDate
     if (Object.keys(patch).length > 0) {
-      const { error } = await supabase.from('projects').update(patch).eq('id', item.id)
+      const { error, count } = await supabase.from('projects').update(patch, { count: 'exact' }).eq('id', item.id)
       if (error) throw error
+      assertAffected(count, '프로젝트')
     }
     await writeProjectLogs(ctx, item.id, item.logs || [])
   }
@@ -1011,8 +1023,9 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
     if (!deepLog) continue // 방어적: 대청소일이 아닌데 들어온 인덱스는 무시
     const itemLog = deepLog.itemLogs[idx - dailyCount]
     if (!itemLog) continue
-    const { error } = await supabase.from('cleaning_deep_item_logs').update({ done, completed_at: done ? new Date().toISOString() : null }).eq('id', itemLog.id)
+    const { error, count } = await supabase.from('cleaning_deep_item_logs').update({ done, completed_at: done ? new Date().toISOString() : null }, { count: 'exact' }).eq('id', itemLog.id)
     if (error) throw error
+    assertAffected(count, '대청소 체크')
   }
 }
 
@@ -1137,8 +1150,9 @@ async function writeDayoffConfig(ctx, dataMap) {
         const { error: e } = await supabase.from('dayoffs').insert({ tenant_id: ctx.tenantId, profile_id: pid, dayoff_date: dateKey, status })
         if (e) throw e
       } else if (cur.status !== status) {
-        const { error: e } = await supabase.from('dayoffs').update({ status, updated_at: new Date().toISOString() }).eq('id', cur.id)
+        const { error: e, count: dc } = await supabase.from('dayoffs').update({ status, updated_at: new Date().toISOString() }, { count: 'exact' }).eq('id', cur.id)
         if (e) throw e
+        assertAffected(dc, '휴무')
       }
     }
   }
