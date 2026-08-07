@@ -2200,6 +2200,7 @@ const GUIDE_SECTIONS = [
       '직원마다 🔄 순환근무(전 매장) 또는 📌 특정 매장 고정을 선택할 수 있어요',
       '📌 고정 직원은 배정 매장의 업무·인수인계만 보고 확인합니다 (다른 매장은 확인 불가 — 의도된 동작)',
       '고정 직원은 홈의 "입장" 카드가 자동으로 배정 매장으로 잡혀요',
+      '🔄 순환 직원은 홈 입장 카드 아래 📍 오늘 근무 매장에서 오늘 일할 매장을 직접 선택해요 (그날 하루 기억됩니다)',
       '변경하면 해당 직원은 앱을 껐다 켜야(새로고침) 반영됩니다',
     ]
   },
@@ -3620,20 +3621,40 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
   wrap.innerHTML='';
   if(!me)return;
 
-  // 0) 매장 입장 카드 — 내 기본 매장(없으면 마지막 선택/첫 매장)의 "방"으로 바로
-  const _entry=STORES.find(s=>s.id===(window.__vflowProfile?.storeId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
+  // 0) 매장 입장 카드 — 고정직원은 배정 매장 고정, 순환직원은 "오늘 근무 매장"을 직접 선택(당일 기억)
+  const _fixedId=window.__vflowProfile?.storeId||null;
+  const _todayKey='vflow_todaystore_'+todayKey();
+  const _savedId=_fixedId?null:localStorage.getItem(_todayKey);
+  const _entry=STORES.find(s=>s.id===(_fixedId||_savedId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
   if(_entry){
     const ec=document.createElement('div');
     ec.className='hp-card';
     ec.style.background='linear-gradient(135deg,#243044,#1a2332)';
-    ec.style.border='none';ec.style.cursor='pointer';
-    ec.style.display='flex';ec.style.alignItems='center';ec.style.gap='10px';
+    ec.style.border='none';
     let _ws=[];try{(todosByName||[]).forEach(pp=>{if(pp&&pp[1].some(i=>i.storeId===_entry.id))_ws.push(pp[0]);});}catch(e){}
-    ec.innerHTML=`<div style="width:38px;height:38px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">${_entry.icon}</div>
-      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:#fff;">${_entry.name} 입장</div>
+    const topRow=document.createElement('div');
+    topRow.style.cssText='display:flex;align-items:center;gap:10px;cursor:pointer;';
+    topRow.innerHTML=`<div style="width:38px;height:38px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">${_entry.icon}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:#fff;">${_entry.name} 입장${_fixedId?' <span style="font-size:10px;color:#93a1b5;font-weight:700;">📌 고정</span>':''}</div>
       <div style="font-size:11px;color:#93a1b5;margin-top:1px;">${_ws.length?`👥 오늘 근무자: ${_ws.join(' · ')}`:'👥 오늘 근무자 없음'}</div></div>
       <span style="background:var(--gold);color:var(--navy);font-size:11.5px;font-weight:800;border-radius:9px;padding:8px 12px;white-space:nowrap;">들어가기 →</span>`;
-    ec.onclick=()=>openStoreRoom(_entry);
+    topRow.onclick=()=>openStoreRoom(_entry);
+    ec.appendChild(topRow);
+    if(!_fixedId){
+      const selRow=document.createElement('div');
+      selRow.style.cssText='display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.12);';
+      selRow.innerHTML='<span style="font-size:11px;color:#93a1b5;font-weight:700;white-space:nowrap;">📍 오늘 근무 매장</span>';
+      const sel=document.createElement('select');
+      sel.style.cssText='flex:1;background:var(--navy-mid);color:#fff;border:1px solid #34435c;border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;';
+      sel.innerHTML=STORES.map(s=>`<option value="${s.id}" ${s.id===_entry.id?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+      sel.onclick=(e)=>e.stopPropagation();
+      sel.onchange=()=>{
+        localStorage.setItem(_todayKey,sel.value);
+        renderHomePersonal(tKey,todosByName,hoByStore);
+      };
+      selRow.appendChild(sel);
+      ec.appendChild(selRow);
+    }
     wrap.appendChild(ec);
   }
 
