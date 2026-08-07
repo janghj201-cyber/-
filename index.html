@@ -313,6 +313,34 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 
 .dashboard-today{margin:0 12px 12px;}
 .dashboard-today-header{font-size:14px;font-weight:700;color:var(--text);padding:4px 2px 10px;}
+/* 내 홈(개인 우선) — v3 구조 */
+.hp-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 13px;box-shadow:0 1px 4px rgba(26,35,50,0.07);margin-bottom:10px;}
+.hp-ho{border-left:5px solid var(--gold);background:#fffdf4;}
+.hp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.hp-title{font-size:13.5px;font-weight:800;color:var(--text);}
+.hp-badge{background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 9px;}
+.hp-ho-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px dashed #eee3c8;font-size:12.5px;line-height:1.45;color:var(--text);}
+.hp-ho-item:first-of-type{border-top:none;}
+.hp-tag{font-size:10px;font-weight:800;border-radius:8px;padding:1px 6px;white-space:nowrap;margin-top:1px;}
+.hp-tag-me{background:var(--orange-light);color:var(--orange);}
+.hp-tag-pub{background:#eef1f4;color:var(--text-sub);}
+.hp-meta{color:var(--text-mute);font-size:10.5px;}
+.hp-confirm{background:var(--green);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:800;padding:6px 10px;white-space:nowrap;cursor:pointer;font-family:inherit;}
+.hp-todo{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid #f2efe8;font-size:13px;color:var(--text);}
+.hp-todo:first-of-type{border-top:none;}
+.hp-todo input{width:17px;height:17px;accent-color:var(--gold);flex-shrink:0;}
+.hp-todo.done span{color:var(--text-mute);text-decoration:line-through;}
+.hp-prog{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.hp-prog-bar{flex:1;height:7px;background:#efece4;border-radius:5px;overflow:hidden;}
+.hp-prog-fill{height:100%;background:var(--gold);border-radius:5px;transition:width .3s;}
+.hp-prog-num{font-size:11px;font-weight:800;color:var(--text-sub);}
+.hp-empty{font-size:12px;color:var(--text-mute);padding:4px 0;}
+.hp-emp{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid #f2efe8;cursor:pointer;}
+.hp-emp:first-of-type{border-top:none;}
+.hp-emp-av{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.hp-emp-name{font-size:13px;font-weight:800;color:var(--text);}
+.hp-emp-task{font-size:11.5px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hp-emp-cnt{margin-left:auto;font-size:11.5px;font-weight:800;white-space:nowrap;}
 .collab-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
 .collab-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
 .collab-card-title{font-size:14px;font-weight:700;color:var(--text);}
@@ -860,12 +888,14 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <!-- ① 대시보드 화면 (첫 화면) -->
 <div class="screen active has-tab-bar" id="screen-dashboard">
   <div class="header">
-    <div><div class="header-title">📋 V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
+    <div><div class="header-title" id="home-greeting">📋 V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <div style="display:flex;gap:6px;">
       <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📖 가이드</button>
       <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
     </div>
   </div>
+  <!-- 내 홈: 개인 우선 섹션 (v3 구조 1차 — 나에게 온 인수인계 · 오늘 내 업무) -->
+  <div class="dashboard-today" id="home-personal" style="margin-top:12px;"></div>
   <!-- 게시판 -->
   <div class="board-section">
     <div class="board-header">
@@ -884,10 +914,17 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <button id="board-expand-btn" onclick="toggleBoardExpand()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;"></button>
     </div>
   </div>
-  <!-- 오늘 전체 매장 현황 -->
+  <!-- 관리자란: 직원별 오늘 업무 (관리자 계정에만 표시) -->
+  <div class="dashboard-today" id="home-admin-section" style="display:none;">
+    <div class="dashboard-today-header">👑 관리자란 — 직원별 오늘 업무</div>
+    <div id="home-admin-emps"></div>
+  </div>
+  <!-- 오늘 전체 매장 현황 (원할 때만 펼쳐보기 — 관리자는 기본 펼침) -->
   <div class="dashboard-today">
-    <div class="dashboard-today-header">📍 오늘의 매장 현황</div>
-    <div class="dashboard-store-grid" id="dashboard-store-list"></div>
+    <div class="dashboard-today-header" id="dash-grid-toggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+      <span>🏪 전체 매장 현황</span><span id="dash-grid-arrow" style="color:var(--gold);font-size:12px;font-weight:800;">펼치기 ▼</span>
+    </div>
+    <div class="dashboard-store-grid" id="dashboard-store-list" style="display:none;"></div>
   </div>
   <div class="dashboard-today" id="dashboard-project-section">
     <div class="dashboard-today-header">🔄 장기 프로젝트 현황</div>
@@ -2074,8 +2111,18 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.4';
+const GUIDE_VERSION = 'v2.5';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v2.5 — 홈이 "나 중심"으로 바뀌었어요',
+    items: [
+      '로그인하면 첫 화면 상단에 내 이름 인사말과 실시간 시계가 표시돼요',
+      '🔔 나에게 온 인수인계 — 나를 받는사람으로 지정한 항목과 내 기본 매장의 미확인 항목이 홈 맨 위에 모여요. ✓ 확인 버튼으로 바로 처리!',
+      '📝 오늘 내 업무 — 홈에서 바로 체크할 수 있어요. 추가·수정은 "+ 추가/관리" 버튼으로',
+      '🏪 전체 매장 현황 — 평소엔 접혀 있고, 궁금할 때 눌러서 펼쳐보세요 (관리자는 기본 펼침)',
+      '👑 관리자란 — 관리자 계정에는 직원별 오늘 업무 현황이 추가로 보여요. 직원 줄을 누르면 그 직원 업무로 이동',
+    ]
+  },
   {
     title: '🚀 시작하기 (처음이라면)',
     items: [
@@ -3307,6 +3354,11 @@ async function renderDashboardHome(){
   const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const subEl=document.getElementById('dashboard-date-sub');
   if(subEl)subEl.textContent=`${today.getFullYear()}년 ${mns[today.getMonth()]} ${today.getDate()}일 (${dows[today.getDay()]})`;
+  // v3 홈: 인사말 + 실시간 시계
+  const _greetEl=document.getElementById('home-greeting');
+  const _me=window.__vflowProfile;
+  if(_greetEl&&_me&&_me.name)_greetEl.innerHTML=`<b style="color:var(--gold);">${_me.name}</b>님, 어서오세요!`;
+  startHomeClock();
 
   // 게시판 로드
   loadBoard();
@@ -3330,6 +3382,10 @@ async function renderDashboardHome(){
   ]);
   const dashCleanByStore=new Map(STORES.map((s,i)=>[s.id,dashCleanSnaps[i]]));
   const dashHoByStore=new Map(STORES.map((s,i)=>[s.id,dashHoSnaps[i]]));
+
+  // v3 홈: 개인 우선 섹션 + 관리자란
+  try{renderHomePersonal(tKey,dashTodosByName,dashHoByStore);}catch(e){console.warn('[home] personal',e);}
+  try{renderHomeAdmin(dashTodosByName);}catch(e){console.warn('[home] admin',e);}
 
   for(const store of STORES){
     const block=document.createElement('div');
@@ -3427,8 +3483,147 @@ async function renderDashboardHome(){
     listEl.appendChild(block);
   }
 
+  // v3 홈: 전체 현황 접기/펼치기 (직원 기본 접힘 · 관리자 기본 펼침)
+  const _gridEl=document.getElementById('dashboard-store-list');
+  const _gridToggle=document.getElementById('dash-grid-toggle');
+  const _gridArrow=document.getElementById('dash-grid-arrow');
+  if(_gridEl&&_gridToggle&&!_gridToggle._wired){
+    _gridToggle._wired=true;
+    _gridToggle.onclick=()=>{
+      const open=_gridEl.style.display!=='none';
+      _gridEl.style.display=open?'none':'grid';
+      if(_gridArrow)_gridArrow.textContent=open?'펼치기 ▼':'접기 ▲';
+    };
+    if(isAdmin){_gridEl.style.display='grid';_gridArrow.textContent='접기 ▲';}
+  }
+
   await renderDashboardProjects();
   await renderCollabProjects();
+}
+
+// ── v3 내 홈: 실시간 시계 + 개인 우선 섹션 ──
+let _homeClockTimer=null;
+function startHomeClock(){
+  const el=document.getElementById('dashboard-date-sub');
+  if(!el)return;
+  const dows=['일','월','화','수','목','금','토'];
+  const f=()=>{const n=new Date();el.textContent=`${n.getMonth()+1}월 ${n.getDate()}일 (${dows[n.getDay()]}) · ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+  f();
+  if(!_homeClockTimer)_homeClockTimer=setInterval(f,1000);
+}
+
+function renderHomePersonal(tKey,todosByName,hoByStore){
+  const wrap=document.getElementById('home-personal');
+  if(!wrap)return;
+  const me=window.__vflowProfile?.name;
+  wrap.innerHTML='';
+  if(!me)return;
+
+  // 1) 나에게 온 인수인계 (수신자=나) + 내 기본 매장의 공용 미확인
+  const myDefaultStoreId=STAFF_DEFAULT_STORE[me]||null;
+  const hoRows=[];
+  for(const store of STORES){
+    const snap=hoByStore.get(store.id);
+    if(!snap||!snap.exists())continue;
+    (snap.data().items||[]).forEach(it=>{
+      if(it.confirmed||it.closed)return;
+      const toMe=it.recipient===me;
+      const isMyStore=myDefaultStoreId&&store.id===myDefaultStoreId;
+      if(toMe||(isMyStore&&!it.recipient))hoRows.push({store,it,toMe});
+    });
+  }
+  hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
+  if(featOn('handover')&&hoRows.length>0){
+    const card=document.createElement('div');
+    card.className='hp-card hp-ho';
+    card.innerHTML=`<div class="hp-head"><span class="hp-title">🔔 나에게 온 인수인계</span><span class="hp-badge">${hoRows.length}건</span></div>`;
+    hoRows.slice(0,5).forEach(({store,it,toMe})=>{
+      const row=document.createElement('div');
+      row.className='hp-ho-item';
+      const short=store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+      row.innerHTML=`<span class="hp-tag ${toMe?'hp-tag-me':'hp-tag-pub'}">${toMe?'나에게':short}</span>
+        <div style="flex:1;">${it.text}<div class="hp-meta">${it.author||'익명'} · ${short}</div></div>`;
+      const btn=document.createElement('button');
+      btn.className='hp-confirm';btn.textContent='✓ 확인';
+      btn.onclick=async()=>{
+        btn.disabled=true;btn.textContent='저장중';
+        try{
+          await toggleHandoverItem(store.id,tKey,it.id,true,me);
+          row.remove();
+          const left=card.querySelectorAll('.hp-ho-item').length;
+          const bd=card.querySelector('.hp-badge');
+          if(left===0)card.remove();else if(bd)bd.textContent=`${left}건`;
+        }catch(e){btn.disabled=false;btn.textContent='✓ 확인';alert('저장 실패 — 네트워크를 확인해주세요');}
+      };
+      row.appendChild(btn);
+      card.appendChild(row);
+    });
+    if(hoRows.length>5){const more=document.createElement('div');more.className='hp-meta';more.style.paddingTop='6px';more.textContent=`외 ${hoRows.length-5}건 — 매장 화면에서 확인하세요`;card.appendChild(more);}
+    wrap.appendChild(card);
+  }
+
+  // 2) 오늘 내 업무 (홈에서 바로 체크)
+  const pair=todosByName.find(p=>p&&p[0]===me);
+  const mine=pair?pair[1]:[];
+  const card2=document.createElement('div');
+  card2.className='hp-card';
+  const head=document.createElement('div');head.className='hp-head';
+  head.innerHTML=`<span class="hp-title">📝 오늘 내 업무</span>`;
+  const goBtn=document.createElement('button');
+  goBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;';
+  goBtn.textContent='+ 추가/관리';
+  goBtn.onclick=()=>enterMyWork(me);
+  head.appendChild(goBtn);
+  card2.appendChild(head);
+  if(mine.length===0){
+    const em=document.createElement('div');em.className='hp-empty';em.textContent='오늘 등록된 업무가 없어요 — "+ 추가/관리"에서 등록하세요';card2.appendChild(em);
+  } else {
+    const done0=mine.filter(i=>i.done).length;
+    const prog=document.createElement('div');prog.className='hp-prog';
+    prog.innerHTML=`<div class="hp-prog-bar"><div class="hp-prog-fill" style="width:${Math.round(done0/mine.length*100)}%"></div></div><span class="hp-prog-num">${done0}/${mine.length}</span>`;
+    card2.appendChild(prog);
+    mine.forEach(it=>{
+      const row=document.createElement('div');row.className='hp-todo'+(it.done?' done':'');
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
+      const sp=document.createElement('span');sp.textContent=it.text;sp.style.flex='1';
+      cb.onchange=async()=>{
+        try{
+          await toggleTodoItem(me,tKey,it.id,cb.checked);
+          it.done=cb.checked;row.classList.toggle('done',cb.checked);
+          const dn=mine.filter(i=>i.done).length;
+          prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;
+          prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;
+        }catch(e){cb.checked=!cb.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
+      };
+      row.appendChild(cb);row.appendChild(sp);card2.appendChild(row);
+    });
+  }
+  wrap.appendChild(card2);
+}
+
+function renderHomeAdmin(todosByName){
+  const sec=document.getElementById('home-admin-section');
+  const list=document.getElementById('home-admin-emps');
+  if(!sec||!list)return;
+  if(!isAdmin){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML='';
+  list.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(26,35,50,0.07);';
+  (todosByName||[]).forEach(pair=>{
+    if(!pair)return;
+    const [name,items]=pair;
+    const row=document.createElement('div');row.className='hp-emp';
+    const done=items.filter(i=>i.done).length;
+    const undone=items.filter(i=>!i.done).map(i=>i.text).join(' · ');
+    const cnt=items.length===0?'<span class="hp-emp-cnt" style="color:var(--text-mute);">-</span>'
+      :done>=items.length?`<span class="hp-emp-cnt" style="color:var(--green);">${done}/${items.length} ✓</span>`
+      :`<span class="hp-emp-cnt" style="color:var(--orange);">${done}/${items.length}</span>`;
+    row.innerHTML=`<div class="hp-emp-av">${name.slice(0,1)}</div>
+      <div style="flex:1;min-width:0;"><div class="hp-emp-name">${name}</div>
+      <div class="hp-emp-task">${items.length===0?'아직 등록된 업무 없음':(undone||'전부 완료 ✅')}</div></div>${cnt}`;
+    row.onclick=()=>enterMyWork(name);
+    list.appendChild(row);
+  });
 }
 
 // ══════════════════════════════════════
