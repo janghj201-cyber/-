@@ -1488,7 +1488,10 @@ function getCleanItemCount(y,m,d){
 // ══════════════════════════════════════
 // 사용자 이름 (오늘의 업무 작성자)
 // ══════════════════════════════════════
-function getUsername(){return localStorage.getItem('wevape_username')||'';}
+function getUsername(){
+  // identity 통합: 항상 로그인 계정 이름이 작성자 (기기에 저장된 옛 이름은 폴백일 뿐)
+  return window.__vflowProfile?.name||localStorage.getItem('wevape_username')||'';
+}
 let pendingNameCb=null;
 window.openNameModal=function(cb){
   pendingNameCb=cb;
@@ -2926,7 +2929,7 @@ async function renderMyProjectBanner(){
       header.innerHTML=`<input type="checkbox" data-id="${item.id}">
         <span style="flex:1;font-weight:600;">${item.text}</span>
         <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
-        <button data-help="${item.id}" title="도움/피드백 요청" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;">🙋</button>
+        <button data-help="${item.id}" title="막힌 부분을 전 직원 홈에 알립니다" style="background:var(--red-light);color:var(--red);border:1.5px dashed var(--red);border-radius:8px;padding:3px 9px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">🙋 도움 요청</button>
         <button data-del="${item.id}" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;padding:0 4px;">🗑️</button>`;
       row.appendChild(header);
 
@@ -4895,9 +4898,11 @@ function buildTodoSection(y,m,d,readOnly=false){
     // 현재 작성자 표시 + 변경
     const whoami=document.createElement('div');whoami.className='todo-whoami';
     const curName=getUsername();
-    whoami.innerHTML=`작성자: <b id="todo-whoami-name">${curName||'(미설정)'}</b> <button class="todo-change-name" id="todo-change-name">변경</button>`;
+    const _loggedIn=!!window.__vflowProfile?.name;
+    whoami.innerHTML=`작성자: <b id="todo-whoami-name">${curName||'(미설정)'}</b>${_loggedIn?'':' <button class="todo-change-name" id="todo-change-name">변경</button>'}`;
     wrap.appendChild(whoami);
-    whoami.querySelector('#todo-change-name').onclick=()=>{
+    const _chg=whoami.querySelector('#todo-change-name');
+    if(_chg)_chg.onclick=()=>{
       openNameModal((newName)=>{
         const nameEl=whoami.querySelector('#todo-whoami-name');
         if(nameEl)nameEl.textContent=newName;
