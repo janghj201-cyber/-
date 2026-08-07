@@ -371,7 +371,7 @@ async function readStaffTodos(ctx, dateKey, target) {
   // "서로 보기는 되고 수정은 본인 것만" — 읽기는 조회대상, 쓰기는 setDoc 라우터에서 본인만.
   const targetId = target?.id ?? ctx.profileId
   const targetName = target?.name ?? ctx.profile.name
-  let query = supabase.from('daily_tasks').select('id, content, store_id, status, task_date, sort_order').eq('employee_id', targetId)
+  let query = supabase.from('daily_tasks').select('id, content, store_id, status, task_date, sort_order, subs').eq('employee_id', targetId)
   query = isToday(dateKey) ? query.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : query.eq('task_date', dateKey)
   const { data, error } = await query.order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true })
   if (error) throw error
@@ -383,6 +383,7 @@ async function readStaffTodos(ctx, dateKey, target) {
     status: r.status,
     author: targetName,
     fromDate: r.task_date !== dateKey ? r.task_date : null,
+    subs: r.subs || [],
   }))
 }
 
@@ -395,7 +396,7 @@ async function readStaffTodos(ctx, dateKey, target) {
 // 매칭 — 원본도 애초에 id 없이 배열로만 다루던 것과 같은 한계).
 async function writeStaffTodos(ctx, dateKey, { items }) {
   const today = isToday(dateKey)
-  let selQuery = supabase.from('daily_tasks').select('id, content, status, task_date').eq('employee_id', ctx.profileId)
+  let selQuery = supabase.from('daily_tasks').select('id, content, status, task_date, subs').eq('employee_id', ctx.profileId)
   selQuery = today ? selQuery.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : selQuery.eq('task_date', dateKey)
   const { data: currentRows, error: selErr } = await selQuery
   if (selErr) throw selErr
@@ -428,6 +429,7 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
           content: item.text,
           status: item.done ? 'done' : 'pending',
           sort_order: i,
+          subs: item.subs ?? null,
           carried_over_from: original.id,
         })
         if (error) throw error
@@ -444,6 +446,7 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
         content: item.text,
         status: item.done ? 'done' : 'pending',
         sort_order: i,
+        subs: item.subs ?? null,
       })
       if (error) throw error
       continue
@@ -454,6 +457,7 @@ async function writeStaffTodos(ctx, dateKey, { items }) {
     if (current.content !== item.text) patch.content = item.text
     const wantStatus = item.kept ? 'kept' : item.done ? 'done' : 'pending'
     if (current.status !== wantStatus) patch.status = wantStatus
+    if (JSON.stringify(current.subs ?? []) !== JSON.stringify(item.subs ?? [])) patch.subs = item.subs ?? []
     const { error } = await supabase.from('daily_tasks').update(patch).eq('id', item.id)
     if (error) throw error
   }

@@ -1749,6 +1749,7 @@ async function renderMyTodoList(){
     const todayMs=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
 
     let editingId=null;
+    let subsOpenId=null;
     const render=()=>{
       listEl.innerHTML='';
 
@@ -1825,19 +1826,80 @@ async function renderMyTodoList(){
               <button class="carry-action-btn carry-del-btn" data-act="delete">🗑️ 삭제</button>
             </div>`:'';
 
+          const _subs=item.subs||[];
+          const _subBadge=`<span data-subbadge style="font-size:10px;background:var(--purple-light);color:var(--purple);padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:800;${_subs.length?'':'display:none;'}">${_subs.length?`☑ ${_subs.filter(s=>s.done).length}/${_subs.length}`:''}</span>`;
           row.innerHTML=`
             <input type="checkbox" ${item.done?'checked':''}>
             <div style="flex:1">
-              <div class="my-todo-text">${item.text}${tags}</div>
+              <div class="my-todo-text">${item.text}${tags}${_subBadge}</div>
               ${actionBtns}
+              <div data-subhost></div>
             </div>
             <div class="todo-actions">
+              <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">☑</button>
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
               ${!carryDays||item.done?`
               <button class="todo-action-btn" data-act="edit">✏️</button>
               <button class="todo-action-btn" data-act="del">🗑️</button>`:''}
             </div>`;
+
+          // ── 세부 체크리스트 (하위 항목) ──
+          row.querySelector('[data-act="subs"]')?.addEventListener('click',()=>{
+            subsOpenId=subsOpenId===item.id?null:item.id;render();
+          });
+          const subHost=row.querySelector('[data-subhost]');
+          if(subHost&&subsOpenId===item.id){
+            const subs=item.subs=item.subs||[];
+            const updateBadge=()=>{
+              const bd=row.querySelector('[data-subbadge]');
+              if(!bd)return;
+              const dn=subs.filter(s=>s.done).length;
+              bd.textContent=subs.length?`☑ ${dn}/${subs.length}`:'';
+              bd.style.display=subs.length?'':'none';
+            };
+            const paint=(focusAdd)=>{
+              subHost.innerHTML='';
+              const box=document.createElement('div');
+              box.style.cssText='margin-top:7px;border-top:1px dashed var(--border);padding-top:7px;display:flex;flex-direction:column;gap:5px;';
+              subs.forEach(su=>{
+                const r=document.createElement('div');
+                r.style.cssText='display:flex;align-items:center;gap:7px;font-size:12px;';
+                const c=document.createElement('input');c.type='checkbox';c.checked=!!su.done;c.style.cssText='width:14px;height:14px;accent-color:var(--purple);flex-shrink:0;';
+                const sp=document.createElement('span');sp.textContent=su.text;sp.style.cssText='flex:1;'+(su.done?'text-decoration:line-through;color:var(--text-mute);':'color:var(--text);');
+                const del=document.createElement('button');del.textContent='✕';del.style.cssText='background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:11px;padding:2px 4px;font-family:inherit;';
+                c.onchange=async()=>{
+                  su.done=c.checked;
+                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){su.done=!c.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
+                  paint(false);updateBadge();
+                };
+                del.onclick=async()=>{
+                  const removed=subs.splice(subs.indexOf(su),1);
+                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.push(removed[0]);alert('저장 실패 — 네트워크를 확인해주세요');}
+                  paint(false);updateBadge();
+                };
+                r.appendChild(c);r.appendChild(sp);r.appendChild(del);box.appendChild(r);
+              });
+              const addRow=document.createElement('div');addRow.style.cssText='display:flex;gap:5px;';
+              const inp=document.createElement('input');inp.type='text';inp.placeholder='세부 항목 추가...';
+              inp.style.cssText='flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;background:#fff;';
+              const ab=document.createElement('button');ab.textContent='+';
+              ab.style.cssText='background:var(--purple-light);color:var(--purple);border:1px solid var(--purple);border-radius:6px;padding:0 10px;font-weight:800;cursor:pointer;font-family:inherit;';
+              const doAdd=async()=>{
+                const t=inp.value.trim();if(!t)return;
+                subs.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,5),text:t,done:false});
+                inp.value='';
+                try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.pop();alert('저장 실패 — 네트워크를 확인해주세요');}
+                paint(true);updateBadge();
+              };
+              ab.onclick=doAdd;
+              inp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
+              addRow.appendChild(inp);addRow.appendChild(ab);box.appendChild(addRow);
+              subHost.appendChild(box);
+              if(focusAdd)setTimeout(()=>inp.focus(),0);
+            };
+            paint(true);
+          }
 
           row.querySelector('input').onchange=async(e)=>{
             await toggleTodoItem(myStaff,dateKey,item.id,e.target.checked);
@@ -2120,8 +2182,17 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v2.7';
+const GUIDE_VERSION = 'v2.8';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v2.8 — 업무별 세부 체크리스트',
+    items: [
+      '내 업무의 각 업무 항목에 ☑ 버튼이 생겼어요 — 누르면 그 업무의 세부 체크리스트가 열립니다',
+      '예) "매장 정리" 업무 안에 → 매대 청소 / 재고 정리 / 가격표 교체 를 각각 체크',
+      '세부 항목이 있으면 업무 옆에 ☑ 2/3 처럼 진행 상황 배지가 표시돼요',
+      '세부 항목은 미완료 업무가 다음날 이월될 때 같이 따라갑니다',
+    ]
+  },
   {
     title: '🆕 v2.7 — 직원 근무지 설정 (관리자)',
     items: [
@@ -4577,6 +4648,15 @@ async function toggleTodoItem(name,dateKey,itemId,doneVal){
   const items=snap.exists()?(snap.data().items||[]):[];
   const item=items.find(x=>x.id===itemId);
   if(item)item.done=doneVal;
+  await setDoc(ref,{items});
+}
+
+async function updateSubItems(name,dateKey,itemId,subs){
+  const ref=staffTodoRef(name,dateKey);
+  const snap=await getDoc(ref);
+  const items=snap.exists()?(snap.data().items||[]):[];
+  const item=items.find(x=>x.id===itemId);
+  if(item)item.subs=subs;
   await setDoc(ref,{items});
 }
 
