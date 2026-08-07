@@ -939,6 +939,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
   <div class="app-footer">
     <div class="app-footer-title" id="footer-app-name">매장 운영 스케줄 시스템</div>
+    <div style="font-size:10.5px;color:var(--text-mute);margin:2px 0 4px;">버전 <b class="app-version-label" style="color:var(--text-sub);"></b></div>
     <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
     <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지</div>
   </div>
@@ -2190,6 +2191,8 @@ async function autoPostDayoffNotice(){
   }catch(e){}
 }
 const GUIDE_VERSION = 'v3.2';
+// 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
+document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=GUIDE_VERSION);
 const GUIDE_SECTIONS = [
   {
     title: '🆕 v3.2 — 출근 브리핑 팝업',
