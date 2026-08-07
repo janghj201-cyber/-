@@ -2189,8 +2189,16 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.1';
+const GUIDE_VERSION = 'v3.2';
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.2 — 출근 브리핑 팝업',
+    items: [
+      '하루 첫 접속 시 "오늘의 브리핑" 팝업이 떠요 — 확인할 인수인계, 미완료 업무(이월 표시), 오늘 고정업무, 새 공지를 한눈에',
+      '나에게 해당되는 내용이 하나도 없는 날엔 조용히 넘어갑니다',
+      '하루에 한 번만 뜨니 부담 없이 확인하고 시작하세요',
+    ]
+  },
   {
     title: '🆕 v3.0 — 고정 직원 "오늘만 예외 출근"',
     items: [
@@ -3562,6 +3570,7 @@ async function renderDashboardHome(){
   // v3 홈: 개인 우선 섹션 + 관리자란
   try{renderHomePersonal(tKey,dashTodosByName,dashHoByStore);}catch(e){console.warn('[home] personal',e);}
   try{renderHomeAdmin(dashTodosByName);}catch(e){console.warn('[home] admin',e);}
+  maybeShowDailyBriefing(tKey,dashTodosByName,dashHoByStore).catch(e=>console.warn('[brief]',e));
 
   for(const store of STORES){
     const block=document.createElement('div');
@@ -3880,6 +3889,111 @@ function renderHomeAdmin(todosByName){
     row.onclick=()=>enterMyWork(name);
     list.appendChild(row);
   });
+}
+
+// ── 출근 브리핑: 하루 첫 접속 시 "나에게 해당되는 것"만 모아 팝업 ──
+async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
+  const me=window.__vflowProfile?.name;
+  const uid=window.__vflowProfile?.id||'';
+  if(!me)return;
+  const key=`vflow_brief_${uid}_${tKey}`;
+  if(localStorage.getItem(key))return;
+
+  // 1) 확인할 인수인계 (나에게 지정 + 오늘 매장의 공용 미확인)
+  const _vp=window.__vflowProfile||{};
+  const myStoreId=_vp.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||null;
+  const hoRows=[];
+  for(const store of STORES){
+    const snap=hoByStore.get(store.id);
+    if(!snap||!snap.exists())continue;
+    (snap.data().items||[]).forEach(it=>{
+      if(it.confirmed||it.closed)return;
+      const toMe=it.recipient===me;
+      if(toMe||(myStoreId&&store.id===myStoreId&&!it.recipient))hoRows.push({store,it,toMe});
+    });
+  }
+  hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
+
+  // 2) 내 미완료 업무 (이월 포함)
+  const pair=(todosByName||[]).find(p=>p&&p[0]===me);
+  const mine=pair?pair[1]:[];
+  const undone=mine.filter(i=>!i.done);
+  const carried=undone.filter(i=>i.fromDate&&i.fromDate!==tKey);
+
+  // 3) 새 공지 (지난 브리핑 이후 올라온 공지)
+  let newNotices=[];
+  try{
+    const lastTs=parseInt(localStorage.getItem(`vflow_brief_ts_${uid}`)||'0',10)||(Date.now()-86400000);
+    const bs=await getDoc(doc(db,'board/posts'));
+    if(bs.exists())newNotices=(bs.data().items||[]).filter(p=>p.cat==='notice'&&(p.ts||0)>lastTs);
+  }catch(e){}
+
+  // 4) 오늘 고정업무
+  const st=STORES.find(s=>s.id===myStoreId)||null;
+  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
+  let fixedLabels=[];
+  try{
+    getEvs(ty,tm,td).forEach(e=>{
+      if(e.t==='order')fixedLabels.push('전체주문일');
+      else if(e.t==='stock')fixedLabels.push('재고실사');
+      else if(e.t==='pod')fixedLabels.push('팟형기기점검');
+      else if(e.t==='aio')fixedLabels.push('일체형기기점검');
+      else if(e.t==='report')fixedLabels.push('월간보고 마감');
+      else if(e.t==='as_deadline')fixedLabels.push('A/S 접수 마감');
+      else if(e.t==='as_send')fixedLabels.push('A/S 발송일');
+      else if(e.t==='clean')fixedLabels.push('대청소 '+e.sec+'구역');
+      else if(e.t==='holiday')fixedLabels.push(e.label||'공휴일');
+      else if(SPECIALS[e.t])fixedLabels.push(SPECIALS[e.t].task);
+    });
+  }catch(e){}
+
+  // 오늘 브리핑은 봤음으로 기록 (내용이 없으면 조용히 패스)
+  localStorage.setItem(key,'1');
+  localStorage.setItem(`vflow_brief_ts_${uid}`,String(Date.now()));
+  if(hoRows.length===0&&undone.length===0&&newNotices.length===0&&fixedLabels.length===0)return;
+
+  const dows=['일','월','화','수','목','금','토'];
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(20,28,42,0.55);display:flex;align-items:center;justify-content:center;padding:18px;';
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--card);border-radius:18px;max-width:420px;width:100%;max-height:82vh;overflow-y:auto;padding:18px 16px;box-shadow:0 18px 60px rgba(0,0,0,0.35);';
+  const sec=(html)=>{const d=document.createElement('div');d.innerHTML=html;card.appendChild(d);};
+  sec(`<div style="font-size:16px;font-weight:800;">📋 <b style="color:var(--gold);">${me}</b>님, 오늘의 브리핑</div>
+    <div style="font-size:11.5px;color:var(--text-sub);margin-top:2px;">${tm+1}월 ${td}일 (${dows[today.getDay()]})${st?` · 오늘 근무: ${st.icon} ${st.name}`:''}</div>`);
+  if(hoRows.length>0){
+    sec(`<div style="margin-top:13px;background:#fffdf4;border:1px solid #f2e6a8;border-left:4px solid var(--gold);border-radius:10px;padding:9px 11px;">
+      <div style="font-size:12.5px;font-weight:800;">🔔 확인할 인수인계 <span style="color:var(--red);">${hoRows.length}건</span></div>
+      ${hoRows.slice(0,3).map(({store,it,toMe})=>`<div style="font-size:12px;margin-top:5px;line-height:1.4;">${toMe?'<b style="color:var(--orange);">[나에게]</b> ':''}${it.text} <span style="color:var(--text-mute);font-size:10.5px;">· ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span></div>`).join('')}
+      ${hoRows.length>3?`<div style="font-size:10.5px;color:var(--text-mute);margin-top:4px;">외 ${hoRows.length-3}건</div>`:''}
+    </div>`);
+  }
+  if(undone.length>0){
+    sec(`<div style="margin-top:9px;background:var(--bg);border-radius:10px;padding:9px 11px;">
+      <div style="font-size:12.5px;font-weight:800;">📝 미완료 업무 <span style="color:var(--orange);">${undone.length}건</span>${carried.length?` <span style="font-size:10.5px;color:var(--red);">(이월 ${carried.length}건)</span>`:''}</div>
+      ${undone.slice(0,3).map(i=>`<div style="font-size:12px;margin-top:5px;">• ${i.text}</div>`).join('')}
+      ${undone.length>3?`<div style="font-size:10.5px;color:var(--text-mute);margin-top:4px;">외 ${undone.length-3}건</div>`:''}
+    </div>`);
+  }
+  if(fixedLabels.length>0){
+    sec(`<div style="margin-top:9px;background:var(--bg);border-radius:10px;padding:9px 11px;">
+      <div style="font-size:12.5px;font-weight:800;">🏪 오늘 매장 고정업무</div>
+      <div style="font-size:12px;margin-top:5px;line-height:1.6;">${fixedLabels.join(' · ')}</div>
+    </div>`);
+  }
+  if(newNotices.length>0){
+    sec(`<div style="margin-top:9px;background:var(--red-light);border-radius:10px;padding:9px 11px;">
+      <div style="font-size:12.5px;font-weight:800;">📢 새 공지 ${newNotices.length}건</div>
+      ${newNotices.slice(0,2).map(p=>`<div style="font-size:12px;margin-top:5px;">• ${p.title}</div>`).join('')}
+    </div>`);
+  }
+  const btn=document.createElement('button');
+  btn.textContent='확인하고 시작하기';
+  btn.style.cssText='display:block;width:100%;margin-top:14px;background:var(--navy);color:var(--gold);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;';
+  btn.onclick=()=>ov.remove();
+  card.appendChild(btn);
+  ov.appendChild(card);
+  ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
 }
 
 // ── v3 2차: 매장 방 — 고정업무·금일 업무·고정정보·인수인계가 한 화면 ──
