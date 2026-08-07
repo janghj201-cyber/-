@@ -490,7 +490,7 @@ async function readStaffProjects(ctx, target) {
   // 5-2: readStaffTodos와 같은 원리 — 읽기는 조회대상(없으면 본인), 쓰기는 본인만.
   const { data, error } = await supabase
     .from('projects')
-    .select('id, store_id, title, progress, status, done_date, created_at')
+    .select('id, store_id, title, progress, status, done_date, created_at, help_message')
     .eq('employee_id', target?.id ?? ctx.profileId)
     .order('created_at', { ascending: true })
   if (error) throw error
@@ -521,6 +521,7 @@ async function readStaffProjects(ctx, target) {
       startDate: p.created_at ? p.created_at.slice(0, 10) : undefined,
       doneDate: p.done_date ?? undefined,
       progress: p.progress ?? 0,
+      helpMessage: p.help_message ?? null,
       logs: logsByProject.get(p.id) ?? [],
     })),
   }

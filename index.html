@@ -1637,8 +1637,12 @@ function enterMyWork(name){
   const _vSelf=window.__vflowProfile;
   document.getElementById('screen-my-work').classList.toggle('view-only',!!(_vSelf&&_vSelf.name!==name));
   myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  // 직원 기본 매장 자동 설정
-  const defaultStoreId=STAFF_DEFAULT_STORE[name];
+  // 직원 기본 매장 자동 설정 — 홈에서 정한 "오늘 매장"(고정/예외출근/순환 당일선택)이 최우선 (본인일 때)
+  let _todayPick=null;
+  if(_vSelf&&_vSelf.name===name){
+    _todayPick=_vSelf.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||null;
+  }
+  const defaultStoreId=_todayPick||STAFF_DEFAULT_STORE[name];
   if(defaultStoreId){
     myStore=STORES.find(s=>s.id===defaultStoreId)||STORES[0];
   } else {
@@ -2182,7 +2186,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.0';
+const GUIDE_VERSION = 'v3.1';
 const GUIDE_SECTIONS = [
   {
     title: '🆕 v3.0 — 고정 직원 "오늘만 예외 출근"',
@@ -2197,6 +2201,7 @@ const GUIDE_SECTIONS = [
     items: [
       '협업 프로젝트에서 막히면 🙋 도움/피드백 요청 버튼을 누르세요 — 막힌 내용을 한 줄로 적으면 됩니다',
       '요청하면 전 직원 홈 맨 위에 🚨 붉은 카드로 표시되고, 협업 카드에도 붉은 테두리가 생겨요',
+      '개인 프로젝트도 똑같이 — 내 업무의 진행중 프로젝트에서 🙋 버튼으로 도움을 요청할 수 있어요',
       '동료·관리자는 카드를 눌러 프로젝트로 이동한 뒤 일지에 피드백을 남겨주세요',
       '도움이 해결되면 ✅ 해결됨 버튼으로 요청을 내리면 됩니다',
     ]
@@ -2921,8 +2926,48 @@ async function renderMyProjectBanner(){
       header.innerHTML=`<input type="checkbox" data-id="${item.id}">
         <span style="flex:1;font-weight:600;">${item.text}</span>
         <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
+        <button data-help="${item.id}" title="도움/피드백 요청" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;">🙋</button>
         <button data-del="${item.id}" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;padding:0 4px;">🗑️</button>`;
       row.appendChild(header);
+
+      // 도움 요청 상태/버튼 (개인 프로젝트 — 실제 uuid가 있는 항목만)
+      const _canHelp=/^[0-9a-f-]{36}$/i.test(String(item.id));
+      const _helpSave=async(patch)=>{
+        const mod=await import('./adapter/supabase-client.js');
+        const ctx=await (await import('./adapter/context.js')).getContext();
+        const {error,count}=await mod.supabase.from('projects').update(patch,{count:'exact'}).eq('id',item.id);
+        if(error||count===0)throw(error||new Error('0행'));
+        return ctx;
+      };
+      if(item.helpMessage){
+        row.style.border='2px solid var(--red)';row.style.borderRadius='10px';
+        const hb=document.createElement('div');
+        hb.style.cssText='margin:4px 2px 4px 28px;background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:6px 9px;font-size:11.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;';
+        hb.innerHTML=`<span style="color:var(--red);font-weight:800;">🚨 도움 요청 중</span><span style="flex:1;">${item.helpMessage}</span>`;
+        const rb=document.createElement('button');rb.textContent='✅ 해결됨';
+        rb.style.cssText='background:var(--green);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+        rb.onclick=async()=>{
+          if(!confirm('도움 요청을 내릴까요? (해결됨 처리)'))return;
+          try{await _helpSave({help_message:null,help_requested_by:null,help_requested_at:null});item.helpMessage=null;renderMyProjectBanner();if(window.renderCollabProjects)renderCollabProjects();}
+          catch(err){alert('처리 실패 — 네트워크/권한을 확인해주세요');}
+        };
+        hb.appendChild(rb);
+        row.appendChild(hb);
+      }
+      header.querySelector(`[data-help="${item.id}"]`)?.addEventListener('click',async(e)=>{
+        e.stopPropagation();
+        if(!_canHelp){alert('방금 만든 프로젝트예요 — 화면을 새로고침한 뒤 다시 시도해주세요.');return;}
+        if(item.helpMessage){alert('이미 도움 요청 중이에요. 해결되면 ✅ 해결됨을 눌러주세요.');return;}
+        const msg=prompt('어떤 도움이 필요한가요? 막힌 부분을 한 줄로 적어주세요.\n(홈 화면에 전 직원에게 표시됩니다)');
+        if(msg===null)return;
+        const t=msg.trim();
+        if(!t){alert('내용을 입력해주세요.');return;}
+        try{
+          const ctx=await _helpSave({help_message:t,help_requested_at:new Date().toISOString()});
+          await _helpSave({help_requested_by:ctx.profileId});
+          item.helpMessage=t;renderMyProjectBanner();if(window.renderCollabProjects)renderCollabProjects();
+        }catch(err){alert('요청 실패 — 네트워크/권한을 확인해주세요');}
+      });
 
       // 진행률 바
       const pct=item.progress||0;
@@ -3927,9 +3972,28 @@ window.renderCollabProjects=async function(){
   const _oldHelp=document.getElementById('home-help-alerts');
   if(_oldHelp)_oldHelp.remove();
   const _helped=ongoing.filter(r=>r.help_message);
-  if(_hp&&_helped.length){
+  let _pHelped=[];
+  try{
+    const {sb:_s2,T:_t2}=await collabApi();
+    const {data:_pp}=await _s2.from('projects').select('id,title,help_message,owner:profiles!employee_id(name)').eq('tenant_id',_t2).eq('status','ongoing').not('help_message','is',null);
+    _pHelped=_pp||[];
+  }catch(e){}
+  if(_hp&&(_helped.length||_pHelped.length)){
     const box=document.createElement('div');
     box.id='home-help-alerts';
+    _pHelped.forEach(r=>{
+      const c=document.createElement('div');
+      c.className='hp-card';
+      c.style.border='2px solid var(--red)';
+      c.style.background='var(--red-light)';
+      c.style.cursor='pointer';
+      c.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 — ${r.owner?.name||'요청자'}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:3px;">🚀 ${r.title}</div>
+        <div style="font-size:12.5px;margin-top:2px;color:var(--text);">${r.help_message}</div>
+        <div style="font-size:10.5px;color:var(--text-sub);margin-top:4px;">누르면 그 직원 업무로 이동 — 도움을 나눠주세요</div>`;
+      c.onclick=()=>{if(r.owner?.name)enterMyWork(r.owner.name);};
+      box.appendChild(c);
+    });
     _helped.forEach(r=>{
       const c=document.createElement('div');
       c.className='hp-card';
