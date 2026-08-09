@@ -9,3 +9,4 @@ _to_delete/
 
 # 크론 설정은 배포 필요
 !vercel.json
+!package.json

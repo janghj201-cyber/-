@@ -39,3 +39,22 @@ self.addEventListener('fetch', (e) => {
     }
   })());
 });
+
+// ── 🔔 웹 푸시 수신 ──
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) {}
+  e.waitUntil(self.registration.showNotification(d.title || 'V-Flow 알림', {
+    body: d.body || '확인할 항목이 있어요',
+    icon: '/icons/icon-192-v2.png',
+    badge: '/icons/icon-192-v2.png',
+    data: { url: d.url || '/' },
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) { if ('focus' in c) { c.focus(); return; } }
+    return clients.openWindow((e.notification.data && e.notification.data.url) || '/');
+  }));
+});

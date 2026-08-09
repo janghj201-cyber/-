@@ -2190,11 +2190,21 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.5';
+const GUIDE_VERSION = 'v3.6';
 const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.6 — 🔔 푸시 알림',
+    items: [
+      '홈의 🔔 알림 켜기를 누르고 "허용"하면, 앱을 안 열어도 폰 알림이 옵니다',
+      '3일 이상 미확인 인수인계가 있으면 매일 아침 9시에 담당자·관리자에게 자동 알림',
+      '📱 아이폰: 홈 화면에 추가한 앱에서 열어야 알림을 켤 수 있어요 (Safari → 공유 → 홈 화면에 추가)',
+      '🤖 안드로이드: 크롬에서 바로 켜기 가능',
+      '알림을 눌러 앱이 열리면 홈에서 바로 확인 처리하면 됩니다',
+    ]
+  },
   {
     title: '🆕 v3.5 — 업무 요청',
     items: [
@@ -3892,6 +3902,8 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
 
   // 📨 나에게 온 업무 요청 (비동기 로드)
   renderHomeRequests(wrap);
+  // 🔔 알림 켜기 카드 (권한 미설정 시에만)
+  renderHomePushCard(wrap);
 }
 
 function renderHomeAdmin(todosByName){
@@ -3917,6 +3929,59 @@ function renderHomeAdmin(todosByName){
     row.onclick=()=>enterMyWork(name);
     list.appendChild(row);
   });
+}
+
+// ── 🔔 웹 푸시: 알림 켜기(구독 등록) — 3일+ 미확인 인수인계 아침 알림 수신용 ──
+const VAPID_PUBLIC='BHw6CVbdFK1U0Mx4mtDW7T2lg3Ol7_yoTAzB_GsKuowWYxGbWEV0QE62EGrZw1j4O_0MIEM8aVHhtymUtjsqL3c';
+function _pushB64(u){const p='='.repeat((4-u.length%4)%4);const b=(u+p).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);const a=new Uint8Array(r.length);for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a;}
+async function enablePush(silent){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+      if(!silent)alert('이 기기/브라우저는 알림을 지원하지 않아요.\n📱 아이폰은 홈 화면에 추가한 앱에서만 알림이 가능합니다.');
+      return false;
+    }
+    if(!silent){
+      const perm=await Notification.requestPermission();
+      if(perm!=='granted'){alert('알림 권한이 허용되지 않았어요.\n브라우저 설정에서 vflow.kr 알림을 허용해주세요.');return false;}
+    } else if(Notification.permission!=='granted')return false;
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_pushB64(VAPID_PUBLIC)});
+    const j=sub.toJSON();
+    const {sb,ctx}=await wrApi();
+    const {error}=await sb.from('push_subscriptions').upsert({
+      tenant_id:ctx.tenantId,profile_id:ctx.profileId,endpoint:sub.endpoint,
+      p256dh:j.keys.p256dh,auth:j.keys.auth,last_seen_at:new Date().toISOString()
+    },{onConflict:'endpoint'});
+    if(error)throw error;
+    if(!silent)alert('🔔 알림이 켜졌어요!\n3일 이상 미확인 인수인계 등이 아침에 알림으로 옵니다.');
+    return true;
+  }catch(e){
+    if(!silent)alert('알림 설정 실패 — 잠시 후 다시 시도해주세요');
+    console.warn('[push]',e);
+    return false;
+  }
+}
+function renderHomePushCard(wrap){
+  try{
+    if(!('PushManager' in window)||!('Notification' in window))return;
+    if(Notification.permission==='granted'){enablePush(true);return;} // 이미 허용 → 조용히 구독 갱신
+    if(Notification.permission==='denied')return;
+    if(localStorage.getItem('vflow_push_dismiss'))return;
+    const card=document.createElement('div');
+    card.className='hp-card';
+    card.style.cssText+='display:flex;align-items:center;gap:10px;';
+    card.innerHTML='<span style="font-size:20px;">🔔</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;">알림 켜기</div><div style="font-size:11px;color:var(--text-sub);">미확인 인수인계가 쌓이면 폰으로 알려드려요</div></div>';
+    const on=document.createElement('button');
+    on.className='hp-confirm';on.textContent='켜기';
+    on.onclick=async()=>{if(await enablePush(false))card.remove();};
+    const x=document.createElement('button');
+    x.style.cssText='background:none;border:none;color:var(--text-mute);font-size:14px;cursor:pointer;font-family:inherit;padding:4px;';
+    x.textContent='✕';x.title='다시 보지 않기';
+    x.onclick=()=>{localStorage.setItem('vflow_push_dismiss','1');card.remove();};
+    card.appendChild(on);card.appendChild(x);
+    wrap.appendChild(card);
+  }catch(e){}
 }
 
 // ── 📨 업무 요청: 매장 귀속 · 수락(내 업무 등록)/거절(사유 필수) · 3일 무응답 표시 ──

@@ -16,3 +16,4 @@ __pycache__/
 
 # Vercel 크론 설정
 !vercel.json
+!package.json
