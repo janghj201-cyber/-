@@ -30,6 +30,19 @@ module.exports = async (req, res) => {
     ]);
 
     const now = Date.now();
+    // 허브 표준 매장명 매핑 (허브 KPI 명단과 동일 표기)
+    const HUB_NAMES = {
+      '검단점': '위베이프 검단점',
+      '계산점': '위베이프 계산점',
+      '구월 길병원점': '위베이프 구월길병원점',
+      '구월 로데오점': '위베이프 구월로데오점',
+      '인천 논현점': '위베이프 논현점',
+      '부천 상동점': '위베이프 부천상동점',
+      '부천 신중동점': '위베이프 부천중동점',
+      '인천 연수점': '위베이프 연수점',
+      '인천공항점': '위베이프 인천공항점',
+    };
+
     const rows = stores.map((s) => {
       const t = tasks.filter((x) => x.store_id === s.id);
       const un = unconf.filter((u) => u.store_id === s.id);
@@ -37,6 +50,7 @@ module.exports = async (req, res) => {
       return {
         store_id: s.id,
         store_name: s.name,
+        hub_name: HUB_NAMES[s.name] || ('위베이프 ' + String(s.name).replace(/\s+/g, '')),
         tasks_done: t.filter((x) => x.status === 'done').length,
         tasks_pending: t.filter((x) => x.status === 'pending').length,
         tasks_total: t.filter((x) => x.status === 'done' || x.status === 'pending').length,
