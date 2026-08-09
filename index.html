@@ -6917,7 +6917,15 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   // 5-5: 관리자 여부는 로그인 계정 role로 (renderMyPage의 관리자 전용 요소 등에 사용)
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');
-  switchTab('dashboard');
+  // Ⓜ️ 모니터링 전용(대표): 아이콘 누르면 바로 주간 리포트가 첫 화면
+  if(window.__vflowProfile?.monitorOnly&&isAdmin){
+    dashTab='report';
+    dashViewDate=null;
+    showScreen('screen-admin');
+    renderDashboard();
+  } else {
+    switchTab('dashboard');
+  }
   // 최종점검: 위베이프 전용 1회성 공지(v1.4 모달·게시판 자동등록 3종) 호출 제거 —
   // 신규 테넌트 게시판에 위베이프 업데이트 공지가 자동 등록되던 문제. 함수는 무해하게 남김.
   applyTenantBranding();
