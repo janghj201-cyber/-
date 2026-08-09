@@ -2191,8 +2191,9 @@ async function autoPostDayoffNotice(){
   }catch(e){}
 }
 const GUIDE_VERSION = 'v3.4';
+const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
-document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=GUIDE_VERSION);
+document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
   {
     title: '🆕 v3.3 — 주간 리포트 & 직원 활동 (관리자)',
