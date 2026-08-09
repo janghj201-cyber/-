@@ -41,6 +41,7 @@ export async function getContext() {
     storeId: (_ovActive ? profile.store_override_id : null) ?? profile.store_id ?? null,
     baseStoreId: profile.store_id ?? null,
     overrideActive: _ovActive,
+    monitorOnly: !!profile.monitor_only,
   }
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
   window.__vflowTenant = { name: tenantRes.data?.name ?? '' }

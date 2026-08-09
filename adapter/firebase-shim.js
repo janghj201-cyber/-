@@ -1048,11 +1048,11 @@ async function readStaffConfig(ctx) {
 // ── 직원 초대 (V-Flow 기존 invitations 테이블 — firebase 흉내가 아니라 직접 export) ──
 // 초대 링크 방식: 이메일 발송(Edge Function) 없이 링크를 관리자가 직접 전달한다.
 // 생성/목록/취소는 RLS(owner/manager)가 강제, 수락은 invite.html에서 본인 이메일 기준.
-export async function createInvitation({ name, email, role, storeId }) {
+export async function createInvitation({ name, email, role, storeId, monitorOnly }) {
   const ctx = await getContext()
   const { data, error } = await supabase
     .from('invitations')
-    .insert({ tenant_id: ctx.tenantId, store_id: storeId || null, role: role || 'staff', name, email, invited_by: ctx.profileId })
+    .insert({ tenant_id: ctx.tenantId, store_id: storeId || null, role: role || 'staff', name, email, invited_by: ctx.profileId, monitor_only: !!monitorOnly })
     .select()
     .single()
   if (error) throw error
@@ -1174,9 +1174,10 @@ function loadProfiles() {
   // 프라미스 자체를 캐시 — 동시 호출(대시보드 직원 16명 병렬 조회)이 쿼리 1개를 공유한다.
   if (!_profilesCache) {
     _profilesCache = (async () => {
-      const { data, error } = await supabase.from('profiles').select('id, name, role, store_id, status').order('name')
+      const { data, error } = await supabase.from('profiles').select('id, name, role, store_id, status, monitor_only').order('name')
       if (error) { _profilesCache = null; throw error }
-      return (data ?? []).filter((p) => (p.status ?? 'active') !== 'inactive')
+      // 모니터링 전용(대표) 계정은 직원 목록/근무자/통계 어디에도 섞지 않는다
+      return (data ?? []).filter((p) => (p.status ?? 'active') !== 'inactive' && !p.monitor_only)
     })()
   }
   return _profilesCache

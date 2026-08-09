@@ -53,7 +53,7 @@
       if (inv.status !== 'pending') throw new Error('이미 사용됐거나 만료된 초대예요.')
       const { data: { user } } = await supabase.auth.getUser()
       // 프로필 생성(초대 조건과 일치해야 RLS 통과) + 초대 수락 처리
-      const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, tenant_id: inv.tenant_id, store_id: inv.store_id, name: inv.name, role: inv.role })
+      const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, tenant_id: inv.tenant_id, store_id: inv.store_id, name: inv.name, role: inv.role, monitor_only: inv.monitor_only ?? false })
       if (pErr && !String(pErr.message).includes('duplicate')) throw pErr
       const { error: uErr } = await supabase.from('invitations').update({ status: 'accepted' }).eq('id', inv.id)
       if (uErr) throw uErr
