@@ -2190,11 +2190,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.4';
+const GUIDE_VERSION = 'v3.5';
 const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.5 — 업무 요청',
+    items: [
+      '매장 방 아래 📨 업무 요청 — 그 매장에 해줬으면 하는 업무를 요청할 수 있어요 (받는 사람 지정 또는 근무자 누구나)',
+      '요청받은 사람은 ✅ 수락(내 오늘 업무에 자동 등록) 또는 ❌ 거절(사유 필수)을 선택합니다',
+      '나에게 온 요청은 홈 상단 📨 카드에서 바로 수락/거절할 수 있어요',
+      '3일간 응답이 없으면 요청에 ⏰ 표시가 붙어요 — 요청은 인수인계(알림)와 달리 "해달라는 것"입니다',
+    ]
+  },
   {
     title: '🆕 v3.3 — 주간 리포트 & 직원 활동 (관리자)',
     items: [
@@ -3880,6 +3889,9 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
     });
   }
   wrap.appendChild(card2);
+
+  // 📨 나에게 온 업무 요청 (비동기 로드)
+  renderHomeRequests(wrap);
 }
 
 function renderHomeAdmin(todosByName){
@@ -3905,6 +3917,164 @@ function renderHomeAdmin(todosByName){
     row.onclick=()=>enterMyWork(name);
     list.appendChild(row);
   });
+}
+
+// ── 📨 업무 요청: 매장 귀속 · 수락(내 업무 등록)/거절(사유 필수) · 3일 무응답 표시 ──
+async function wrApi(){
+  const sb=(await import('./adapter/supabase-client.js')).supabase;
+  const ctx=await (await import('./adapter/context.js')).getContext();
+  return {sb,ctx};
+}
+const _wrEsc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+async function wrCreate(storeId,content,recipientName){
+  const {sb,ctx}=await wrApi();
+  let recipientId=null;
+  if(recipientName){
+    try{const {data}=await sb.from('profiles').select('id').eq('tenant_id',ctx.tenantId).eq('name',recipientName).limit(1);recipientId=data?.[0]?.id||null;}catch(e){}
+  }
+  const {error}=await sb.from('work_requests').insert({tenant_id:ctx.tenantId,store_id:storeId,requester_id:ctx.profileId,recipient_id:recipientId,content});
+  if(error)throw error;
+}
+async function wrRespond(reqRow,accept){
+  const {sb,ctx}=await wrApi();
+  let reason=null;
+  if(!accept){
+    const r=prompt('거절 사유를 적어주세요 (요청자에게 표시됩니다)');
+    if(r===null)return false;
+    reason=(r||'').trim();
+    if(!reason){alert('거절할 때는 사유가 필요해요.');return false;}
+  } else {
+    if(!confirm(`이 요청을 수락할까요?\n"${reqRow.content}"\n→ 내 오늘 업무에 자동 등록됩니다.`))return false;
+  }
+  const patch=accept
+    ?{status:'accepted',responded_by:ctx.profileId,responded_at:new Date().toISOString()}
+    :{status:'declined',decline_reason:reason,responded_by:ctx.profileId,responded_at:new Date().toISOString()};
+  const {error,count}=await sb.from('work_requests').update(patch,{count:'exact'}).eq('id',reqRow.id).eq('status','pending');
+  if(error||count===0){alert('처리 실패 — 이미 다른 사람이 처리했거나 네트워크 문제예요. 새로고침 후 확인해주세요.');return false;}
+  if(accept){
+    const {error:tErr}=await sb.from('daily_tasks').insert({
+      tenant_id:ctx.tenantId,store_id:reqRow.store_id,employee_id:ctx.profileId,
+      task_date:todayKey(),content:'📨 '+reqRow.content,status:'pending'});
+    if(tErr){alert('요청은 수락됐지만 업무 등록에 실패했어요 — 내 업무에서 직접 추가해주세요.');}
+  }
+  return true;
+}
+function wrDaysAgo(ts){return Math.floor((Date.now()-new Date(ts).getTime())/86400000);}
+
+// 매장 방의 업무 요청 섹션
+async function buildRequestSection(store){
+  const wrap=document.createElement('div');
+  wrap.className='handover-section';
+  wrap.innerHTML='<div class="handover-sub" style="margin:12px 0 8px;">📨 업무 요청</div><div id="wr-list" class="todo-list"><div class="todo-empty">불러오는 중...</div></div>';
+  const listEl=wrap.querySelector('#wr-list');
+  const {sb,ctx}=await wrApi();
+  const me=window.__vflowProfile?.name;
+  const paint=async()=>{
+    try{
+      const {data}=await sb.from('work_requests')
+        .select('id,store_id,content,status,decline_reason,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)')
+        .eq('store_id',store.id).order('created_at',{ascending:false}).limit(20);
+      const rows=data||[];
+      listEl.innerHTML='';
+      if(rows.length===0){listEl.innerHTML='<div class="todo-empty">요청이 없습니다 — 아래에서 이 매장에 업무를 요청할 수 있어요</div>';}
+      rows.forEach(r=>{
+        const row=document.createElement('div');
+        row.className='todo-item';
+        const days=wrDaysAgo(r.created_at);
+        let badge='';
+        if(r.status==='accepted')badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--green-light);color:var(--green);">✅ ${_wrEsc(r.responder?.name||'')} 수락</span>`;
+        else if(r.status==='declined')badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--red-light);color:var(--red);">거절 — ${_wrEsc(r.decline_reason||'')}</span>`;
+        else if(days>=3)badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--red-light);color:var(--red);">⏰ ${days}일째 응답 없음</span>`;
+        else badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--orange-light);color:var(--orange);">대기중</span>`;
+        const toTag=r.recipient?.name?`→ ${_wrEsc(r.recipient.name)}`:'→ 근무자 누구나';
+        row.innerHTML=`<div class="todo-text-wrap"><span class="todo-text">${_wrEsc(r.content)}</span> ${badge}<div class="todo-author">요청: ${_wrEsc(r.requester?.name||'익명')} ${toTag} · ${r.created_at.slice(5,10).replace('-','/')}</div></div>`;
+        if(r.status==='pending'&&me&&(!r.recipient?.name||r.recipient.name===me)){
+          const act=document.createElement('div');act.className='todo-actions';
+          const ok=document.createElement('button');ok.className='todo-action-btn';ok.textContent='✅';ok.title='수락 — 내 업무로 등록';
+          ok.onclick=async()=>{if(await wrRespond(r,true))paint();};
+          const no=document.createElement('button');no.className='todo-action-btn';no.textContent='❌';no.title='거절 (사유 필수)';
+          no.onclick=async()=>{if(await wrRespond(r,false))paint();};
+          act.appendChild(ok);act.appendChild(no);row.appendChild(act);
+        } else if(r.status==='pending'&&r.requester?.name===me){
+          const act=document.createElement('div');act.className='todo-actions';
+          const del=document.createElement('button');del.className='todo-action-btn';del.textContent='🗑️';del.title='요청 취소';
+          del.onclick=async()=>{
+            if(!confirm('이 요청을 취소할까요?'))return;
+            const {error,count}=await sb.from('work_requests').delete({count:'exact'}).eq('id',r.id);
+            if(error||count===0){alert('취소 실패');return;}
+            paint();
+          };
+          act.appendChild(del);row.appendChild(act);
+        }
+        listEl.appendChild(row);
+      });
+    }catch(e){listEl.innerHTML='<div class="todo-empty">불러오기 실패 (관리자: 업무요청 테이블 SQL 필요)</div>';}
+  };
+  paint();
+
+  // 요청 만들기
+  const form=document.createElement('div');
+  form.style.cssText='display:flex;flex-direction:column;gap:6px;margin-top:8px;';
+  const selRow=document.createElement('select');
+  selRow.style.cssText='border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;background:#fff;';
+  selRow.innerHTML='<option value="">받는 사람: 이 매장 근무자 누구나</option>'+staffList.filter(n=>n!==me).map(n=>`<option value="${_wrEsc(n)}">받는 사람: ${_wrEsc(n)}</option>`).join('');
+  const inRow=document.createElement('div');inRow.className='todo-input-row';
+  inRow.innerHTML='<input type="text" class="todo-input" placeholder="이 매장에 요청할 업무를 입력하세요" id="wr-input"><button class="todo-add-btn" id="wr-add">📨 요청</button>';
+  form.appendChild(selRow);form.appendChild(inRow);
+  wrap.appendChild(form);
+  const doReq=async()=>{
+    const inp=inRow.querySelector('#wr-input');
+    const t=(inp.value||'').trim();
+    if(!t)return;
+    const btn=inRow.querySelector('#wr-add');btn.disabled=true;
+    try{await wrCreate(store.id,t,selRow.value||null);inp.value='';paint();}
+    catch(e){alert('요청 실패 — 네트워크/권한을 확인해주세요');}
+    btn.disabled=false;
+  };
+  inRow.querySelector('#wr-add').onclick=doReq;
+  inRow.querySelector('#wr-input').addEventListener('keydown',e=>{if(e.key==='Enter')doReq();});
+  return wrap;
+}
+
+// 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
+async function renderHomeRequests(wrap){
+  try{
+    const me=window.__vflowProfile?.name;
+    if(!me||!wrap)return;
+    const {sb,ctx}=await wrApi();
+    const myStoreId=window.__vflowProfile?.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||null;
+    const {data}=await sb.from('work_requests')
+      .select('id,store_id,content,status,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name)')
+      .eq('status','pending').order('created_at',{ascending:true}).limit(30);
+    const rows=(data||[]).filter(r=>{
+      const toMe=r.recipient?.name===me;
+      const isMine=r.requester?.name===me;
+      const myStorePub=!r.recipient?.name&&myStoreId&&r.store_id===myStoreId;
+      return !isMine&&(toMe||myStorePub);
+    });
+    const old=document.getElementById('home-wr-card');
+    if(old)old.remove();
+    if(rows.length===0)return;
+    const card=document.createElement('div');
+    card.id='home-wr-card';
+    card.className='hp-card';
+    card.style.borderLeft='5px solid var(--blue)';
+    card.innerHTML=`<div class="hp-head"><span class="hp-title">📨 나에게 온 업무 요청</span><span class="hp-badge" style="background:var(--blue);">${rows.length}건</span></div>`;
+    rows.slice(0,4).forEach(r=>{
+      const row=document.createElement('div');
+      row.className='hp-ho-item';
+      const st=STORES.find(s=>s.id===r.store_id);
+      row.innerHTML=`<span class="hp-tag ${r.recipient?.name===me?'hp-tag-me':'hp-tag-pub'}">${r.recipient?.name===me?'나에게':'공용'}</span>
+        <div style="flex:1;">${_wrEsc(r.content)}<div class="hp-meta">${_wrEsc(r.requester?.name||'익명')} · ${st?st.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):''}</div></div>`;
+      const ok=document.createElement('button');ok.className='hp-confirm';ok.textContent='✅ 수락';
+      ok.onclick=async()=>{if(await wrRespond(r,true)){row.remove();const left=card.querySelectorAll('.hp-ho-item').length;if(left===0)card.remove();}};
+      const no=document.createElement('button');no.className='hp-confirm';no.style.background='var(--red)';no.textContent='거절';
+      no.onclick=async()=>{if(await wrRespond(r,false)){row.remove();const left=card.querySelectorAll('.hp-ho-item').length;if(left===0)card.remove();}};
+      row.appendChild(ok);row.appendChild(no);
+      card.appendChild(row);
+    });
+    wrap.insertBefore(card,wrap.children[1]||null);
+  }catch(e){console.warn('[wr]',e);}
 }
 
 // ── 출근 브리핑: 하루 첫 접속 시 "나에게 해당되는 것"만 모아 팝업 ──
@@ -4056,9 +4226,12 @@ function openStoreRoom(store){
   body.appendChild(buildTodoSection(ty,tm,td,false));
   // 매장 고정 정보(접이식) + 이 매장 인수인계
   body.appendChild(buildHandoverSection(ty,tm,td));
+  // 📨 업무 요청 (비동기 — 준비되면 붙음)
+  buildRequestSection(store).then(sec=>{const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
 
   // 월간 스케줄로 가는 통로 유지
   const goBtn=document.createElement('button');
+  goBtn.id='room-go-monthly';
   goBtn.style.cssText='display:block;width:100%;margin:12px 0 24px;padding:12px;background:var(--navy);color:var(--gold);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
   goBtn.textContent='📅 이 매장 월간 스케줄 보기';
   goBtn.onclick=()=>{window.closeStoreRoom();switchTab('monthly');};
