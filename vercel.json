@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/sync-dayoffs", "schedule": "0 4 1,2 * *" }
+    { "path": "/api/sync-dayoffs", "schedule": "0 4 1,2 * *" },
+    { "path": "/api/weekly-report", "schedule": "30 22 * * 0" }
   ]
 }
