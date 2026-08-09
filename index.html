@@ -6577,13 +6577,30 @@ async function renderSettingsTab(content){
       const {getContext}=await import('./adapter/context.js');
       const ctx=await getContext();
       const listEl=secW.querySelector('#workplace-list');
-      const {data}=await supabase.from('profiles').select('id,name,role,store_id,status,monitor_only').eq('tenant_id',ctx.tenantId).order('name');
+      const {data}=await supabase.from('profiles').select('id,name,role,store_id,status,monitor_only,employee_no').eq('tenant_id',ctx.tenantId).order('employee_no',{ascending:true,nullsFirst:false}).order('name');
       const act=(data||[]).filter(p=>(p.status??'active')!=='inactive');
       listEl.innerHTML='';
       act.forEach(p=>{
         const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);';
         const roleTag=p.role==='owner'?' <span style="font-size:10px;color:var(--gold);font-weight:800;">대표</span>':p.role==='manager'?' <span style="font-size:10px;color:var(--blue);font-weight:800;">매니저</span>':'';
-        row.innerHTML=`<span style="font-size:13px;font-weight:600;">${p.name}${roleTag}</span>`;
+        const nameWrap=document.createElement('span');
+        nameWrap.style.cssText='display:flex;align-items:center;gap:6px;min-width:0;';
+        nameWrap.innerHTML=`<span style="font-size:13px;font-weight:600;">${p.name}${roleTag}</span>`;
+        const eb=document.createElement('button');
+        eb.textContent=p.employee_no||'사번 등록';
+        eb.title='클릭해서 사번 등록/수정';
+        eb.style.cssText=`font-size:10px;font-weight:800;border-radius:8px;padding:2px 7px;border:1px solid ${p.employee_no?'var(--border)':'var(--gold)'};background:${p.employee_no?'#f6f4ee':'var(--gold-light)'};color:${p.employee_no?'var(--text-sub)':'var(--orange)'};cursor:pointer;font-family:inherit;`;
+        eb.onclick=async()=>{
+          const v=prompt(`${p.name} 님의 사번 (예: WV-015)\n비우고 확인하면 사번이 제거됩니다.`,p.employee_no||'WV-0');
+          if(v===null)return;
+          const t=v.trim()||null;
+          const {error,count}=await supabase.from('profiles').update({employee_no:t},{count:'exact'}).eq('id',p.id);
+          if(error||count===0){alert('저장 실패'+(error?': '+error.message:' — 권한 확인'));return;}
+          p.employee_no=t;
+          eb.textContent=t||'사번 등록';
+        };
+        nameWrap.appendChild(eb);
+        row.appendChild(nameWrap);
         if(p.monitor_only){
           const mo=document.createElement('span');
           mo.style.cssText='font-size:11px;font-weight:800;color:var(--purple);';
