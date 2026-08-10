@@ -803,7 +803,13 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <button onclick="closeCollabCreate()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
     </div>
     <div class="update-modal-body">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">프로젝트명</label>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">범위</label>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <button type="button" id="collab-scope-all" onclick="setCollabScope('all')" style="flex:1;border:2px solid var(--navy);background:var(--navy);color:var(--gold);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🤝 전사 협업</button>
+        <button type="button" id="collab-scope-store" onclick="setCollabScope('store')" style="flex:1;border:2px solid var(--border);background:#fff;color:var(--text-sub);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🏗️ 매장 프로젝트</button>
+      </div>
+      <select id="collab-store-select" style="display:none;width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;margin-bottom:6px;background:#fff;"></select>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin:8px 0 6px;">프로젝트명</label>
       <input type="text" id="collab-title-input" placeholder="예) 매장 자동화 프로그램 제작" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;">
       <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin:14px 0 6px;">참여 직원 (여러 명 선택)</label>
       <div id="collab-member-picker" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
@@ -916,7 +922,9 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
   <!-- 관리자란: 직원별 오늘 업무 (관리자 계정에만 표시) -->
   <div class="dashboard-today" id="home-admin-section" style="display:none;">
-    <div class="dashboard-today-header">👑 관리자란 — 직원별 오늘 업무</div>
+    <div class="dashboard-today-header" id="admin-fold-toggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+      <span>👑 관리자란 — 직원별 오늘 업무</span><span id="admin-fold-arrow" style="color:var(--gold);font-size:12px;font-weight:800;">접기 ▲</span>
+    </div>
     <div id="home-admin-emps"></div>
   </div>
   <!-- 오늘 전체 매장 현황 (원할 때만 펼쳐보기 — 관리자는 기본 펼침) -->
@@ -1636,6 +1644,12 @@ window.saveMyMemo=async function(){
 function saveMyMemo(){window.saveMyMemo();}
 
 function enterMyWork(name){
+  // 순환직원이 오늘 매장을 안 정하고 본인 업무에 들어가면 먼저 선택
+  const _gSelf=window.__vflowProfile;
+  if(_gSelf&&_gSelf.name===name&&needTodayStorePick()){
+    showTodayStorePick(()=>enterMyWork(name));
+    return;
+  }
   myStaff=name;
   // 5-2: 타인 카드는 조회 전용(보기 O, 수정 X) — 어댑터도 타인 쓰기를 차단함
   const _vSelf=window.__vflowProfile;
@@ -2190,11 +2204,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.6';
+const GUIDE_VERSION = 'v3.7';
 const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.7 — 오늘 매장 선택 · 매장 프로젝트',
+    items: [
+      '📍 순환근무 직원은 아침(7시 이후) 첫 접속 때 "오늘 어느 매장에서 근무하세요?" 선택이 먼저 떠요 — 골라야 시작됩니다 (다른 매장에 업무가 잘못 적히는 것 방지)',
+      '선택한 매장이 그날의 내 업무·인수인계 기본 매장이 됩니다 (휴무면 "오늘은 휴무예요")',
+      '🏗️ 매장 프로젝트 — 하루에 안 끝나는 매장 일(창고 정리 등)은 매장 방의 🏗️ 섹션에서 만들고, 그 매장 근무자가 이어서 진행·일지를 쓰면 됩니다 (개인 미완료로 안 잡혀요)',
+      '새 협업 만들 때 🤝 전사 협업 / 🏗️ 매장 프로젝트 중 범위를 고를 수 있어요',
+    ]
+  },
   {
     title: '🆕 v3.6 — 🔔 푸시 알림',
     items: [
@@ -3573,6 +3596,8 @@ async function renderDashboardHome(){
   const _me=window.__vflowProfile;
   if(_greetEl&&_me&&_me.name)_greetEl.innerHTML=`<b style="color:var(--gold);">${_me.name}</b>님, 어서오세요!`;
   startHomeClock();
+  // 순환직원: 오늘 매장 먼저 정하고 시작
+  if(needTodayStorePick())showTodayStorePick();
 
   // 게시판 로드
   loadBoard();
@@ -3912,6 +3937,22 @@ function renderHomeAdmin(todosByName){
   if(!sec||!list)return;
   if(!isAdmin){sec.style.display='none';return;}
   sec.style.display='block';
+  // 접이식 (상태 기억)
+  const _foldT=document.getElementById('admin-fold-toggle');
+  const _foldA=document.getElementById('admin-fold-arrow');
+  const _applyFold=()=>{
+    const closed=localStorage.getItem('vflow_adminfold')==='1';
+    list.style.display=closed?'none':'block';
+    if(_foldA)_foldA.textContent=closed?'펼치기 ▼':'접기 ▲';
+  };
+  if(_foldT&&!_foldT._wired){
+    _foldT._wired=true;
+    _foldT.onclick=()=>{
+      localStorage.setItem('vflow_adminfold',localStorage.getItem('vflow_adminfold')==='1'?'0':'1');
+      _applyFold();
+    };
+  }
+  _applyFold();
   list.innerHTML='';
   list.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(26,35,50,0.07);';
   (todosByName||[]).forEach(pair=>{
@@ -3962,6 +4003,50 @@ async function enablePush(silent){
     return false;
   }
 }
+// ── 📍 순환직원 오늘 매장 선택 강제 (오전 7시 이후 · 선택 전 닫기 불가) ──
+function needTodayStorePick(){
+  const vp=window.__vflowProfile||{};
+  if(!vp.name||vp.monitorOnly||vp.baseStoreId)return false; // 고정·모니터링 계정 제외
+  if(new Date().getHours()<7)return false;                   // 새벽 마감 작업은 방해 안 함
+  if(localStorage.getItem('vflow_todaystore_'+todayKey()))return false;
+  if(localStorage.getItem('vflow_todayoff_'+todayKey()))return false;
+  return true;
+}
+function showTodayStorePick(onDone){
+  if(document.getElementById('storepick-ov'))return;
+  const ov=document.createElement('div');
+  ov.id='storepick-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(20,28,42,0.62);display:flex;align-items:center;justify-content:center;padding:18px;';
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--card);border-radius:18px;max-width:420px;width:100%;padding:18px 16px;box-shadow:0 18px 60px rgba(0,0,0,0.35);';
+  card.innerHTML=`<div style="font-size:16px;font-weight:800;">📍 오늘 어느 매장에서 근무하세요?</div>
+    <div style="font-size:11.5px;color:var(--text-sub);margin-top:3px;">선택한 매장으로 오늘 업무·인수인계가 기록됩니다 (그날 하루 기억)</div>`;
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px;';
+  STORES.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.style.cssText='background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 6px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:4px;';
+    btn.innerHTML=`<span style="font-size:19px;">${s.icon}</span>${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
+    btn.onclick=()=>{
+      localStorage.setItem('vflow_todaystore_'+todayKey(),s.id);
+      ov.remove();
+      if(onDone)onDone();else if(curTab==='dashboard')renderDashboardHome();
+    };
+    grid.appendChild(btn);
+  });
+  card.appendChild(grid);
+  const off=document.createElement('button');
+  off.style.cssText='display:block;width:100%;margin-top:11px;background:none;border:none;color:var(--text-mute);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:6px;';
+  off.textContent='오늘은 휴무예요';
+  off.onclick=()=>{
+    localStorage.setItem('vflow_todayoff_'+todayKey(),'1');
+    ov.remove();
+  };
+  card.appendChild(off);
+  ov.appendChild(card); // 바깥 클릭으로 닫기 없음 — 선택이 필수
+  document.body.appendChild(ov);
+}
+
 function renderHomePushCard(wrap){
   try{
     if(!('PushManager' in window)||!('Notification' in window))return;
@@ -4099,6 +4184,42 @@ async function buildRequestSection(store){
   inRow.querySelector('#wr-add').onclick=doReq;
   inRow.querySelector('#wr-input').addEventListener('keydown',e=>{if(e.key==='Enter')doReq();});
   return wrap;
+}
+
+// 매장 방: 🏗️ 이 매장 프로젝트
+async function buildStoreProjectSection(store){
+  try{
+    const rows=await loadCollabList();
+    if(rows===null)return null;
+    const mine=rows.filter(r=>r.store_id===store.id&&r.status!=='done');
+    const wrap=document.createElement('div');
+    wrap.className='handover-section';
+    wrap.innerHTML='<div class="handover-sub" style="margin:12px 0 8px;">🏗️ 이 매장 프로젝트</div>';
+    if(mine.length===0){
+      const em=document.createElement('div');em.className='todo-empty';em.textContent='진행중인 매장 프로젝트가 없습니다';wrap.appendChild(em);
+    }
+    mine.forEach(r=>{
+      const pct=Math.max(0,Math.min(100,r.progress||0));
+      const c=document.createElement('div');
+      c.className='todo-item';
+      c.style.cursor='pointer';
+      c.innerHTML=`<div class="todo-text-wrap" style="width:100%;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span class="todo-text" style="font-weight:700;">${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 6px;">🚨</span>':''}</span>
+          <span style="font-weight:800;color:var(--purple);font-size:12px;flex-shrink:0;">${pct}%</span>
+        </div>
+        <div style="height:6px;background:#efece4;border-radius:4px;overflow:hidden;margin-top:6px;"><div style="height:100%;width:${pct}%;background:var(--purple);border-radius:4px;"></div></div>
+      </div>`;
+      c.onclick=()=>{window.closeStoreRoom();openCollabDetail(r.id);};
+      wrap.appendChild(c);
+    });
+    const add=document.createElement('button');
+    add.style.cssText='display:block;width:100%;margin-top:8px;background:var(--purple-light);color:var(--purple);border:1.5px dashed var(--purple);border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;';
+    add.textContent='+ 이 매장에 프로젝트 만들기';
+    add.onclick=()=>{window.closeStoreRoom();openCollabCreate(store.id);};
+    wrap.appendChild(add);
+    return wrap;
+  }catch(e){return null;}
 }
 
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
@@ -4293,6 +4414,8 @@ function openStoreRoom(store){
   body.appendChild(buildHandoverSection(ty,tm,td));
   // 📨 업무 요청 (비동기 — 준비되면 붙음)
   buildRequestSection(store).then(sec=>{const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
+  // 🏗️ 이 매장 프로젝트 (비동기)
+  buildStoreProjectSection(store).then(sec=>{if(!sec)return;const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
 
   // 월간 스케줄로 가는 통로 유지
   const goBtn=document.createElement('button');
@@ -4324,7 +4447,7 @@ async function collabProfiles(){
 async function loadCollabList(){
   const {sb,T}=await collabApi();
   const {data,error}=await sb.from('collab_projects')
-    .select('id,title,progress,status,done_date,created_at,created_by,help_message,help_requested_at,helper:profiles!help_requested_by(name),collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
+    .select('id,title,progress,status,done_date,created_at,created_by,store_id,help_message,help_requested_at,helper:profiles!help_requested_by(name),collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
     .eq('tenant_id',T).order('created_at',{ascending:false});
   if(error){console.warn('collab load',error);return null;}
   return data||[];
@@ -4390,7 +4513,7 @@ window.renderCollabProjects=async function(){
     if(r.help_message){card.style.border='2px solid var(--red)';}
     card.innerHTML=`
       <div class="collab-card-top">
-        <span class="collab-card-title">${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 7px;vertical-align:1px;">🚨 도움 요청</span>':''}</span>
+        <span class="collab-card-title">${r.store_id?`<span style="font-size:10px;background:var(--blue-light);color:var(--blue);font-weight:800;border-radius:8px;padding:1px 7px;margin-right:4px;">🏗️ ${(STORES.find(s=>s.id===r.store_id)||{name:''}).name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:''}${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 7px;vertical-align:1px;">🚨 도움 요청</span>':''}</span>
         <span class="collab-card-pct">${pct}%</span>
       </div>
       <div class="collab-bar"><div class="collab-bar-fill" style="width:${pct}%;"></div></div>
@@ -4400,9 +4523,26 @@ window.renderCollabProjects=async function(){
   });
 };
 
-window.openCollabCreate=async function(){
+let _collabScope='all';
+window.setCollabScope=function(scope){
+  _collabScope=scope;
+  const a=document.getElementById('collab-scope-all');
+  const s=document.getElementById('collab-scope-store');
+  const sel=document.getElementById('collab-store-select');
+  const on='border:2px solid var(--navy);background:var(--navy);color:var(--gold);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;flex:1;';
+  const offS='border:2px solid var(--border);background:#fff;color:var(--text-sub);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;flex:1;';
+  if(a)a.style.cssText=scope==='all'?on:offS;
+  if(s)s.style.cssText=scope==='store'?on:offS;
+  if(sel)sel.style.display=scope==='store'?'block':'none';
+};
+window.openCollabCreate=async function(presetStoreId){
   const picker=document.getElementById('collab-member-picker');
   document.getElementById('collab-title-input').value='';
+  // 매장 선택 목록 채우기
+  const sel=document.getElementById('collab-store-select');
+  if(sel&&!sel.options.length)sel.innerHTML=STORES.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('');
+  if(presetStoreId&&sel){sel.value=presetStoreId;setCollabScope('store');}
+  else setCollabScope('all');
   picker.innerHTML='불러오는 중...';
   const profs=await collabProfiles();
   picker.innerHTML='';
@@ -4424,7 +4564,9 @@ window.submitCollab=async function(){
   const memberIds=[...document.querySelectorAll('#collab-member-picker .collab-mem-chip.on')].map(c=>c.dataset.id);
   const {sb,T,me}=await collabApi();
   try{
-    const {data:proj,error}=await sb.from('collab_projects').insert({tenant_id:T,title,progress:0,status:'ongoing',created_by:me}).select('id').single();
+    const _storeId=_collabScope==='store'?(document.getElementById('collab-store-select')?.value||null):null;
+    if(_collabScope==='store'&&!_storeId){alert('매장을 선택해 주세요.');return;}
+    const {data:proj,error}=await sb.from('collab_projects').insert({tenant_id:T,title,progress:0,status:'ongoing',created_by:me,store_id:_storeId}).select('id').single();
     if(error)throw error;
     const ids=[...new Set([me,...memberIds])]; // 생성자도 참여자에 포함
     if(ids.length){
@@ -4442,7 +4584,8 @@ window.openCollabDetail=async function(id){
   const rows=await loadCollabList();
   const r=(rows||[]).find(x=>x.id===id);
   if(!r){alert('불러오지 못했어요.');return;}
-  document.getElementById('collab-detail-title').textContent='🤝 '+r.title;
+  const _dst=r.store_id?(STORES.find(s=>s.id===r.store_id)||null):null;
+  document.getElementById('collab-detail-title').textContent=(_dst?`🏗️ [${_dst.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}] `:'🤝 ')+r.title;
   const {me}=await collabApi();
   const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
   const pct=Math.max(0,Math.min(100,r.progress||0));
