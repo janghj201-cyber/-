@@ -2212,7 +2212,7 @@ const GUIDE_SECTIONS = [
   {
     title: '🆕 v3.8 — 📜 인수인계 기록 (무삭제 보관)',
     items: [
-      '매장 방에 📜 인수인계 기록이 생겼어요 — 최근 30일 전체 이력을 날짜별로 볼 수 있습니다',
+      '매장 방과 월간 스케줄 날짜 화면(보관함 아래)에 📜 인수인계 기록이 생겼어요 — 최근 30일 전체 이력을 날짜별로 볼 수 있습니다',
       '누가 언제 작성/확인/피드백/종료/삭제했는지까지 전부 남아요 (확인 표시에도 이제 확인 시각이 붙습니다)',
       '인수인계는 이제 지워도 완전히 사라지지 않습니다 — 기록에 "누가 삭제"로 남아요',
       '"안 보이는데?" 싶으면 그 매장 방의 📜 기록부터 열어보세요 — 답이 거기 있습니다',
@@ -5825,6 +5825,7 @@ function buildHandoverSection(y,m,d){
   archiveEl.style.cssText='display:none;margin-top:8px;padding:10px 12px;background:#f8f7f2;border-radius:10px;border:1px solid var(--border);';
   archiveEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">📂 완료된 인수인계</div><div id="archive-list"></div>';
   wrap.appendChild(archiveEl);
+  try{wrap.appendChild(buildHandoverHistorySection(curStore));}catch(e){}
 
   if(!locked){
     const inputRow=document.createElement('div');inputRow.className='todo-input-row';
