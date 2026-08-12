@@ -247,6 +247,7 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
     .from('handovers')
     .select('id, content, confirmed, closed')
     .eq('store_id', storeId)
+    .is('deleted_at', null)
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
@@ -254,7 +255,8 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
 
   for (const id of currentById.keys()) {
     if (!incomingRealIds.has(id)) {
-      const { error } = await supabase.from('handovers').delete().eq('id', id)
+      // 무삭제 보관: 물리 삭제 대신 "누가 언제 지웠는지"를 남기고 숨긴다 (매장 기록에서 추적 가능)
+      const { error } = await supabase.from('handovers').update({ deleted_at: new Date().toISOString(), deleted_by: ctx.profileId }).eq('id', id).is('deleted_at', null)
       if (error) throw error
     }
   }
@@ -315,6 +317,7 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     .from('handovers')
     .select('id, content, handover_date, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
     .eq('store_id', storeId)
+    .is('deleted_at', null)
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
     .order('created_at', { ascending: true })
   if (error) throw error

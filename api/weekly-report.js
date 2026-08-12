@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
       sb(`profiles?select=id,name,role,status&tenant_id=eq.${T}&limit=200`),
       sb(`daily_tasks?select=employee_id,store_id,status,task_date&tenant_id=eq.${T}&task_date=gte.${trS}&task_date=lte.${weS}&limit=20000`),
       sb(`handovers?select=store_id,from_employee,confirmed,confirmed_at,confirmed_by,closed,created_at&tenant_id=eq.${T}&created_at=gte.${trendTs}&limit=20000`),
-      sb(`handovers?select=store_id,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&limit=5000`),
+      sb(`handovers?select=store_id,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&deleted_at=is.null&limit=5000`),
       sb(`cleaning_daily_logs?select=store_id,done&tenant_id=eq.${T}&log_date=gte.${wsS}&log_date=lte.${weS}&limit=20000`),
     ]);
     const nameOf = new Map(profiles.filter((p) => (p.status ?? 'active') !== 'inactive').map((p) => [p.id, p.name]));

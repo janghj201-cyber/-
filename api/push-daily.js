@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
 
     // 본편: 3일 이상 미확인 인수인계
     const cutoff = new Date(Date.now() - 3 * 86400e3).toISOString();
-    const stale = await sb(`handovers?select=id,store_id,recipient_id,content,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&created_at=lte.${encodeURIComponent(cutoff)}&limit=1000`);
+    const stale = await sb(`handovers?select=id,store_id,recipient_id,content,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&deleted_at=is.null&created_at=lte.${encodeURIComponent(cutoff)}&limit=1000`);
     if (!stale.length) { res.status(200).json({ ok: true, stale: 0, sent: 0 }); return; }
 
     let sent = 0;

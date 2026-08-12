@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const [stores, tasks, unconf] = await Promise.all([
       sb(`stores?select=id,name&tenant_id=eq.${T}&order=name&limit=100`),
       sb(`daily_tasks?select=store_id,status&tenant_id=eq.${T}&task_date=eq.${today}&limit=10000`),
-      sb(`handovers?select=store_id,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&limit=10000`),
+      sb(`handovers?select=store_id,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&deleted_at=is.null&limit=10000`),
     ]);
 
     const now = Date.now();

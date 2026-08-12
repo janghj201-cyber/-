@@ -2204,11 +2204,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.7';
+const GUIDE_VERSION = 'v3.8';
 const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.8 — 📜 인수인계 기록 (무삭제 보관)',
+    items: [
+      '매장 방에 📜 인수인계 기록이 생겼어요 — 최근 30일 전체 이력을 날짜별로 볼 수 있습니다',
+      '누가 언제 작성/확인/피드백/종료/삭제했는지까지 전부 남아요 (확인 표시에도 이제 확인 시각이 붙습니다)',
+      '인수인계는 이제 지워도 완전히 사라지지 않습니다 — 기록에 "누가 삭제"로 남아요',
+      '"안 보이는데?" 싶으면 그 매장 방의 📜 기록부터 열어보세요 — 답이 거기 있습니다',
+    ]
+  },
   {
     title: '🆕 v3.7 — 오늘 매장 선택 · 매장 프로젝트',
     items: [
@@ -4186,6 +4195,70 @@ async function buildRequestSection(store){
   return wrap;
 }
 
+// 매장 방: 📜 인수인계 기록 — 날짜 무관 전체 이력 (작성/확인/피드백/종료/삭제, 누가·언제까지)
+function buildHandoverHistorySection(store){
+  const wrap=document.createElement('div');
+  wrap.className='handover-section';
+  wrap.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin:12px 0 4px;" data-hh-toggle>
+      <div class="handover-sub" style="margin:0;">📜 인수인계 기록 (최근 30일)</div>
+      <span style="color:var(--gold);font-size:12px;font-weight:800;" data-hh-arrow>펼치기 ▼</span>
+    </div>
+    <div data-hh-body style="display:none;"></div>`;
+  const body=wrap.querySelector('[data-hh-body]');
+  const arrow=wrap.querySelector('[data-hh-arrow]');
+  let loaded=false;
+  wrap.querySelector('[data-hh-toggle]').onclick=async()=>{
+    const open=body.style.display!=='none';
+    body.style.display=open?'none':'block';
+    arrow.textContent=open?'펼치기 ▼':'접기 ▲';
+    if(open||loaded)return;
+    loaded=true;
+    body.innerHTML='<div class="todo-empty">불러오는 중...</div>';
+    try{
+      const sb=(await import('./adapter/supabase-client.js')).supabase;
+      const since=new Date(Date.now()-30*86400000).toISOString();
+      const {data,error}=await sb.from('handovers')
+        .select('content,handover_date,created_at,confirmed,confirmed_at,closed,deleted_at,author:profiles!from_employee(name),confirmer:profiles!confirmed_by(name),closer:profiles!closed_by(name),deleter:profiles!deleted_by(name),recip:profiles!recipient_id(name),handover_feedbacks(content,created_at,fauthor:profiles!author_id(name))')
+        .eq('store_id',store.id).gte('created_at',since).order('created_at',{ascending:false}).limit(200);
+      if(error)throw error;
+      const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      const ts=(t)=>{if(!t)return'';const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+      const rows=data||[];
+      if(!rows.length){body.innerHTML='<div class="todo-empty">최근 30일 기록이 없습니다</div>';return;}
+      body.innerHTML='';
+      let cur='';
+      rows.forEach(h=>{
+        const day=(h.created_at||'').slice(0,10);
+        if(day!==cur){
+          cur=day;
+          const dh=document.createElement('div');
+          dh.style.cssText='font-size:10.5px;font-weight:800;color:var(--text-mute);margin:9px 0 3px;';
+          dh.textContent=day.slice(5).replace('-','/');
+          body.appendChild(dh);
+        }
+        const r=document.createElement('div');
+        r.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.5;'+(h.deleted_at?'opacity:0.62;':'');
+        let meta=`✍️ ${esc(h.author?.name||'익명')} ${ts(h.created_at)}`;
+        if(h.recip?.name)meta+=` → ${esc(h.recip.name)}`;
+        if(h.confirmed&&h.confirmer)meta+=` · ✅ ${esc(h.confirmer.name)} 확인 ${ts(h.confirmed_at)}`;
+        else if(h.confirmed)meta+=' · ✅ 확인됨(이관분)';
+        if(h.closed)meta+=` · 🚫 종료${h.closer?' '+esc(h.closer.name):''}`;
+        if(h.deleted_at)meta+=` · 🗑️ 삭제 ${h.deleter?esc(h.deleter.name)+' ':''}${ts(h.deleted_at)}`;
+        let fb='';
+        (h.handover_feedbacks||[]).forEach(f=>{
+          fb+=`<div style="margin-top:3px;font-size:11px;color:var(--text-sub);">💬 ${esc(f.fauthor?.name||'익명')} ${ts(f.created_at)} — ${esc(f.content)}</div>`;
+        });
+        r.innerHTML=`<div${h.deleted_at?' style="text-decoration:line-through;color:var(--text-mute);"':''}>${esc(h.content)}</div><div style="font-size:10.5px;color:var(--text-sub);margin-top:3px;">${meta}</div>${fb}`;
+        body.appendChild(r);
+      });
+    }catch(e){
+      body.innerHTML='<div class="todo-empty">불러오기 실패 (관리자: 무삭제 보관 SQL 필요)</div>';
+      console.warn('[hh]',e);
+    }
+  };
+  return wrap;
+}
+
 // 매장 방: 🏗️ 이 매장 프로젝트
 async function buildStoreProjectSection(store){
   try{
@@ -4412,6 +4485,8 @@ function openStoreRoom(store){
   body.appendChild(buildTodoSection(ty,tm,td,false));
   // 매장 고정 정보(접이식) + 이 매장 인수인계
   body.appendChild(buildHandoverSection(ty,tm,td));
+  // 📜 인수인계 기록 (접이식 — 펼칠 때 로드)
+  try{body.appendChild(buildHandoverHistorySection(store));}catch(e){}
   // 📨 업무 요청 (비동기 — 준비되면 붙음)
   buildRequestSection(store).then(sec=>{const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
   // 🏗️ 이 매장 프로젝트 (비동기)
@@ -5808,8 +5883,9 @@ function buildHandoverSection(y,m,d){
       setTimeout(()=>editInput.focus(),0);
     } else {
       const carryTag=(item.fromDate&&item.fromDate!==dateKey)?`<span class="todo-carry">${item.fromDate.slice(5)}에서 이월</span>`:'';
+      const _cts=item.confirmedAt?(d=>` ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)(new Date(item.confirmedAt)):'';
       const confirmInfo=item.confirmed&&item.confirmedBy
-        ?`<span class="confirm-tag">✅ ${item.confirmedBy} 확인</span>`
+        ?`<span class="confirm-tag">✅ ${item.confirmedBy} 확인${_cts}</span>`
         :item.confirmed?`<span class="confirm-tag">✅ 확인됨</span>`:'';
       row.innerHTML=`<input type="checkbox" ${item.confirmed?'checked':''} ${locked?'disabled':''}>
         <div class="todo-text-wrap"><span class="todo-text">${item.text}</span>${carryTag}${confirmInfo}<div class="todo-author">작성: ${item.author||'익명'}</div></div>
