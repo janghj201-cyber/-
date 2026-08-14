@@ -40,6 +40,7 @@
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
 html,body{height:100%;overflow:hidden;}
+body.home-quick #screen-dashboard .board-section,body.home-quick #screen-dashboard .dashboard-today:not(#home-personal){display:none!important}
 body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding-top:var(--safe-top);margin:0;}
 .app-shell{display:flex;flex-direction:column;height:calc(100dvh - var(--safe-top));overflow:hidden;}
 
@@ -2204,11 +2205,21 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.8';
-const BUILD_DATE = '2026-08-08'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v3.9';
+const BUILD_DATE = '2026-08-14'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v3.9 — ⚡ 직원 첫 화면 (바로가기 3버튼)',
+    items: [
+      '직원 계정은 이제 로그인하면 간단 첫 화면이 먼저 떠요 — ✅ 오늘 업무 · 📝 인수인계 · 🧹 청소 체크 큰 버튼 3개',
+      '버튼이 오늘 상태를 알려줘요: 미등록/미확인 건수(빨간 배지)/청소 진행률 — 셋 다 초록이면 오늘 할 일 끝',
+      '버튼 위치는 항상 고정, 전 직원 동일 배치 — 매일 같은 자리를 누르면 됩니다',
+      '전체 기능이 궁금하면 맨 아래 "전체 화면 보기 →" — 기존 홈이 그대로 나와요 (관리자 계정은 처음부터 기존 홈)',
+      '🏬 관리자 → 설정에 매장 관리가 생겼어요 — 새 매장 추가·폐업 처리 (기록은 보존)',
+    ]
+  },
   {
     title: '🆕 v3.8 — 📜 인수인계 기록 (무삭제 보관)',
     items: [
@@ -3632,6 +3643,7 @@ async function renderDashboardHome(){
   const dashHoByStore=new Map(STORES.map((s,i)=>[s.id,dashHoSnaps[i]]));
 
   window.__dashTodos=dashTodosByName; // 매장 방·입장 카드의 "오늘 근무자" 계산용
+  window.__dashClean=dashCleanByStore; // ⚡ 직원 첫 화면 청소 버튼 상태용
 
   // v3 홈: 개인 우선 섹션 + 관리자란
   try{renderHomePersonal(tKey,dashTodosByName,dashHoByStore);}catch(e){console.warn('[home] personal',e);}
@@ -3763,12 +3775,158 @@ function startHomeClock(){
   if(!_homeClockTimer)_homeClockTimer=setInterval(f,1000);
 }
 
+// ⚡ 직원 첫 화면 — 고정 버튼 3개 (위치 고정 · 전원 동일 · 자동 재배열 없음)
+function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
+  const me=window.__vflowProfile?.name;
+  const _vp=window.__vflowProfile||{};
+  const _isFixed=!!_vp.baseStoreId;
+  const _lsKey='vflow_todaystore_'+todayKey();
+  const _savedId=_isFixed?null:localStorage.getItem(_lsKey);
+  const entry=STORES.find(s=>s.id===(_vp.storeId||_savedId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
+  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
+
+  // 오늘 매장 (순환직원은 바로 변경 가능)
+  const chip=document.createElement('div');
+  chip.style.cssText='display:flex;align-items:center;gap:8px;margin:2px 0 12px;';
+  if(_isFixed||!entry){
+    chip.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--gold-light);color:#8a5a00;font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;">📍 오늘 근무: ${entry?entry.name:'-'}${_vp.overrideActive?' (예외출근)':''}</span>`;
+  } else {
+    chip.innerHTML='<span style="font-size:12px;font-weight:800;color:#8a5a00;background:var(--gold-light);border-radius:999px;padding:5px 12px;white-space:nowrap;">📍 오늘 근무</span>';
+    const sel=document.createElement('select');
+    sel.style.cssText='flex:1;background:var(--card);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:7px 9px;font-size:12.5px;font-weight:700;font-family:inherit;';
+    sel.innerHTML=STORES.map(s=>`<option value="${s.id}" ${s.id===entry.id?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+    sel.onchange=()=>{localStorage.setItem(_lsKey,sel.value);renderHomePersonal(tKey,todosByName,hoByStore);};
+    chip.appendChild(sel);
+  }
+  wrap.appendChild(chip);
+
+  const label=document.createElement('div');
+  label.style.cssText='font-size:11px;font-weight:800;color:var(--text-mute);letter-spacing:.5px;margin-bottom:8px;';
+  label.textContent='⚡ 바로가기 — 매일 이 세 개만 기억하세요';
+  wrap.appendChild(label);
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;';
+
+  const mkBtn=(ico,lb)=>{
+    const b=document.createElement('div');
+    b.style.cssText='position:relative;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px 6px 13px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(26,35,50,.06);';
+    b.innerHTML=`<span style="font-size:29px;display:block;margin-bottom:6px;">${ico}</span><span style="font-size:13px;font-weight:800;display:block;">${lb}</span><span data-st style="font-size:10px;margin-top:4px;display:block;font-weight:700;color:var(--text-mute);">…</span>`;
+    return b;
+  };
+  const setSt=(b,txt,color,done)=>{
+    const st=b.querySelector('[data-st]');st.textContent=txt;st.style.color=color;
+    if(done){b.style.borderColor='var(--green)';b.style.background='var(--green-light)';}
+  };
+
+  // ① 오늘 업무
+  const bTask=mkBtn('✅','오늘 업무');
+  const pair=(todosByName||[]).find(p=>p&&p[0]===me);
+  const mine=pair?pair[1]:[];
+  if(mine.length===0)setSt(bTask,'아직 미등록','var(--red)',false);
+  else{const dn=mine.filter(i=>i.done).length;setSt(bTask,`${dn}/${mine.length} 완료`,dn>=mine.length?'var(--green)':'var(--orange)',dn>=mine.length);}
+  bTask.onclick=()=>enterMyWork(me);
+  grid.appendChild(bTask);
+
+  // ② 인수인계 (나에게 온 것 + 오늘 매장 공용 미확인)
+  const bHo=mkBtn('📝','인수인계');
+  let hoCnt=0;
+  try{
+    for(const store of STORES){
+      const snap=hoByStore.get(store.id);
+      if(!snap||!snap.exists())continue;
+      (snap.data().items||[]).forEach(it=>{
+        if(it.confirmed||it.closed)return;
+        if(it.recipient===me||(entry&&store.id===entry.id&&!it.recipient))hoCnt++;
+      });
+    }
+  }catch(e){}
+  if(hoCnt>0){
+    const bd=document.createElement('span');
+    bd.style.cssText='position:absolute;top:-7px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 2px 6px rgba(192,57,43,.4);';
+    bd.textContent=hoCnt;bHo.appendChild(bd);
+    setSt(bHo,`미확인 ${hoCnt}건`,'var(--red)',false);
+  } else setSt(bHo,'모두 확인 ✓','var(--green)',true);
+  bHo.onclick=()=>{if(entry)openStoreRoom(entry);};
+  grid.appendChild(bHo);
+
+  // ③ 청소 체크
+  const bCl=mkBtn('🧹','청소 체크');
+  try{
+    const totalCl=getCleanItemCount(ty,tm,td);
+    const cs=window.__dashClean?window.__dashClean.get(entry?entry.id:''):null;
+    const dnCl=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;
+    if(totalCl>0&&dnCl>=totalCl)setSt(bCl,'오늘 완료 ✓','var(--green)',true);
+    else if(dnCl>0)setSt(bCl,`${dnCl}/${totalCl} 진행중`,'var(--orange)',false);
+    else setSt(bCl,'오늘 미완료','var(--red)',false);
+  }catch(e){setSt(bCl,'오늘 미완료','var(--red)',false);}
+  bCl.onclick=()=>{if(entry)openQuickClean(entry);};
+  grid.appendChild(bCl);
+
+  wrap.appendChild(grid);
+
+  // 축약 카드
+  const mkCard=(ico,title,desc,fn)=>{
+    const c=document.createElement('div');
+    c.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:9px;display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer;';
+    c.innerHTML=`<span>${ico}</span><div style="flex:1;"><b style="font-weight:800;">${title}</b><div style="color:var(--text-sub);font-size:11px;margin-top:2px;">${desc}</div></div><span style="color:var(--text-mute);font-size:14px;">›</span>`;
+    c.onclick=fn;return c;
+  };
+  wrap.appendChild(mkCard('📋','오늘의 브리핑','인수인계 · 미완료 업무 · 공지 한눈에',async()=>{
+    try{
+      const uid=window.__vflowProfile?.id||'';
+      localStorage.removeItem(`vflow_brief_${uid}_${tKey}`);
+      const shown=await maybeShowDailyBriefing(tKey,todosByName,hoByStore);
+      if(shown===false)alert('오늘은 브리핑에 새로 표시할 내용이 없어요 ✓');
+    }catch(e){}
+  }));
+  if(entry)wrap.appendChild(mkCard('🏪',`${entry.name} 방 들어가기`,'근무자 · 고정정보 · 인수인계 기록',()=>openStoreRoom(entry)));
+
+  const full=document.createElement('button');
+  full.textContent='전체 화면 보기 →';
+  full.style.cssText='display:block;width:100%;text-align:center;background:none;border:1.5px dashed var(--border);border-radius:12px;padding:11px;font-size:12.5px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;margin-top:4px;';
+  full.onclick=()=>{window.__homeFull=true;renderHomePersonal(tKey,todosByName,hoByStore);};
+  wrap.appendChild(full);
+}
+
+// 🧹 원터치 청소 체크 — 첫 화면 버튼에서 오늘 이 매장 체크리스트 바로 열기
+function openQuickClean(store){
+  curStore=store;
+  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
+  const ce=getEvs(ty,tm,td).find(e=>e.t==='clean');
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:940;background:rgba(20,28,42,0.55);display:flex;align-items:flex-end;justify-content:center;';
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:600px;max-height:82vh;overflow-y:auto;padding:14px 14px calc(20px + var(--safe-bot));';
+  card.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div style="font-size:15px;font-weight:800;">🧹 ${store.name} 청소 체크${ce?` <span style="font-size:11px;color:var(--green);font-weight:700;">· 대청소 ${ce.sec}구역 포함</span>`:''}</div>
+    <button data-qc-close style="background:none;border:none;font-size:19px;cursor:pointer;color:var(--text-sub);font-family:inherit;">✕</button></div>`;
+  try{card.appendChild(buildCL(ce?'combined':'base',ce?ce.sec-1:null,todayKey()));}catch(e){}
+  const close=()=>{ov.remove();try{renderDashboardHome().catch(()=>{});}catch(e){}};
+  card.querySelector('[data-qc-close]').onclick=close;
+  ov.onclick=(e)=>{if(e.target===ov)close();};
+  ov.appendChild(card);
+  document.body.appendChild(ov);
+}
+
 function renderHomePersonal(tKey,todosByName,hoByStore){
   const wrap=document.getElementById('home-personal');
   if(!wrap)return;
   const me=window.__vflowProfile?.name;
   wrap.innerHTML='';
   if(!me)return;
+
+  // ⚡ 직원 계정은 간단 첫 화면이 기본 — "전체 화면 보기"로 기존 홈 진입
+  const _vpq=window.__vflowProfile||{};
+  const _staffQuick=!_vpq.monitorOnly&&_vpq.role!=='owner'&&_vpq.role!=='manager';
+  document.body.classList.toggle('home-quick',_staffQuick&&!window.__homeFull);
+  if(_staffQuick&&!window.__homeFull){renderHomeQuick(wrap,tKey,todosByName,hoByStore);return;}
+  if(_staffQuick&&window.__homeFull){
+    const back=document.createElement('button');
+    back.textContent='⚡ 간단 화면으로 돌아가기';
+    back.style.cssText='display:block;width:100%;margin-bottom:10px;background:var(--gold-light);border:1.5px solid var(--gold);border-radius:12px;padding:10px;font-size:12.5px;font-weight:800;color:#8a5a00;cursor:pointer;font-family:inherit;';
+    back.onclick=()=>{window.__homeFull=false;renderHomePersonal(tKey,todosByName,hoByStore);};
+    wrap.appendChild(back);
+  }
 
   // 0) 매장 입장 카드 — 고정직원은 배정 매장 고정, 순환직원은 "오늘 근무 매장"을 직접 선택(당일 기억)
   const _vp=window.__vflowProfile||{};
@@ -4395,7 +4553,7 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
   // 오늘 브리핑은 봤음으로 기록 (내용이 없으면 조용히 패스)
   localStorage.setItem(key,'1');
   localStorage.setItem(`vflow_brief_ts_${uid}`,String(Date.now()));
-  if(hoRows.length===0&&undone.length===0&&newNotices.length===0&&fixedLabels.length===0)return;
+  if(hoRows.length===0&&undone.length===0&&newNotices.length===0&&fixedLabels.length===0)return false;
 
   const dows=['일','월','화','수','목','금','토'];
   const ov=document.createElement('div');
@@ -4439,12 +4597,14 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
   ov.appendChild(card);
   ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
+  return true;
 }
 
 // ── v3 2차: 매장 방 — 고정업무·금일 업무·고정정보·인수인계가 한 화면 ──
 window.closeStoreRoom=function(){
   document.getElementById('room-overlay').style.display='none';
   document.body.style.overflow='';
+  try{renderDashboardHome().catch(()=>{});}catch(e){} // 홈 배지·버튼 상태 즉시 갱신
 };
 function openStoreRoom(store){
   curStore=store;
@@ -4485,8 +4645,6 @@ function openStoreRoom(store){
   body.appendChild(buildTodoSection(ty,tm,td,false));
   // 매장 고정 정보(접이식) + 이 매장 인수인계
   body.appendChild(buildHandoverSection(ty,tm,td));
-  // 📜 인수인계 기록 (접이식 — 펼칠 때 로드)
-  try{body.appendChild(buildHandoverHistorySection(store));}catch(e){}
   // 📨 업무 요청 (비동기 — 준비되면 붙음)
   buildRequestSection(store).then(sec=>{const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
   // 🏗️ 이 매장 프로젝트 (비동기)
@@ -7024,6 +7182,53 @@ async function renderSettingsTab(content){
     }catch(e){resEl.innerHTML=`<span style="font-size:12px;color:var(--red);">초대 생성 실패: ${e.message||e}</span>`;}
   };
   renderInvList();
+
+  // ── 🏬 매장 관리 (추가 / 폐업) ──
+  const secM=document.createElement('div');secM.className='dash-card';secM.style.marginTop='12px';
+  secM.innerHTML='<div class="dash-store-name">🏬 매장 관리</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">새 매장 추가와 폐업 처리. 폐업해도 그동안의 업무·인수인계·청소 기록은 지워지지 않고 목록에서만 빠져요. 변경 후 전 직원이 새로고침하면 반영됩니다.</div><div id="storemgmt-list"></div><div style="display:flex;gap:8px;margin-top:10px;"><input id="storemgmt-name" type="text" placeholder="새 매장 이름 (예: 인천 검단점)" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><button id="storemgmt-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 매장 추가</button></div><div id="storemgmt-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
+  content.appendChild(secM);
+  {
+    const smList=secM.querySelector('#storemgmt-list');
+    const smMsg=secM.querySelector('#storemgmt-msg');
+    const say=(t,c)=>{smMsg.textContent=t;smMsg.style.color=c||'var(--text-sub)';};
+    STORES.forEach(s=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;';
+      row.innerHTML=`<span>${s.icon}</span><span style="flex:1;">${s.name}</span>`;
+      const del=document.createElement('button');
+      del.textContent='폐업 처리';
+      del.style.cssText='background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;';
+      del.onclick=async()=>{
+        if(!confirm(`${s.name}을(를) 폐업 처리할까요?\n\n• 매장 목록·대시보드에서 사라집니다\n• 그동안의 업무·인수인계·청소 기록은 그대로 보존됩니다`))return;
+        say('처리 중...');
+        try{
+          const {sb}=await wrApi();
+          const {error,count}=await sb.from('stores').update({active:false},{count:'exact'}).eq('id',s.id);
+          if(error)throw error;
+          if(!count)throw new Error('권한이 없거나 이미 처리됐어요');
+          say('✓ 폐업 처리됨 — 새로고침하면 목록에서 빠집니다','var(--green)');
+          row.style.opacity='0.4';del.disabled=true;del.textContent='폐업됨';
+        }catch(e){say('⚠ 실패: '+(e.message||e),'var(--red)');}
+      };
+      row.appendChild(del);
+      smList.appendChild(row);
+    });
+    secM.querySelector('#storemgmt-add').onclick=async()=>{
+      const nameIn=secM.querySelector('#storemgmt-name');
+      const name=nameIn.value.trim();
+      if(!name){say('매장 이름을 입력해주세요','var(--red)');return;}
+      if(STORES.some(s=>s.name===name)){say('같은 이름의 매장이 이미 있어요','var(--red)');return;}
+      if(!confirm(`새 매장 "${name}"을(를) 추가할까요?\n전 직원이 새로고침하면 바로 보입니다.`))return;
+      say('추가 중...');
+      try{
+        const {sb,ctx}=await wrApi();
+        const {error}=await sb.from('stores').insert({tenant_id:ctx.tenantId,name});
+        if(error)throw error;
+        nameIn.value='';
+        say('✓ 추가됨 — 새로고침하면 매장 목록·대시보드에 나타납니다','var(--green)');
+      }catch(e){say('⚠ 추가 실패: '+(e.message||e),'var(--red)');}
+    };
+  }
 
   // ── 직원 근무지 설정 (고정/순환) ──
   const secW=document.createElement('div');secW.className='dash-card';secW.style.marginTop='12px';
