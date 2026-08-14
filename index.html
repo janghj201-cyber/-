@@ -1020,7 +1020,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
     <div><div class="header-title">👤 내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
-    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="doChangePw()">🔑 비밀번호</button><button class="back-btn" onclick="doLogout()">🚪 로그아웃</button></div>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">🏠 홈으로</button><button class="back-btn" onclick="doChangePw()">🔑 비밀번호</button><button class="back-btn" onclick="doLogout()">🚪 로그아웃</button></div>
   </div>
   <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
   <div class="pb"></div>
@@ -1030,7 +1030,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my-work">
   <div class="header">
     <div><div class="header-title" id="my-work-name">-</div><div class="header-sub" id="my-work-sub"></div></div>
-    <button class="back-btn" onclick="backToStaffSelect()">← 직원 선택</button>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">🏠 홈으로</button><button class="back-btn" onclick="backToStaffSelect()">← 직원 선택</button></div>
   </div>
 
   <!-- 지난달 미완료 알림 배너 (월 첫날에만 표시) -->
