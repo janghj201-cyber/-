@@ -1678,7 +1678,7 @@ function enterMyWork(name){
 }
 
 window.backToStaffSelect=function(){
-  showScreen('screen-my');
+  renderMyPage(); // 목록을 다시 그리고 화면 표시 (빈 화면 버그 방지)
 };
 function backToStaffSelect(){window.backToStaffSelect();}
 
