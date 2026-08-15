@@ -2238,7 +2238,8 @@ const GUIDE_SECTIONS = [
       '⚠️ 막힌 곳(3일 이상 응답 없음)이 항상 맨 위, 그다음 진행 중, 최근 완료 — 칩으로 종류별·"나 관련"만 걸러볼 수 있어요',
       '행을 누르면 그 매장 방(또는 프로젝트)으로 바로 이동',
       '🗣️ 매주 직원 1명씩 자동으로 1:1 상담 대상이 정해져요 — 대상자 첫 화면에 카드가 뜨고, 팀장 2명과 화상으로 진행 (부담 없는 대화 자리예요)',
-      '팀장·대표 화면에는 이번 주 대상과 ✅ 완료·🔁 대상 변경 버튼이 보여요',
+      '팀장·대표 화면에는 이번 주 대상과 팀장 전원 출근일이 보이고, 📅 날짜 정하기 · ✅ 완료 · 🔁 대상 변경 · (출근일 없으면) ⏭️ 다음 주로 버튼이 있어요',
+      '관리자 → 설정 → 🗣️ 주간 1:1 상담 대상에서 순번에서 뺄 직원을 체크 해제할 수 있어요',
     ]
   },
   {
@@ -3811,11 +3812,12 @@ function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)
 async function wmEnsureThisWeek(){
   const {sb,ctx}=await wrApi();
   const ws=wmWeekStart();
-  const {data:cur}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
+  const {data:cur}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,meeting_date,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
   if(cur)return cur;
   // 대상 후보: 직원(관리자·모니터링 제외), 사번 순 → 이름 순
   const {data:profs}=await sb.from('profiles').select('id,name,role,employee_no,status,monitor_only').eq('tenant_id',ctx.tenantId);
-  const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager')
+  const _ex=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
+  const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager'&&!_ex.has(p.id))
     .sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
   if(!cands.length)return null;
   // 최근 배정 이력 — 가장 오래 안 만난 사람 우선 (한 바퀴 순환)
@@ -3827,9 +3829,27 @@ async function wmEnsureThisWeek(){
   else pick=cands.slice().sort((a,b)=>lastSeen.get(a.id).localeCompare(lastSeen.get(b.id)))[0];
   const {error}=await sb.from('weekly_meetings').insert({tenant_id:ctx.tenantId,week_start:ws,target_id:pick.id});
   if(error&&!String(error.message||'').includes('duplicate')&&error.code!=='23505')throw error;
-  const {data:again}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
+  const {data:again}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,meeting_date,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
   return again||null;
 }
+// 이번 주 중 팀장(매니저) 전원이 출근하는 날 — dayoffs 기준
+async function wmAvailableDays(weekStart){
+  try{
+    const {sb,ctx}=await wrApi();
+    const {data:mgrs}=await sb.from('profiles').select('id,name').eq('tenant_id',ctx.tenantId).eq('role','manager').neq('status','inactive');
+    const ids=(mgrs||[]).map(m=>m.id);
+    const ws=new Date(weekStart);const days=[];
+    for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);days.push(dk(d.getFullYear(),d.getMonth(),d.getDate()));}
+    if(!ids.length)return {days,names:[]};
+    const {data:offs}=await sb.from('dayoffs').select('profile_id,dayoff_date').in('profile_id',ids).gte('dayoff_date',days[0]).lte('dayoff_date',days[6]);
+    const offSet=new Set((offs||[]).map(o=>o.dayoff_date+'|'+o.profile_id));
+    const ok=days.filter(dd=>ids.every(id=>!offSet.has(dd+'|'+id)));
+    return {days:ok,names:(mgrs||[]).map(m=>m.name)};
+  }catch(e){return {days:[],names:[]};}
+}
+const _wmDows=['일','월','화','수','목','금','토'];
+function wmFmt(ds){if(!ds)return '';const d=new Date(ds);return `${d.getMonth()+1}/${d.getDate()}(${_wmDows[d.getDay()]})`;}
+
 // 홈 카드 — 대상 직원 본인 + 관리자(팀장·대표)에게만 표시
 async function renderHomeMeetingCard(wrap,beforeEl){
   try{
@@ -3845,18 +3865,39 @@ async function renderHomeMeetingCard(wrap,beforeEl){
     card.style.cssText=m.done?'border:1.5px solid var(--green);background:var(--green-light);':'border:1.5px solid var(--purple);background:var(--purple-light);';
     const ws=new Date(m.week_start);const we=new Date(ws);we.setDate(we.getDate()+6);
     const range=`${ws.getMonth()+1}/${ws.getDate()}~${we.getMonth()+1}/${we.getDate()}`;
+    const av=isMe?null:await wmAvailableDays(m.week_start);
     if(isMe){
       card.innerHTML=`<div style="font-size:13px;font-weight:800;color:var(--purple);">🗣️ 이번 주 1:1 상담 대상이에요</div>
-        <div style="font-size:12.5px;margin-top:4px;">김형진·장현진 팀장과 <b>화상</b>으로 진행합니다 (${range})</div>
-        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${m.done?'✅ 완료됐어요 — 수고하셨습니다':'일정은 팀장이 따로 연락드려요 · 편하게 이야기 나누는 자리입니다'}</div>`;
+        <div style="font-size:12.5px;margin-top:4px;">팀장님들과 <b>화상</b>으로 진행합니다${m.meeting_date?` — <b style="color:var(--purple);">${wmFmt(m.meeting_date)} 예정</b>`:` (${range})`}</div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${m.done?'✅ 완료됐어요 — 수고하셨습니다':m.meeting_date?'시간은 팀장이 따로 연락드려요 · 편하게 이야기 나누는 자리입니다':'날짜는 팀장이 정하면 여기에 표시돼요 · 편하게 이야기 나누는 자리입니다'}</div>`;
     } else {
       card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;">
         <div style="font-size:13px;font-weight:800;color:var(--purple);">🗣️ 이번 주 1:1 상담: <span style="color:var(--text);">${m.target.name}</span></div>
-        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${range} · 화상 · 팀장 2명 참석${m.done?' · ✅ 완료':''}</div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${m.meeting_date?`📅 <b style="color:var(--purple);">${wmFmt(m.meeting_date)}</b>`:range} · 화상 · 팀장 ${(av&&av.names.length)||2}명 참석${m.done?' · ✅ 완료':''}</div>
+        ${!m.done&&!m.meeting_date?`<div style="font-size:11px;margin-top:3px;color:${av&&av.days.length?'var(--text)':'var(--red)'};">${av&&av.days.length?'🗓️ 팀장 전원 출근일: '+av.days.map(wmFmt).join(' · '):'⚠️ 이번 주엔 팀장 전원 출근하는 날이 없어요 — 다음 주로 넘겨주세요'}</div>`:''}
         ${m.note?`<div style="font-size:11.5px;margin-top:4px;color:var(--text);">📝 ${_wrEsc(m.note)}</div>`:''}</div>
         <div style="display:flex;flex-direction:column;gap:5px;" data-wm-acts></div></div>`;
       const acts=card.querySelector('[data-wm-acts]');
       const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';b.onclick=fn;return b;};
+      if(!m.done)acts.appendChild(mk(m.meeting_date?'📅 날짜 변경':'📅 날짜 정하기',async()=>{
+        const opts=(av&&av.days.length?av.days:[]);
+        const pick=prompt('상담 날짜 (YYYY-MM-DD)'+(opts.length?'\n팀장 전원 출근일: '+opts.map(wmFmt).join(' · '):'\n⚠️ 이번 주 팀장 전원 출근일이 없어요 — 그래도 정하려면 입력'),m.meeting_date||opts[0]||'');
+        if(!pick)return;const v=pick.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){alert('날짜 형식은 2026-08-19 처럼 입력해주세요');return;}
+        if(opts.length&&!opts.includes(v)&&!confirm('그날은 팀장 중 휴무인 분이 있어요. 그래도 정할까요?'))return;
+        const {sb}=await wrApi();
+        const {error,count}=await sb.from('weekly_meetings').update({meeting_date:v},{count:'exact'}).eq('id',m.id);
+        if(error||!count){alert('저장 실패 (권한 확인)');return;}
+        renderDashboardHome().catch(()=>{});
+      }));
+      if(!m.done&&av&&!av.days.length&&!m.meeting_date)acts.appendChild(mk('⏭️ 다음 주로',async()=>{
+        if(!confirm(`${m.target.name} 님 상담을 다음 주로 넘길까요?\n(이번 주 배정을 지우고, 다음 주에 같은 분이 먼저 배정됩니다)`))return;
+        const {sb,ctx}=await wrApi();
+        const nws=(()=>{const d=new Date(m.week_start);d.setDate(d.getDate()+7);return dk(d.getFullYear(),d.getMonth(),d.getDate());})();
+        const {error:e1}=await sb.from('weekly_meetings').delete().eq('id',m.id);
+        if(e1){alert('처리 실패 (권한 확인)');return;}
+        await sb.from('weekly_meetings').upsert({tenant_id:ctx.tenantId,week_start:nws,target_id:m.target_id},{onConflict:'tenant_id,week_start'});
+        renderDashboardHome().catch(()=>{});
+      }));
       if(!m.done)acts.appendChild(mk('✅ 완료',async()=>{
         const note=prompt('상담 완료 — 팀장 한 줄 메모 (선택, 직원에게는 안 보여요)',m.note||'')??null;
         if(note===null&&!confirm('메모 없이 완료 처리할까요?'))return;
@@ -3868,7 +3909,8 @@ async function renderHomeMeetingCard(wrap,beforeEl){
       acts.appendChild(mk('🔁 대상 변경',async()=>{
         const {sb,ctx}=await wrApi();
         const {data:profs}=await sb.from('profiles').select('id,name,role,status,monitor_only').eq('tenant_id',ctx.tenantId);
-        const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager').sort((a,b)=>a.name.localeCompare(b.name));
+        const _ex2=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
+        const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager'&&!_ex2.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
         const pick=prompt('이번 주 상담 대상을 바꿉니다. 이름을 입력하세요:\n'+cands.map(c=>c.name).join(' · '),m.target.name);
         if(!pick)return;const p=cands.find(c=>c.name===pick.trim());if(!p){alert('해당 이름의 직원이 없어요');return;}
         const {error,count}=await sb.from('weekly_meetings').update({target_id:p.id,done:false,done_at:null},{count:'exact'}).eq('id',m.id);
@@ -7366,6 +7408,36 @@ async function renderSettingsTab(content){
     }catch(e){resEl.innerHTML=`<span style="font-size:12px;color:var(--red);">초대 생성 실패: ${e.message||e}</span>`;}
   };
   renderInvList();
+
+  // ── 🗣️ 1:1 상담 대상 설정 (제외 체크) ──
+  const secMt=document.createElement('div');secMt.className='dash-card';secMt.style.marginTop='12px';
+  secMt.innerHTML='<div class="dash-store-name">🗣️ 주간 1:1 상담 대상</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">매주 직원 1명이 순번대로 자동 배정돼요(사번 순, 관리자·모니터링 계정 제외). 순번에서 빼고 싶은 직원은 체크를 해제하세요 — 바로 저장됩니다.</div><div id="mt-list"></div>';
+  content.appendChild(secMt);
+  (async()=>{
+    const box=secMt.querySelector('#mt-list');
+    try{
+      const {sb,ctx}=await wrApi();
+      const {data:profs}=await sb.from('profiles').select('id,name,role,employee_no,status,monitor_only').eq('tenant_id',ctx.tenantId);
+      const list=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager').sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
+      if(!list.length){box.innerHTML='<div style="font-size:12px;color:var(--text-mute);">대상 직원이 없어요</div>';return;}
+      box.innerHTML='';
+      list.forEach(p=>{
+        const ex=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
+        const row=document.createElement('label');
+        row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;';
+        row.innerHTML=`<span>${p.name} <span style="font-size:10.5px;color:var(--text-mute);font-weight:600;">${p.employee_no||''}</span></span><input type="checkbox" ${ex.has(p.id)?'':'checked'} style="accent-color:var(--gold);width:18px;height:18px;">`;
+        row.querySelector('input').onchange=async(e)=>{
+          const cur=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
+          if(e.target.checked)cur.delete(p.id);else cur.add(p.id);
+          const prev=appSettings.features.meeting_exclude;
+          appSettings.features={...appSettings.features,meeting_exclude:[...cur]};
+          try{await saveSettings();}
+          catch(err){appSettings.features={...appSettings.features,meeting_exclude:prev};e.target.checked=!e.target.checked;alert('저장 실패 (권한/네트워크 확인)');}
+        };
+        box.appendChild(row);
+      });
+    }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패</div>';}
+  })();
 
   // ── 🏬 매장 관리 (추가 / 폐업) ──
   const secM=document.createElement('div');secM.className='dash-card';secM.style.marginTop='12px';
