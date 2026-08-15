@@ -347,6 +347,22 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .hp-emp-name{font-size:13px;font-weight:800;color:var(--text);}
 .hp-emp-task{font-size:11.5px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hp-emp-cnt{margin-left:auto;font-size:11.5px;font-weight:800;white-space:nowrap;}
+.cf-chips{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px;}
+.cf-chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;border:1px solid var(--border);background:var(--bg);color:var(--text-sub);cursor:pointer;font-family:inherit;}
+.cf-chip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.cf-grp{font-size:11px;font-weight:800;color:var(--text-mute);letter-spacing:.4px;margin:10px 0 6px;display:flex;align-items:center;gap:6px;}
+.cf-grp .ln{flex:1;height:1px;background:var(--border);}
+.cf-row{display:flex;gap:9px;padding:9px 8px;border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;background:var(--card);align-items:flex-start;}
+.cf-row.stuck{border-left:4px solid var(--red);background:#fffaf9;}
+.cf-row.done{opacity:.7;}
+.cf-kind{font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;white-space:nowrap;margin-top:2px;}
+.cf-who{font-size:12.5px;font-weight:800;line-height:1.35;}
+.cf-who .arr{color:var(--gold);margin:0 3px;}
+.cf-what{font-size:12px;margin-top:2px;line-height:1.4;}
+.cf-meta{font-size:10.5px;color:var(--text-mute);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.cf-st{font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;}
+.cf-prog{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:5px;width:120px;}
+.cf-prog i{display:block;height:100%;background:var(--green);}
 .collab-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
 .collab-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
 .collab-card-title{font-size:14px;font-weight:700;color:var(--text);}
@@ -946,7 +962,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
   <div class="dashboard-today" id="dashboard-collab-section">
     <div class="dashboard-today-header" style="display:flex;align-items:center;justify-content:space-between;">
-      <span>🤝 협업 프로젝트</span>
+      <span>🤝 협업 흐름 <span style="font-size:11px;font-weight:600;color:var(--text-sub);">누가 → 누구 · 어느 매장 · 어디까지</span></span>
       <button onclick="openCollabCreate()" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ 새 협업</button>
     </div>
     <div id="dashboard-collab-list"></div>
@@ -2210,11 +2226,21 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v3.9';
-const BUILD_DATE = '2026-08-14'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v4.0';
+const BUILD_DATE = '2026-08-15'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v4.0 — 🤝 협업 흐름 · 🗣️ 주간 1:1 상담',
+    items: [
+      '전체 화면의 🤝 협업 흐름 — 업무요청·매장 프로젝트·도움요청·전사 협업이 한 줄기로 보여요: 누가 → 누구에게 · 어느 매장 · 어디까지',
+      '⚠️ 막힌 곳(3일 이상 응답 없음)이 항상 맨 위, 그다음 진행 중, 최근 완료 — 칩으로 종류별·"나 관련"만 걸러볼 수 있어요',
+      '행을 누르면 그 매장 방(또는 프로젝트)으로 바로 이동',
+      '🗣️ 매주 직원 1명씩 자동으로 1:1 상담 대상이 정해져요 — 대상자 첫 화면에 카드가 뜨고, 팀장 2명과 화상으로 진행 (부담 없는 대화 자리예요)',
+      '팀장·대표 화면에는 이번 주 대상과 ✅ 완료·🔁 대상 변경 버튼이 보여요',
+    ]
+  },
   {
     title: '🆕 v3.9 — ⚡ 직원 첫 화면 (바로가기 3버튼)',
     items: [
@@ -3780,6 +3806,80 @@ function startHomeClock(){
   if(!_homeClockTimer)_homeClockTimer=setInterval(f,1000);
 }
 
+// ── 🗣️ 주간 1:1 상담 자동 배정 (팀장 2명 고정 · 화상 · 매주 직원 1명 순번) ──
+function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return dk(x.getFullYear(),x.getMonth(),x.getDate());}
+async function wmEnsureThisWeek(){
+  const {sb,ctx}=await wrApi();
+  const ws=wmWeekStart();
+  const {data:cur}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
+  if(cur)return cur;
+  // 대상 후보: 직원(관리자·모니터링 제외), 사번 순 → 이름 순
+  const {data:profs}=await sb.from('profiles').select('id,name,role,employee_no,status,monitor_only').eq('tenant_id',ctx.tenantId);
+  const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager')
+    .sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
+  if(!cands.length)return null;
+  // 최근 배정 이력 — 가장 오래 안 만난 사람 우선 (한 바퀴 순환)
+  const {data:hist}=await sb.from('weekly_meetings').select('target_id,week_start').eq('tenant_id',ctx.tenantId).order('week_start',{ascending:false}).limit(cands.length*2);
+  const lastSeen=new Map();(hist||[]).forEach(h=>{if(!lastSeen.has(h.target_id))lastSeen.set(h.target_id,h.week_start);});
+  const never=cands.filter(c=>!lastSeen.has(c.id));
+  let pick;
+  if(never.length)pick=never[0];
+  else pick=cands.slice().sort((a,b)=>lastSeen.get(a.id).localeCompare(lastSeen.get(b.id)))[0];
+  const {error}=await sb.from('weekly_meetings').insert({tenant_id:ctx.tenantId,week_start:ws,target_id:pick.id});
+  if(error&&!String(error.message||'').includes('duplicate')&&error.code!=='23505')throw error;
+  const {data:again}=await sb.from('weekly_meetings').select('id,week_start,target_id,done,done_at,note,target:profiles!target_id(name,role)').eq('tenant_id',ctx.tenantId).eq('week_start',ws).maybeSingle();
+  return again||null;
+}
+// 홈 카드 — 대상 직원 본인 + 관리자(팀장·대표)에게만 표시
+async function renderHomeMeetingCard(wrap,beforeEl){
+  try{
+    const vp=window.__vflowProfile||{};
+    if(vp.monitorOnly)return;
+    const isAdminRole=vp.role==='owner'||vp.role==='manager';
+    const m=await wmEnsureThisWeek();
+    if(!m||!m.target)return;
+    const isMe=m.target_id===vp.id;
+    if(!isMe&&!isAdminRole)return;
+    const card=document.createElement('div');
+    card.className='hp-card';
+    card.style.cssText=m.done?'border:1.5px solid var(--green);background:var(--green-light);':'border:1.5px solid var(--purple);background:var(--purple-light);';
+    const ws=new Date(m.week_start);const we=new Date(ws);we.setDate(we.getDate()+6);
+    const range=`${ws.getMonth()+1}/${ws.getDate()}~${we.getMonth()+1}/${we.getDate()}`;
+    if(isMe){
+      card.innerHTML=`<div style="font-size:13px;font-weight:800;color:var(--purple);">🗣️ 이번 주 1:1 상담 대상이에요</div>
+        <div style="font-size:12.5px;margin-top:4px;">김형진·장현진 팀장과 <b>화상</b>으로 진행합니다 (${range})</div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${m.done?'✅ 완료됐어요 — 수고하셨습니다':'일정은 팀장이 따로 연락드려요 · 편하게 이야기 나누는 자리입니다'}</div>`;
+    } else {
+      card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:var(--purple);">🗣️ 이번 주 1:1 상담: <span style="color:var(--text);">${m.target.name}</span></div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${range} · 화상 · 팀장 2명 참석${m.done?' · ✅ 완료':''}</div>
+        ${m.note?`<div style="font-size:11.5px;margin-top:4px;color:var(--text);">📝 ${_wrEsc(m.note)}</div>`:''}</div>
+        <div style="display:flex;flex-direction:column;gap:5px;" data-wm-acts></div></div>`;
+      const acts=card.querySelector('[data-wm-acts]');
+      const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';b.onclick=fn;return b;};
+      if(!m.done)acts.appendChild(mk('✅ 완료',async()=>{
+        const note=prompt('상담 완료 — 팀장 한 줄 메모 (선택, 직원에게는 안 보여요)',m.note||'')??null;
+        if(note===null&&!confirm('메모 없이 완료 처리할까요?'))return;
+        const {sb}=await wrApi();
+        const {error,count}=await sb.from('weekly_meetings').update({done:true,done_at:new Date().toISOString(),note:note||m.note||null},{count:'exact'}).eq('id',m.id);
+        if(error||!count){alert('저장 실패 (권한 확인)');return;}
+        renderDashboardHome().catch(()=>{});
+      }));
+      acts.appendChild(mk('🔁 대상 변경',async()=>{
+        const {sb,ctx}=await wrApi();
+        const {data:profs}=await sb.from('profiles').select('id,name,role,status,monitor_only').eq('tenant_id',ctx.tenantId);
+        const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager').sort((a,b)=>a.name.localeCompare(b.name));
+        const pick=prompt('이번 주 상담 대상을 바꿉니다. 이름을 입력하세요:\n'+cands.map(c=>c.name).join(' · '),m.target.name);
+        if(!pick)return;const p=cands.find(c=>c.name===pick.trim());if(!p){alert('해당 이름의 직원이 없어요');return;}
+        const {error,count}=await sb.from('weekly_meetings').update({target_id:p.id,done:false,done_at:null},{count:'exact'}).eq('id',m.id);
+        if(error||!count){alert('변경 실패 (권한 확인)');return;}
+        renderDashboardHome().catch(()=>{});
+      }));
+    }
+    if(beforeEl&&beforeEl.parentNode===wrap)wrap.insertBefore(card,beforeEl);else wrap.appendChild(card);
+  }catch(e){console.warn('[meeting]',e);}
+}
+
 // ⚡ 직원 첫 화면 — 고정 버튼 3개 (위치 고정 · 전원 동일 · 자동 재배열 없음)
 function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const me=window.__vflowProfile?.name;
@@ -3868,6 +3968,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   grid.appendChild(bCl);
 
   wrap.appendChild(grid);
+  const _wmAnchor=document.createElement('div');wrap.appendChild(_wmAnchor);
+  renderHomeMeetingCard(wrap,_wmAnchor);
 
   // 축약 카드
   const mkCard=(ico,title,desc,fn)=>{
@@ -4097,6 +4199,8 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
   }
   wrap.appendChild(card2);
 
+  // 🗣️ 이번 주 1:1 상담 카드
+  renderHomeMeetingCard(wrap,null);
   // 📨 나에게 온 업무 요청 (비동기 로드)
   renderHomeRequests(wrap);
   // 🔔 알림 켜기 카드 (권한 미설정 시에만)
@@ -4741,24 +4845,99 @@ window.renderCollabProjects=async function(){
     });
     _hp.insertBefore(box,_hp.firstChild);
   }
-  if(ongoing.length===0){ listEl.innerHTML='<div class="project-overview-empty">진행중인 협업 프로젝트가 없습니다. "+ 새 협업"으로 시작해보세요</div>'; return; }
-  listEl.innerHTML='';
-  ongoing.forEach(r=>{
-    const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
-    const pct=Math.max(0,Math.min(100,r.progress||0));
-    const card=document.createElement('div');
-    card.className='collab-card';
-    if(r.help_message){card.style.border='2px solid var(--red)';}
-    card.innerHTML=`
-      <div class="collab-card-top">
-        <span class="collab-card-title">${r.store_id?`<span style="font-size:10px;background:var(--blue-light);color:var(--blue);font-weight:800;border-radius:8px;padding:1px 7px;margin-right:4px;">🏗️ ${(STORES.find(s=>s.id===r.store_id)||{name:''}).name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:''}${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 7px;vertical-align:1px;">🚨 도움 요청</span>':''}</span>
-        <span class="collab-card-pct">${pct}%</span>
-      </div>
-      <div class="collab-bar"><div class="collab-bar-fill" style="width:${pct}%;"></div></div>
-      <div class="collab-card-members">👥 ${members.length?members.join(' · '):'참여자 없음'}</div>`;
-    card.onclick=()=>openCollabDetail(r.id);
-    listEl.appendChild(card);
+  // ── 🤝 협업 흐름: 업무요청 · 매장 프로젝트 · 도움요청 · 전사 협업을 한 줄기로 ──
+  let wrRows=[];
+  try{
+    const {sb:_s3,T:_t3}=await collabApi();
+    const {data:_wr}=await _s3.from('work_requests')
+      .select('id,store_id,content,status,decline_reason,created_at,responded_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)')
+      .eq('tenant_id',_t3).order('created_at',{ascending:false}).limit(60);
+    wrRows=_wr||[];
+  }catch(e){}
+  const me=window.__vflowProfile?.name||'';
+  const sname=(id)=>{const s=STORES.find(x=>x.id===id);return s?s.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):'';};
+  const days=(ts)=>Math.floor((Date.now()-new Date(ts).getTime())/86400000);
+  const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const kindTag={req:['📨 요청','var(--blue-light)','var(--blue)'],store:['🏗️ 매장','var(--purple-light)','var(--purple)'],help:['🆘 도움','var(--orange-light)','var(--orange)'],collab:['🤝 전사','var(--green-light)','var(--green)']};
+  const items=[]; // {kind,grp,who,what,meta,prog,names,click,ts}
+  const sevenAgo=Date.now()-7*86400000;
+  wrRows.forEach(r=>{
+    const d=days(r.created_at);
+    const names=[r.requester?.name,r.recipient?.name,r.responder?.name].filter(Boolean);
+    let grp,st;
+    if(r.status==='pending'){grp=d>=3?'stuck':'prog';st=d>=3?`<span class="cf-st" style="background:var(--red-light);color:var(--red);">대기 ${d}일째</span>`:'<span class="cf-st" style="background:var(--orange-light);color:var(--orange);">대기중</span>';}
+    else if(r.status==='accepted'){const dd=r.responded_at?days(r.responded_at):d;if(dd>7)return;grp='prog';st=`<span class="cf-st" style="background:var(--blue-light);color:var(--blue);">${esc(r.responder?.name||'')} 수락 → 내 업무 등록됨</span>`;}
+    else {const dd=r.responded_at?days(r.responded_at):d;if(dd>7)return;grp='done';st=`<span class="cf-st" style="background:var(--red-light);color:var(--red);">거절 — ${esc(r.decline_reason||'')}</span>`;}
+    const st_=STORES.find(x=>x.id===r.store_id);
+    items.push({kind:'req',grp,names,ts:r.created_at,
+      who:`${esc(r.requester?.name||'익명')}<span class="arr">→</span>${r.recipient?.name?esc(r.recipient.name):'근무자 누구나'}`,
+      what:esc(r.content),meta:`<span>🏪 ${sname(r.store_id)}</span><span>·</span>${st}`,
+      click:()=>{if(st_)openStoreRoom(st_);}});
   });
+  (_pHelped||[]).forEach(p=>{
+    items.push({kind:'help',grp:'stuck',names:[p.owner?.name].filter(Boolean),ts:p.created_at||'',
+      who:`${esc(p.owner?.name||'요청자')}<span class="arr">→</span>아무나`,
+      what:`"${esc(p.help_message)}" — 🚀 ${esc(p.title)} (개인 프로젝트)`,
+      meta:'<span class="cf-st" style="background:var(--red-light);color:var(--red);">도움 필요</span>',
+      click:()=>{if(p.owner?.name)enterMyWork(p.owner.name);}});
+  });
+  rows.forEach(r=>{
+    const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
+    const logs=r.collab_project_logs||[];
+    const last=logs.length?logs.reduce((a,b)=>a.created_at>b.created_at?a:b):null;
+    const pct=Math.max(0,Math.min(100,r.progress||0));
+    const isDone=r.status==='done';
+    if(isDone&&(!r.done_date||new Date(r.done_date).getTime()<sevenAgo))return;
+    const names=[...members,r.helper?.name].filter(Boolean);
+    if(r.help_message&&!isDone){
+      const hd=r.help_requested_at?days(r.help_requested_at):0;
+      items.push({kind:'help',grp:'stuck',names,ts:r.help_requested_at||r.created_at,
+        who:`${esc(r.helper?.name||'요청자')}<span class="arr">→</span>아무나`,
+        what:`"${esc(r.help_message)}" — ${r.store_id?'🏗️ ':'🤝 '}${esc(r.title)}`,
+        meta:`<span class="cf-st" style="background:var(--red-light);color:var(--red);">응답 없음 ${hd}일</span>`,
+        click:()=>openCollabDetail(r.id)});
+    }
+    const st_=r.store_id?STORES.find(x=>x.id===r.store_id):null;
+    items.push({kind:r.store_id?'store':'collab',grp:isDone?'done':'prog',names,ts:r.created_at,
+      who:r.store_id?`${esc(st_?st_.name:'')} <span style="color:var(--text-mute);font-weight:600;">· 근무자 이어서 진행</span>`:(members.length?`${esc(members[0])}${members.length>1?` 외 ${members.length-1}명`:''}`:'참여자 없음'),
+      what:esc(r.title),
+      meta:isDone?`<span class="cf-st" style="background:var(--green-light);color:var(--green);">완료 · ${r.done_date?r.done_date.slice(5).replace('-','/'):''}</span>`
+        :`<span class="cf-st" style="background:var(--orange-light);color:var(--orange);">진행 중 ${pct}%</span><span>일지 ${logs.length}건${last?` · 마지막 ${esc(last.profiles?.name||'')} ${last.created_at.slice(5,10).replace('-','/')}`:''}</span>`,
+      prog:isDone?null:pct,
+      click:()=>openCollabDetail(r.id)});
+  });
+  if(items.length===0){ listEl.innerHTML='<div class="project-overview-empty">진행 중인 협업·요청이 없습니다. "+ 새 협업"으로 시작해보세요</div>'; return; }
+  const cnt={all:items.length,req:0,store:0,help:0,collab:0,me:0};
+  items.forEach(i=>{cnt[i.kind]++;if(me&&i.names.includes(me))cnt.me++;});
+  listEl.innerHTML='';
+  const chips=document.createElement('div');chips.className='cf-chips';
+  const chipDefs=[['all','전체'],['req','📨 업무요청'],['store','🏗️ 매장'],['help','🆘 도움'],['collab','🤝 전사'],['me','👤 나 관련']];
+  let cur=window.__cfFilter||'all';
+  const body=document.createElement('div');
+  const paint=()=>{
+    chips.querySelectorAll('.cf-chip').forEach(c=>c.classList.toggle('on',c.dataset.k===cur));
+    body.innerHTML='';
+    const vis=items.filter(i=>cur==='all'?true:cur==='me'?(me&&i.names.includes(me)):i.kind===cur);
+    const grps=[['stuck','⚠️ 막힌 곳 먼저'],['prog','🔄 진행 중'],['done','✅ 최근 완료 (7일)']];
+    grps.forEach(([g,label])=>{
+      const list=vis.filter(i=>i.grp===g);
+      if(!list.length)return;
+      const gh=document.createElement('div');gh.className='cf-grp';gh.innerHTML=`${label} <span class="ln"></span>`;body.appendChild(gh);
+      list.forEach(i=>{
+        const [kl,kb,kc]=kindTag[i.kind];
+        const row=document.createElement('div');row.className='cf-row'+(g==='stuck'?' stuck':g==='done'?' done':'');
+        row.innerHTML=`<span class="cf-kind" style="background:${kb};color:${kc};">${kl}</span>
+          <div style="flex:1;min-width:0;"><div class="cf-who">${i.who}</div><div class="cf-what">${i.what}</div><div class="cf-meta">${i.meta}</div>${i.prog!=null?`<div class="cf-prog"><i style="width:${i.prog}%"></i></div>`:''}</div>
+          <span style="color:var(--text-mute);font-size:14px;margin-top:6px;">›</span>`;
+        row.onclick=i.click;
+        body.appendChild(row);
+      });
+    });
+    if(!body.children.length)body.innerHTML='<div class="project-overview-empty">해당 항목이 없어요</div>';
+  };
+  chipDefs.forEach(([k,l])=>{const c=document.createElement('button');c.type='button';c.className='cf-chip';c.dataset.k=k;c.innerHTML=`${l}${k==='me'?'':`<b style="margin-left:3px;">${cnt[k]}</b>`}`;c.onclick=()=>{cur=k;window.__cfFilter=k;paint();};chips.appendChild(c);});
+  listEl.appendChild(chips);listEl.appendChild(body);
+  paint();
 };
 
 let _collabScope='all';
