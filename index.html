@@ -3817,7 +3817,8 @@ async function wmEnsureThisWeek(){
   // 대상 후보: 직원(관리자·모니터링 제외), 사번 순 → 이름 순
   const {data:profs}=await sb.from('profiles').select('id,name,role,employee_no,status,monitor_only').eq('tenant_id',ctx.tenantId);
   const _ex=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
-  const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager'&&!_ex.has(p.id))
+  const _ld=(appSettings.features&&appSettings.features.meeting_leads)||[];const _ldSet=new Set(_ld);
+  const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&(_ld.length?!_ldSet.has(p.id):p.role!=='manager')&&!_ex.has(p.id))
     .sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
   if(!cands.length)return null;
   // 최근 배정 이력 — 가장 오래 안 만난 사람 우선 (한 바퀴 순환)
@@ -3836,7 +3837,10 @@ async function wmEnsureThisWeek(){
 async function wmAvailableDays(weekStart){
   try{
     const {sb,ctx}=await wrApi();
-    const {data:mgrs}=await sb.from('profiles').select('id,name').eq('tenant_id',ctx.tenantId).eq('role','manager').neq('status','inactive');
+    const _lead=(appSettings.features&&appSettings.features.meeting_leads)||null;
+    let mgrs;
+    if(_lead&&_lead.length){const r=await sb.from('profiles').select('id,name').in('id',_lead);mgrs=r.data||[];}
+    else{const r=await sb.from('profiles').select('id,name').eq('tenant_id',ctx.tenantId).eq('role','manager').neq('status','inactive');mgrs=r.data||[];}
     const ids=(mgrs||[]).map(m=>m.id);
     const ws=new Date(weekStart);const days=[];
     for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);days.push(dk(d.getFullYear(),d.getMonth(),d.getDate()));}
@@ -3910,7 +3914,8 @@ async function renderHomeMeetingCard(wrap,beforeEl){
         const {sb,ctx}=await wrApi();
         const {data:profs}=await sb.from('profiles').select('id,name,role,status,monitor_only').eq('tenant_id',ctx.tenantId);
         const _ex2=new Set((appSettings.features&&appSettings.features.meeting_exclude)||[]);
-        const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager'&&!_ex2.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+        const _ld2=(appSettings.features&&appSettings.features.meeting_leads)||[];const _ld2Set=new Set(_ld2);
+        const cands=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&(_ld2.length?!_ld2Set.has(p.id):p.role!=='manager')&&!_ex2.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
         const pick=prompt('이번 주 상담 대상을 바꿉니다. 이름을 입력하세요:\n'+cands.map(c=>c.name).join(' · '),m.target.name);
         if(!pick)return;const p=cands.find(c=>c.name===pick.trim());if(!p){alert('해당 이름의 직원이 없어요');return;}
         const {error,count}=await sb.from('weekly_meetings').update({target_id:p.id,done:false,done_at:null},{count:'exact'}).eq('id',m.id);
@@ -7411,14 +7416,34 @@ async function renderSettingsTab(content){
 
   // ── 🗣️ 1:1 상담 대상 설정 (제외 체크) ──
   const secMt=document.createElement('div');secMt.className='dash-card';secMt.style.marginTop='12px';
-  secMt.innerHTML='<div class="dash-store-name">🗣️ 주간 1:1 상담 대상</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">매주 직원 1명이 순번대로 자동 배정돼요(사번 순, 관리자·모니터링 계정 제외). 순번에서 빼고 싶은 직원은 체크를 해제하세요 — 바로 저장됩니다.</div><div id="mt-list"></div>';
+  secMt.innerHTML='<div class="dash-store-name">🗣️ 주간 1:1 상담</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>참석 팀장</b> — 체크한 사람이 상담 팀장이에요(출근일 계산·카드 표시 기준). 아무도 체크 안 하면 매니저 전원.</div><div id="mt-leads" style="margin-bottom:12px;"></div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>상담 대상</b> — 매주 1명 순번(사번 순). 빼고 싶은 직원은 체크 해제 — 바로 저장.</div><div id="mt-list"></div>';
   content.appendChild(secMt);
   (async()=>{
     const box=secMt.querySelector('#mt-list');
     try{
       const {sb,ctx}=await wrApi();
       const {data:profs}=await sb.from('profiles').select('id,name,role,employee_no,status,monitor_only').eq('tenant_id',ctx.tenantId);
-      const list=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&p.role!=='manager').sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
+      // 참석 팀장 체크 (관리자·매니저 중에서)
+      const lbox=secMt.querySelector('#mt-leads');lbox.innerHTML='';
+      const admins=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&(p.role==='owner'||p.role==='manager')).sort((a,b)=>a.name.localeCompare(b.name));
+      admins.forEach(p=>{
+        const cur=new Set((appSettings.features&&appSettings.features.meeting_leads)||[]);
+        const row=document.createElement('label');
+        row.style.cssText='display:inline-flex;align-items:center;gap:6px;margin:0 12px 6px 0;font-size:13px;font-weight:600;cursor:pointer;';
+        row.innerHTML=`<input type="checkbox" ${cur.has(p.id)?'checked':''} style="accent-color:var(--purple);width:17px;height:17px;"><span>${p.name} <span style="font-size:10.5px;color:var(--text-mute);">${p.role==='owner'?'대표':'매니저'}</span></span>`;
+        row.querySelector('input').onchange=async(e)=>{
+          const s=new Set((appSettings.features&&appSettings.features.meeting_leads)||[]);
+          if(e.target.checked)s.add(p.id);else s.delete(p.id);
+          const prev=appSettings.features.meeting_leads;
+          appSettings.features={...appSettings.features,meeting_leads:[...s]};
+          try{await saveSettings();paintTargets();}
+          catch(err){appSettings.features={...appSettings.features,meeting_leads:prev};e.target.checked=!e.target.checked;alert('저장 실패 (권한/네트워크 확인)');}
+        };
+        lbox.appendChild(row);
+      });
+      const paintTargets=()=>{
+      const _ldS=(appSettings.features&&appSettings.features.meeting_leads)||[];const _ldSet=new Set(_ldS);
+      const list=(profs||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only&&p.role!=='owner'&&(_ldS.length?!_ldSet.has(p.id):p.role!=='manager')).sort((a,b)=>(a.employee_no||'zz').localeCompare(b.employee_no||'zz')||a.name.localeCompare(b.name));
       if(!list.length){box.innerHTML='<div style="font-size:12px;color:var(--text-mute);">대상 직원이 없어요</div>';return;}
       box.innerHTML='';
       list.forEach(p=>{
@@ -7436,6 +7461,8 @@ async function renderSettingsTab(content){
         };
         box.appendChild(row);
       });
+      };
+      paintTargets();
     }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패</div>';}
   })();
 
