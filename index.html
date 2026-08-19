@@ -971,7 +971,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div class="app-footer-title" id="footer-app-name">매장 운영 스케줄 시스템</div>
     <div style="font-size:10.5px;color:var(--text-mute);margin:2px 0 4px;">버전 <b class="app-version-label" style="color:var(--text-sub);"></b></div>
     <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
-    <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지</div>
+    <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지 · <a href="legal.html" target="_blank" style="color:inherit;text-decoration:underline;">약관·개인정보</a></div>
   </div>
   <div class="pb"></div>
 </div>
@@ -1036,7 +1036,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
     <div><div class="header-title">👤 내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
-    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">🏠 홈으로</button><button class="back-btn" onclick="doChangePw()">🔑 비밀번호</button><button class="back-btn" onclick="doLogout()">🚪 로그아웃</button></div>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">🏠 홈으로</button><button class="back-btn" onclick="openMyConsents()">📄 내 동의</button><button class="back-btn" onclick="doChangePw()">🔑 비밀번호</button><button class="back-btn" onclick="doLogout()">🚪 로그아웃</button></div>
   </div>
   <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
   <div class="pb"></div>
@@ -2226,11 +2226,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v4.0';
+const GUIDE_VERSION = 'v4.1';
 const BUILD_DATE = '2026-08-15'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v4.1 — 📄 약관·동의 체계',
+    items: [
+      '가입(설치 마법사·초대)할 때 약관과 개인정보 동의를 받습니다 — 필수/선택이 구분돼 있고 "보기"로 전문을 읽을 수 있어요',
+      '이미 쓰고 있던 분들은 다음 로그인 때 한 번 동의 화면이 떠요 — 필수만 체크하면 바로 계속됩니다',
+      '내 동의 내역·선택 항목 변경: 내 업무 화면의 📄 내 동의 (관리자는 설정 맨 아래에도 있어요)',
+      '약관·개인정보처리방침 전문은 홈 맨 아래 "약관·개인정보" 링크',
+    ]
+  },
   {
     title: '🆕 v4.0 — 🤝 협업 흐름 · 🗣️ 주간 1:1 상담',
     items: [
@@ -3806,6 +3815,29 @@ function startHomeClock(){
   f();
   if(!_homeClockTimer)_homeClockTimer=setInterval(f,1000);
 }
+
+// 📄 내 동의 관리 모달 (직원용 — 설정 탭 없이 접근)
+window.openMyConsents=async function(){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(20,28,42,0.55);display:flex;align-items:center;justify-content:center;padding:18px;';
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--card);border-radius:18px;max-width:440px;width:100%;max-height:82vh;overflow-y:auto;padding:16px;box-shadow:0 18px 60px rgba(0,0,0,0.35);';
+  card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:15px;font-weight:800;">📄 내 동의 관리</div><button data-x style="background:none;border:none;font-size:19px;cursor:pointer;color:var(--text-sub);font-family:inherit;">✕</button></div><div style="font-size:11.5px;color:var(--text-sub);margin:4px 0 8px;">선택 항목은 언제든 켜고 끌 수 있어요. 전문은 <a href="legal.html" target="_blank" style="color:var(--blue);font-weight:700;">여기</a>.</div><div data-list>불러오는 중...</div>';
+  card.querySelector('[data-x]').onclick=()=>ov.remove();ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+  ov.appendChild(card);document.body.appendChild(ov);
+  const box=card.querySelector('[data-list]');
+  try{
+    const C=await import('./consent.js');const vp=window.__vflowProfile||{};const {ctx}=await wrApi();
+    const keys=vp.role==='owner'?C.TENANT_KEYS:C.STAFF_KEYS;const st=await C.loadConsentState(vp.id);
+    box.innerHTML='';
+    keys.forEach(k=>{const d=C.CONSENT_DOCS[k];const cur=st[k];const on=!!(cur&&cur.agreed&&!cur.withdrawn_at);
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px;';
+      row.innerHTML=`<div><span style="font-size:10.5px;font-weight:800;border-radius:5px;padding:1px 6px;margin-right:5px;${d.required?'background:var(--red-light);color:var(--red);':'background:var(--blue-light);color:var(--blue);'}">${d.required?'필수':'선택'}</span><b>${d.title}</b><div style="font-size:10.5px;color:var(--text-mute);margin-top:2px;">${cur?`${on?'동의':'미동의/철회'} · ${cur.doc_version}`:'기록 없음'}</div></div>`;
+      if(d.required)row.insertAdjacentHTML('beforeend',`<span style="font-size:11px;font-weight:700;color:${on?'var(--green)':'var(--red)'};">${on?'✓':'미동의'}</span>`);
+      else{const cb=document.createElement('input');cb.type='checkbox';cb.checked=on;cb.style.cssText='accent-color:var(--gold);width:18px;height:18px;';cb.onchange=async()=>{try{await C.setOptional(ctx.tenantId,vp.id,vp.role==='owner'?'tenant':'staff',k,cb.checked);}catch(e){cb.checked=!cb.checked;alert('저장 실패');}};row.appendChild(cb);}
+      box.appendChild(row);});
+  }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패</div>';}
+};
 
 // ── 🗣️ 주간 1:1 상담 자동 배정 (팀장 2명 고정 · 화상 · 매주 직원 1명 순번) ──
 function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return dk(x.getFullYear(),x.getMonth(),x.getDate());}
@@ -7414,6 +7446,36 @@ async function renderSettingsTab(content){
   };
   renderInvList();
 
+  // ── 📄 내 동의 관리 ──
+  const secC=document.createElement('div');secC.className='dash-card';secC.style.marginTop='12px';
+  secC.innerHTML='<div class="dash-store-name">📄 내 동의 관리</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">선택 항목은 언제든 켜고 끌 수 있어요. 전문은 <a href="legal.html" target="_blank" style="color:var(--blue);font-weight:700;">약관·동의 문서</a>에서.</div><div id="consent-list">불러오는 중...</div>';
+  content.appendChild(secC);
+  (async()=>{
+    const box=secC.querySelector('#consent-list');
+    try{
+      const C=await import('./consent.js');
+      const vp=window.__vflowProfile||{};
+      const {ctx}=await wrApi();
+      const keys=vp.role==='owner'?C.TENANT_KEYS:C.STAFF_KEYS;
+      const st=await C.loadConsentState(vp.id);
+      box.innerHTML='';
+      keys.forEach(k=>{
+        const d=C.CONSENT_DOCS[k];const cur=st[k];
+        const on=!!(cur&&cur.agreed&&!cur.withdrawn_at);
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px;';
+        row.innerHTML=`<div><span style="font-size:10.5px;font-weight:800;border-radius:5px;padding:1px 6px;margin-right:5px;${d.required?'background:var(--red-light);color:var(--red);':'background:var(--blue-light);color:var(--blue);'}">${d.required?'필수':'선택'}</span><b>${d.title}</b><div style="font-size:10.5px;color:var(--text-mute);margin-top:2px;">${cur?`${on?'동의':'미동의/철회'} · ${cur.doc_version}${cur.agreed_at?' · '+cur.agreed_at.slice(0,10):''}`:'기록 없음'}</div></div>`;
+        if(d.required){row.insertAdjacentHTML('beforeend',`<span style="font-size:11px;font-weight:700;color:${on?'var(--green)':'var(--red)'};">${on?'✓ 동의함':'미동의'}</span>`);}
+        else{
+          const cb=document.createElement('input');cb.type='checkbox';cb.checked=on;cb.style.cssText='accent-color:var(--gold);width:18px;height:18px;';
+          cb.onchange=async()=>{try{await C.setOptional(ctx.tenantId,vp.id,vp.role==='owner'?'tenant':'staff',k,cb.checked);}catch(e){cb.checked=!cb.checked;alert('저장 실패');}};
+          row.appendChild(cb);
+        }
+        box.appendChild(row);
+      });
+    }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패 (관리자: 동의 테이블 SQL 필요)</div>';}
+  })();
+
   // ── 🗣️ 1:1 상담 대상 설정 (제외 체크) ──
   const secMt=document.createElement('div');secMt.className='dash-card';secMt.style.marginTop='12px';
   secMt.innerHTML='<div class="dash-store-name">🗣️ 주간 1:1 상담</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>참석 팀장</b> — 체크한 사람이 상담 팀장이에요(출근일 계산·카드 표시 기준). 아무도 체크 안 하면 매니저 전원.</div><div id="mt-leads" style="margin-bottom:12px;"></div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>상담 대상</b> — 매주 1명 순번(사번 순). 빼고 싶은 직원은 체크 해제 — 바로 저장.</div><div id="mt-list"></div>';
@@ -7881,6 +7943,15 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   // 5-5: 관리자 여부는 로그인 계정 role로 (renderMyPage의 관리자 전용 요소 등에 사용)
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');
+  // 📄 동의 체크 — 필수 항목의 최신 버전 동의가 없으면 모달 (Ⓜ️ 모니터링 계정은 제외)
+  try{
+    const _vp0=window.__vflowProfile||{};
+    if(_vp0.id&&!_vp0.monitorOnly){
+      const C=await import('./consent.js');
+      const miss=await C.missingRequired(_vp0.id,_vp0.role);
+      if(miss.length){const _ctx=await (await import('./adapter/context.js')).getContext();await C.showReconsentModal(_ctx.tenantId,_vp0.id,_vp0.role,miss);}
+    }
+  }catch(e){console.warn('[consent]',e);}
   // Ⓜ️ 모니터링 전용(대표): 아이콘 누르면 바로 주간 리포트가 첫 화면
   if(window.__vflowProfile?.monitorOnly&&isAdmin){
     dashTab='report';

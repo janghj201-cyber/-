@@ -26,15 +26,18 @@
     <form id="form">
       <label>이메일<input type="email" id="email" required placeholder="초대받은 이메일" /></label>
       <label>비밀번호<input type="password" id="password" required minlength="6" placeholder="6자 이상" /></label>
+      <div id="inv-consent"></div>
       <p class="error" id="error" hidden></p>
-      <button type="submit" class="primary" id="btn">가입하고 합류하기</button>
+      <button type="submit" class="primary" id="btn" disabled style="opacity:.5;">가입하고 합류하기</button>
     </form>
     <span class="toggle" id="toggle-wrap">이미 계정이 있으세요? <a id="toggle">로그인으로 합류</a></span>
   </div>
 
   <script type="module">
     import { supabase } from './adapter/supabase-client.js'
+    import { renderConsentBox, saveConsents, STAFF_KEYS } from './consent.js'
     const $ = (id) => document.getElementById(id)
+    { const _b=$('btn'); window.__invConsent = renderConsentBox($('inv-consent'), STAFF_KEYS, (ok) => { _b.disabled = !ok; _b.style.opacity = ok ? '1' : '.5' }) }
     const inviteId = new URLSearchParams(location.search).get('id')
     if (!inviteId) { $('sub').textContent='초대 링크가 올바르지 않아요. 관리자에게 링크를 다시 받아주세요.'; $('form').style.display='none'; $('toggle-wrap').style.display='none' }
 
@@ -57,6 +60,7 @@
       if (pErr && !String(pErr.message).includes('duplicate')) throw pErr
       const { error: uErr } = await supabase.from('invitations').update({ status: 'accepted' }).eq('id', inv.id)
       if (uErr) throw uErr
+      try { await saveConsents(inv.tenant_id, user.id, 'staff', window.__invConsent ? window.__invConsent.values() : { staff_privacy: true, privacy: true, staff_insights: false }) } catch (ce) { console.warn('[consent]', ce) }
     }
 
     // 이미 로그인된 상태로 링크를 열었으면 바로 수락 시도

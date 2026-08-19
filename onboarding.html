@@ -39,8 +39,9 @@
         <label>이름<input type="text" id="su-name" required placeholder="예) 장현진" /></label>
         <label>이메일<input type="email" id="su-email" required placeholder="you@example.com" /></label>
         <label>비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" /></label>
+        <div id="su-consent"></div>
         <p class="error" id="su-error" hidden></p>
-        <button type="submit" class="primary" id="su-btn">계정 만들기</button>
+        <button type="submit" class="primary" id="su-btn" disabled style="opacity:.5;">계정 만들기</button>
       </form>
       <span class="login-link">이미 계정이 있으세요? <a href="login.html">로그인</a></span>
     </div>
@@ -86,6 +87,7 @@
 
   <script type="module">
     import { supabase } from './adapter/supabase-client.js'
+    import { renderConsentBox, saveConsents, TENANT_KEYS } from './consent.js'
 
     // 이미 온보딩까지 끝난 계정이면 앱으로
     const { data: { session: existing } } = await supabase.auth.getSession()
@@ -98,6 +100,9 @@
     let userId = existing?.user?.id ?? null
     let contactName = ''
     let tenantInfo = null // {name, industry}
+    let consentValues = null
+    const _suBtn = $('su-btn')
+    const consentBox = renderConsentBox($('su-consent'), TENANT_KEYS, (ok) => { _suBtn.disabled = !ok; _suBtn.style.opacity = ok ? '1' : '.5' })
 
     function showStep(n) {
       ;['step1','step2','step3','step-done'].forEach((id,i)=>{ $(id).hidden = (id !== (n===4?'step-done':'step'+n)) })
@@ -112,6 +117,7 @@
       const btn=$('su-btn'), err=$('su-error'); err.hidden=true; btn.disabled=true; btn.textContent='만드는 중...'
       try {
         contactName = $('su-name').value.trim()
+        consentValues = consentBox.values()
         const { data, error } = await supabase.auth.signUp({ email: $('su-email').value.trim(), password: $('su-password').value })
         if (error) throw error
         if (!data.session) {
@@ -161,6 +167,8 @@
         if (tErr) throw tErr
         const { error: pErr } = await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, name: contactName, role: 'owner' })
         if (pErr) throw pErr
+        // 동의 기록 (1단계에서 받은 값 — 가입만 하고 이탈했다 돌아온 경우는 로그인 후 재동의 모달이 받는다)
+        if (consentValues) { try { await saveConsents(tenantId, userId, 'tenant', consentValues) } catch (ce) { console.warn('[consent]', ce) } }
 
         // 매장
         const { error: sErr } = await supabase.from('stores').insert(stores.map(s=>({ tenant_id: tenantId, name: s.name, address: s.address || null })))
