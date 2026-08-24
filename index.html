@@ -3566,9 +3566,9 @@ window.switchTab = function(tab){
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
-  // 직원은 탭바 없음 — 첫 화면이 전부. 관리자(모니터링 제외)만 [대시보드|오늘 현황]
+  // 직원은 탭바 없음 — 첫 화면이 전부. 관리자·Ⓜ️ 모니터링은 [대시보드|오늘 현황]
   const _vpT=window.__vflowProfile||{};
-  const _adminBar=(_vpT.role==='owner'||_vpT.role==='manager')&&!_vpT.monitorOnly;
+  const _adminBar=(_vpT.role==='owner'||_vpT.role==='manager');
   document.getElementById('tab-bar').style.display=_adminBar?'flex':'none';
   if(tab==='dashboard'){
     showScreen('screen-dashboard');
@@ -8124,7 +8124,7 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');
   const _tsBtn=document.getElementById('tab-status');
-  if(_tsBtn)_tsBtn.style.display=(isAdmin&&!window.__vflowProfile?.monitorOnly)?'':'none';
+  if(_tsBtn)_tsBtn.style.display=isAdmin?'':'none';
   // 📄 동의 체크 — 필수 항목의 최신 버전 동의가 없으면 모달 (Ⓜ️ 모니터링 계정은 제외)
   try{
     const _vp0=window.__vflowProfile||{};
@@ -8138,7 +8138,7 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   if(window.__vflowProfile?.monitorOnly&&isAdmin){
     dashTab='report';
     dashViewDate=null;
-    document.getElementById('tab-bar').style.display='none';
+    document.getElementById('tab-bar').style.display='flex'; // Ⓜ️도 하단 탭으로 오늘 현황 접근
     showScreen('screen-admin');
     renderDashboard();
   } else {
