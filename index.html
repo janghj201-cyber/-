@@ -981,6 +981,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="header">
     <div><div class="header-title" id="monthly-store-title">매장을 선택하세요</div><div class="header-sub" id="monthly-hsub"></div></div>
     <div class="nav-btns">
+      <button class="nav-btn" onclick="switchTab('dashboard')" title="홈으로">🏠</button>
       <div id="monthly-store-selector" style="display:flex;gap:4px;align-items:center;">
         <button class="nav-btn" onclick="chgMonthlyStore(-1)">‹</button>
         <button class="nav-btn today-btn" onclick="openStoreSelect()">지점</button>
@@ -1194,18 +1195,24 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div id="room-body" style="padding:12px;max-width:860px;margin:0 auto;"></div>
 </div>
 
+<!-- 👑 오늘 현황 (관리자 전용) -->
+<div class="screen has-tab-bar" id="screen-status">
+  <div class="header">
+    <div><div class="header-title">👑 오늘 현황</div><div class="header-sub">누락 먼저 · 매장 한눈에 · 직원 오늘</div></div>
+    <button class="back-btn" onclick="renderTodayStatus()">🔄 새로고침</button>
+  </div>
+  <div style="padding:14px 14px 24px;max-width:820px;margin:0 auto;" id="status-body"></div>
+  <div class="pb"></div>
+</div>
+
 <div class="tab-bar" id="tab-bar">
   <button class="tab-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
     <div class="tab-icon">🏠</div>
     <div class="tab-label">대시보드</div>
   </button>
-  <button class="tab-item" id="tab-monthly" onclick="switchTab('monthly')">
-    <div class="tab-icon">📅</div>
-    <div class="tab-label">월간 스케줄</div>
-  </button>
-  <button class="tab-item" id="tab-my" onclick="switchTab('my')">
-    <div class="tab-icon">👤</div>
-    <div class="tab-label">내 업무</div>
+  <button class="tab-item" id="tab-status" onclick="switchTab('status')" style="display:none;">
+    <div class="tab-icon">👑</div>
+    <div class="tab-label">오늘 현황</div>
   </button>
 </div>
 </div><!-- /app-shell -->
@@ -2226,11 +2233,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v4.2';
-const BUILD_DATE = '2026-08-15'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v4.3';
+const BUILD_DATE = '2026-08-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v4.3 — 하단 탭 정리 · 👑 오늘 현황',
+    items: [
+      '하단 탭이 정리됐어요 — 월간 스케줄·내 업무 탭이 빠지고, 첫 화면 버튼으로 들어갑니다 (기능은 전부 그대로예요)',
+      '오늘 업무 = 첫 화면 ✅ 오늘 업무 버튼 · 월간 스케줄·휴무 설정 = 첫 화면의 🗓️ 카드',
+      '오늘 업무 버튼에도 미완료 수 빨간 배지가 붙어요 — 네 버튼 모두 남은 일을 숫자로 알려줍니다',
+      '👑 관리자는 하단에 오늘 현황 탭이 생겼어요 — 청소 미체크·3일+ 미확인·업무 미등록·이월이 맨 위에 뜨고, 매장 신호등 표와 직원 오늘 현황이 한 화면에 (매장·직원 누르면 바로 이동)',
+    ]
+  },
   {
     title: '🆕 v4.2 — 🧹 청소 배지 · 💬 인수인계 피드백',
     items: [
@@ -3546,14 +3562,20 @@ function showScreen(id){
 
 window.switchTab = function(tab){
   curTab=tab;
-  ['dashboard','monthly','my'].forEach(t=>{
+  ['dashboard','status'].forEach(t=>{
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
-  document.getElementById('tab-bar').style.display='flex';
+  // 직원은 탭바 없음 — 첫 화면이 전부. 관리자(모니터링 제외)만 [대시보드|오늘 현황]
+  const _vpT=window.__vflowProfile||{};
+  const _adminBar=(_vpT.role==='owner'||_vpT.role==='manager')&&!_vpT.monitorOnly;
+  document.getElementById('tab-bar').style.display=_adminBar?'flex':'none';
   if(tab==='dashboard'){
     showScreen('screen-dashboard');
     renderDashboardHome();
+  } else if(tab==='status'){
+    showScreen('screen-status');
+    renderTodayStatus();
   } else if(tab==='monthly'){
     showScreen('screen-monthly');
     if(!curStore)curStore=STORES[0];
@@ -3846,6 +3868,116 @@ window.openMyConsents=async function(){
   }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패</div>';}
 };
 
+// 👑 오늘 현황 — 관리자 전용: 누락 먼저 → 매장 신호등 → 직원 오늘 → 바로가기
+window.renderTodayStatus=async function(){
+  const body=document.getElementById('status-body');
+  if(!body)return;
+  body.innerHTML='<div class="project-overview-empty">불러오는 중...</div>';
+  try{
+    const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
+    const tKey=todayKey();
+    const totalCl=getCleanItemCount(ty,tm,td);
+    const [cleanSnaps,hoSnaps,todosByName,dayoffSnap]=await Promise.all([
+      Promise.all(STORES.map(s=>getDoc(doc(db,`checks/${s.id}/${tKey}/clean`)).catch(()=>null))),
+      Promise.all(STORES.map(s=>getDoc(doc(db,`handover/${s.id}_${tKey}`)).catch(()=>null))),
+      Promise.all(staffList.map(async name=>{try{return [name,await loadStaffTodos(name,tKey)];}catch(e){return [name,[]];}})),
+      getDoc(doc(db,'config/dayoff')).catch(()=>null),
+    ]);
+    const dayoffData=(dayoffSnap&&dayoffSnap.exists&&dayoffSnap.exists())?(dayoffSnap.data()||{}):{};
+    const offToday=(name)=>{const d=dayoffData[name]||{};return !!d[tKey];};
+    const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const shortN=(n)=>n.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+
+    const rows=STORES.map((s,i)=>{
+      const cs=cleanSnaps[i];
+      const cleanDone=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;
+      let todoDone=0,todoTotal=0,workers=[],carried=0;
+      for(const p of todosByName){
+        if(!p)continue;
+        const st_=p[1].filter(it=>it.storeId===s.id);
+        if(st_.length){workers.push(p[0]);todoTotal+=st_.length;todoDone+=st_.filter(it=>it.done).length;carried+=st_.filter(it=>!it.done&&it.fromDate&&it.fromDate!==tKey).length;}
+      }
+      let unconf=0;const stale=[];
+      const hs=hoSnaps[i];
+      if(hs&&hs.exists()){
+        (hs.data().items||[]).forEach(it=>{
+          if(it.confirmed||it.closed)return;
+          unconf++;
+          if(it.fromDate){const dd=Math.floor((Date.now()-new Date(it.fromDate).getTime())/86400000);if(dd>=3)stale.push({store:s,it,days:dd});}
+        });
+      }
+      return {s,cleanDone,todoDone,todoTotal,workers,carried,unconf,stale};
+    });
+
+    body.innerHTML='';
+    const grp=(label)=>{const g=document.createElement('div');g.className='cf-grp';g.innerHTML=`${label} <span class="ln"></span>`;body.appendChild(g);};
+    const missRow=(ico,title,meta,fn,warn)=>{
+      const r=document.createElement('div');
+      r.style.cssText=`display:flex;gap:9px;padding:9px 10px;border-radius:10px;border:1px solid var(--border);border-left:4px solid ${warn?'var(--orange)':'var(--red)'};background:${warn?'#fffdf6':'#fffaf9'};margin-bottom:6px;cursor:pointer;align-items:center;font-size:12.5px;`;
+      r.innerHTML=`<span>${ico}</span><div style="flex:1;"><b style="font-weight:800;">${title}</b><div style="font-size:10.5px;color:var(--text-mute);margin-top:2px;">${meta}</div></div><span style="color:var(--text-mute);font-size:14px;">›</span>`;
+      r.onclick=fn;body.appendChild(r);
+    };
+    const goStore=(s)=>{switchTab('dashboard');setTimeout(()=>{try{openStoreRoom(s);}catch(e){}},80);};
+
+    grp('⚠️ 지금 확인할 것');
+    let missCnt=0;
+    rows.filter(r=>totalCl>0&&r.cleanDone===0).forEach(r=>{missCnt++;missRow('🧹',`${esc(r.s.name)} 청소 미체크`,`오늘 항목 ${totalCl}개 중 0개${r.workers.length?` · 근무: ${r.workers.map(esc).join(' · ')}`:''}`,()=>goStore(r.s));});
+    const staleAll=rows.flatMap(r=>r.stale);
+    if(staleAll.length){missCnt++;missRow('📝',`3일 이상 미확인 인수인계 ${staleAll.length}건`,staleAll.slice(0,2).map(x=>`${shortN(x.store.name)} · ${esc(x.it.text).slice(0,20)}${x.it.recipient?` · 수신: ${esc(x.it.recipient)}`:''}`).join(' / ')+(staleAll.length>2?` 외 ${staleAll.length-2}건`:''),()=>goStore(staleAll[0].store));}
+    const noTask=staffList.filter(n=>{const p=todosByName.find(x=>x&&x[0]===n);return (!p||p[1].length===0)&&!offToday(n);});
+    if(noTask.length){missCnt++;missRow('✍️',`오늘 업무 미등록 ${noTask.length}명`,noTask.map(esc).join(' · ')+' — 휴무 아님',()=>{if(noTask[0])enterMyWork(noTask[0]);},true);}
+    const carrySum=rows.reduce((a,r)=>a+r.carried,0);
+    if(carrySum){missCnt++;missRow('↩️',`미완료 이월 ${carrySum}건`,rows.filter(r=>r.carried).map(r=>`${shortN(r.s.name)} ${r.carried}건`).join(' · '),()=>switchTab('dashboard'),true);}
+    if(!missCnt){const ok=document.createElement('div');ok.style.cssText='background:var(--green-light);border:1px solid var(--green);border-radius:10px;padding:12px;font-size:13px;font-weight:800;color:var(--green);text-align:center;margin-bottom:6px;';ok.textContent='오늘은 누락이 없어요 ✅';body.appendChild(ok);}
+
+    grp('🏪 매장 한눈에');
+    const tbl=document.createElement('div');
+    tbl.style.cssText='background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(26,35,50,.06);';
+    tbl.innerHTML=`<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.4fr;background:var(--navy);color:#fff;font-size:10.5px;font-weight:800;padding:7px 10px;gap:4px;"><span>매장</span><span style="text-align:center;">청소</span><span style="text-align:center;">업무</span><span style="text-align:center;">인수인계</span><span style="text-align:center;">근무</span></div>`;
+    rows.forEach(r=>{
+      const line=document.createElement('div');
+      line.style.cssText='display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.4fr;padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px;gap:4px;align-items:center;cursor:pointer;';
+      const cl=totalCl>0&&r.cleanDone>=totalCl?'<span style="color:var(--green);font-weight:800;">✓</span>':r.cleanDone>0?`<span style="color:var(--orange);font-weight:800;">${r.cleanDone}/${totalCl}</span>`:`<span style="color:var(--red);font-weight:800;">0/${totalCl}</span>`;
+      const tw=r.todoTotal===0?'<span style="color:var(--red);font-weight:800;">미등록</span>':r.todoDone>=r.todoTotal?`<span style="color:var(--green);font-weight:800;">${r.todoDone}/${r.todoTotal}</span>`:`<span style="color:var(--orange);font-weight:800;">${r.todoDone}/${r.todoTotal}</span>`;
+      const ho=r.unconf===0?'<span style="color:var(--green);font-weight:800;">0</span>':`<span style="color:var(--red);font-weight:800;">${r.unconf}</span>`;
+      line.innerHTML=`<span style="font-weight:800;">${esc(shortN(r.s.name))}</span><span style="text-align:center;">${cl}</span><span style="text-align:center;">${tw}</span><span style="text-align:center;">${ho}</span><span style="text-align:center;font-size:10.5px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.workers.length?r.workers.map(esc).join('·'):'-'}</span>`;
+      line.onclick=()=>goStore(r.s);
+      tbl.appendChild(line);
+    });
+    body.appendChild(tbl);
+
+    grp('👥 직원 오늘 — 누르면 그 직원 업무로');
+    const emp=document.createElement('div');emp.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+    staffList.forEach(n=>{
+      const p=todosByName.find(x=>x&&x[0]===n);
+      const items=p?p[1]:[];
+      const off=offToday(n);
+      const chip=document.createElement('button');
+      let style='background:var(--card);border:1px solid var(--border);border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+      let label;
+      if(off){label=`${esc(n)} 휴무`;style+='opacity:.5;';}
+      else if(items.length===0){label=`${esc(n)} 미등록`;style+='border-color:var(--red);color:var(--red);';}
+      else{
+        const dn=items.filter(i=>i.done).length;
+        if(dn>=items.length){label=`${esc(n)} ${dn}/${items.length} ✓`;style+='border-color:var(--green);color:var(--green);';}
+        else{label=`${esc(n)} ${dn}/${items.length}`;style+='border-color:var(--orange);color:var(--orange);';}
+      }
+      chip.style.cssText=style;chip.innerHTML=label;
+      chip.onclick=()=>enterMyWork(n);
+      emp.appendChild(chip);
+    });
+    body.appendChild(emp);
+
+    grp('🔎 더 보기');
+    const ql=document.createElement('div');ql.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;';
+    const mkq=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 6px;font-size:11px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;';b.onclick=fn;ql.appendChild(b);};
+    mkq('📊 주간 리포트',()=>{dashTab='report';showScreen('screen-admin');renderDashboard();});
+    mkq('👥 활동 모아보기',()=>{dashTab='activity';showScreen('screen-admin');renderDashboard();});
+    mkq('🤝 협업 흐름',()=>{window.__homeFull=true;switchTab('dashboard');setTimeout(()=>{try{document.getElementById('dashboard-collab-section')?.scrollIntoView({behavior:'smooth'});}catch(e){}},600);});
+    body.appendChild(ql);
+  }catch(e){console.warn('[status]',e);body.innerHTML='<div class="project-overview-empty">불러오기 실패 — 새로고침 해주세요</div>';}
+};
+
 // ── 🗣️ 주간 1:1 상담 자동 배정 (팀장 2명 고정 · 화상 · 매주 직원 1명 순번) ──
 function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return dk(x.getFullYear(),x.getMonth(),x.getDate());}
 async function wmEnsureThisWeek(){
@@ -4090,6 +4222,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     }catch(e){}
   }));
   if(entry)wrap.appendChild(mkCard('🏪',`${entry.name} 방 들어가기`,'근무자 · 고정정보 · 인수인계 기록',()=>openStoreRoom(entry)));
+  wrap.appendChild(mkCard('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
 
   const full=document.createElement('button');
   full.textContent='전체 화면 보기 →';
@@ -7990,6 +8123,8 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   // 5-5: 관리자 여부는 로그인 계정 role로 (renderMyPage의 관리자 전용 요소 등에 사용)
   const _role=window.__vflowProfile?.role;
   isAdmin=(_role==='owner'||_role==='manager');
+  const _tsBtn=document.getElementById('tab-status');
+  if(_tsBtn)_tsBtn.style.display=(isAdmin&&!window.__vflowProfile?.monitorOnly)?'':'none';
   // 📄 동의 체크 — 필수 항목의 최신 버전 동의가 없으면 모달 (Ⓜ️ 모니터링 계정은 제외)
   try{
     const _vp0=window.__vflowProfile||{};
@@ -8003,6 +8138,7 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   if(window.__vflowProfile?.monitorOnly&&isAdmin){
     dashTab='report';
     dashViewDate=null;
+    document.getElementById('tab-bar').style.display='none';
     showScreen('screen-admin');
     renderDashboard();
   } else {
