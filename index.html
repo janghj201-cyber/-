@@ -919,6 +919,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div><div class="header-title" id="home-greeting">📋 V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <div style="display:flex;gap:6px;">
       <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📖 가이드</button>
+      <button onclick="openAppMenu()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" title="내 계정">⚙️</button>
       <button class="admin-btn" onclick="openPwModal()">🔐 관리자</button>
     </div>
   </div>
@@ -2244,6 +2245,7 @@ const GUIDE_SECTIONS = [
       '하단 탭이 정리됐어요 — 월간 스케줄·내 업무 탭이 빠지고, 첫 화면 버튼으로 들어갑니다 (기능은 전부 그대로예요)',
       '오늘 업무 = 첫 화면 ✅ 오늘 업무 버튼 · 월간 스케줄·휴무 설정 = 첫 화면의 🗓️ 카드',
       '오늘 업무 버튼에도 미완료 수 빨간 배지가 붙어요 — 네 버튼 모두 남은 일을 숫자로 알려줍니다',
+      '⚙️ 홈 오른쪽 위 톱니 버튼 = 내 계정 — 직원 목록·월간 스케줄·내 동의·가이드·비밀번호·로그아웃이 전부 여기 있어요',
       '👑 관리자는 하단에 오늘 현황 탭이 생겼어요 — 청소 미체크·3일+ 미확인·업무 미등록·이월이 맨 위에 뜨고, 매장 신호등 표와 직원 오늘 현황이 한 화면에 (매장·직원 누르면 바로 이동)',
     ]
   },
@@ -3866,6 +3868,37 @@ window.openMyConsents=async function(){
       else{const cb=document.createElement('input');cb.type='checkbox';cb.checked=on;cb.style.cssText='accent-color:var(--gold);width:18px;height:18px;';cb.onchange=async()=>{try{await C.setOptional(ctx.tenantId,vp.id,vp.role==='owner'?'tenant':'staff',k,cb.checked);}catch(e){cb.checked=!cb.checked;alert('저장 실패');}};row.appendChild(cb);}
       box.appendChild(row);});
   }catch(e){box.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패</div>';}
+};
+
+// ⚙️ 내 계정 메뉴 — 탭 개편으로 묻힌 계정 기능들을 홈에서 바로 (동의·비밀번호·로그아웃·직원 목록)
+window.openAppMenu=function(){
+  const vp=window.__vflowProfile||{};
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:965;background:rgba(20,28,42,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:16px 14px calc(20px + var(--safe-bot));box-shadow:0 -8px 40px rgba(0,0,0,0.28);';
+  card.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div><div style="font-size:15px;font-weight:800;">${vp.name||'내 계정'}</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:2px;">${vp.role==='owner'?'대표':vp.role==='manager'?'매니저':'직원'}${vp.monitorOnly?' · Ⓜ️ 모니터링':''}</div></div>
+      <button data-x style="background:none;border:none;font-size:19px;cursor:pointer;color:var(--text-sub);font-family:inherit;">✕</button></div>
+    <div data-list style="margin-top:8px;"></div>`;
+  const list=card.querySelector('[data-list]');
+  const mk=(ico,label,desc,fn,danger)=>{
+    const b=document.createElement('button');
+    b.style.cssText=`display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;font-family:inherit;${danger?'color:var(--red);':''}`;
+    b.innerHTML=`<span style="font-size:19px;">${ico}</span><div style="flex:1;"><div style="font-size:13.5px;font-weight:800;">${label}</div><div style="font-size:11px;color:var(--text-sub);margin-top:1px;">${desc}</div></div><span style="color:var(--text-mute);">›</span>`;
+    b.onclick=()=>{ov.remove();fn();};
+    list.appendChild(b);
+  };
+  mk('👥','직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
+  mk('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
+  mk('📄','내 동의 관리','약관·개인정보 동의 내역 확인 및 변경',()=>{try{openMyConsents();}catch(e){}});
+  mk('📖','앱 가이드','새 기능 안내 · 사용법',()=>{try{openGuideModal();}catch(e){}});
+  mk('🔑','비밀번호 변경','',()=>{try{doChangePw();}catch(e){}});
+  mk('🚪','로그아웃','',()=>{try{doLogout();}catch(e){}},true);
+  card.querySelector('[data-x]').onclick=()=>ov.remove();
+  ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+  ov.appendChild(card);document.body.appendChild(ov);
 };
 
 // 👑 오늘 현황 — 관리자 전용: 누락 먼저 → 매장 신호등 → 직원 오늘 → 바로가기
