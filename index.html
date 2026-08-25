@@ -1609,13 +1609,10 @@ window.closeUpdateModal=function(){
 };
 function closeUpdateModal(){window.closeUpdateModal();}
 
-const DEFAULT_STAFF = [
-  '오명록','고아현','장현진','장대운','신재현','정희경',
-  '조효정','홍다운','이종혁','원주현','김형진','윤하람',
-  '차영근','정유진','안태민','김다정'
-];
-
-let staffList = [...DEFAULT_STAFF];
+// 직원 목록은 실제 계정(profiles)이 유일한 원천이다.
+// 예전에는 위베이프 직원 16명이 폴백으로 박혀 있어, 로드가 실패하면 다른 회사 화면에
+// 남의 회사 실명이 그대로 보일 수 있었다 — 폴백 자체를 없앤다.
+let staffList = [];
 let myStaff = null; // 현재 선택된 직원 이름
 
 // 직원 목록 Firebase 로드/저장
@@ -1626,9 +1623,9 @@ async function loadStaffList(){
       staffList=snap.data().list;
       if(snap.data().defaultStores)Object.assign(STAFF_DEFAULT_STORE,snap.data().defaultStores);
     } else {
-      await setDoc(doc(db,'config/staff'),{list:DEFAULT_STAFF});
+      staffList=[]; // 계정이 아직 없는 새 회사 — 초대하면 자동으로 채워진다
     }
-  }catch(e){}
+  }catch(e){staffList=[];}
 }
 async function saveStaffList(){
   await setDoc(doc(db,'config/staff'),{list:staffList});
@@ -2260,7 +2257,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v5.0';
+const GUIDE_VERSION = 'v5.1';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
@@ -2342,6 +2339,14 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v5.1 — 직원 목록 원천 정리',
+    items: [
+      '직원 목록은 이제 실제 계정(초대해서 가입한 사람)만을 원천으로 씁니다',
+      '예전에는 목록을 못 불러오면 미리 박아둔 이름 16개가 대신 보였는데, 그 폴백을 없앴어요 — 다른 회사 화면에 남의 회사 이름이 뜰 여지를 차단했습니다',
+      '계정이 아직 없는 새 회사는 빈 목록으로 시작하고, 직원을 초대하면 자동으로 채워집니다',
+    ],
+  },
   {
     title: '🆕 v5.0 — 🔎 설정 찾기',
     items: [

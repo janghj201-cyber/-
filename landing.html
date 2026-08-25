@@ -30,27 +30,40 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;paddi
 .hero h1 span{color:var(--gold);}
 .hero p{font-size:15.5px;color:#b8c4d4;margin-top:14px;max-width:560px;}
 .hero .cta{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;}
-.herogrid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
-@media(max-width:880px){.herogrid{grid-template-columns:1fr;gap:30px;}.hero h1{font-size:27px;}}
-.dphone{max-width:320px;margin:0 auto;background:#0e1522;border:1px solid rgba(255,255,255,.14);border-radius:28px;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.45);}
-.dscreen{background:#faf9f5;border-radius:20px;overflow:hidden;min-height:340px;display:flex;flex-direction:column;}
-.dtop{background:#1a2332;color:#fff;padding:11px 13px;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:space-between;}
-.dbody{padding:13px;flex:1;color:#1f2933;animation:dfade .45s ease;}
+.demo{margin-top:34px;}
+.dhook{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;min-height:30px;margin-bottom:14px;animation:dfade .5s ease;}
+.dhook em{color:var(--gold);font-style:normal;}
+@media(max-width:700px){.dhook{font-size:16.5px;min-height:46px;}}
+.dwin{background:#0e1522;border:1px solid rgba(255,255,255,.13);border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.45);max-width:780px;}
+.dwbar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:#111a29;border-bottom:1px solid rgba(255,255,255,.08);}
+.dwbar i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16);}
+.dwbar .url{margin-left:10px;background:rgba(255,255,255,.07);color:#8b9bb0;font-size:10.5px;font-weight:700;border-radius:99px;padding:3px 12px;}
+.dpanes{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.08);}
+@media(max-width:620px){.dpanes{grid-template-columns:1fr;}}
+.dpane{background:#faf9f5;padding:0 0 13px;transition:opacity .45s,filter .45s;position:relative;}
+.dpane.off{opacity:.32;filter:saturate(.4);}
+.dpane.on:after{content:"";position:absolute;inset:0;border:2px solid var(--gold);pointer-events:none;}
+.plab{background:#1a2332;color:#fff;font-size:10.5px;font-weight:700;padding:8px 12px;display:flex;align-items:center;gap:6px;}
+.plab b{font-weight:800;}
+.plab span{margin-left:auto;opacity:.6;}
+.pbody{padding:12px;min-height:210px;color:#1f2933;animation:dfade .45s ease;}
 @keyframes dfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.dcap{margin-top:14px;text-align:center;font-size:12.5px;color:#c3cfdd;font-weight:700;min-height:34px;line-height:1.5;}
-.ddots{display:flex;gap:6px;justify-content:center;margin-top:10px;}
-.ddots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22);transition:.3s;}
+.dcap{margin-top:14px;font-size:12.5px;color:#a9b7c7;font-weight:600;min-height:20px;}
+.ddots{display:flex;gap:6px;margin-top:10px;}
+.ddots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:.3s;}
 .ddots i.on{background:var(--gold);width:18px;border-radius:99px;}
-.dq{display:flex;align-items:center;gap:9px;border:1.5px solid #e6e3da;border-radius:11px;padding:10px;background:#fff;position:relative;margin-bottom:7px;}
-.dq b{font-size:12.5px;flex:1;}
-.dq .st{font-size:11px;font-weight:800;}
-.dbd{position:absolute;top:-7px;right:-6px;background:#c0392b;color:#fff;font-size:10.5px;font-weight:800;min-width:19px;height:19px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 5px;animation:dpop .45s cubic-bezier(.2,1.4,.4,1);}
+.dq{display:flex;align-items:center;gap:8px;border:1.5px solid #e6e3da;border-radius:10px;padding:9px;background:#fff;position:relative;margin-bottom:6px;}
+.dq b{font-size:12px;flex:1;}
+.dq .st{font-size:10.5px;font-weight:800;}
+.dbd{position:absolute;top:-7px;right:-6px;background:#c0392b;color:#fff;font-size:10.5px;font-weight:800;min-width:19px;height:19px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 5px;animation:dpop .5s cubic-bezier(.2,1.5,.4,1);}
 @keyframes dpop{0%{transform:scale(0)}100%{transform:scale(1)}}
-.dinput{border:1.5px solid #f5a623;border-radius:10px;padding:10px;background:#fff;font-size:12px;line-height:1.5;min-height:56px;}
-.dcaret{display:inline-block;width:1.5px;height:13px;background:#1a2332;vertical-align:-2px;animation:dblink .9s steps(1) infinite;}
+.dinput{border:1.5px solid #f5a623;border-radius:10px;padding:10px;background:#fff;font-size:11.5px;line-height:1.55;min-height:54px;}
+.dcaret{display:inline-block;width:1.5px;height:12px;background:#1a2332;vertical-align:-2px;animation:dblink .9s steps(1) infinite;}
 @keyframes dblink{50%{opacity:0}}
-.drow{border:1px solid #e6e3da;border-radius:10px;padding:9px 10px;background:#fff;font-size:12px;line-height:1.5;margin-bottom:7px;}
-.dok{font-size:10.5px;font-weight:800;color:#27ae60;margin-top:4px;}
+.drow{border:1px solid #e6e3da;border-radius:10px;padding:9px;background:#fff;font-size:11.5px;line-height:1.55;margin-bottom:6px;}
+.dmeta{font-size:10px;color:#9aa5b1;margin-top:4px;}
+.dok{font-size:10px;font-weight:800;color:#27ae60;margin-top:4px;}
+.dhead{font-size:10.5px;font-weight:800;color:#8a5a00;margin-bottom:7px;letter-spacing:.2px;}
 .btn-g{background:var(--gold);color:var(--navy);border:none;border-radius:11px;padding:13px 22px;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
 .btn-o{background:rgba(255,255,255,.09);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:11px;padding:13px 22px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
 .hero .note{font-size:12px;color:#8fa0b5;margin-top:14px;}
@@ -188,8 +201,6 @@ details.q p{padding:0 18px 16px;}
 </div></header>
 
 <div class="hero"><div class="wrap">
- <div class="herogrid">
-  <div>
   <span class="hbadge" id="hbadge">🎁 지금은 무료 제공 중 · 실제 매장에서 매일 사용</span>
   <h1>매장 운영,<br><span class="rot" id="rot">인수인계</span>를 사람이 기억하지 않아도<br>시스템이 챙깁니다</h1>
   <p>직원은 오늘 할 일 세 가지만 보고, 관리자는 빠진 것만 봅니다.
@@ -199,16 +210,26 @@ details.q p{padding:0 18px 16px;}
     <a href="#screens" class="btn-o">화면 먼저 보기</a>
   </div>
   <div style="font-size:12.5px;color:#93a3b8;margin-top:14px;">초기 도입 매장은 <b style="color:#f5a623;">무료</b>로 이용하실 수 있습니다 · 카드 등록·결제 절차 없음</div>
-  </div>
-  <div>
-    <div class="dphone"><div class="dscreen">
-      <div class="dtop"><span id="d-who">📍 인천 논현점 · 장대운</span><span style="opacity:.65;">18:40</span></div>
-      <div class="dbody" id="d-body"></div>
-    </div></div>
+
+  <div class="demo">
+    <div class="dhook" id="d-hook"></div>
+    <div class="dwin">
+      <div class="dwbar"><i></i><i></i><i></i><span class="url">vflow.kr</span></div>
+      <div class="dpanes">
+        <div class="dpane" id="p-a">
+          <div class="plab"><b>A매니저</b> · 인천 논현점 <span>퇴근 전 18:40</span></div>
+          <div class="pbody" id="b-a"></div>
+        </div>
+        <div class="dpane" id="p-b">
+          <div class="plab"><b>김사원</b> · 인천 논현점 <span>다음 근무 09:10</span></div>
+          <div class="pbody" id="b-b"></div>
+        </div>
+      </div>
+    </div>
     <div class="dcap" id="d-cap"></div>
     <div class="ddots" id="d-dots"><i class="on"></i><i></i><i></i><i></i></div>
   </div>
- </div>
+
   <div class="stats">
     <div class="st"><div class="n" id="s-recs" data-n="2653">0</div><div class="l">누적 기록</div></div>
     <div class="st"><div class="n" id="s-days">—</div><div class="l">매일 쓴 날</div></div>
@@ -279,8 +300,8 @@ details.q p{padding:0 18px 16px;}
     <div class="shot">
       <div class="bar">관리자 — 빠진 것부터 보입니다</div>
       <div class="in">
-        <div class="miss"><span>🧹</span><div style="flex:1;"><b>부천 신중동점 청소 미체크</b><div class="m">오늘 항목 5개 중 0개 · 근무: 고아현</div></div></div>
-        <div class="miss"><span>📝</span><div style="flex:1;"><b>3일 이상 미확인 인수인계 1건</b><div class="m">상동점 · 수신: 홍다운</div></div></div>
+        <div class="miss"><span>🧹</span><div style="flex:1;"><b>부천 신중동점 청소 미체크</b><div class="m">오늘 항목 5개 중 0개 · 근무: 차매니저</div></div></div>
+        <div class="miss"><span>📝</span><div style="flex:1;"><b>3일 이상 미확인 인수인계 1건</b><div class="m">상동점 · 수신: 김사원</div></div></div>
         <div style="border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-top:10px;">
           <div class="strow"><span>매장</span><span>청소</span><span>업무</span><span>인수인계</span></div>
           <div class="strow"><span>연수</span><span style="color:var(--green);font-weight:800;">✓</span><span style="color:var(--green);font-weight:800;">4/4</span><span style="color:var(--green);font-weight:800;">0</span></div>
@@ -313,6 +334,7 @@ details.q p{padding:0 18px 16px;}
   <h2>지금도 매주 좋아지고 있습니다</h2>
   <p class="lead">실제 매장에서 쓰면서 나온 의견을 그 주에 반영합니다. 도입하시면 업데이트는 자동으로 적용됩니다.</p>
   <div class="tl">
+    <div class="ti"><div class="v">v5.1 · 2026.08.25</div><h4>소개 화면 데모 개선</h4><p>두 사람의 화면을 나란히 놓아, 남긴 인수인계가 다음 근무자에게 닿는 과정을 한눈에 보여줍니다.</p></div>
     <div class="ti"><div class="v">v5.0 · 2026.08.25</div><h4>움직이는 소개 화면 · 설정 찾기</h4><p>인수인계 한 줄이 다음 근무자에게 닿는 과정을 첫 화면에서 바로 보여줍니다. 앱 설정에는 검색이 붙었습니다.</p></div>
     <div class="ti"><div class="v">v4.9 · 2026.08.25</div><h4>가이드 개편 — 역할별 입문과 검색</h4><p>대표·매니저·직원이 각자 처음 할 일을 순서대로 봅니다. 기능별 정리와 검색도 붙었습니다.</p></div>
     <div class="ti"><div class="v">v4.8 · 2026.08.25</div><h4>빈 화면이 사용법을 알려줍니다</h4><p>처음 시작하면 모든 화면이 비어 있습니다. 그 빈 자리에 무엇을 하면 되는지를 적었습니다.</p></div>
@@ -396,39 +418,63 @@ function sendForm(e){
   document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">문자 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span><br>열리지 않으면 <b>010-4787-6928</b> 로 직접 전화 주세요.';
   return false;
 }
-// ── 히어로 데모: 인수인계 한 줄이 다음 근무자에게 닿는 과정 ──
+// ── 히어로 데모: 인수인계 한 줄이 다음 근무자에게 닿기까지 (두 사람 화면 동시에) ──
 (function(){
-  var body=document.getElementById("d-body"),cap=document.getElementById("d-cap"),
-      who=document.getElementById("d-who"),dots=document.getElementById("d-dots");
-  if(!body)return;
+  var bA=document.getElementById("b-a"),bB=document.getElementById("b-b"),
+      pA=document.getElementById("p-a"),pB=document.getElementById("p-b"),
+      hook=document.getElementById("d-hook"),cap=document.getElementById("d-cap"),
+      dots=document.getElementById("d-dots");
+  if(!bA||!bB)return;
   var TXT="냉장고 온도 조절기 A/S 접수함 — 내일 오전 기사 방문";
-  function quick(badge,ho){
-    return '<div class="dq"><span style="font-size:16px;">✅</span><b>오늘 업무</b><span class="st" style="color:#27ae60;">3/3 ✓</span></div>'+
-      '<div class="dq">'+(badge?'<span class="dbd">1</span>':'')+'<span style="font-size:16px;">📝</span><b>인수인계</b><span class="st" style="color:'+(badge?'#c0392b':'#27ae60')+';">'+ho+'</span></div>'+
-      '<div class="dq"><span style="font-size:16px;">🧹</span><b>청소 체크</b><span class="st" style="color:#27ae60;">오늘 완료 ✓</span></div>';
+
+  function quick(badge){
+    return '<div class="dhead">⚡ 오늘 할 일</div>'+
+      '<div class="dq"><span style="font-size:15px;">✅</span><b>오늘 업무</b><span class="st" style="color:#27ae60;">3/3 ✓</span></div>'+
+      '<div class="dq">'+(badge?'<span class="dbd">1</span>':'')+'<span style="font-size:15px;">📝</span><b>인수인계</b>'+
+        '<span class="st" style="color:'+(badge?"#c0392b":"#27ae60")+';">'+(badge?"미확인 1":"모두 확인 ✓")+'</span></div>'+
+      '<div class="dq"><span style="font-size:15px;">🧹</span><b>청소 체크</b><span class="st" style="color:#27ae60;">완료 ✓</span></div>';
   }
+  function typing(n){
+    return '<div class="dhead">📝 다음 근무자에게 남기기</div>'+
+      '<div class="dinput">'+TXT.slice(0,n)+'<span class="dcaret"></span></div>'+
+      '<div style="text-align:right;margin-top:9px;"><span style="background:#f5a623;color:#1a2332;font-size:11px;font-weight:800;border-radius:8px;padding:6px 14px;display:inline-block;">남기기</span></div>';
+  }
+  function listA(state){
+    var meta = state==="wait" ? '<div class="dmeta">A매니저 · 18:41 · 아직 확인 안 됨</div>'
+                              : '<div class="dok">✓ 김사원 확인 · 09:12</div>';
+    return '<div class="dhead">📝 논현점 인수인계</div>'+
+      '<div class="drow" style="border-color:'+(state==="wait"?"#f5a623":"#27ae60")+';">'+TXT+meta+'</div>'+
+      '<div class="drow" style="opacity:.5;">신형 팟 3종 진열대 앞줄로 이동<div class="dok">✓ 차매니저 확인 · 어제</div></div>';
+  }
+  function confirmB(){
+    return '<div class="dhead">📝 확인할 인수인계</div>'+
+      '<div class="drow" style="border-color:#27ae60;">'+TXT+'<div class="dok">✓ 확인함 · 09:12</div></div>'+
+      '<div style="margin-top:10px;">'+quick(false)+'</div>';
+  }
+
   var STEPS=[
-    {who:"📍 인천 논현점 · 장대운", cap:"① 퇴근 전, 다음 사람에게 한 줄 남깁니다",
-     html:function(n){return '<div style="font-size:11px;font-weight:800;color:#8a5a00;margin-bottom:8px;">📝 인수인계 남기기</div>'+
-       '<div class="dinput">'+TXT.slice(0,n)+'<span class="dcaret"></span></div>'+
-       '<div style="text-align:right;margin-top:9px;"><span style="background:#f5a623;color:#1a2332;font-size:11.5px;font-weight:800;border-radius:8px;padding:7px 14px;display:inline-block;">남기기</span></div>';},
-     type:true},
-    {who:"📍 인천 논현점 · 장대운", cap:"② 남기면 그 매장 기록에 바로 쌓입니다",
-     html:function(){return '<div style="font-size:11px;font-weight:800;color:#8a5a00;margin-bottom:8px;">📝 논현점 인수인계 · 오늘</div>'+
-       '<div class="drow" style="border-color:#f5a623;">'+TXT+'<div style="font-size:10.5px;color:#9aa5b1;margin-top:4px;">장대운 · 18:41 · 아직 확인 안 됨</div></div>'+
-       '<div class="drow" style="opacity:.5;">신형 팟 3종 진열대 앞줄로 이동<div style="font-size:10.5px;color:#9aa5b1;margin-top:4px;">조효정 · 어제 · ✓ 확인됨</div></div>';}},
-    {who:"📍 인천 논현점 · 홍다운", cap:"③ 다음 근무자 화면에 빨간 숫자가 뜹니다",
-     html:function(){return '<div style="font-size:11px;font-weight:800;color:#9aa5b1;letter-spacing:.5px;margin-bottom:9px;">⚡ 바로가기</div>'+quick(true,"미확인 1");}},
-    {who:"📍 인천 논현점 · 홍다운", cap:"④ 확인을 누르면 누가 언제 봤는지 남습니다",
-     html:function(){return '<div style="font-size:11px;font-weight:800;color:#8a5a00;margin-bottom:8px;">📝 확인할 인수인계</div>'+
-       '<div class="drow" style="border-color:#27ae60;">'+TXT+'<div class="dok">✓ 홍다운 확인 · 09:12</div></div>'+
-       '<div style="margin-top:10px;">'+quick(false,"모두 확인 ✓")+'</div>';}}
+    {act:"a", hook:'퇴근하면서 <em>분명히 말해뒀는데.</em>',
+     cap:"① 말로 하지 않고, 한 줄로 남깁니다",
+     a:typing, b:function(){return quick(false);}, type:true},
+    {act:"a", hook:'말은 사라져도 <em>기록은 남습니다.</em>',
+     cap:"② 남기는 순간 그 매장 기록이 됩니다",
+     a:function(){return listA("wait");}, b:function(){return quick(false);}},
+    {act:"b", hook:'다음 사람은 <em>출근하자마자 압니다.</em>',
+     cap:"③ 다음 근무자 화면에 빨간 숫자가 뜹니다",
+     a:function(){return listA("wait");}, b:function(){return quick(true);}},
+    {act:"b", hook:'봤는지 못 봤는지 <em>더는 묻지 않습니다.</em>',
+     cap:"④ 누가 언제 확인했는지까지 남습니다",
+     a:function(){return listA("done");}, b:confirmB}
   ];
+
   var i=0,tn=0,timer=null;
   function paint(){
     var st=STEPS[i];
-    who.textContent=st.who;cap.textContent=st.cap;
-    body.innerHTML=st.html(st.type?tn:0);
+    hook.innerHTML=st.hook;cap.textContent=st.cap;
+    bA.innerHTML=st.a(st.type?tn:0);
+    bB.innerHTML=st.b();
+    pA.className="dpane "+(st.act==="a"?"on":"off");
+    pB.className="dpane "+(st.act==="b"?"on":"off");
     Array.prototype.forEach.call(dots.children,function(d,k){d.className=k===i?"on":"";});
   }
   function tick(){
@@ -436,15 +482,15 @@ function sendForm(e){
     var st=STEPS[i];
     if(st.type&&tn<TXT.length){
       tn=Math.min(TXT.length,tn+2);
-      body.innerHTML=st.html(tn);
-      timer=setTimeout(tick,38);return;
+      bA.innerHTML=st.a(tn);
+      timer=setTimeout(tick,36);return;
     }
     i=(i+1)%STEPS.length;
     if(i===0)tn=0;
     paint();
-    timer=setTimeout(tick,i===0?900:2500);
+    timer=setTimeout(tick,i===0?1000:2600);
   }
-  paint();timer=setTimeout(tick,700);
+  paint();timer=setTimeout(tick,800);
 })();
 
 // ── 📲 앱 설치 안내 (환경 감지) ──
