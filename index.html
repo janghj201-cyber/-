@@ -2260,7 +2260,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v4.9';
+const GUIDE_VERSION = 'v5.0';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
@@ -2342,6 +2342,14 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v5.0 — 🔎 설정 찾기',
+    items: [
+      '관리자 → 🎨 설정 맨 위에 검색창이 생겼어요 — "초대", "매장", "비밀번호"처럼 단어만 넣으면 해당 설정만 남습니다',
+      '검색창 아래 동그란 칩을 누르면 그 설정으로 바로 내려가고, 잠깐 금색 테두리로 표시됩니다',
+      '설정 카드가 열 개가 넘어가면서 스크롤로만 찾던 문제를 없앴습니다',
+    ],
+  },
   {
     title: '🆕 v4.9 — 📖 가이드 개편 (역할별 · 검색)',
     items: [
@@ -8339,6 +8347,58 @@ async function renderSettingsTab(content){
   })();
 
   content.appendChild(savedEl);
+  attachSettingsFinder(content);
+}
+
+// ── 🔎 설정 찾기 — 카드가 많아져서 스크롤로만 찾던 문제 ──
+function attachSettingsFinder(content){
+  try{
+    const bar=document.createElement('div');
+    bar.style.cssText='position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 10px;margin-bottom:2px;';
+    bar.innerHTML='<input data-sq placeholder="🔎 설정 찾기 (예: 초대, 매장, 비밀번호)" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);">'+
+      '<div data-chips style="display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;"></div>'+
+      '<div data-none style="display:none;font-size:12px;color:var(--text-mute);padding:10px 2px;"></div>';
+    content.insertBefore(bar,content.firstChild);
+    const input=bar.querySelector('[data-sq]');
+    const chips=bar.querySelector('[data-chips]');
+    const none=bar.querySelector('[data-none]');
+    const cards=()=>Array.from(content.querySelectorAll('.dash-card'));
+
+    const buildChips=()=>{
+      chips.innerHTML='';
+      cards().forEach(c=>{
+        const t=c.querySelector('.dash-store-name');
+        if(!t)return;
+        const b=document.createElement('button');
+        b.textContent=t.textContent.trim();
+        b.style.cssText='flex:0 0 auto;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;white-space:nowrap;';
+        b.onclick=()=>{
+          input.value='';filter('');
+          c.scrollIntoView({behavior:'smooth',block:'start'});
+          c.style.transition='box-shadow .3s';
+          c.style.boxShadow='0 0 0 2.5px var(--gold)';
+          setTimeout(()=>{c.style.boxShadow='';},1400);
+        };
+        chips.appendChild(b);
+      });
+    };
+    const filter=(q)=>{
+      const kw=(q||'').trim().toLowerCase();
+      let hit=0;
+      cards().forEach(c=>{
+        const ok=!kw||c.textContent.toLowerCase().includes(kw);
+        c.style.display=ok?'':'none';
+        if(ok)hit++;
+      });
+      chips.style.display=kw?'none':'flex';
+      if(kw&&hit===0){none.style.display='block';none.textContent='"'+q+'" 에 해당하는 설정이 없어요. 다른 단어로 찾아보세요.';}
+      else none.style.display='none';
+    };
+    input.oninput=()=>filter(input.value);
+    buildChips();
+    setTimeout(buildChips,400);
+    setTimeout(buildChips,1200);
+  }catch(e){}
 }
 
 async function renderFixedTasksTab(content){
