@@ -44,7 +44,7 @@ export async function getContext() {
     monitorOnly: !!profile.monitor_only,
   }
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
-  window.__vflowTenant = { name: tenantRes.data?.name ?? '', isPlatform: !!tenantRes.data?.is_platform }
+  window.__vflowTenant = { id: profile.tenant_id, name: tenantRes.data?.name ?? '', isPlatform: !!tenantRes.data?.is_platform }
   // 운영사(V-Flow 본사) 테넌트만 쓰는 기능 판별 — 가맹 초대 코드 등
   window.__vflowProfile.isPlatform = !!tenantRes.data?.is_platform
   return cached
