@@ -117,6 +117,7 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   인수인계·청소·업무를 매일 확인하고 보고하라고 말하는 대신, 앱이 기록하고 알려주는 구조로 바꿨습니다.</p>
   <div class="cta">
     <a href="#contact" class="btn-g">도입 문의하기</a>
+    <a href="tel:01047876928" class="btn-o">📞 010-4787-6928</a>
     <a href="#screens" class="btn-o">화면 먼저 보기</a>
   </div>
   <div class="note">6개 매장 · 16명 직원이 매일 쓰고 있는 시스템입니다 (2026년 8월 기준)</div>
@@ -200,7 +201,7 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
 <section class="contact" id="contact"><div class="wrap">
   <div class="eyebrow">도입 문의</div>
   <h2>테스트로 먼저 써보세요</h2>
-  <p class="lead">연락처를 남겨주시면 초대 코드를 보내드립니다. 코드를 받으면 회사 이름과 매장을 등록하는 것만으로 바로 시작됩니다 — 설치할 프로그램은 없습니다.</p>
+  <p class="lead">아래 내용을 적고 <b>문자</b>로 보내주시거나 <b>전화</b> 주시면 초대 코드를 보내드립니다. 코드를 받으면 회사 이름과 매장을 등록하는 것만으로 바로 시작됩니다 — 설치할 프로그램은 없습니다.</p>
   <form class="form" id="f" onsubmit="return sendForm(event)">
     <label>매장 · 회사 이름</label>
     <input type="text" id="c-name" required placeholder="예) 위베이프 검단점">
@@ -210,8 +211,11 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
     <input type="text" id="c-contact" required placeholder="010-0000-0000 또는 you@example.com">
     <label>매장 수 · 궁금한 점 (선택)</label>
     <textarea id="c-memo" rows="3" placeholder="예) 매장 3개 운영 중입니다. 인수인계 기능이 궁금해요"></textarea>
-    <button type="submit">문의 남기기</button>
-    <div class="hint" id="f-hint">남겨주신 내용은 도입 안내 목적으로만 사용하고, 안내 후 파기합니다.</div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+      <button type="submit" style="flex:1;min-width:150px;margin-top:0;">💬 문자로 문의 보내기</button>
+      <a href="tel:01047876928" style="flex:1;min-width:150px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:11px;padding:13px;font-size:15px;font-weight:800;text-decoration:none;">📞 전화 문의</a>
+    </div>
+    <div class="hint" id="f-hint">문자 버튼을 누르면 위 내용이 문자 앱에 자동으로 채워집니다 — 전송만 눌러주세요.<br>전화 문의 <b style="color:#f5a623;">010-4787-6928</b> · 남겨주신 내용은 도입 안내 목적으로만 사용하고 안내 후 파기합니다.</div>
   </form>
 </div></section>
 
@@ -230,7 +234,7 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
 <footer><div class="wrap">
   <div>V-Flow · 매장 운영 스케줄 시스템</div>
   <div style="margin-top:8px;">
-    <a href="legal.html#terms">이용약관</a>·<a href="legal.html#privacy">개인정보처리방침</a>·<a href="mailto:support@vflow.kr">support@vflow.kr</a>
+    <a href="legal.html#terms">이용약관</a>·<a href="legal.html#privacy">개인정보처리방침</a>·<a href="tel:01047876928">문의 010-4787-6928</a>
   </div>
   <div style="margin-top:10px;color:#5e6d80;">© 2026 Su Ho Jang. All Rights Reserved.</div>
 </div></footer>
@@ -239,9 +243,11 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
 function sendForm(e){
   e.preventDefault();
   const v=(id)=>document.getElementById(id).value.trim();
-  const body=`[V-Flow 도입 문의]%0D%0A%0D%0A매장·회사: ${encodeURIComponent(v("c-name"))}%0D%0A담당자: ${encodeURIComponent(v("c-person"))}%0D%0A연락처: ${encodeURIComponent(v("c-contact"))}%0D%0A내용: ${encodeURIComponent(v("c-memo")||"-")}`;
-  window.location.href=`mailto:support@vflow.kr?subject=${encodeURIComponent("[V-Flow] 도입 문의 - "+v("c-name"))}&body=${body}`;
-  document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">메일 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span>';
+  const msg=`[V-Flow 도입 문의]\n매장·회사: ${v("c-name")}\n담당자: ${v("c-person")}\n연락처: ${v("c-contact")}\n내용: ${v("c-memo")||"-"}`;
+  const ua=navigator.userAgent||'';
+  const sep=/iPhone|iPad|iPod|Macintosh/i.test(ua)?'&':'?';
+  window.location.href=`sms:01047876928${sep}body=${encodeURIComponent(msg)}`;
+  document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">문자 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span><br>열리지 않으면 <b>010-4787-6928</b> 로 직접 전화 주세요.';
   return false;
 }
 </script>
