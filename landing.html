@@ -167,7 +167,7 @@ details.q p{padding:0 18px 16px;}
 </div></header>
 
 <div class="hero"><div class="wrap">
-  <span class="hbadge">🎁 지금은 무료 제공 중 · 6개 매장에서 매일 사용</span>
+  <span class="hbadge" id="hbadge">🎁 지금은 무료 제공 중 · 6개 매장에서 매일 사용</span>
   <h1>매장 운영,<br><span class="rot" id="rot">인수인계</span>를 사람이 기억하지 않아도<br>시스템이 챙깁니다</h1>
   <p>직원은 오늘 할 일 세 가지만 보고, 관리자는 빠진 것만 봅니다.
   인수인계·청소·업무를 매일 확인하고 보고하라고 말하는 대신, 앱이 기록하고 알려주는 구조로 바꿨습니다.</p>
@@ -177,9 +177,9 @@ details.q p{padding:0 18px 16px;}
   </div>
   <div style="font-size:12.5px;color:#93a3b8;margin-top:14px;">초기 도입 매장은 <b style="color:#f5a623;">무료</b>로 이용하실 수 있습니다 · 카드 등록·결제 절차 없음</div>
   <div class="stats">
-    <div class="st"><div class="n" data-n="6">0</div><div class="l">운영 매장</div></div>
-    <div class="st"><div class="n" data-n="16">0</div><div class="l">사용 직원</div></div>
-    <div class="st"><div class="n" data-n="855">0</div><div class="l">월간 업무 기록</div></div>
+    <div class="st"><div class="n" id="s-stores" data-n="6">0</div><div class="l">운영 매장</div></div>
+    <div class="st"><div class="n" id="s-staff" data-n="16">0</div><div class="l">사용 직원</div></div>
+    <div class="st"><div class="n" id="s-recs" data-n="855">0</div><div class="l">누적 업무 기록</div></div>
     <div class="st"><div class="n">v4.4</div><div class="l">현재 버전</div></div>
   </div>
 </div></div>
@@ -341,7 +341,7 @@ setTimeout(function(){i=(i+1)%w.length;el.textContent=w[i];el.style.opacity="1";
 (function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("on");io.unobserve(e.target);}});},{threshold:.12});
 document.querySelectorAll(".rv").forEach(function(el){io.observe(el);});})();
 (function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;var el=e.target,t=parseInt(el.dataset.n||"0");if(!t){io.unobserve(el);return;}
-var c=0,s=Math.max(1,Math.round(t/38)),iv=setInterval(function(){c+=s;if(c>=t){c=t;clearInterval(iv);}el.textContent=c.toLocaleString();},26);io.unobserve(el);});},{threshold:.4});
+var c=0,s=Math.max(1,Math.round(t/38)),iv=setInterval(function(){c+=s;if(c>=t){c=t;clearInterval(iv);el.dataset.done="1";}el.textContent=c.toLocaleString();},26);io.unobserve(el);});},{threshold:.4});
 document.querySelectorAll(".st .n[data-n]").forEach(function(el){io.observe(el);});})();
 document.getElementById("more").onclick=function(){var h=document.querySelectorAll(".ti.hide"),op=h[0].style.display==="none";
 h.forEach(function(x){x.style.display=op?"block":"none";});this.textContent=op?"접기 ▴":"이전 업데이트 더 보기 ▾";};
@@ -357,6 +357,22 @@ function sendForm(e){
   document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">문자 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span><br>열리지 않으면 <b>010-4787-6928</b> 로 직접 전화 주세요.';
   return false;
 }
+</script>
+
+<!-- 실사용 지표 — Supabase public_stats() 집계 (실패해도 고정 기본값 유지) -->
+<script type="module">
+import { supabase } from './adapter/supabase-client.js'
+try{
+  const { data, error } = await supabase.rpc('public_stats')
+  if(error) throw error
+  if(data){
+    const put=function(id,v){ if(v==null) return; var el=document.getElementById(id); if(!el) return;
+      el.dataset.n=v; if(el.dataset.done==="1") el.textContent=Number(v).toLocaleString(); };
+    put('s-stores', data.stores); put('s-staff', data.staff); put('s-recs', data.records);
+    var b=document.getElementById('hbadge');
+    if(b && data.stores) b.textContent='\uD83C\uDF81 지금은 무료 제공 중 · '+data.stores+'개 매장에서 매일 사용';
+  }
+}catch(e){ console.warn('[stats]', e && e.message); }
 </script>
 </body>
 </html>
