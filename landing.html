@@ -104,25 +104,86 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   h2{font-size:21px;}
 }
 </style>
+<style>
+html{scroll-behavior:smooth;}
+.logo .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(15,138,95,.5);}50%{opacity:.75;box-shadow:0 0 0 6px rgba(15,138,95,0);}}
+header{background:rgba(26,35,50,.94);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.07);}
+.hnav{display:flex;gap:7px;align-items:center;}
+.hbtn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.24);}
+.hero{position:relative;overflow:hidden;background:linear-gradient(150deg,#161e2b 0%,#243044 55%,#2c3a52 100%);}
+.hero:before,.hero:after{content:'';position:absolute;border-radius:50%;filter:blur(70px);opacity:.16;}
+.hero:before{width:340px;height:340px;background:var(--gold);top:-110px;right:-70px;animation:fl1 14s ease-in-out infinite;}
+.hero:after{width:270px;height:270px;background:#3d7fd4;bottom:-110px;left:-60px;animation:fl2 17s ease-in-out infinite;}
+@keyframes fl1{0%,100%{transform:translate(0,0);}50%{transform:translate(-28px,26px);}}
+@keyframes fl2{0%,100%{transform:translate(0,0);}50%{transform:translate(24px,-22px);}}
+.hero .wrap{position:relative;z-index:1;}
+.hbadge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.35);color:var(--gold);font-size:12px;font-weight:800;border-radius:999px;padding:5px 13px;margin-bottom:16px;}
+.rot{color:var(--gold);display:inline-block;transition:opacity .3s,transform .3s;}
+.btn-g{box-shadow:0 6px 20px rgba(245,166,35,.28);transition:transform .16s,box-shadow .16s;}
+.btn-g:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(245,166,35,.36);}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:36px;}
+.st{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:14px 12px;text-align:center;}
+.st .n{font-size:23px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;}
+.st .l{font-size:11px;color:#93a3b8;margin-top:2px;font-weight:600;}
+.rv{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.3,1),transform .6s cubic-bezier(.2,.7,.3,1);}
+.rv.on{opacity:1;transform:none;}
+.fcard{transition:transform .2s,box-shadow .2s;}
+.fcard:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(26,35,50,.09);}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;}
+.step{background:var(--bg);border:1px solid var(--border);border-radius:15px;padding:22px 19px;}
+.step .num{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--gold);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.step.now{border:2px solid var(--gold);background:#fffdf6;}
+.step h3{font-size:15.5px;font-weight:800;margin-bottom:6px;}
+.step p{font-size:13px;color:var(--sub);line-height:1.6;}
+.sbtn{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:var(--gold);border:none;border-radius:10px;padding:11px 17px;font-size:13.5px;font-weight:800;text-decoration:none;font-family:inherit;cursor:pointer;margin-top:14px;}
+.sbtn.gold{background:var(--gold);color:var(--navy);}
+.note-s{font-size:11.5px;color:var(--mute);margin-top:9px;line-height:1.55;}
+.tl{margin-top:26px;position:relative;padding-left:22px;}
+.tl:before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--border);}
+.ti{position:relative;margin-bottom:16px;}
+.ti:before{content:'';position:absolute;left:-21px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--card);border:2.5px solid var(--gold);}
+.ti.old:before{border-color:var(--border);}
+.ti .v{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.4px;}
+.ti.old .v{color:var(--mute);}
+.ti h4{font-size:14.5px;font-weight:800;margin:2px 0 5px;}
+.ti p{font-size:13px;color:var(--sub);line-height:1.65;}
+.more-btn{background:none;border:1px solid var(--border);border-radius:9px;padding:9px 16px;font-size:12.5px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit;}
+.tabb{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#93a3b8;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
+.tabb.on{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+details.q summary{font-size:14px;font-weight:800;padding:15px 18px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+details.q summary::-webkit-details-marker{display:none;}
+details.q summary:after{content:'+';color:var(--gold);font-size:18px;font-weight:800;}
+details.q[open] summary:after{content:'\2212';}
+details.q{padding:0;overflow:hidden;}
+details.q p{padding:0 18px 16px;}
+@media(max-width:760px){.steps{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
-  <div class="logo">V<b>-</b>Flow</div>
-  <a href="#contact" class="hbtn">도입 문의</a>
+  <div class="logo"><span class="dot"></span>V<b>-</b>Flow</div>
+  <div class="hnav"><a href="onboarding.html" class="hbtn ghost">🎟️ 코드 입력</a><a href="#contact" class="hbtn">도입 문의</a></div>
 </div></header>
 
 <div class="hero"><div class="wrap">
-  <h1>매장 운영, <span>사람이 기억하지 않아도</span><br>시스템이 챙깁니다</h1>
+  <span class="hbadge">🟢 6개 매장에서 매일 사용 중</span>
+  <h1>매장 운영,<br><span class="rot" id="rot">인수인계</span>를 사람이 기억하지 않아도<br>시스템이 챙깁니다</h1>
   <p>직원은 오늘 할 일 세 가지만 보고, 관리자는 빠진 것만 봅니다.
   인수인계·청소·업무를 매일 확인하고 보고하라고 말하는 대신, 앱이 기록하고 알려주는 구조로 바꿨습니다.</p>
   <div class="cta">
     <a href="#contact" class="btn-g">도입 문의하기</a>
     <a href="#screens" class="btn-o">화면 먼저 보기</a>
   </div>
-  <div class="note">6개 매장 · 16명 직원이 매일 쓰고 있는 시스템입니다 (2026년 8월 기준)</div>
+  <div class="stats">
+    <div class="st"><div class="n" data-n="6">0</div><div class="l">운영 매장</div></div>
+    <div class="st"><div class="n" data-n="16">0</div><div class="l">사용 직원</div></div>
+    <div class="st"><div class="n" data-n="855">0</div><div class="l">월간 업무 기록</div></div>
+    <div class="st"><div class="n">v4.4</div><div class="l">현재 버전</div></div>
+  </div>
 </div></div>
 
-<section><div class="wrap">
+<section><div class="wrap rv">
   <div class="eyebrow">왜 만들었나</div>
   <h2>1인 근무 매장에서 생기는 일</h2>
   <p class="lead">사람을 탓해서 해결되지 않던 문제들입니다. 기억력이 아니라 구조의 문제였습니다.</p>
@@ -150,7 +211,7 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   </div>
 </div></section>
 
-<section style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);"><div class="wrap">
+<section style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);"><div class="wrap rv">
   <div class="eyebrow">기능</div>
   <h2>매일 쓰는 것만 크게, 나머지는 한 겹 아래로</h2>
   <p class="lead">기능이 많아도 화면은 단순해야 실제로 쓰입니다. 직원 화면과 관리자 화면의 목적을 나눴습니다.</p>
@@ -164,7 +225,7 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   </div>
 </div></section>
 
-<section id="screens"><div class="wrap">
+<section id="screens"><div class="wrap rv">
   <div class="eyebrow">화면</div>
   <h2>직원은 이렇게, 관리자는 이렇게</h2>
   <p class="lead">같은 앱이지만 보이는 것이 다릅니다.</p>
@@ -197,11 +258,38 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   </div>
 </div></section>
 
-<section class="contact" id="contact"><div class="wrap">
+<section style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);" id="start"><div class="wrap rv">
+  <div class="eyebrow">시작하기</div>
+  <h2>세 단계면 끝납니다</h2>
+  <p class="lead">설치할 프로그램은 없습니다. 인터넷 주소로 접속해서 바로 씁니다.</p>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h3>문의 남기기</h3><p>매장 이름과 연락처를 문자나 전화로 주세요. 업종과 매장 수만 알려주시면 됩니다.</p><a href="#contact" class="sbtn">문의하러 가기</a></div>
+    <div class="step"><div class="num">2</div><h3>초대 코드 받기</h3><p>확인 후 초대 코드를 보내드립니다. 코드 하나로 우리 회사 전용 V-Flow가 만들어집니다.</p><div class="note-s">보통 당일 안에 회신드립니다</div></div>
+    <div class="step now"><div class="num">3</div><h3>설치하러 가기</h3><p>코드를 받으셨다면 바로 시작하세요. 회사 이름·업종·매장만 등록하면 끝입니다.</p><a href="onboarding.html" class="sbtn gold">🎟️ 코드 입력하고 시작 →</a><div class="note-s">이미 쓰고 계신가요? <a href="index.html" style="color:var(--blue);font-weight:700;">로그인</a></div></div>
+  </div>
+</div></section>
+
+<section id="updates"><div class="wrap rv">
+  <div class="eyebrow">업데이트</div>
+  <h2>지금도 매주 좋아지고 있습니다</h2>
+  <p class="lead">실제 매장에서 쓰면서 나온 의견을 그 주에 반영합니다. 도입하시면 업데이트는 자동으로 적용됩니다.</p>
+  <div class="tl">
+    <div class="ti"><div class="v">v4.4 · 2026.08.25</div><h4>내 계정 메뉴 · 가맹 초대 코드</h4><p>홈 오른쪽 위 톱니 하나에 계정 기능을 모았고, 다른 매장이 시작할 때 쓰는 초대 코드 발급·관리가 생겼습니다.</p></div>
+    <div class="ti"><div class="v">v4.3 · 2026.08.24</div><h4>화면 단순화 · 관리자 오늘 현황</h4><p>하단 탭을 정리해 직원은 첫 화면 하나로 끝나게 했고, 관리자에게는 빠진 것만 모아 보여주는 화면을 추가했습니다.</p></div>
+    <div class="ti"><div class="v">v4.2 · 2026.08.24</div><h4>남은 일 빨간 배지 · 인수인계 피드백</h4><p>버튼마다 남은 개수가 숫자로 뜨고, 인수인계 항목에 댓글로 답할 수 있게 됐습니다.</p></div>
+    <div class="ti hide old" style="display:none;"><div class="v">v4.0 · 2026.08.23</div><h4>협업 흐름 · 주간 1:1 상담</h4><p>매장 간 요청·프로젝트를 한 줄기로 모으고, 매주 직원 한 명씩 상담 대상이 자동 배정됩니다.</p></div>
+    <div class="ti hide old" style="display:none;"><div class="v">v3.8 · 2026.08.15</div><h4>인수인계 무삭제 보관</h4><p>인수인계는 지워도 매장 기록에 남습니다. 누가 언제 작성·확인·삭제했는지 30일 이력을 봅니다.</p></div>
+    <div class="ti hide old" style="display:none;"><div class="v">v3.6 · 2026.08.10</div><h4>푸시 알림</h4><p>3일 이상 확인되지 않은 인수인계가 있으면 담당자와 관리자에게 아침에 알림이 갑니다.</p></div>
+  </div>
+  <button class="more-btn" id="more">이전 업데이트 더 보기 ▾</button>
+</div></section>
+
+<section class="contact" id="contact"><div class="wrap rv">
   <div class="eyebrow">도입 문의</div>
   <h2>테스트로 먼저 써보세요</h2>
-  <p class="lead">아래 내용을 적고 <b>문자</b>로 보내주시거나 <b>전화</b> 주시면 초대 코드를 보내드립니다. 코드를 받으면 회사 이름과 매장을 등록하는 것만으로 바로 시작됩니다 — 설치할 프로그램은 없습니다.</p>
+  <p class="lead">아래 내용을 적고 <b>문자</b>로 보내주시거나 <b>전화</b> 주시면 초대 코드를 보내드립니다.<br>이미 쓰고 계신 분의 개선 의견·버그 제보도 같은 번호로 받습니다.</p>
   <form class="form" id="f" onsubmit="return sendForm(event)">
+    <div style="display:flex;gap:7px;margin-bottom:6px;"><button type="button" class="tabb on" data-k="도입 문의">도입 문의</button><button type="button" class="tabb" data-k="의견·버그 제보">의견·버그 제보</button></div>
     <label>매장 · 회사 이름</label>
     <input type="text" id="c-name" required placeholder="예) 위베이프 검단점">
     <label>담당자 성함</label>
@@ -218,15 +306,16 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
   </form>
 </div></section>
 
-<section><div class="wrap">
+<section><div class="wrap rv">
   <div class="eyebrow">자주 묻는 질문</div>
   <h2>궁금하실 것들</h2>
   <div class="faq">
-    <div class="q"><h4>설치해야 하나요?</h4><p>아니요. 인터넷 주소로 접속해서 바로 씁니다. 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있고, 업데이트도 자동으로 적용됩니다.</p></div>
-    <div class="q"><h4>우리 매장 데이터가 다른 회사에 보이나요?</h4><p>보이지 않습니다. 회사별로 데이터가 완전히 분리돼 있고, 서버 단에서 접근 권한을 강제합니다. 화면에서 숨기는 방식이 아닙니다.</p></div>
-    <div class="q"><h4>직원들이 어려워하지 않을까요?</h4><p>직원 화면에는 버튼 세 개와 안내 카드뿐입니다. 교육은 5분이면 충분하고, 실제 매장에서 그렇게 쓰고 있습니다.</p></div>
-    <div class="q"><h4>업종이 달라도 되나요?</h4><p>가입할 때 업종을 고르면 청소 체크리스트와 고정 업무가 그 업종에 맞게 기본 세팅되고, 이후 자유롭게 수정할 수 있습니다.</p></div>
-    <div class="q"><h4>기존에 쓰던 기록은요?</h4><p>테스트 기간에는 새로 시작하시는 것을 권합니다. 정식 도입 시 기존 자료 이관은 별도로 상담해 드립니다.</p></div>
+    <details class="q" open><summary>설치해야 하나요?</summary><p>아니요. 인터넷 주소로 접속해서 바로 씁니다. 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있고, 업데이트도 자동으로 적용됩니다.</p></details>
+    <details class="q"><summary>우리 매장 데이터가 다른 회사에 보이나요?</summary><p>보이지 않습니다. 회사별로 데이터가 완전히 분리돼 있고, 서버 단에서 접근 권한을 강제합니다. 화면에서 숨기는 방식이 아닙니다.</p></details>
+    <details class="q"><summary>직원들이 어려워하지 않을까요?</summary><p>직원 화면에는 버튼 세 개와 안내 카드뿐입니다. 교육은 5분이면 충분하고, 실제 매장에서 그렇게 쓰고 있습니다.</p></details>
+    <details class="q"><summary>업종이 달라도 되나요?</summary><p>가입할 때 업종을 고르면 청소 체크리스트와 고정 업무가 그 업종에 맞게 기본 세팅되고, 이후 자유롭게 수정할 수 있습니다.</p></details>
+    <details class="q"><summary>기존에 쓰던 기록은요?</summary><p>테스트 기간에는 새로 시작하시는 것을 권합니다. 정식 도입 시 기존 자료 이관은 별도로 상담해 드립니다.</p></details>
+    <details class="q"><summary>초대 코드는 왜 필요한가요?</summary><p>아무나 가입해서 쓰는 서비스가 아니라, 도입을 상의한 곳에만 열어드리기 위해서입니다. 코드는 1회용이며 유효 기간이 있습니다.</p></details>
   </div>
 </div></section>
 
@@ -239,10 +328,22 @@ footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
 </div></footer>
 
 <script>
+(function(){var w=["인수인계","청소 체크","오늘 할 일","누가 뭘 했는지"],el=document.getElementById("rot"),i=0;
+setInterval(function(){el.style.opacity="0";el.style.transform="translateY(-6px)";
+setTimeout(function(){i=(i+1)%w.length;el.textContent=w[i];el.style.opacity="1";el.style.transform="none";},300);},2600);})();
+(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("on");io.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll(".rv").forEach(function(el){io.observe(el);});})();
+(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;var el=e.target,t=parseInt(el.dataset.n||"0");if(!t){io.unobserve(el);return;}
+var c=0,s=Math.max(1,Math.round(t/38)),iv=setInterval(function(){c+=s;if(c>=t){c=t;clearInterval(iv);}el.textContent=c.toLocaleString();},26);io.unobserve(el);});},{threshold:.4});
+document.querySelectorAll(".st .n[data-n]").forEach(function(el){io.observe(el);});})();
+document.getElementById("more").onclick=function(){var h=document.querySelectorAll(".ti.hide"),op=h[0].style.display==="none";
+h.forEach(function(x){x.style.display=op?"block":"none";});this.textContent=op?"접기 ▴":"이전 업데이트 더 보기 ▾";};
+var formKind="도입 문의";
+document.querySelectorAll(".tabb").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tabb").forEach(function(x){x.classList.remove("on");});b.classList.add("on");formKind=b.dataset.k;};});
 function sendForm(e){
   e.preventDefault();
   const v=(id)=>document.getElementById(id).value.trim();
-  const msg=`[V-Flow 도입 문의]\n매장·회사: ${v("c-name")}\n담당자: ${v("c-person")}\n연락처: ${v("c-contact")}\n내용: ${v("c-memo")||"-"}`;
+  const msg=`[V-Flow ${formKind}]\n매장·회사: ${v("c-name")}\n담당자: ${v("c-person")}\n연락처: ${v("c-contact")}\n내용: ${v("c-memo")||"-"}`;
   const ua=navigator.userAgent||'';
   const sep=/iPhone|iPad|iPod|Macintosh/i.test(ua)?'&':'?';
   window.location.href=`sms:01047876928${sep}body=${encodeURIComponent(msg)}`;
