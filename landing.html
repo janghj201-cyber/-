@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-Flow — 매장 운영, 시스템이 기억합니다</title>
+<meta name="description" content="직원이 오늘 할 일만 보고, 관리자는 빠진 것만 봅니다. 매장 운영 스케줄·인수인계·청소 관리 시스템 V-Flow.">
+<style>
+:root{
+  --navy:#1a2332; --navy-mid:#243044; --gold:#f5a623;
+  --bg:#f8f7f2; --card:#fff; --border:#e8e4dc;
+  --text:#1a2332; --sub:#6b7a8d; --mute:#a0aab4;
+  --green:#0f8a5f; --red:#c0392b; --orange:#d97706;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px;}
+a{color:inherit;}
+
+/* 헤더 */
+header{background:var(--navy);position:sticky;top:0;z-index:10;}
+header .wrap{display:flex;align-items:center;justify-content:space-between;padding-top:14px;padding-bottom:14px;}
+.logo{color:#fff;font-size:19px;font-weight:800;letter-spacing:-.3px;}
+.logo b{color:var(--gold);}
+.hbtn{background:var(--gold);color:var(--navy);border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
+
+/* 히어로 */
+.hero{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-mid) 100%);color:#fff;padding:52px 0 60px;}
+.hero h1{font-size:34px;font-weight:800;line-height:1.35;letter-spacing:-.6px;}
+.hero h1 span{color:var(--gold);}
+.hero p{font-size:15.5px;color:#b8c4d4;margin-top:14px;max-width:560px;}
+.hero .cta{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;}
+.btn-g{background:var(--gold);color:var(--navy);border:none;border-radius:11px;padding:13px 22px;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
+.btn-o{background:rgba(255,255,255,.09);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:11px;padding:13px 22px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
+.hero .note{font-size:12px;color:#8fa0b5;margin-top:14px;}
+
+/* 섹션 */
+section{padding:56px 0;}
+.eyebrow{font-size:11.5px;font-weight:800;color:var(--gold);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;}
+h2{font-size:25px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px;}
+.lead{font-size:15px;color:var(--sub);max-width:620px;}
+
+/* 문제/해결 */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px;}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.pcard.bad{border-left:4px solid var(--red);}
+.pcard.good{border-left:4px solid var(--green);}
+.pcard h3{font-size:14px;font-weight:800;margin-bottom:10px;}
+.pcard ul{list-style:none;font-size:13.5px;color:var(--sub);}
+.pcard li{padding:5px 0 5px 20px;position:relative;}
+.pcard.bad li:before{content:"✕";position:absolute;left:0;color:var(--red);font-weight:800;}
+.pcard.good li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:800;}
+
+/* 기능 */
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.fcard .ico{font-size:26px;display:block;margin-bottom:10px;}
+.fcard h3{font-size:15px;font-weight:800;margin-bottom:6px;}
+.fcard p{font-size:13px;color:var(--sub);line-height:1.6;}
+
+/* 화면 미리보기 */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px;align-items:start;}
+.shot{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 3px 14px rgba(26,35,50,.07);}
+.shot .bar{background:var(--navy);color:#fff;padding:10px 14px;font-size:12px;font-weight:800;}
+.shot .in{padding:14px;}
+.chip{display:inline-flex;background:rgba(245,166,35,.14);color:#8a5a00;font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 11px;margin-bottom:10px;}
+.qg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.qb{position:relative;background:var(--bg);border:1.5px solid var(--border);border-radius:13px;padding:12px 4px 10px;text-align:center;}
+.qb .i{font-size:22px;display:block;margin-bottom:4px;}
+.qb .l{font-size:11.5px;font-weight:800;display:block;}
+.qb .s{font-size:9.5px;font-weight:700;margin-top:2px;display:block;}
+.bdg{position:absolute;top:-6px;right:-5px;background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;}
+.miss{display:flex;gap:8px;padding:8px 9px;border-radius:9px;border:1px solid var(--border);border-left:4px solid var(--red);background:#fffaf9;margin-bottom:6px;font-size:12px;align-items:center;}
+.miss b{font-weight:800;}
+.miss .m{font-size:10px;color:var(--mute);}
+.strow{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;font-size:11px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center;}
+.strow:first-child{background:var(--navy);color:#fff;font-weight:800;font-size:10px;border:none;}
+.strow span:first-child{text-align:left;font-weight:800;}
+
+/* 문의 */
+.contact{background:var(--navy);color:#fff;}
+.contact h2{color:#fff;}
+.contact .lead{color:#b8c4d4;}
+.form{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:22px;margin-top:24px;max-width:520px;}
+.form label{display:block;font-size:12.5px;font-weight:700;color:#c8d3e0;margin:12px 0 5px;}
+.form input,.form textarea{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:11px 12px;font-size:14px;color:#fff;font-family:inherit;outline:none;}
+.form input::placeholder,.form textarea::placeholder{color:#7f8fa4;}
+.form input:focus,.form textarea:focus{border-color:var(--gold);}
+.form button{width:100%;margin-top:16px;background:var(--gold);color:var(--navy);border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+.form .hint{font-size:11.5px;color:#8fa0b5;margin-top:10px;line-height:1.6;}
+
+/* FAQ */
+.faq{margin-top:24px;}
+.q{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px 18px;margin-bottom:9px;}
+.q h4{font-size:14px;font-weight:800;margin-bottom:5px;}
+.q p{font-size:13.5px;color:var(--sub);}
+
+footer{background:#141c2a;color:#7f8fa4;padding:26px 0;font-size:12px;text-align:center;}
+footer a{color:#a8b6c8;text-decoration:underline;margin:0 6px;}
+
+@media(max-width:720px){
+  .hero h1{font-size:26px;}
+  .pair,.feat,.shots{grid-template-columns:1fr;}
+  h2{font-size:21px;}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="logo">V<b>-</b>Flow</div>
+  <a href="#contact" class="hbtn">도입 문의</a>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <h1>매장 운영, <span>사람이 기억하지 않아도</span><br>시스템이 챙깁니다</h1>
+  <p>직원은 오늘 할 일 세 가지만 보고, 관리자는 빠진 것만 봅니다.
+  인수인계·청소·업무를 매일 확인하고 보고하라고 말하는 대신, 앱이 기록하고 알려주는 구조로 바꿨습니다.</p>
+  <div class="cta">
+    <a href="#contact" class="btn-g">도입 문의하기</a>
+    <a href="#screens" class="btn-o">화면 먼저 보기</a>
+  </div>
+  <div class="note">6개 매장 · 16명 직원이 매일 쓰고 있는 시스템입니다 (2026년 8월 기준)</div>
+</div></div>
+
+<section><div class="wrap">
+  <div class="eyebrow">왜 만들었나</div>
+  <h2>1인 근무 매장에서 생기는 일</h2>
+  <p class="lead">사람을 탓해서 해결되지 않던 문제들입니다. 기억력이 아니라 구조의 문제였습니다.</p>
+  <div class="pair">
+    <div class="pcard bad">
+      <h3>이전</h3>
+      <ul>
+        <li>인수인계를 카톡에 남기면 묻히고, 누가 봤는지 모름</li>
+        <li>청소 체크표는 프린트해서 사인만 하고 끝</li>
+        <li>담당자 컴퓨터가 고장 나면 기록도 함께 사라짐</li>
+        <li>관리자는 매장마다 전화해야 오늘 상황을 앎</li>
+        <li>"했다"와 "안 했다"가 말로만 오감</li>
+      </ul>
+    </div>
+    <div class="pcard good">
+      <h3>V-Flow</h3>
+      <ul>
+        <li>인수인계는 누가 언제 확인했는지까지 남고 지워지지 않음</li>
+        <li>청소·업무는 남은 개수가 빨간 숫자로 보이고 0이 되면 사라짐</li>
+        <li>모든 기록이 서버에 저장 — 어느 기기에서든 로그인하면 그대로</li>
+        <li>관리자는 한 화면에서 빠진 것만 확인</li>
+        <li>3일 넘게 확인 안 된 인수인계는 아침에 자동 알림</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);"><div class="wrap">
+  <div class="eyebrow">기능</div>
+  <h2>매일 쓰는 것만 크게, 나머지는 한 겹 아래로</h2>
+  <p class="lead">기능이 많아도 화면은 단순해야 실제로 쓰입니다. 직원 화면과 관리자 화면의 목적을 나눴습니다.</p>
+  <div class="feat">
+    <div class="fcard"><span class="ico">✅</span><h3>오늘 업무</h3><p>출근하면 오늘 할 일을 등록하고 체크합니다. 못 끝낸 일은 다음 날로 자동 이월돼서 사라지지 않습니다.</p></div>
+    <div class="fcard"><span class="ico">📝</span><h3>인수인계</h3><p>다음 근무자에게 남기는 메모. 누가 언제 확인했는지 기록되고, 삭제해도 매장 기록에는 남습니다.</p></div>
+    <div class="fcard"><span class="ico">🧹</span><h3>청소 체크</h3><p>매일 체크리스트와 주기별 대청소 구역. 남은 항목이 숫자로 보여서 빠뜨리기 어렵습니다.</p></div>
+    <div class="fcard"><span class="ico">👑</span><h3>관리자 오늘 현황</h3><p>청소 미체크 매장, 오래된 미확인 인수인계, 업무 미등록 직원이 한 화면 맨 위에 모입니다.</p></div>
+    <div class="fcard"><span class="ico">🤝</span><h3>협업·업무 요청</h3><p>매장 간 요청과 진행 상황을 한 줄기로. 3일 이상 응답 없는 요청이 먼저 보입니다.</p></div>
+    <div class="fcard"><span class="ico">📊</span><h3>주간 리포트</h3><p>매장별 운영 상태를 매주 자동 집계. 점수가 아니라 있는 그대로의 기록을 봅니다.</p></div>
+  </div>
+</div></section>
+
+<section id="screens"><div class="wrap">
+  <div class="eyebrow">화면</div>
+  <h2>직원은 이렇게, 관리자는 이렇게</h2>
+  <p class="lead">같은 앱이지만 보이는 것이 다릅니다.</p>
+  <div class="shots">
+    <div class="shot">
+      <div class="bar">직원 — 로그인하면 이 화면</div>
+      <div class="in">
+        <span class="chip">📍 오늘 근무: 인천 논현점</span>
+        <div class="qg">
+          <div class="qb"><span class="i">✅</span><span class="l">오늘 업무</span><span class="s" style="color:var(--green);">3/3 ✓</span></div>
+          <div class="qb"><span class="bdg">1</span><span class="i">📝</span><span class="l">인수인계</span><span class="s" style="color:var(--red);">미확인 1</span></div>
+          <div class="qb"><span class="bdg">2</span><span class="i">🧹</span><span class="l">청소 체크</span><span class="s" style="color:var(--orange);">3/5</span></div>
+        </div>
+        <p style="font-size:12px;color:var(--sub);margin-top:12px;line-height:1.6;">버튼 세 개가 남은 일을 숫자로 알려줍니다. 셋 다 초록이면 오늘 할 일 끝. 버튼 위치는 항상 고정이라 매일 같은 자리를 누르면 됩니다.</p>
+      </div>
+    </div>
+    <div class="shot">
+      <div class="bar">관리자 — 빠진 것부터 보입니다</div>
+      <div class="in">
+        <div class="miss"><span>🧹</span><div style="flex:1;"><b>부천 신중동점 청소 미체크</b><div class="m">오늘 항목 5개 중 0개 · 근무: 고아현</div></div></div>
+        <div class="miss"><span>📝</span><div style="flex:1;"><b>3일 이상 미확인 인수인계 1건</b><div class="m">상동점 · 수신: 홍다운</div></div></div>
+        <div style="border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-top:10px;">
+          <div class="strow"><span>매장</span><span>청소</span><span>업무</span><span>인수인계</span></div>
+          <div class="strow"><span>연수</span><span style="color:var(--green);font-weight:800;">✓</span><span style="color:var(--green);font-weight:800;">4/4</span><span style="color:var(--green);font-weight:800;">0</span></div>
+          <div class="strow"><span>논현</span><span style="color:var(--orange);font-weight:800;">3/5</span><span style="color:var(--green);font-weight:800;">3/3</span><span style="color:var(--red);font-weight:800;">1</span></div>
+          <div class="strow"><span>신중동</span><span style="color:var(--red);font-weight:800;">0/5</span><span style="color:var(--orange);font-weight:800;">1/3</span><span style="color:var(--green);font-weight:800;">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="contact" id="contact"><div class="wrap">
+  <div class="eyebrow">도입 문의</div>
+  <h2>테스트로 먼저 써보세요</h2>
+  <p class="lead">연락처를 남겨주시면 초대 코드를 보내드립니다. 코드를 받으면 회사 이름과 매장을 등록하는 것만으로 바로 시작됩니다 — 설치할 프로그램은 없습니다.</p>
+  <form class="form" id="f" onsubmit="return sendForm(event)">
+    <label>매장 · 회사 이름</label>
+    <input type="text" id="c-name" required placeholder="예) 위베이프 검단점">
+    <label>담당자 성함</label>
+    <input type="text" id="c-person" required placeholder="예) 홍길동">
+    <label>연락처 (전화 또는 이메일)</label>
+    <input type="text" id="c-contact" required placeholder="010-0000-0000 또는 you@example.com">
+    <label>매장 수 · 궁금한 점 (선택)</label>
+    <textarea id="c-memo" rows="3" placeholder="예) 매장 3개 운영 중입니다. 인수인계 기능이 궁금해요"></textarea>
+    <button type="submit">문의 남기기</button>
+    <div class="hint" id="f-hint">남겨주신 내용은 도입 안내 목적으로만 사용하고, 안내 후 파기합니다.</div>
+  </form>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">자주 묻는 질문</div>
+  <h2>궁금하실 것들</h2>
+  <div class="faq">
+    <div class="q"><h4>설치해야 하나요?</h4><p>아니요. 인터넷 주소로 접속해서 바로 씁니다. 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있고, 업데이트도 자동으로 적용됩니다.</p></div>
+    <div class="q"><h4>우리 매장 데이터가 다른 회사에 보이나요?</h4><p>보이지 않습니다. 회사별로 데이터가 완전히 분리돼 있고, 서버 단에서 접근 권한을 강제합니다. 화면에서 숨기는 방식이 아닙니다.</p></div>
+    <div class="q"><h4>직원들이 어려워하지 않을까요?</h4><p>직원 화면에는 버튼 세 개와 안내 카드뿐입니다. 교육은 5분이면 충분하고, 실제 매장에서 그렇게 쓰고 있습니다.</p></div>
+    <div class="q"><h4>업종이 달라도 되나요?</h4><p>가입할 때 업종을 고르면 청소 체크리스트와 고정 업무가 그 업종에 맞게 기본 세팅되고, 이후 자유롭게 수정할 수 있습니다.</p></div>
+    <div class="q"><h4>기존에 쓰던 기록은요?</h4><p>테스트 기간에는 새로 시작하시는 것을 권합니다. 정식 도입 시 기존 자료 이관은 별도로 상담해 드립니다.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div>V-Flow · 매장 운영 스케줄 시스템</div>
+  <div style="margin-top:8px;">
+    <a href="legal.html#terms">이용약관</a>·<a href="legal.html#privacy">개인정보처리방침</a>·<a href="mailto:support@vflow.kr">support@vflow.kr</a>
+  </div>
+  <div style="margin-top:10px;color:#5e6d80;">© 2026 Su Ho Jang. All Rights Reserved.</div>
+</div></footer>
+
+<script>
+function sendForm(e){
+  e.preventDefault();
+  const v=(id)=>document.getElementById(id).value.trim();
+  const body=`[V-Flow 도입 문의]%0D%0A%0D%0A매장·회사: ${encodeURIComponent(v("c-name"))}%0D%0A담당자: ${encodeURIComponent(v("c-person"))}%0D%0A연락처: ${encodeURIComponent(v("c-contact"))}%0D%0A내용: ${encodeURIComponent(v("c-memo")||"-")}`;
+  window.location.href=`mailto:support@vflow.kr?subject=${encodeURIComponent("[V-Flow] 도입 문의 - "+v("c-name"))}&body=${body}`;
+  document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">메일 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span>';
+  return false;
+}
+</script>
+</body>
+</html>

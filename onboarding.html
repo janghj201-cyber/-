@@ -34,8 +34,10 @@
     <!-- 1단계: 회원가입 -->
     <div id="step1">
       <h2>시작하기</h2>
-      <p class="sub">대표자(관리자) 계정을 만듭니다. 직원은 나중에 초대로 가입해요.</p>
+      <p class="sub">대표자(관리자) 계정을 만듭니다. 직원은 나중에 초대로 가입해요.<br><b>초대 코드</b>가 필요합니다 — 없으시면 도입 문의를 남겨주세요.</p>
       <form id="signup-form">
+        <label>초대 코드<input type="text" id="su-code" required placeholder="예) WV-TEST-01" style="text-transform:uppercase;" /></label>
+        <div id="su-code-msg" style="font-size:12px;margin:-4px 0 8px;min-height:16px;"></div>
         <label>이름<input type="text" id="su-name" required placeholder="예) 장현진" /></label>
         <label>이메일<input type="email" id="su-email" required placeholder="you@example.com" /></label>
         <label>비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" /></label>
@@ -101,6 +103,7 @@
     let contactName = ''
     let tenantInfo = null // {name, industry}
     let consentValues = null
+    let signupCode = ''
     const _suBtn = $('su-btn')
     const consentBox = renderConsentBox($('su-consent'), TENANT_KEYS, (ok) => { _suBtn.disabled = !ok; _suBtn.style.opacity = ok ? '1' : '.5' })
 
@@ -118,6 +121,13 @@
       try {
         contactName = $('su-name').value.trim()
         consentValues = consentBox.values()
+        signupCode = $('su-code').value.trim().toUpperCase()
+        {
+          const { data: okCode, error: cErr } = await supabase.rpc('check_signup_code', { p_code: signupCode })
+          if (cErr) throw cErr
+          if (!okCode) { $('su-code-msg').innerHTML = '<span style="color:#c0392b;font-weight:700;">사용할 수 없는 코드예요 (오타·만료·사용완료)</span>'; btn.disabled=false; btn.textContent='계정 만들기'; return }
+          $('su-code-msg').innerHTML = '<span style="color:#0f8a5f;font-weight:700;">✓ 확인된 코드</span>'
+        }
         const { data, error } = await supabase.auth.signUp({ email: $('su-email').value.trim(), password: $('su-password').value })
         if (error) throw error
         if (!data.session) {
@@ -169,6 +179,8 @@
         if (pErr) throw pErr
         // 동의 기록 (1단계에서 받은 값 — 가입만 하고 이탈했다 돌아온 경우는 로그인 후 재동의 모달이 받는다)
         if (consentValues) { try { await saveConsents(tenantId, userId, 'tenant', consentValues) } catch (ce) { console.warn('[consent]', ce) } }
+        // 🎟️ 초대 코드 사용 처리 (누가 어느 코드로 만들었는지 기록)
+        if (signupCode) { try { await supabase.rpc('use_signup_code', { p_code: signupCode, p_tenant: tenantId, p_tenant_name: tenantInfo.name, p_email: (await supabase.auth.getUser()).data?.user?.email ?? null }) } catch (ue) { console.warn('[code]', ue) } }
 
         // 매장
         const { error: sErr } = await supabase.from('stores').insert(stores.map(s=>({ tenant_id: tenantId, name: s.name, address: s.address || null })))
