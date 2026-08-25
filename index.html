@@ -678,6 +678,9 @@ body[data-theme="purple"]{--navy:#2d2350;--navy-mid:#3a2d66;--navy-light:#47387c
 body[data-theme="dark"]{--navy:#101216;--navy-mid:#16181d;--navy-light:#1d2026;--gold:#7f8ea3;--gold-light:rgba(127,142,163,0.12);}
 /* 커스터마이징: 기능 Off 숨김 (데이터는 유지, 화면만 숨김) */
 body.feat-off-board .board-section{display:none!important}
+body.feat-off-workreq .feat-workreq{display:none!important}
+body.feat-off-storeinfo .feat-storeinfo{display:none!important}
+body.feat-off-hofeedback .ho-btn-fb{display:none!important}
 body.feat-off-memo .my-section:has(#my-memo-textarea){display:none!important}
 body.feat-off-projects .my-section:has(#my-project-banner-wrap){display:none!important}
 body.feat-off-projects #type-project{display:none!important}
@@ -737,19 +740,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <button class="xbtn" onclick="document.getElementById('ibanner').style.display='none'">×</button>
 </div>
 
-<!-- 비밀번호 모달 -->
-<div class="modal-bg" id="pw-modal" style="display:none">
-  <div class="modal">
-    <h3>🔐 관리자 모드</h3>
-    <p>비밀번호를 입력하세요</p>
-    <input type="password" id="pw-input" maxlength="20" placeholder="••••••">
-    <div class="modal-err" id="pw-err"></div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closePwModal()">취소</button>
-      <button class="modal-btn confirm" onclick="checkPw()">확인</button>
-    </div>
-  </div>
-</div>
+<!-- (제거됨) 관리자 비밀번호 모달 — 5-5부터 로그인 계정 직함으로 판별하므로 불필요 -->
 
 <!-- 이름 입력 모달 -->
 <div class="modal-bg" id="name-modal" style="display:none" onclick="if(event.target===this)closeNameModal()">
@@ -1251,6 +1242,10 @@ const FEATURE_DEFS=[
   {key:'board',label:'📋 게시판'},
   {key:'dayoff',label:'🏖️ 휴무 관리'},
   {key:'handover',label:'📝 인수인계'},
+  {key:'hofeedback',label:'💬 인수인계 피드백'},
+  {key:'workreq',label:'📨 업무 요청'},
+  {key:'meeting',label:'🗣️ 주간 1:1 상담'},
+  {key:'storeinfo',label:'📌 매장 고정 정보'},
 ];
 const THEME_DEFS=[
   {key:'default',label:'클래식 네이비',navy:'#1a2332',gold:'#f5a623'},
@@ -1304,6 +1299,16 @@ const CLEAN_BASE=[
   "액상 및 기기 앞정렬",
   "시연 제품 먼지/얼룩 제거 (+진열 박스)"
 ];
+// 신규 테넌트(가맹·타업종)용 중립 기본값 — 운영사 전용 항목이 남의 회사에 뜨지 않게.
+// 저장된 설정이 없을 때만 쓰이고, 관리자 → 고정업무 → 🧹 청소 항목 편집에서 바로 바꿀 수 있다.
+const NEUTRAL_CLEAN_BASE=[
+  "매장 바닥 청소",
+  "출입문·유리창 닦기",
+  "쓰레기통 비우기",
+  "진열대·집기 정리",
+  "화장실 점검",
+  "카운터 주변 정리"
+];
 // 월간 고정업무 규칙의 기본값(폴백) — Firestore config/schedule_rules 없으면 이걸로 시딩
 const DEFAULT_SCHEDULE_RULES=[
   {key:'order',condType:'weekday',weekday:1,task:'전체 주문 (주간)',meta:'전 품목 발주 · 본사 재고 연동 확인',col:'c-blue'},
@@ -1313,6 +1318,13 @@ const DEFAULT_SCHEDULE_RULES=[
   {key:'report',condType:'monthdays',days:[25],task:'📊 월간 보고 마감',meta:'매장 현황 보고서 입력 마감 (매출·재고·직원의견)',col:'c-pink',report:true},
   {key:'as_deadline',condType:'monthdays',days:[15],task:'📦 A/S 접수 마감',meta:'각 매장 고객 A/S 접수 마감일 (오늘까지 접수)',col:'c-teal'},
   {key:'as_send',condType:'lastBizDayBefore',targetDay:16,task:'🚚 A/S 택배 발송일',meta:'전 지점 A/S 물품 → 로데오점으로 발송',col:'c-teal',asSend:true},
+];
+// 신규 테넌트(가맹·타업종)용 중립 기본값 — 운영사 전용 규칙(본사 재고 대조·A/S 로데오점 등)을
+// 남의 회사 DB에 심지 않기 위해. 관리자 → 고정업무 탭에서 자유롭게 추가·수정·삭제 가능.
+const NEUTRAL_SCHEDULE_RULES=[
+  {key:'order',condType:'weekday',weekday:1,task:'주간 발주',meta:'주 1회 발주 마감',col:'c-blue'},
+  {key:'stock',condType:'monthdays',days:[1],task:'재고 실사',meta:'월초 재고 점검',col:'c-orange'},
+  {key:'report',condType:'monthdays',days:[25],task:'📊 월간 보고 마감',meta:'매장 현황 보고서 입력 마감',col:'c-pink',report:true},
 ];
 let scheduleRules=DEFAULT_SCHEDULE_RULES.map(r=>({...r}));
 let SPECIALS={};
@@ -1330,6 +1342,8 @@ async function loadScheduleRules(){
     if(snap.exists()&&Array.isArray(snap.data().rules)&&snap.data().rules.length){
       scheduleRules=snap.data().rules;
     } else {
+      // 저장된 규칙이 없는 = 새로 시작하는 회사. 운영사 테넌트가 아니면 중립 기본값으로 시딩.
+      if(!(window.__vflowTenant||{}).isPlatform)scheduleRules=NEUTRAL_SCHEDULE_RULES.map(r=>({...r}));
       await setDoc(doc(db,'config/schedule_rules'),{rules:scheduleRules});
     }
   }catch(e){}
@@ -1400,6 +1414,9 @@ async function loadCleanConfig(){
     const dSnap=await getDoc(doc(db,'config/clean_daily_items'));
     if(dSnap.exists()&&Array.isArray(dSnap.data().items)&&dSnap.data().items.length){
       CLEAN_BASE.splice(0,CLEAN_BASE.length,...dSnap.data().items);
+    } else if(!(window.__vflowTenant||{}).isPlatform){
+      // 저장된 청소 항목이 없는 새 회사 — 운영사 전용 항목 대신 중립 기본값
+      CLEAN_BASE.splice(0,CLEAN_BASE.length,...NEUTRAL_CLEAN_BASE);
     }
   }catch(e){}
   try{
@@ -2234,11 +2251,20 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v4.4';
-const BUILD_DATE = '2026-08-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v4.5';
+const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v4.5 — 👤 내 계정 · 이름/직함 변경 · 기능 토글 확대',
+    items: [
+      '👤 관리자 → 설정 맨 위에 내 계정 카드가 생겼어요 — 내 이름·직함·회사가 한눈에 보이고, ✏️ 내 이름 수정과 🔑 비밀번호 변경을 바로 할 수 있어요',
+      '🔐 관리자 화면에는 따로 비밀번호가 없습니다 — 로그인 계정의 직함(대표·매니저)으로 자동 판별돼요. 로그인 비밀번호가 곧 관리자 비밀번호입니다',
+      '🧑‍💼 직원 근무지 설정에서 이름을 누르면 이름 수정, 옆 칸에서 직함(직원·매니저·대표) 변경 — 관리자를 앱 안에서 직접 늘리고 줄일 수 있어요 (대표만 가능)',
+      '🧩 기능 켜기/끄기에 💬 인수인계 피드백 · 📨 업무 요청 · 🗣️ 주간 1:1 상담 · 📌 매장 고정 정보가 추가됐어요',
+    ],
+  },
   {
     title: '🆕 v4.4 — ⚙️ 내 계정 메뉴 · 🎟️ 가맹 초대 코드',
     items: [
@@ -4068,6 +4094,7 @@ function wmFmt(ds){if(!ds)return '';const d=new Date(ds);return `${d.getMonth()+
 // 홈 카드 — 대상 직원 본인 + 관리자(팀장·대표)에게만 표시
 async function renderHomeMeetingCard(wrap,beforeEl){
   try{
+    if(!featOn('meeting'))return;
     const vp=window.__vflowProfile||{};
     if(vp.monitorOnly)return;
     const isAdminRole=vp.role==='owner'||vp.role==='manager';
@@ -4666,7 +4693,7 @@ function wrDaysAgo(ts){return Math.floor((Date.now()-new Date(ts).getTime())/864
 // 매장 방의 업무 요청 섹션
 async function buildRequestSection(store){
   const wrap=document.createElement('div');
-  wrap.className='handover-section';
+  wrap.className='handover-section feat-workreq';
   wrap.innerHTML='<div class="handover-sub" style="margin:12px 0 8px;">📨 업무 요청</div><div id="wr-list" class="todo-list"><div class="todo-empty">불러오는 중...</div></div>';
   const listEl=wrap.querySelector('#wr-list');
   const {sb,ctx}=await wrApi();
@@ -4841,6 +4868,7 @@ async function buildStoreProjectSection(store){
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
 async function renderHomeRequests(wrap){
   try{
+    if(!featOn('workreq'))return;
     const me=window.__vflowProfile?.name;
     if(!me||!wrap)return;
     const {sb,ctx}=await wrApi();
@@ -5017,7 +5045,7 @@ function openStoreRoom(store){
       else if(e.t==='aio'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='일체형기기점검';}
       else if(e.t==='report'){t.style.cssText='background:var(--pink-light);color:var(--pink)';t.textContent='📊 월간보고 마감일';}
       else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='📦 A/S 접수 마감일';}
-      else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일 (→로데오점)';}
+      else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일';}
       else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
       else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
       else return;
@@ -5916,7 +5944,7 @@ function showDetail(y,m,d){
     else if(e.t==='aio'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='일체형기기점검';}
     else if(e.t==='report'){t.style.cssText='background:var(--pink-light);color:var(--pink)';t.textContent='📊 월간보고 마감일';}
     else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='📦 A/S 접수 마감일';}
-    else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일 (→로데오점)';}
+    else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='🚚 A/S 발송일';}
     else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
     else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
     tg.appendChild(t);
@@ -6379,14 +6407,14 @@ function buildHandoverSection(y,m,d){
   const wrap=document.createElement('div');wrap.className='handover-section';
 
   // 📌 매장 고정 정보 (펼치기/접기)
-  const infoBox=document.createElement('div');infoBox.className='storeinfo-box';
+  const infoBox=document.createElement('div');infoBox.className='storeinfo-box feat-storeinfo';
   infoBox.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="storeinfo-toggle-row">
       <div class="storeinfo-label" style="margin:0;">📌 매장 고정 정보</div>
       <button style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" id="storeinfo-toggle-btn">펼치기 ▼</button>
     </div>
     <div id="storeinfo-content" style="display:none;margin-top:10px;">
-      <textarea class="storeinfo-textarea" id="storeinfo-textarea" placeholder="예) 와이파이: WeVape_5G / 비밀번호: ...${'\n'}도어락 번호: ...${'\n'}POS 로그인 정보: ..." rows="5"></textarea>
+      <textarea class="storeinfo-textarea" id="storeinfo-textarea" placeholder="예) 와이파이 이름 / 비밀번호: ...${'\n'}도어락 번호: ...${'\n'}POS 로그인 정보: ..." rows="5"></textarea>
       <div class="storeinfo-save-row">
         <button class="storeinfo-save-btn" id="storeinfo-save-btn">💾 저장</button>
         <span class="storeinfo-saved" id="storeinfo-saved"></span>
@@ -6716,7 +6744,7 @@ function buildAS(y,m){
   const wrap=document.createElement('div');wrap.className='as-wrap';wrap.id='aspanel';
   wrap.innerHTML=`<div class="as-title">🚚 A/S 발송 안내</div>
   <ul class="as-guide">
-    <li>발송 대상: <strong>전 지점 → 로데오점</strong></li>
+    ${(SPECIALS.as_send&&SPECIALS.as_send.meta)?`<li>${SPECIALS.as_send.meta}</li>`:''}
     <li>발송 기준일: 매월 <strong>16일</strong> (토·일·공휴일이면 직전 평일로 자동 조정)</li>
     <li>${mns[m]} 실제 발송일: <strong style="color:var(--teal)">${m+1}월 ${sendDate}일</strong></li>
     <li>발송 전 A/S 현황 시트에서 물품 목록 더블체크 필수</li>
@@ -7509,6 +7537,34 @@ async function renderSettingsTab(content){
   document.getElementById('dash-sub').textContent='기능 켜기/끄기 · 컬러테마 (전 직원 적용)';
   const savedEl=document.createElement('div');savedEl.className='feedback-saved';savedEl.style.cssText='margin:8px 0;min-height:16px;';
 
+  // ── 👤 내 계정 (신규 가입자가 "내가 누구인지" 바로 알 수 있게) ──
+  {
+    const me=window.__vflowProfile||{};
+    const roleKo=me.role==='owner'?'대표 (관리자)':me.role==='manager'?'매니저 (관리자)':'직원';
+    const secMe=document.createElement('div');secMe.className='dash-card';secMe.style.marginBottom='12px';
+    secMe.innerHTML='<div class="dash-store-name">👤 내 계정</div>'+
+      `<div style="font-size:13px;font-weight:700;margin:6px 0 2px;">${me.name||'(이름 없음)'} <span style="font-size:11px;color:var(--gold);font-weight:800;">${roleKo}</span></div>`+
+      `<div style="font-size:12px;color:var(--text-sub);line-height:1.6;">회사: <b>${(window.__vflowTenant||{}).name||'-'}</b></div>`+
+      '<div style="font-size:12px;color:var(--text-sub);line-height:1.6;margin-top:8px;background:#f8f7f2;border-radius:8px;padding:9px 10px;">'+
+      '🔐 <b>관리자 화면에는 따로 비밀번호가 없습니다.</b><br>로그인한 계정의 직함(대표·매니저)으로 자동 판별돼요. 즉 <b>로그인 비밀번호가 곧 관리자 비밀번호</b>입니다.<br>관리자를 늘리려면 아래 <b>🧑‍💼 직원 근무지 설정</b>에서 직함을 매니저·대표로 바꿔주세요.</div>';
+    const pwb=document.createElement('button');pwb.className='dash-refresh';pwb.style.marginTop='10px';pwb.textContent='🔑 내 비밀번호 변경';
+    pwb.onclick=()=>{try{doChangePw();}catch(e){}};
+    secMe.appendChild(pwb);
+    const nmb=document.createElement('button');nmb.className='dash-refresh';nmb.style.marginTop='6px';nmb.textContent='✏️ 내 이름 수정';
+    nmb.onclick=async()=>{
+      const v=prompt('내 이름을 수정합니다.\n업무·인수인계 기록에 표시되는 이름이에요.',me.name||'');
+      if(v===null)return;const t=v.trim();if(!t){alert('이름은 비울 수 없어요.');return;}
+      try{
+        const {supabase}=await import('./adapter/supabase-client.js');
+        const {error,count}=await supabase.from('profiles').update({name:t},{count:'exact'}).eq('id',me.id);
+        if(error||count===0){alert('변경 실패'+(error?': '+error.message:' — 권한 확인'));return;}
+        alert(`이름이 "${t}" 로 바뀌었어요. 새로고침하면 반영됩니다.`);location.reload();
+      }catch(e){alert('변경 실패: '+(e&&e.message||e));}
+    };
+    secMe.appendChild(nmb);
+    content.appendChild(secMe);
+  }
+
   const secF=document.createElement('div');secF.className='dash-card';secF.style.marginBottom='12px';
   secF.innerHTML='<div class="dash-store-name">🧩 기능 켜기 / 끄기</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">끈 기능은 전 직원 화면에서 숨겨집니다. 데이터는 지워지지 않아요 — 다시 켜면 그대로 돌아옵니다.</div>';
   FEATURE_DEFS.forEach(f=>{
@@ -7697,7 +7753,8 @@ async function renderSettingsTab(content){
   })();
 
   // ── 🎟️ 가맹 초대 코드 (대표 전용) ──
-  if((window.__vflowProfile||{}).role==='owner'){
+  // 🔒 운영사(V-Flow 본사) 테넌트의 대표만 — 가맹 대표도 role='owner'라 role만으로는 못 막는다
+  if((window.__vflowProfile||{}).role==='owner' && (window.__vflowProfile||{}).isPlatform){
     const secC2=document.createElement('div');secC2.className='dash-card';secC2.style.marginTop='12px';
     secC2.innerHTML='<div class="dash-store-name">🎟️ 가맹 초대 코드</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">다른 매장·가맹점이 V-Flow를 시작하려면 이 코드가 필요해요. 코드를 만들어 전달하고, 누가 썼는지 여기서 확인합니다.<br>안내: <b>vflow.kr/onboarding.html</b> 접속 → 코드 입력 → 회사·매장 등록</div><div id="code-list">불러오는 중...</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><input id="code-label" type="text" placeholder="용도 메모 (예: 검단점 테스트)" style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><input id="code-days" type="number" value="90" min="1" style="width:72px;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:inherit;" title="유효 일수"><button id="code-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 코드 발급</button></div><div id="code-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
     content.appendChild(secC2);
@@ -7763,7 +7820,8 @@ async function renderSettingsTab(content){
   }
 
   // ── 🗣️ 1:1 상담 대상 설정 (제외 체크) ──
-  const secMt=document.createElement('div');secMt.className='dash-card';secMt.style.marginTop='12px';
+  const secMt=document.createElement('div');secMt.className='dash-card feat-meeting';secMt.style.marginTop='12px';
+  if(!featOn('meeting'))secMt.style.display='none';
   secMt.innerHTML='<div class="dash-store-name">🗣️ 주간 1:1 상담</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>참석 팀장</b> — 체크한 사람이 상담 팀장이에요(출근일 계산·카드 표시 기준). 아무도 체크 안 하면 매니저 전원.</div><div id="mt-leads" style="margin-bottom:12px;"></div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;"><b>상담 대상</b> — 매주 1명 순번(사번 순). 빼고 싶은 직원은 체크 해제 — 바로 저장.</div><div id="mt-list"></div>';
   content.appendChild(secMt);
   (async()=>{
@@ -7863,7 +7921,7 @@ async function renderSettingsTab(content){
 
   // ── 직원 근무지 설정 (고정/순환) ──
   const secW=document.createElement('div');secW.className='dash-card';secW.style.marginTop='12px';
-  secW.innerHTML='<div class="dash-store-name">🧑‍💼 직원 근무지 설정</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">📌 고정 직원은 배정 매장의 업무·인수인계만 보고 확인할 수 있어요. 🔄 순환 직원은 전 매장 접근. 변경 후 해당 직원은 앱을 새로고침해야 반영됩니다.</div><div id="workplace-list"></div>';
+  secW.innerHTML='<div class="dash-store-name">🧑‍💼 직원 근무지 설정</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">이름을 누르면 <b>이름 수정</b>, 직함 칸으로 <b>관리자 지정</b>을 할 수 있어요.<br>📌 고정 직원은 배정 매장의 업무·인수인계만, 🔄 순환 직원은 전 매장 접근. 변경 후 해당 직원은 앱을 새로고침해야 반영됩니다.</div><div id="workplace-list"></div>';
   content.appendChild(secW);
   (async()=>{
     try{
@@ -7875,11 +7933,29 @@ async function renderSettingsTab(content){
       const act=(data||[]).filter(p=>(p.status??'active')!=='inactive');
       listEl.innerHTML='';
       act.forEach(p=>{
-        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);';
+        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 4px;border-bottom:1px solid var(--border);';
         const roleTag=p.role==='owner'?' <span style="font-size:10px;color:var(--gold);font-weight:800;">대표</span>':p.role==='manager'?' <span style="font-size:10px;color:var(--blue);font-weight:800;">매니저</span>':'';
         const nameWrap=document.createElement('span');
         nameWrap.style.cssText='display:flex;align-items:center;gap:6px;min-width:0;';
-        nameWrap.innerHTML=`<span style="font-size:13px;font-weight:600;">${p.name}${roleTag}</span>`;
+        const _iAmOwner=(window.__vflowProfile||{}).role==='owner';
+        const nmEl=document.createElement('span');
+        nmEl.style.cssText='font-size:13px;font-weight:600;'+(_iAmOwner?'cursor:pointer;border-bottom:1px dashed var(--border);':'');
+        nmEl.innerHTML=`${p.name}${roleTag}`;
+        if(_iAmOwner){
+          nmEl.title='클릭해서 이름 수정';
+          nmEl.onclick=async()=>{
+            const v=prompt(`이름을 수정합니다.\n업무·인수인계 기록에 표시되는 이름이에요.`,p.name);
+            if(v===null)return;
+            const t=v.trim();
+            if(!t){alert('이름은 비울 수 없어요.');return;}
+            if(t===p.name)return;
+            const {error,count}=await supabase.from('profiles').update({name:t},{count:'exact'}).eq('id',p.id);
+            if(error||count===0){alert('이름 변경 실패'+(error?': '+error.message:' — 권한을 확인해주세요'));return;}
+            p.name=t;nmEl.innerHTML=`${t}${roleTag}`;
+            alert(`이름이 "${t}" 로 바뀌었어요.\n본인은 앱을 새로고침하면 반영됩니다.`);
+          };
+        }
+        nameWrap.appendChild(nmEl);
         const eb=document.createElement('button');
         eb.textContent=p.employee_no||'사번 등록';
         eb.title='클릭해서 사번 등록/수정';
@@ -7895,6 +7971,23 @@ async function renderSettingsTab(content){
         };
         nameWrap.appendChild(eb);
         row.appendChild(nameWrap);
+        // 직함(권한) 변경 — 대표만, 자기 자신은 못 바꿈(마지막 대표가 스스로 강등되는 사고 방지)
+        if(_iAmOwner && p.id!==(window.__vflowProfile||{}).id && !p.monitor_only){
+          const rs=document.createElement('select');
+          rs.title='직함(권한) 변경';
+          rs.style.cssText='border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;background:#fff;';
+          rs.innerHTML=['staff','manager','owner'].map(r=>`<option value="${r}" ${p.role===r?'selected':''}>${r==='staff'?'직원':r==='manager'?'매니저 (관리자)':'대표 (관리자)'}</option>`).join('');
+          rs.onchange=async()=>{
+            const nr=rs.value, lbl=nr==='staff'?'직원':nr==='manager'?'매니저(관리자)':'대표(관리자)';
+            const warn=nr==='staff'?'\n\n관리자 화면에 더 이상 들어갈 수 없게 됩니다.':'\n\n관리자 화면(전 매장 현황·설정)에 들어갈 수 있게 됩니다.';
+            if(!confirm(`${p.name} 님을 ${lbl} 로 변경할까요?${warn}`)){rs.value=p.role;return;}
+            const {error,count}=await supabase.from('profiles').update({role:nr},{count:'exact'}).eq('id',p.id);
+            if(error||count===0){alert('직함 변경 실패'+(error?': '+error.message:' — 저장된 행이 없습니다(권한 확인)'));rs.value=p.role;return;}
+            p.role=nr;
+            alert(`${p.name} 님 → ${lbl} 변경 완료.\n해당 직원은 앱 새로고침 후 반영됩니다.`);
+          };
+          row.appendChild(rs);
+        }
         if(p.monitor_only){
           const mo=document.createElement('span');
           mo.style.cssText='font-size:11px;font-weight:800;color:var(--purple);';
@@ -8156,7 +8249,7 @@ window.openPwModal=function(){
   }
 };
 window.closePwModal=function(){
-  document.getElementById('pw-modal').style.display='none';
+  const el=document.getElementById('pw-modal');if(el)el.style.display='none';
 };
 window.checkPw=function(){window.openPwModal();};
 document.getElementById('name-input').addEventListener('keydown',e=>{

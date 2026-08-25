@@ -26,7 +26,7 @@ export async function getContext() {
   // 성능: stores와 tenant는 서로 독립 — 병렬로 (순차 왕복 2회 -> 1회)
   const [storesRes, tenantRes] = await Promise.all([
     supabase.from('stores').select('*').eq('tenant_id', profile.tenant_id).order('name'),
-    supabase.from('tenants').select('name').eq('id', profile.tenant_id).maybeSingle(),
+    supabase.from('tenants').select('name, is_platform').eq('id', profile.tenant_id).maybeSingle(),
   ])
   if (storesRes.error) throw storesRes.error
 
@@ -44,6 +44,8 @@ export async function getContext() {
     monitorOnly: !!profile.monitor_only,
   }
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
-  window.__vflowTenant = { name: tenantRes.data?.name ?? '' }
+  window.__vflowTenant = { name: tenantRes.data?.name ?? '', isPlatform: !!tenantRes.data?.is_platform }
+  // 운영사(V-Flow 본사) 테넌트만 쓰는 기능 판별 — 가맹 초대 코드 등
+  window.__vflowProfile.isPlatform = !!tenantRes.data?.is_platform
   return cached
 }
