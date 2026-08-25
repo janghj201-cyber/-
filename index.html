@@ -460,6 +460,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Pretendard','Noto Sans KR'
 .update-modal-header h3{color:#fff;font-size:16px;font-weight:700;flex:1;}
 .update-modal-version{background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
 .update-modal-body{padding:14px 20px;max-height:55vh;overflow-y:auto;}
+#guide-modal-body{max-height:70vh;}
 .update-modal-date{font-size:11px;color:var(--text-mute);margin-bottom:10px;}
 .update-section{margin-bottom:10px;}
 .update-section-title{font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:4px;padding:3px 8px;background:#f0f0ee;border-radius:6px;display:inline-block;}
@@ -2259,11 +2260,97 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v4.8';
+const GUIDE_VERSION = 'v4.9';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
+// ── 📖 가이드: 역할별 입문 코스 ──
+const GUIDE_START = {
+  owner: { label:'👑 대표', title:'👑 대표 — 처음 시작하기', items:[
+    '① 매장이 다 등록됐는지 봅니다 — 관리자 🔐 → 🎨 설정 → 🏬 매장 관리. 나중에 추가·폐업도 여기서 하고, 폐업해도 기록은 남습니다',
+    '② 직원을 초대합니다 — 같은 설정 화면의 👥 직원 초대에서 이름·직함을 넣고 링크를 만들어 카톡으로 보내세요. 직원이 링크로 가입하면 계정이 생깁니다',
+    '③ 관리자를 정합니다 — 🧑‍💼 직원 근무지 설정에서 이름 옆 칸을 매니저로 바꾸면 그 사람도 관리자 화면을 볼 수 있어요. 이름 오타도 이름을 눌러 고칩니다',
+    '④ 우리 매장에 맞게 고칩니다 — ⚙️ 고정업무 탭에서 매달 반복되는 발주·재고·마감 규칙을, 그 아래 🧹 청소 항목 편집에서 매일 체크할 청소 목록을 바꿉니다',
+    '⑤ 다 같이 앱으로 깝니다 — 첫 화면 📲 앱으로 설치. 직원들에게도 알려주세요. 매번 주소를 치지 않아도 됩니다',
+    '⑥ 매일 이것만 봅니다 — 관리자 화면의 👑 오늘 현황. 빠진 것만 위에 모아서 보여줍니다. 다 정상이면 볼 게 없는 게 정상이에요',
+    '⑦ 주에 한 번 📈 주간 리포트 — 매장별·직원별로 무엇이 쌓였는지 자동으로 정리됩니다',
+  ]},
+  manager: { label:'🧑‍💼 매니저', title:'🧑‍💼 매니저 — 처음 시작하기', items:[
+    '① 관리자 화면은 상단 🔐 관리자 버튼입니다 — 비밀번호가 따로 없어요. 로그인한 계정의 직함으로 자동 판별됩니다',
+    '② 👑 오늘 현황이 기본 화면입니다 — 청소 미체크, 3일 넘은 미확인 인수인계, 업무 미등록, 이월된 일이 위에 모입니다',
+    '③ 매장 신호등을 봅니다 — 초록은 정상, 주황·빨강만 확인하면 됩니다. 매장을 누르면 그 매장 방으로 바로 들어갑니다',
+    '④ 👥 직원 활동에서 직원별로 오늘 뭘 했는지 볼 수 있어요',
+    '⑤ 🗣️ 주간 1:1 상담 — 매주 한 명씩 자동 배정됩니다. 팀장 전원이 출근하는 날에만 잡히고, 대상자는 첫 화면에서 자기 차례를 봅니다',
+    '⑥ 매니저도 매장 일을 하니 첫 화면은 직원과 똑같습니다 — 오늘 업무·인수인계·청소를 직접 체크하세요',
+  ]},
+  staff: { label:'🙋 직원', title:'🙋 직원 — 처음 시작하기', items:[
+    '① 첫 화면의 큰 버튼 세 개만 기억하면 됩니다 — ✅ 오늘 업무 · 📝 인수인계 · 🧹 청소 체크',
+    '② 버튼 위 빨간 숫자가 남은 개수입니다 — 숫자가 사라지면 그날 할 일이 끝난 거예요',
+    '③ 📍 오늘 근무 — 여러 매장을 도는 순환 근무자면 위에서 오늘 근무할 매장을 고르세요. 고정 근무자는 자동으로 잡힙니다',
+    '④ 인수인계는 한 줄이면 충분합니다 — 다음 근무자가 알아야 할 것만. 상대가 확인하면 확인 표시가 뜹니다',
+    '⑤ 휴무는 🗓️ 월간 스케줄에서 날짜를 눌러 신청합니다',
+    '⑥ 📲 앱으로 설치 — 홈 화면에 깔아두면 매번 주소를 치지 않아도 됩니다',
+    '⑦ 하루 첫 접속에 뜨는 📋 오늘의 브리핑만 읽어도 그날 할 일이 다 정리됩니다',
+  ]},
+};
+// ── 📖 가이드: 기능별 ──
+const GUIDE_TOPICS = [
+  { title:'📝 인수인계', items:[
+    '다음 근무자에게 남기는 한 줄 메모입니다. 매장 방이나 첫 화면 📝 인수인계에서 남깁니다',
+    '받는 사람을 정하지 않으면 그 매장 근무자 누구나 확인할 수 있어요. 특정인을 고르면 그 사람 화면에만 뜹니다',
+    '상대가 확인하면 확인 표시와 시간이 남습니다 — 봤는지 못 봤는지 다투지 않아도 됩니다',
+    '💬 피드백 — 항목 밑에 댓글처럼 답할 수 있어요. 작성자가 볼 수 있습니다',
+    '📜 기록 — 삭제하거나 완료한 것도 30일치가 그대로 보관됩니다. 매장 방과 월간 날짜 화면 양쪽에서 열 수 있어요',
+  ]},
+  { title:'✅ 오늘 업무', items:[
+    '첫 화면 ✅ 오늘 업무에서 그날 할 일을 한 줄씩 적고 체크합니다',
+    '완료하지 못한 일은 다음 날 자동으로 넘어옵니다 — 이월 표시가 붙어요',
+    '📋 여러 개 한번에 입력 — 줄바꿈으로 여러 건을 한 번에 등록할 수 있습니다',
+    '매장 공용 업무는 매장 방에서 등록합니다 — 그 매장 근무자 전원에게 보입니다',
+  ]},
+  { title:'🧹 청소 체크', items:[
+    '첫 화면 🧹 청소 체크를 누르면 오늘 이 매장 목록이 바로 열립니다',
+    '매일 하는 기본 청소와, 정해진 날에 하는 대청소 구역이 함께 뜹니다',
+    '항목을 바꾸려면 관리자 → ⚙️ 고정업무 → 🧹 청소 항목 편집입니다 — 전 지점에 바로 반영됩니다',
+    '같은 매장에 두 명이 근무하면 서로 체크한 것이 실시간으로 함께 보입니다',
+  ]},
+  { title:'🗓️ 월간 스케줄 · 휴무', items:[
+    '달력에서 날짜를 누르면 그날의 업무·인수인계·청소 기록을 볼 수 있습니다',
+    '휴무는 날짜를 눌러 신청하고, 취소도 같은 자리에서 합니다',
+    '색깔 배지는 고정업무입니다 — 발주·재고·마감 같은 매달 반복되는 일이에요',
+    '공휴일은 자동으로 표시됩니다',
+  ]},
+  { title:'🤝 협업 · 업무 요청', items:[
+    '📨 업무 요청 — 다른 매장에 해줬으면 하는 일을 부탁합니다. 받는 사람을 정하거나 근무자 누구나로 열어둘 수 있어요',
+    '요청을 받으면 수락하거나 사유를 적고 거절합니다. 수락하면 내 오늘 업무에 자동으로 들어갑니다',
+    '3일 동안 답이 없으면 표시가 뜹니다',
+    '🤝 협업 프로젝트 — 여러 매장이 함께 하는 일을 한 줄기로 모아서 봅니다',
+  ]},
+  { title:'👑 관리자 기능', items:[
+    '상단 🔐 관리자로 들어갑니다 — 비밀번호 없이 계정 직함으로 판별됩니다',
+    '👑 오늘 현황 — 빠진 것만 위에 모으고, 매장별 신호등과 직원 현황을 한 화면에 보여줍니다',
+    '📈 주간 리포트 · 📊 월간 통계 — 실제 기록으로 자동 생성됩니다',
+    '⚙️ 고정업무 — 매달 반복되는 규칙과 청소 항목을 직접 만들고 고칩니다',
+    '🎨 설정 — 기능 켜기/끄기, 컬러 테마, 직원 초대, 매장 관리, 근무지 설정이 모여 있습니다',
+  ]},
+  { title:'⚙️ 내 계정 · 설정', items:[
+    '홈 오른쪽 위 ⚙️ — 앱 설치, 직원 목록, 월간 스케줄, 내 동의, 가이드, 비밀번호 변경, 로그아웃',
+    '관리자 → 🎨 설정 맨 위 👤 내 계정 — 내 이름·직함·회사를 확인하고 이름을 고칠 수 있습니다',
+    '비밀번호를 잊었으면 로그인 화면에서 "비밀번호를 잊으셨나요?" — 메일로 재설정 링크가 옵니다',
+    '🧩 기능 켜기/끄기 — 안 쓰는 기능을 끄면 전 직원 화면에서 숨겨집니다. 데이터는 지워지지 않아요',
+    '📲 앱으로 설치 — 홈 화면·바탕화면에 추가하면 앱처럼 열립니다',
+  ]},
+];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v4.9 — 📖 가이드 개편 (역할별 · 검색)',
+    items: [
+      '📖 가이드가 세 칸으로 나뉘었어요 — 🚀 시작하기 · 📚 기능별 · 🆕 업데이트',
+      '🚀 시작하기 — 대표 / 매니저 / 직원 각자 처음에 할 일을 순서대로. 로그인한 계정 직함에 맞춰 자동으로 열립니다',
+      '📚 기능별 — 인수인계 · 오늘 업무 · 청소 · 월간 · 협업 · 관리자 · 계정 7가지로 정리했어요',
+      '🔍 검색 — 맨 위 칸에 단어를 넣으면 세 칸 전체에서 찾아줍니다 (예: 휴무, 초대, 이월)',
+    ],
+  },
   {
     title: '🆕 v4.8 — 빈 화면이 사용법을 알려줍니다',
     items: [
@@ -2782,13 +2869,55 @@ async function showStaffDayDetail(y,m,d,name){
 
 window.openGuideModal=function(){
   const body=document.getElementById('guide-modal-body');
-  if(body){
-    body.innerHTML=GUIDE_SECTIONS.map(s=>`
-      <div class="update-section">
-        <div class="update-section-title">${s.title}</div>
-        ${s.items.map(i=>`<div class="update-item"><span style="color:var(--gold);flex-shrink:0;margin-right:6px;">•</span><span>${i}</span></div>`).join('')}
-      </div>`).join('');
+  if(!body){document.getElementById('guide-modal').classList.add('open');return;}
+  const vp=window.__vflowProfile||{};
+  let role=vp.role==='owner'?'owner':vp.role==='manager'?'manager':'staff';
+  let tab='start', q='';
+
+  const ITEM=(t)=>`<div class="update-item"><span style="color:var(--gold);flex-shrink:0;margin-right:6px;">•</span><span>${t}</span></div>`;
+  const SEC=(title,items)=>`<div class="update-section"><div class="update-section-title">${title}</div>${items.map(ITEM).join('')}</div>`;
+
+  function allEntries(){
+    const out=[];
+    Object.keys(GUIDE_START).forEach(k=>GUIDE_START[k].items.forEach(i=>out.push({g:GUIDE_START[k].title,t:i})));
+    GUIDE_TOPICS.forEach(s=>s.items.forEach(i=>out.push({g:s.title,t:i})));
+    GUIDE_SECTIONS.forEach(s=>s.items.forEach(i=>out.push({g:s.title,t:i})));
+    return out;
   }
+  function esc(x){return String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+  function render(){
+    const TB=(id,label)=>`<button data-tab="${id}" style="flex:1;background:${tab===id?'var(--navy)':'var(--bg)'};color:${tab===id?'#fff':'var(--text-sub)'};border:1px solid var(--border);border-radius:9px;padding:9px 4px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;">${label}</button>`;
+    let inner='';
+    if(q.trim()){
+      const kw=q.trim().toLowerCase();
+      const hits=allEntries().filter(e=>(e.t+' '+e.g).toLowerCase().includes(kw));
+      inner=hits.length
+        ? `<div style="font-size:11.5px;color:var(--text-mute);margin:2px 0 8px;">"${esc(q)}" 검색 결과 ${hits.length}건</div>`+
+          hits.map(h=>`<div class="update-item" style="align-items:flex-start;"><span style="color:var(--gold);flex-shrink:0;margin-right:6px;">•</span><span>${h.t}<div style="font-size:10.5px;color:var(--text-mute);margin-top:2px;">${h.g}</div></span></div>`).join('')
+        : EMPTY('🔍','검색 결과가 없어요','다른 단어로 찾아보세요 — 예: 인수인계, 청소, 휴무, 초대');
+    } else if(tab==='start'){
+      const sw=Object.keys(GUIDE_START).map(k=>`<button data-role="${k}" style="flex:1;background:${role===k?'var(--gold-light)':'var(--bg)'};color:${role===k?'var(--orange)':'var(--text-sub)'};border:1.5px solid ${role===k?'var(--gold)':'var(--border)'};border-radius:9px;padding:8px 4px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;">${GUIDE_START[k].label}</button>`).join('');
+      inner=`<div style="display:flex;gap:6px;margin-bottom:12px;">${sw}</div>`+
+        `<div style="font-size:11.5px;color:var(--text-mute);margin-bottom:8px;line-height:1.5;">순서대로 따라 하면 됩니다. 5분이면 끝나요.</div>`+
+        SEC(GUIDE_START[role].title,GUIDE_START[role].items);
+    } else if(tab==='topic'){
+      inner=GUIDE_TOPICS.map(s=>SEC(s.title,s.items)).join('');
+    } else {
+      inner=`<div style="font-size:11.5px;color:var(--text-mute);margin-bottom:10px;line-height:1.5;">최근 업데이트가 위에 있습니다. 지금 버전은 <b>${GUIDE_VERSION}</b> 이에요.</div>`+
+        GUIDE_SECTIONS.map(s=>SEC(s.title,s.items)).join('');
+    }
+    body.innerHTML=
+      `<div style="position:sticky;top:-14px;background:var(--card);margin:-14px -20px 6px;padding:14px 20px 10px;z-index:2;border-bottom:1px solid var(--border);">
+        <input data-q value="${esc(q)}" placeholder="🔍 찾고 싶은 기능을 적어보세요 (예: 인수인계)" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px;">
+        <div style="display:flex;gap:6px;">${TB('start','🚀 시작하기')}${TB('topic','📚 기능별')}${TB('log','🆕 업데이트')}</div>
+      </div>${inner}`;
+    const qi=body.querySelector('[data-q]');
+    qi.oninput=()=>{q=qi.value;const pos=qi.selectionStart;render();const n=body.querySelector('[data-q]');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}};
+    body.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;q='';render();});
+    body.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{role=b.dataset.role;render();});
+  }
+  render();
   document.getElementById('guide-modal').classList.add('open');
 };
 function openGuideModal(){window.openGuideModal();}
