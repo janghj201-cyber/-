@@ -6,7 +6,7 @@ export const OPERATOR = { name: 'V-Flow 운영사 (상호·사업자번호·주�
 
 // 문서 버전 — 문구가 바뀌면 날짜를 올린다 → 필수 항목은 다음 로그인 때 재동의
 export const CONSENT_DOCS = {
-  terms:         { version: '2026-08-15', title: 'V-Flow 이용약관',                       required: true,  subject: 'tenant' },
+  terms:         { version: '2026-08-25', title: 'V-Flow 이용약관',                       required: true,  subject: 'tenant' },
   privacy:       { version: '2026-08-15', title: '개인정보처리방침',                       required: true,  subject: 'both'   },
   insights:      { version: '2026-08-15', title: '비식별 사용 데이터 활용 동의',           required: true,  subject: 'tenant' },
   benchmark:     { version: '2026-08-15', title: '업종 벤치마크 리포트 수신 (제공 시)',    required: false, subject: 'tenant' },
