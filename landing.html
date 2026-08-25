@@ -266,7 +266,7 @@ details.q p{padding:0 18px 16px;}
   <div class="steps">
     <div class="step"><div class="num">1</div><h3>문의 남기기</h3><p>매장 이름과 연락처를 문자나 전화로 주세요. 업종과 매장 수만 알려주시면 됩니다.</p><a href="#contact" class="sbtn">문의하러 가기</a></div>
     <div class="step"><div class="num">2</div><h3>초대 코드 받기</h3><p>확인 후 초대 코드를 보내드립니다. 코드 하나로 우리 회사 전용 V-Flow가 만들어집니다.</p><div class="note-s">보통 당일 안에 회신드립니다</div></div>
-    <div class="step now"><div class="num">3</div><h3>설치하러 가기</h3><p>코드를 받으셨다면 바로 시작하세요. 회사 이름·업종·매장만 등록하면 끝입니다.</p><a href="onboarding.html" class="sbtn gold">🎟️ 코드 입력하고 시작 →</a><div class="note-s">이미 쓰고 계신가요? <a href="index.html" style="color:var(--blue);font-weight:700;">로그인</a></div></div>
+    <div class="step now"><div class="num">3</div><h3>설치하러 가기</h3><p>코드를 받으셨다면 바로 시작하세요. 회사 이름·업종·매장만 등록하면 끝입니다.</p><a href="onboarding.html" class="sbtn gold">🎟️ 코드 입력하고 시작 →</a><a href="#" data-install-btn class="sbtn" style="margin-top:8px;">📲 앱으로 설치하기</a><div class="note-s">이미 쓰고 계신가요? <a href="index.html" style="color:var(--blue);font-weight:700;">로그인</a></div></div>
   </div>
   <div style="margin-top:22px;background:var(--bg);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:13px;padding:18px 20px;">
     <div style="font-size:14.5px;font-weight:800;margin-bottom:6px;">💡 요금 안내 — 지금은 무료입니다</div>
@@ -280,6 +280,7 @@ details.q p{padding:0 18px 16px;}
   <h2>지금도 매주 좋아지고 있습니다</h2>
   <p class="lead">실제 매장에서 쓰면서 나온 의견을 그 주에 반영합니다. 도입하시면 업데이트는 자동으로 적용됩니다.</p>
   <div class="tl">
+    <div class="ti"><div class="v">v4.6 · 2026.08.25</div><h4>앱으로 설치하기</h4><p>버튼 하나를 누르면 지금 쓰는 기기에 맞는 설치 방법만 안내됩니다. 카카오톡에서 열어 설치가 안 되던 문제도 함께 잡았습니다.</p></div>
     <div class="ti"><div class="v">v4.5 · 2026.08.25</div><h4>내 계정 · 이름과 직함을 앱에서</h4><p>설정 맨 위에서 내 이름·직함·회사를 확인하고 바로 고칠 수 있습니다. 관리자 지정도 앱 안에서 됩니다.</p></div>
     <div class="ti"><div class="v">v4.4 · 2026.08.25</div><h4>내 계정 메뉴 · 가맹 초대 코드</h4><p>홈 오른쪽 위 톱니 하나에 계정 기능을 모았고, 다른 매장이 시작할 때 쓰는 초대 코드 발급·관리가 생겼습니다.</p></div>
     <div class="ti"><div class="v">v4.3 · 2026.08.24</div><h4>화면 단순화 · 관리자 오늘 현황</h4><p>하단 탭을 정리해 직원은 첫 화면 하나로 끝나게 했고, 관리자에게는 빠진 것만 모아 보여주는 화면을 추가했습니다.</p></div>
@@ -358,6 +359,109 @@ function sendForm(e){
   document.getElementById("f-hint").innerHTML='<span style="color:#f5a623;font-weight:700;">문자 앱이 열렸어요 — 전송 버튼을 눌러주시면 접수됩니다.</span><br>열리지 않으면 <b>010-4787-6928</b> 로 직접 전화 주세요.';
   return false;
 }
+// ── 📲 앱 설치 안내 (환경 감지) ──
+var _dp=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();_dp=e;});
+function _instEnv(){
+  var ua=navigator.userAgent||"";
+  var standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  var inapp=/KAKAOTALK|NAVER\(inapp|DaumApps|Instagram|FBAN|FBAV|FB_IAB|Line\/|BAND\/|kakaostory|everytimeApp/i.test(ua);
+  var ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  var android=/android/i.test(ua);
+  var an="이 앱";
+  if(/KAKAOTALK/i.test(ua))an="카카오톡";else if(/NAVER/i.test(ua))an="네이버";
+  else if(/Instagram/i.test(ua))an="인스타그램";else if(/FBAN|FBAV|FB_IAB/i.test(ua))an="페이스북";
+  else if(/Line\//i.test(ua))an="라인";else if(/BAND\//i.test(ua))an="밴드";
+  return {standalone:standalone,inapp:inapp,ios:ios,android:android,appName:an,hasPrompt:!!_dp,os:ios?"ios":android?"android":"desktop"};
+}
+function openInstall(forceOs){
+  var E=_instEnv(),os=forceOs||E.os;
+  var ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;z-index:9000;background:rgba(10,15,25,.65);display:flex;align-items:center;justify-content:center;padding:16px;";
+  var card=document.createElement("div");
+  card.style.cssText="background:var(--card,#fff);color:var(--text,#1f2933);border-radius:16px;width:100%;max-width:400px;overflow:hidden;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);";
+  function close(){ov.remove();}
+  function top(i,t,s){return '<div style="background:#111c2e;color:#fff;padding:16px;position:relative;">'+
+    '<button data-x style="position:absolute;top:12px;right:13px;background:none;border:none;color:#8794a3;font-size:18px;cursor:pointer;font-family:inherit;">✕</button>'+
+    '<div style="font-size:26px;line-height:1;">'+i+'</div>'+
+    '<div style="font-size:15px;font-weight:800;margin-top:7px;">'+t+'</div>'+
+    (s?'<div style="font-size:12px;color:#b9c3cf;margin-top:4px;line-height:1.5;">'+s+'</div>':'')+'</div>';}
+  var NOTE="font-size:11.5px;color:#8b95a1;line-height:1.55;margin-top:11px;background:rgba(127,140,160,.09);border-radius:8px;padding:9px 10px;";
+  var BTN="display:block;width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:9px;";
+  var GHOST=BTN+"background:rgba(127,140,160,.12);color:#7b8794;font-weight:700;font-size:13px;";
+  var STEP='display:flex;gap:10px;padding:9px 0;font-size:13px;line-height:1.5;';
+  var NUM='flex:0 0 22px;height:22px;border-radius:50%;background:rgba(245,166,35,.16);color:#c07d12;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;';
+  var h="";
+  if(E.standalone&&!forceOs){
+    h=top("✅","이미 앱으로 쓰고 계세요","")+'<div style="padding:15px 16px 17px;"><div style="text-align:center;"><div style="font-size:34px;">🎉</div><div style="font-size:13.5px;font-weight:700;margin-top:8px;">설치가 끝난 상태입니다</div></div><div style="'+NOTE+'">다른 기기에도 깔고 싶으면 그 기기에서 <b>'+location.host+'</b> 로 접속하세요.</div><button data-close style="'+GHOST+'">닫기</button></div>';
+  }else if(E.inapp&&!forceOs){
+    h=top("🚫","여기서는 설치할 수 없어요",E.appName+" 안에서 열린 화면이에요")+
+      '<div style="padding:15px 16px 17px;"><div style="background:rgba(192,57,43,.09);border-left:3px solid #c0392b;border-radius:8px;padding:11px 12px;font-size:12.5px;line-height:1.6;">'+
+      E.appName+' 같은 앱 안의 브라우저는 앱 설치 기능을 지원하지 않습니다.<br><b>'+(E.ios?"사파리":"크롬")+'</b>로 열면 바로 설치할 수 있어요.</div>'+
+      (E.android?'<button data-chrome style="'+BTN+'background:#111c2e;color:#fff;">🌐 크롬으로 열기</button>':'')+
+      '<div style="display:flex;gap:6px;margin-top:10px;"><input data-url value="'+location.origin+'" readonly style="flex:1;min-width:0;border:1px solid rgba(127,140,160,.3);border-radius:8px;padding:9px 10px;font-size:12px;font-family:inherit;background:rgba(127,140,160,.07);color:#7b8794;"><button data-copy style="border:none;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:800;background:#111c2e;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">주소 복사</button></div>'+
+      '<div style="'+NOTE+'">'+(E.ios?'주소를 복사해 사파리 주소창에 붙여넣으세요. 오른쪽 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b> 도 있어요.':'버튼이 안 되면 주소를 복사해 크롬에 붙여넣으세요. 오른쪽 위 <b>⋮</b> → <b>다른 브라우저로 열기</b> 도 있어요.')+'</div>'+
+      '<button data-pick style="'+GHOST+'">다른 기기 방법 보기</button></div>';
+  }else if(E.hasPrompt&&!forceOs){
+    var mob=E.os!=="desktop";
+    h=top(mob?"📲":"🖥️",mob?"홈 화면에 V-Flow 추가":"바탕화면에 V-Flow 설치",mob?"앱처럼 열리고, 주소창 없이 꽉 찬 화면으로 씁니다":"창 하나로 따로 뜨고, 작업표시줄에 고정할 수 있어요")+
+      '<div style="padding:15px 16px 17px;"><button data-install style="'+BTN+'background:#f5a623;color:#111c2e;">'+(mob?"홈 화면에 추가하기":"바탕화면에 설치하기")+'</button>'+
+      '<div style="'+NOTE+'">'+(mob?"누르면 확인창이 떠요. <b>설치</b>를 누르면 끝입니다.":"버튼이 안 눌리면 <b>주소창 오른쪽 끝 ⊕ 설치 아이콘</b>을 눌러도 같습니다.")+'</div>'+
+      '<button data-pick style="'+GHOST+'">다른 기기 방법 보기</button></div>';
+  }else if(os==="ios"){
+    h=top("🍎","홈 화면에 추가하기","아이폰은 직접 3번만 눌러주면 돼요")+
+      '<div style="padding:15px 16px 17px;">'+
+      '<div style="'+STEP+'border-bottom:1px dashed rgba(127,140,160,.25);"><span style="'+NUM+'">1</span><span>화면 <b>아래쪽 가운데</b> <b>공유 버튼</b>을 누르세요<br><span style="font-size:11.5px;color:#8b95a1;">네모에서 화살표가 위로 나온 모양</span></span></div>'+
+      '<div style="'+STEP+'border-bottom:1px dashed rgba(127,140,160,.25);"><span style="'+NUM+'">2</span><span>목록을 <b>아래로 내려</b> <b>홈 화면에 추가</b></span></div>'+
+      '<div style="'+STEP+'"><span style="'+NUM+'">3</span><span>오른쪽 위 <b>추가</b>를 누르면 끝!</span></div>'+
+      '<div style="'+NOTE+'">사파리에서만 됩니다.</div><button data-close style="'+BTN+'background:#f5a623;color:#111c2e;">알겠어요</button><button data-pick style="'+GHOST+'">다른 기기 방법 보기</button></div>';
+  }else if(os==="android"){
+    h=top("🤖","홈 화면에 추가하기","크롬으로 열면 버튼 한 번으로 끝나요")+
+      '<div style="padding:15px 16px 17px;">'+
+      '<div style="'+STEP+'border-bottom:1px dashed rgba(127,140,160,.25);"><span style="'+NUM+'">1</span><span>크롬 오른쪽 위 <b>⋮</b> 를 누르세요</span></div>'+
+      '<div style="'+STEP+'"><span style="'+NUM+'">2</span><span><b>홈 화면에 추가</b> 또는 <b>앱 설치</b></span></div>'+
+      '<div style="'+NOTE+'">삼성 인터넷은 아래쪽 <b>≡</b> → <b>현재 페이지 추가</b> → <b>홈 화면</b>.</div><button data-close style="'+BTN+'background:#f5a623;color:#111c2e;">알겠어요</button><button data-pick style="'+GHOST+'">다른 기기 방법 보기</button></div>';
+  }else{
+    h=top("🖥️","바탕화면에 설치하기","크롬·엣지에서 됩니다")+
+      '<div style="padding:15px 16px 17px;">'+
+      '<div style="'+STEP+'border-bottom:1px dashed rgba(127,140,160,.25);"><span style="'+NUM+'">1</span><span>주소창 <b>오른쪽 끝</b>의 <b>⊕ 설치</b> 아이콘을 누르세요</span></div>'+
+      '<div style="'+STEP+'"><span style="'+NUM+'">2</span><span>없으면 <b>⋮</b> → <b>캐스트, 저장 및 공유</b> → <b>페이지를 앱으로 설치</b></span></div>'+
+      '<div style="'+NOTE+'">설치하면 바탕화면에서 바로 열 수 있고, 브라우저 탭에 섞이지 않습니다.</div><button data-close style="'+BTN+'background:#f5a623;color:#111c2e;">알겠어요</button><button data-pick style="'+GHOST+'">다른 기기 방법 보기</button></div>';
+  }
+  card.innerHTML=h;
+  function q(s){return card.querySelector(s);}
+  if(q("[data-x]"))q("[data-x]").onclick=close;
+  if(q("[data-close]"))q("[data-close]").onclick=close;
+  if(q("[data-install]"))q("[data-install]").onclick=function(){
+    if(!_dp){close();openInstall(E.os);return;}
+    try{_dp.prompt();}catch(e){}
+    _dp=null;close();
+  };
+  if(q("[data-chrome]"))q("[data-chrome]").onclick=function(){
+    location.href="intent://"+location.href.replace(/^https?:\/\//,"")+"#Intent;scheme=https;package=com.android.chrome;end";
+  };
+  if(q("[data-copy]"))q("[data-copy]").onclick=function(e){
+    var t=location.origin,b=e.target;
+    if(navigator.clipboard){navigator.clipboard.writeText(t)["catch"](function(){});}
+    else{var i=q("[data-url]");i.select();try{document.execCommand("copy");}catch(e2){}}
+    b.textContent="복사됨 ✓";setTimeout(function(){b.textContent="주소 복사";},1600);
+  };
+  if(q("[data-pick]"))q("[data-pick]").onclick=function(){
+    var PB='border:1.5px solid rgba(127,140,160,.3);background:transparent;color:#7b8794;border-radius:10px;padding:10px 4px;font-size:11.5px;font-weight:700;font-family:inherit;cursor:pointer;line-height:1.5;';
+    card.innerHTML=top("📲","어떤 기기에 설치할까요?","쓰고 계신 기기를 골라주세요")+
+      '<div style="padding:15px 16px 17px;"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;">'+
+      '<button data-p="desktop" style="'+PB+'"><span style="display:block;font-size:17px;margin-bottom:3px;">🖥️</span>데스크탑</button>'+
+      '<button data-p="android" style="'+PB+'"><span style="display:block;font-size:17px;margin-bottom:3px;">🤖</span>안드로이드</button>'+
+      '<button data-p="ios" style="'+PB+'"><span style="display:block;font-size:17px;margin-bottom:3px;">🍎</span>아이폰</button>'+
+      '</div></div>';
+    card.querySelector("[data-x]").onclick=close;
+    Array.prototype.forEach.call(card.querySelectorAll("[data-p]"),function(b){b.onclick=function(){close();openInstall(b.getAttribute("data-p"));};});
+  };
+  ov.onclick=function(e){if(e.target===ov)close();};
+  ov.appendChild(card);document.body.appendChild(ov);
+}
+Array.prototype.forEach.call(document.querySelectorAll("[data-install-btn]"),function(b){b.onclick=function(e){e.preventDefault();openInstall();};});
+
 </script>
 
 <!-- 실사용 지표 — Supabase public_stats() 집계 (실패해도 고정 기본값 유지) -->
