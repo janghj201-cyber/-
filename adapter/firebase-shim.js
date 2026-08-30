@@ -237,7 +237,7 @@ const assertAffected = (count, what) => {
   if (count === 0) throw new Error(`${what} 저장이 반영되지 않았습니다 (권한 또는 대상 없음)`)
 }
 
-async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
+async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, deletedIds }) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return
 
@@ -251,14 +251,16 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items }) {
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
-  const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
 
-  for (const id of currentById.keys()) {
-    if (!incomingRealIds.has(id)) {
-      // 무삭제 보관: 물리 삭제 대신 "누가 언제 지웠는지"를 남기고 숨긴다 (매장 기록에서 추적 가능)
-      const { error } = await supabase.from('handovers').update({ deleted_at: new Date().toISOString(), deleted_by: ctx.profileId }).eq('id', id).is('deleted_at', null)
-      if (error) throw error
-    }
+  // ⚠ 예전에는 "들어온 목록에 없는 행"을 전부 삭제 후보로 잡았다. 그런데 여기 들어오는
+  // items는 화면이 조금 전에 읽어둔 사본이라, 그 사이 같은 매장의 다른 사람이 새 항목을
+  // 넣었으면 "내 목록에 없다"는 이유만으로 그 항목이 조용히 사라졌다. 두 사람이 같은 매장
+  // 화면을 동시에 보는 교대 시간에 가장 잘 터지는데, 하필 인수인계를 쓰는 시간이다.
+  // 이제는 화면이 "이걸 지워달라"고 명시한 id만 지운다. 목록에 없는 행은 건드리지 않는다.
+  // 무삭제 보관: 물리 삭제 대신 "누가 언제 지웠는지"를 남기고 숨긴다 (매장 기록에서 추적 가능)
+  for (const id of (deletedIds ?? []).filter((x) => UUID_RE.test(x))) {
+    const { error } = await supabase.from('handovers').update({ deleted_at: new Date().toISOString(), deleted_by: ctx.profileId }).eq('id', id).is('deleted_at', null)
+    if (error) throw error
   }
 
   for (const item of items) {
@@ -405,20 +407,20 @@ async function readStaffTodos(ctx, dateKey, target) {
 // 추가되는 항목의 fromDate가 채워져 있고 오늘 날짜와 다르면 "이동" 케이스로 보고,
 // 같은 내용의 아직 pending인 원본을 그 날짜에서 찾아 연결한다(id가 없어 내용+날짜로
 // 매칭 — 원본도 애초에 id 없이 배열로만 다루던 것과 같은 한계).
-async function writeStaffTodos(ctx, dateKey, { items }) {
+async function writeStaffTodos(ctx, dateKey, { items, deletedIds }) {
   const today = isToday(dateKey)
   let selQuery = supabase.from('daily_tasks').select('id, content, status, task_date, subs').eq('employee_id', ctx.profileId)
   selQuery = today ? selQuery.or(`task_date.eq.${dateKey},and(status.eq.pending,task_date.lt.${dateKey})`) : selQuery.eq('task_date', dateKey)
   const { data: currentRows, error: selErr } = await selQuery
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
-  const incomingRealIds = new Set(items.filter((i) => UUID_RE.test(i.id)).map((i) => i.id))
 
-  for (const id of currentById.keys()) {
-    if (!incomingRealIds.has(id)) {
-      const { error } = await supabase.from('daily_tasks').delete().eq('id', id)
-      if (error) throw error
-    }
+  // 인수인계와 같은 이유로 암묵적 삭제를 걷어냈다 — 이쪽은 물리 삭제라 더 위험했다.
+  // 대표적으로 업무 요청을 수락하면 daily_tasks에 행이 바로 꽂히는데(wrRespond),
+  // 그 전에 열어둔 내 업무 화면에서 뭔가를 저장하면 방금 꽂힌 그 업무가 사라졌다.
+  for (const id of (deletedIds ?? []).filter((x) => UUID_RE.test(x))) {
+    const { error } = await supabase.from('daily_tasks').delete().eq('id', id)
+    if (error) throw error
   }
 
   for (let i = 0; i < items.length; i++) {

@@ -2257,7 +2257,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v5.1';
+const GUIDE_VERSION = 'v5.2';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
@@ -2339,6 +2339,16 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v5.2 — 인수인계·업무가 사라지던 문제 해결',
+    items: [
+      '🛠️ 같은 매장을 두 사람이 동시에 보고 있을 때, 한쪽이 저장하면 그 사이 다른 쪽이 적은 인수인계가 사라지는 문제가 있었어요 — 고쳤습니다',
+      '교대 시간처럼 두 명이 같이 앱을 켜는 순간에 주로 생기던 문제라, 인수인계를 쓰는 바로 그 시간에 가장 잘 났습니다',
+      '오늘 업무도 같은 문제가 있었어요 — 업무 요청을 수락한 직후 다른 화면에서 저장하면 방금 받은 업무가 없어지곤 했습니다',
+      '이제 지우기 버튼을 직접 누른 항목만 지워집니다. 화면에 안 보인다는 이유로 없어지지 않아요',
+      '👀 화면을 열기만 해도 저장이 일어나던 것도 없앴어요 — 목록 여는 속도가 조금 빨라집니다',
+    ],
+  },
   {
     title: '🆕 v5.1 — 직원 목록 원천 정리',
     items: [
@@ -6336,33 +6346,11 @@ function staffTodoRef(name,dateKey){
 }
 
 async function loadStaffTodos(name,dateKey){
-  const ref=staffTodoRef(name,dateKey);
-  const snap=await getDoc(ref);
-  let items=snap.exists()?(snap.data().items||[]):[];
-
-  // 오늘 날짜만 이월 처리 (다른 날짜는 그냥 반환)
-  if(dateKey===todayKey()){
-    const prevKey=prevDateKey(dateKey);
-    try{
-      const prevRef=staffTodoRef(name,prevKey);
-      const prevSnap=await getDoc(prevRef);
-      if(prevSnap.exists()){
-        const prevItems=prevSnap.data().items||[];
-        // 미완료 중 보관(kept) 항목은 이월 제외
-        const undone=prevItems.filter(it=>!it.done&&!it.kept);
-        let changed=false;
-        undone.forEach(it=>{
-          // 이미 이월된 항목이면 추가 안 함
-          if(!items.find(x=>x.id===it.id)){
-            items.push({...it,fromDate:it.fromDate||prevKey});
-            changed=true;
-          }
-        });
-        if(changed)await setDoc(ref,{items});
-      }
-    }catch(e){}
-  }
-  return items;
+  // 인수인계와 같은 이유로 "어제 미완료분을 오늘로 복사"를 걷어냈다. 저장소가 이미 과거
+  // 미완료 업무를 함께 돌려주므로 중복이었고, 읽기만 하려던 화면이 목록 전체를 다시
+  // 저장하면서 그 사이 생긴 업무(예: 방금 수락한 업무 요청)를 지울 수 있었다.
+  const snap=await getDoc(staffTodoRef(name,dateKey));
+  return snap.exists()?(snap.data().items||[]):[];
 }
 
 async function addTodoItem(storeId,dateKey,text,author,fromDate=null){
@@ -6422,7 +6410,8 @@ async function deleteTodoItem(name,dateKey,itemId){
   const snap=await getDoc(ref);
   let items=snap.exists()?(snap.data().items||[]):[];
   items=items.filter(x=>x.id!==itemId);
-  await setDoc(ref,{items});
+  // 지울 대상을 명시 (인수인계와 동일 — 이쪽은 물리 삭제라 더 중요)
+  await setDoc(ref,{items,deletedIds:[itemId]});
 }
 
 // 기존 loadTodoItems → staff_todos 기반으로 교체
@@ -6640,28 +6629,11 @@ async function saveStoreInfo(storeId,text){
 // 인수인계 메모 (날짜별, 미확인 항목 다음날 이월)
 // ══════════════════════════════════════
 async function loadHandoverItems(storeId,dateKey){
-  const ref=doc(db,`handover/${storeId}_${dateKey}`);
-  const snap=await getDoc(ref);
-  let items=snap.exists()?(snap.data().items||[]):[];
-  if(dateKey===todayKey()){
-    const prevKey=prevDateKey(dateKey);
-    try{
-      const prevSnap=await getDoc(doc(db,`handover/${storeId}_${prevKey}`));
-      if(prevSnap.exists()){
-        const prevItems=prevSnap.data().items||[];
-        const unconfirmed=prevItems.filter(it=>!it.confirmed&&!it.closed);
-        let changed=false;
-        unconfirmed.forEach(it=>{
-          if(!items.find(x=>x.id===it.id)){
-            items.push({...it,fromDate:it.fromDate||prevKey});
-            changed=true;
-          }
-        });
-        if(changed)await setDoc(ref,{items});
-      }
-    }catch(e){}
-  }
-  return items;
+  // 어제 미확인분을 오늘로 "복사"하지 않는다. 저장소가 이미 미확인 과거 항목을 함께
+  // 돌려주므로(어제만이 아니라 전부) 복사는 중복이었고, 무엇보다 화면을 여는 것만으로
+  // 목록 전체를 다시 저장해서 그 사이 다른 사람이 고친 내용을 되돌릴 수 있었다.
+  const snap=await getDoc(doc(db,`handover/${storeId}_${dateKey}`));
+  return snap.exists()?(snap.data().items||[]):[];
 }
 async function addHandoverItem(storeId,dateKey,text,author,recipient){
   const ref=doc(db,`handover/${storeId}_${dateKey}`);
@@ -6709,7 +6681,8 @@ async function deleteHandoverItem(storeId,dateKey,itemId){
   const snap=await getDoc(ref);
   let items=snap.exists()?(snap.data().items||[]):[];
   items=items.filter(x=>x.id!==itemId);
-  await setDoc(ref,{items});
+  // 지울 대상을 명시한다 — "내 목록에 없다"는 이유로 남의 항목이 지워지지 않도록
+  await setDoc(ref,{items,deletedIds:[itemId]});
 }
 
 function buildHandoverSection(y,m,d){
