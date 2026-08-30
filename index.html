@@ -817,10 +817,10 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <button onclick="closeCollabCreate()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0;margin-left:8px;">×</button>
     </div>
     <div class="update-modal-body">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">범위</label>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;">어느 매장 일인가요?</label>
       <div style="display:flex;gap:6px;margin-bottom:6px;">
-        <button type="button" id="collab-scope-all" onclick="setCollabScope('all')" style="flex:1;border:2px solid var(--navy);background:var(--navy);color:var(--gold);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🤝 전사 협업</button>
-        <button type="button" id="collab-scope-store" onclick="setCollabScope('store')" style="flex:1;border:2px solid var(--border);background:#fff;color:var(--text-sub);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🏗️ 매장 프로젝트</button>
+        <button type="button" id="collab-scope-all" onclick="setCollabScope('all')" style="flex:1;border:2px solid var(--navy);background:var(--navy);color:var(--gold);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🏢 회사 전체</button>
+        <button type="button" id="collab-scope-store" onclick="setCollabScope('store')" style="flex:1;border:2px solid var(--border);background:#fff;color:var(--text-sub);border-radius:10px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">🏪 특정 매장</button>
       </div>
       <select id="collab-store-select" style="display:none;width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;margin-bottom:6px;background:#fff;"></select>
       <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin:8px 0 6px;">프로젝트명</label>
@@ -2257,7 +2257,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v5.2';
+const GUIDE_VERSION = 'v5.3';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
@@ -2339,6 +2339,16 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v5.3 — 프로젝트가 하나로 합쳐졌어요',
+    items: [
+      '🔗 「내 프로젝트」와 「협업 프로젝트」가 따로 있던 걸 하나로 합쳤어요 — 이제 프로젝트는 하나고, 같이 하는 사람이 있으면 협업이 됩니다',
+      '🙋 혼자 하던 일에 도움을 요청해서 사람이 붙으면, 그대로 협업이 돼요. 예전에는 둘이 다른 곳에 저장돼서 넘어가지 못했습니다',
+      '🏢 「전사 협업」이라는 말을 없앴어요 — 매장 일이면 매장 이름이, 매장과 상관없는 일이면 🏢 회사 전체가 표시됩니다',
+      '➕ 새로 만들 때도 종류를 고르지 않고 「어느 매장 일인가요?」만 답하면 돼요',
+      '🔒 협업 프로젝트는 같은 회사면 누구나 지울 수 있었어요 — 이제 담당자와 관리자만 지울 수 있습니다',
+    ],
+  },
   {
     title: '🆕 v5.2 — 인수인계·업무가 사라지던 문제 해결',
     items: [
@@ -2445,7 +2455,7 @@ const GUIDE_SECTIONS = [
   {
     title: '🆕 v4.0 — 🤝 협업 흐름 · 🗣️ 주간 1:1 상담',
     items: [
-      '전체 화면의 🤝 협업 흐름 — 업무요청·매장 프로젝트·도움요청·전사 협업이 한 줄기로 보여요: 누가 → 누구에게 · 어느 매장 · 어디까지',
+      '전체 화면의 🤝 협업 흐름 — 업무요청·매장 일·도움요청·회사 전체 일이 한 줄기로 보여요: 누가 → 누구에게 · 어느 매장 · 어디까지',
       '⚠️ 막힌 곳(3일 이상 응답 없음)이 항상 맨 위, 그다음 진행 중, 최근 완료 — 칩으로 종류별·"나 관련"만 걸러볼 수 있어요',
       '행을 누르면 그 매장 방(또는 프로젝트)으로 바로 이동',
       '🗣️ 매주 직원 1명씩 자동으로 1:1 상담 대상이 정해져요 — 대상자 첫 화면에 카드가 뜨고, 팀장 2명과 화상으로 진행 (부담 없는 대화 자리예요)',
@@ -2478,7 +2488,7 @@ const GUIDE_SECTIONS = [
       '📍 순환근무 직원은 아침(7시 이후) 첫 접속 때 "오늘 어느 매장에서 근무하세요?" 선택이 먼저 떠요 — 골라야 시작됩니다 (다른 매장에 업무가 잘못 적히는 것 방지)',
       '선택한 매장이 그날의 내 업무·인수인계 기본 매장이 됩니다 (휴무면 "오늘은 휴무예요")',
       '🏗️ 매장 프로젝트 — 하루에 안 끝나는 매장 일(창고 정리 등)은 매장 방의 🏗️ 섹션에서 만들고, 그 매장 근무자가 이어서 진행·일지를 쓰면 됩니다 (개인 미완료로 안 잡혀요)',
-      '새 협업 만들 때 🤝 전사 협업 / 🏗️ 매장 프로젝트 중 범위를 고를 수 있어요',
+      '새 협업 만들 때 🏢 회사 전체 / 🏪 특정 매장 중에서 고를 수 있어요',
     ]
   },
   {
@@ -5398,7 +5408,7 @@ function openStoreRoom(store){
 }
 
 // ══════════════════════════════════════
-// 🤝 협업 프로젝트 (collab_projects 등 전용 테이블, 회사 전체 공용)
+// 🤝 협업 흐름 (projects · project_members · project_logs — 프로젝트는 한 테이블뿐)
 // ══════════════════════════════════════
 let _collabSupa=null, _collabCtx=null;
 async function collabApi(){
@@ -5412,11 +5422,14 @@ async function collabProfiles(){
   return data||[];
 }
 async function loadCollabList(){
+  // 통합 후: 프로젝트는 projects 하나뿐이다. "여럿이 하는 일"과 "혼자 하는 일"을 나누는
+  // 것은 종류가 아니라 project_members 유무다. 도움 요청으로 사람이 붙으면 그대로
+  // 여럿이 하는 일이 된다 — 테이블을 옮기지 않는다.
   const {sb,T}=await collabApi();
-  const {data,error}=await sb.from('collab_projects')
-    .select('id,title,progress,status,done_date,created_at,created_by,store_id,help_message,help_requested_at,helper:profiles!help_requested_by(name),collab_project_members(profile_id,profiles(name)),collab_project_logs(id,content,author_id,created_at,profiles(name))')
+  const {data,error}=await sb.from('projects')
+    .select('id,title,progress,status,done_date,created_at,employee_id,store_id,help_message,help_requested_at,owner:profiles!employee_id(name),project_members(profile_id,profiles(name)),project_logs(id,content,author_id,created_at,profiles(name))')
     .eq('tenant_id',T).order('created_at',{ascending:false});
-  if(error){console.warn('collab load',error);return null;}
+  if(error){console.warn('project load',error);return null;}
   return data||[];
 }
 window.renderCollabProjects=async function(){
@@ -5428,49 +5441,36 @@ window.renderCollabProjects=async function(){
   if(rows===null){ listEl.innerHTML='<div class="project-overview-empty">'+EMPTY('⚙️','협업 기능이 아직 켜지지 않았어요','회사 관리자에게 문의하시거나, 설정 → 1:1 상담으로 알려주세요')+'</div>'; return; }
   const ongoing=rows.filter(r=>r.status!=='done');
 
+  const memOf=(r)=>(r.project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
+  const helped=rows.filter(r=>r.help_message&&r.status!=='done');
+
   // 🚨 도움 요청 알림 — 홈 개인 섹션 최상단에 붉은 카드로
+  // 예전에는 개인 프로젝트와 협업 프로젝트가 다른 테이블이라 똑같이 생긴 카드를 두 번
+  // 그렸다. 이제 한 테이블이라 한 번만 그린다. 혼자 하는 일이면 그 사람 업무로,
+  // 여럿이 하는 일이면 프로젝트로 보낸다.
   const _hp=document.getElementById('home-personal');
   const _oldHelp=document.getElementById('home-help-alerts');
   if(_oldHelp)_oldHelp.remove();
-  const _helped=ongoing.filter(r=>r.help_message);
-  let _pHelped=[];
-  try{
-    const {sb:_s2,T:_t2}=await collabApi();
-    const {data:_pp}=await _s2.from('projects').select('id,title,help_message,owner:profiles!employee_id(name)').eq('tenant_id',_t2).eq('status','ongoing').not('help_message','is',null);
-    _pHelped=_pp||[];
-  }catch(e){}
-  if(_hp&&(_helped.length||_pHelped.length)){
+  if(_hp&&helped.length){
     const box=document.createElement('div');
     box.id='home-help-alerts';
-    _pHelped.forEach(r=>{
+    helped.forEach(r=>{
+      const solo=memOf(r).length===0;
       const c=document.createElement('div');
       c.className='hp-card';
       c.style.border='2px solid var(--red)';
       c.style.background='var(--red-light)';
       c.style.cursor='pointer';
       c.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 — ${r.owner?.name||'요청자'}</div>
-        <div style="font-size:13px;font-weight:700;margin-top:3px;">🚀 ${r.title}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:3px;">${solo?'🚀':'🤝'} ${r.title}</div>
         <div style="font-size:12.5px;margin-top:2px;color:var(--text);">${r.help_message}</div>
-        <div style="font-size:10.5px;color:var(--text-sub);margin-top:4px;">누르면 그 직원 업무로 이동 — 도움을 나눠주세요</div>`;
-      c.onclick=()=>{if(r.owner?.name)enterMyWork(r.owner.name);};
-      box.appendChild(c);
-    });
-    _helped.forEach(r=>{
-      const c=document.createElement('div');
-      c.className='hp-card';
-      c.style.border='2px solid var(--red)';
-      c.style.background='var(--red-light)';
-      c.style.cursor='pointer';
-      c.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 — ${r.helper?.name||'요청자'}</div>
-        <div style="font-size:13px;font-weight:700;margin-top:3px;">🤝 ${r.title}</div>
-        <div style="font-size:12.5px;margin-top:2px;color:var(--text);">${r.help_message}</div>
-        <div style="font-size:10.5px;color:var(--text-sub);margin-top:4px;">누르면 프로젝트로 이동 — 일지에 피드백을 남겨주세요</div>`;
-      c.onclick=()=>openCollabDetail(r.id);
+        <div style="font-size:10.5px;color:var(--text-sub);margin-top:4px;">${solo?'누르면 그 직원 업무로 이동 — 도움을 나눠주세요':'누르면 프로젝트로 이동 — 일지에 피드백을 남겨주세요'}</div>`;
+      c.onclick=()=>{ if(solo){ if(r.owner?.name)enterMyWork(r.owner.name); } else openCollabDetail(r.id); };
       box.appendChild(c);
     });
     _hp.insertBefore(box,_hp.firstChild);
   }
-  // ── 🤝 협업 흐름: 업무요청 · 매장 프로젝트 · 도움요청 · 전사 협업을 한 줄기로 ──
+  // ── 🤝 협업 흐름: 업무요청 · 매장 일 · 도움요청 · 회사 전체 일을 한 줄기로 ──
   let wrRows=[];
   try{
     const {sb:_s3,T:_t3}=await collabApi();
@@ -5483,7 +5483,7 @@ window.renderCollabProjects=async function(){
   const sname=(id)=>{const s=STORES.find(x=>x.id===id);return s?s.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):'';};
   const days=(ts)=>Math.floor((Date.now()-new Date(ts).getTime())/86400000);
   const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const kindTag={req:['📨 요청','var(--blue-light)','var(--blue)'],store:['🏗️ 매장','var(--purple-light)','var(--purple)'],help:['🆘 도움','var(--orange-light)','var(--orange)'],collab:['🤝 전사','var(--green-light)','var(--green)']};
+  const kindTag={req:['📨 요청','var(--blue-light)','var(--blue)'],store:['🏗️ 매장','var(--purple-light)','var(--purple)'],help:['🆘 도움','var(--orange-light)','var(--orange)'],collab:['🏢 회사 전체','var(--green-light)','var(--green)']};
   const items=[]; // {kind,grp,who,what,meta,prog,names,click,ts}
   const sevenAgo=Date.now()-7*86400000;
   wrRows.forEach(r=>{
@@ -5499,30 +5499,28 @@ window.renderCollabProjects=async function(){
       what:esc(r.content),meta:`<span>🏪 ${sname(r.store_id)}</span><span>·</span>${st}`,
       click:()=>{if(st_)openStoreRoom(st_);}});
   });
-  (_pHelped||[]).forEach(p=>{
-    items.push({kind:'help',grp:'stuck',names:[p.owner?.name].filter(Boolean),ts:p.created_at||'',
-      who:`${esc(p.owner?.name||'요청자')}<span class="arr">→</span>아무나`,
-      what:`"${esc(p.help_message)}" — 🚀 ${esc(p.title)} (개인 프로젝트)`,
-      meta:'<span class="cf-st" style="background:var(--red-light);color:var(--red);">도움 필요</span>',
-      click:()=>{if(p.owner?.name)enterMyWork(p.owner.name);}});
-  });
   rows.forEach(r=>{
-    const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
-    const logs=r.collab_project_logs||[];
+    const members=memOf(r);
+    const logs=r.project_logs||[];
     const last=logs.length?logs.reduce((a,b)=>a.created_at>b.created_at?a:b):null;
     const pct=Math.max(0,Math.min(100,r.progress||0));
     const isDone=r.status==='done';
-    if(isDone&&(!r.done_date||new Date(r.done_date).getTime()<sevenAgo))return;
-    const names=[...members,r.helper?.name].filter(Boolean);
+    const names=[...members,r.owner?.name].filter(Boolean);
+    const st_=r.store_id?STORES.find(x=>x.id===r.store_id):null;
+    // 도움 요청은 혼자 하는 일이든 여럿이 하는 일이든 똑같이 띄운다
     if(r.help_message&&!isDone){
       const hd=r.help_requested_at?days(r.help_requested_at):0;
+      const solo=members.length===0;
       items.push({kind:'help',grp:'stuck',names,ts:r.help_requested_at||r.created_at,
-        who:`${esc(r.helper?.name||'요청자')}<span class="arr">→</span>아무나`,
-        what:`"${esc(r.help_message)}" — ${r.store_id?'🏗️ ':'🤝 '}${esc(r.title)}`,
+        who:`${esc(r.owner?.name||'요청자')}<span class="arr">→</span>아무나`,
+        what:`"${esc(r.help_message)}" — ${st_?'🏗️ ':(solo?'🚀 ':'🏢 ')}${esc(r.title)}`,
         meta:`<span class="cf-st" style="background:var(--red-light);color:var(--red);">응답 없음 ${hd}일</span>`,
-        click:()=>openCollabDetail(r.id)});
+        click:()=>{ if(solo){ if(r.owner?.name)enterMyWork(r.owner.name); } else openCollabDetail(r.id); }});
     }
-    const st_=r.store_id?STORES.find(x=>x.id===r.store_id):null;
+    // 협업 흐름 본목록에는 "여럿이 하는 일"만 올린다. 혼자 하는 일은 🔄 장기 프로젝트
+    // 현황에 담당자별로 이미 나오므로 여기 또 넣으면 같은 것이 두 번 보인다.
+    if(members.length===0)return;
+    if(isDone&&(!r.done_date||new Date(r.done_date).getTime()<sevenAgo))return;
     items.push({kind:r.store_id?'store':'collab',grp:isDone?'done':'prog',names,ts:r.created_at,
       who:r.store_id?`${esc(st_?st_.name:'')} <span style="color:var(--text-mute);font-weight:600;">· 근무자 이어서 진행</span>`:(members.length?`${esc(members[0])}${members.length>1?` 외 ${members.length-1}명`:''}`:'참여자 없음'),
       what:esc(r.title),
@@ -5536,7 +5534,7 @@ window.renderCollabProjects=async function(){
   items.forEach(i=>{cnt[i.kind]++;if(me&&i.names.includes(me))cnt.me++;});
   listEl.innerHTML='';
   const chips=document.createElement('div');chips.className='cf-chips';
-  const chipDefs=[['all','전체'],['req','📨 업무요청'],['store','🏗️ 매장'],['help','🆘 도움'],['collab','🤝 전사'],['me','👤 나 관련']];
+  const chipDefs=[['all','전체'],['req','📨 업무요청'],['store','🏗️ 매장'],['help','🆘 도움'],['collab','🏢 회사 전체'],['me','👤 나 관련']];
   let cur=window.__cfFilter||'all';
   const body=document.createElement('div');
   const paint=()=>{
@@ -5608,11 +5606,11 @@ window.submitCollab=async function(){
   try{
     const _storeId=_collabScope==='store'?(document.getElementById('collab-store-select')?.value||null):null;
     if(_collabScope==='store'&&!_storeId){alert('매장을 선택해 주세요.');return;}
-    const {data:proj,error}=await sb.from('collab_projects').insert({tenant_id:T,title,progress:0,status:'ongoing',created_by:me,store_id:_storeId}).select('id').single();
+    const {data:proj,error}=await sb.from('projects').insert({tenant_id:T,title,progress:0,status:'ongoing',employee_id:me,store_id:_storeId}).select('id').single();
     if(error)throw error;
     const ids=[...new Set([me,...memberIds])]; // 생성자도 참여자에 포함
     if(ids.length){
-      const {error:me2}=await sb.from('collab_project_members').insert(ids.map(pid=>({collab_project_id:proj.id,profile_id:pid,tenant_id:T})));
+      const {error:me2}=await sb.from('project_members').insert(ids.map(pid=>({project_id:proj.id,profile_id:pid,tenant_id:T})));
       if(me2)throw me2;
     }
     closeCollabCreate();
@@ -5627,11 +5625,11 @@ window.openCollabDetail=async function(id){
   const r=(rows||[]).find(x=>x.id===id);
   if(!r){alert('불러오지 못했어요.');return;}
   const _dst=r.store_id?(STORES.find(s=>s.id===r.store_id)||null):null;
-  document.getElementById('collab-detail-title').textContent=(_dst?`🏗️ [${_dst.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}] `:'🤝 ')+r.title;
+  document.getElementById('collab-detail-title').textContent=(_dst?`🏗️ [${_dst.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}] `:'🏢 ')+r.title;
   const {me}=await collabApi();
-  const members=(r.collab_project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
+  const members=(r.project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
   const pct=Math.max(0,Math.min(100,r.progress||0));
-  const logs=(r.collab_project_logs||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const logs=(r.project_logs||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   const body=document.getElementById('collab-detail-body');
   body.innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -5644,7 +5642,7 @@ window.openCollabDetail=async function(id){
       <button onclick="collabDone()" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✓ 완료</button>
     </div>
     ${r.help_message?`<div style="background:var(--red-light);border:1.5px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 중 — ${r.helper?.name||'요청자'}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--red);">🚨 도움 요청 중 — ${r.owner?.name||'요청자'}</div>
       <div style="font-size:13px;margin-top:3px;">${r.help_message}</div>
       <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">아래 일지에 피드백을 남겨주세요. 해결되면 요청을 내려주세요.</div>
       <button onclick="collabHelpResolve()" style="margin-top:8px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 해결됨 (요청 내리기)</button>
@@ -5670,19 +5668,19 @@ window.collabProgress=async function(delta){
   const r=(rows||[]).find(x=>x.id===_collabCur); if(!r)return;
   let pct=Math.max(0,Math.min(100,(r.progress||0)+delta));
   const {sb}=await collabApi();
-  await sb.from('collab_projects').update({progress:pct,status:pct>=100?'done':'ongoing',done_date:pct>=100?new Date().toISOString().slice(0,10):null}).eq('id',_collabCur);
+  await sb.from('projects').update({progress:pct,status:pct>=100?'done':'ongoing',done_date:pct>=100?new Date().toISOString().slice(0,10):null}).eq('id',_collabCur);
   await openCollabDetail(_collabCur); renderCollabProjects();
 };
 window.collabDone=async function(){
   const {sb}=await collabApi();
-  await sb.from('collab_projects').update({progress:100,status:'done',done_date:new Date().toISOString().slice(0,10)}).eq('id',_collabCur);
+  await sb.from('projects').update({progress:100,status:'done',done_date:new Date().toISOString().slice(0,10)}).eq('id',_collabCur);
   closeCollabDetail(); renderCollabProjects();
 };
 window.collabAddLog=async function(){
   const inp=document.getElementById('collab-log-input');
   const text=inp?.value.trim(); if(!text)return;
   const {sb,T,me}=await collabApi();
-  await sb.from('collab_project_logs').insert({collab_project_id:_collabCur,tenant_id:T,author_id:me,content:text});
+  await sb.from('project_logs').insert({project_id:_collabCur,tenant_id:T,author_id:me,log_date:todayKey(),content:text});
   await openCollabDetail(_collabCur);
 };
 window.collabHelpRequest=async function(){
@@ -5691,21 +5689,21 @@ window.collabHelpRequest=async function(){
   const t=msg.trim();
   if(!t){alert('내용을 입력해주세요.');return;}
   const {sb,me}=await collabApi();
-  const {error,count}=await sb.from('collab_projects').update({help_message:t,help_requested_by:me,help_requested_at:new Date().toISOString()},{count:'exact'}).eq('id',_collabCur);
+  const {error,count}=await sb.from('projects').update({help_message:t,help_requested_by:me,help_requested_at:new Date().toISOString()},{count:'exact'}).eq('id',_collabCur);
   if(error||count===0){alert('요청 실패 — 네트워크/권한을 확인해주세요');return;}
   await openCollabDetail(_collabCur); renderCollabProjects();
 };
 window.collabHelpResolve=async function(){
   if(!confirm('도움 요청을 내릴까요? (해결됨 처리)'))return;
   const {sb}=await collabApi();
-  const {error,count}=await sb.from('collab_projects').update({help_message:null,help_requested_by:null,help_requested_at:null},{count:'exact'}).eq('id',_collabCur);
+  const {error,count}=await sb.from('projects').update({help_message:null,help_requested_by:null,help_requested_at:null},{count:'exact'}).eq('id',_collabCur);
   if(error||count===0){alert('처리 실패 — 네트워크/권한을 확인해주세요');return;}
   await openCollabDetail(_collabCur); renderCollabProjects();
 };
 window.collabDelete=async function(){
   if(!confirm('이 협업 프로젝트를 삭제할까요? (참여자·일지도 함께 삭제됩니다)'))return;
   const {sb}=await collabApi();
-  await sb.from('collab_projects').delete().eq('id',_collabCur);
+  await sb.from('projects').delete().eq('id',_collabCur);
   closeCollabDetail(); renderCollabProjects();
 };
 
