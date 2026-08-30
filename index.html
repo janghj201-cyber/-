@@ -2257,7 +2257,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v5.3';
+const GUIDE_VERSION = 'v5.4';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
@@ -2339,6 +2339,16 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: '🆕 v5.4 — 근무 기록이 남습니다',
+    items: [
+      '📍 「오늘 어느 매장에서 근무하세요?」에서 고른 매장이 이제 서버에 남아요 — 예전에는 그 기기 안에만 있었습니다',
+      '📱 폰에서 골랐으면 데스크탑에서 또 안 물어봐요. 기기를 바꿔도 마찬가지입니다',
+      '🏪 매장이 하나뿐인 회사에는 아예 묻지 않아요 — 답이 하나뿐인 질문이니까요',
+      '🏖️ 「오늘은 휴무예요」를 누르면 휴무로 기록됩니다 — 예전에는 브라우저에만 남아서 관리자 화면에 보이지 않았어요',
+      '고정 근무자는 앱을 여는 것만으로 기록돼요. 따로 누를 버튼은 없습니다',
+    ],
+  },
   {
     title: '🆕 v5.3 — 프로젝트가 하나로 합쳐졌어요',
     items: [
@@ -4614,6 +4624,7 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
             const mod=await import('./adapter/supabase-client.js');
             const {error}=await mod.supabase.rpc('set_today_workplace',{target_store:sel.value});
             if(error)throw error;
+            await mod.supabase.rpc('record_workday',{target_store:sel.value});
             location.reload();
           }catch(err){alert('처리 실패 — 네트워크를 확인해주세요');sel.value='';}
         };
@@ -4798,8 +4809,42 @@ function needTodayStorePick(){
   if(localStorage.getItem('vflow_todayoff_'+todayKey()))return false;
   return true;
 }
-function showTodayStorePick(onDone){
+async function _recordWorkday(storeId){
+  try{
+    const mod=await import('./adapter/supabase-client.js');
+    const {error}=await mod.supabase.rpc('record_workday',{target_store:storeId||null});
+    if(error)console.warn('[근무기록] 실패',error);
+  }catch(e){console.warn('[근무기록] 실패',e);}
+}
+async function _recordDayoff(){
+  try{
+    const mod=await import('./adapter/supabase-client.js');
+    const ctx=await (await import('./adapter/context.js')).getContext();
+    const d=todayKey();
+    const {data:ex}=await mod.supabase.from('dayoffs').select('id').eq('profile_id',ctx.profileId).eq('dayoff_date',d).limit(1);
+    if(ex&&ex.length)return;
+    await mod.supabase.from('dayoffs').insert({tenant_id:ctx.tenantId,profile_id:ctx.profileId,dayoff_date:d,status:'dayoff'});
+  }catch(e){console.warn('[휴무기록] 실패',e);}
+}
+async function showTodayStorePick(onDone){
   if(document.getElementById('storepick-ov'))return;
+  // 매장이 하나뿐인 회사에는 물어볼 것이 없다 — 답이 하나뿐인 질문은 하지 않는다
+  if(STORES.length===1){
+    try{localStorage.setItem('vflow_todaystore_'+todayKey(),STORES[0].id);}catch(e){}
+    _recordWorkday(STORES[0].id);
+    if(onDone)onDone();
+    return;
+  }
+  // 다른 기기(폰 ↔ 데스크탑)에서 오늘 매장을 이미 골랐으면 또 묻지 않는다
+  try{
+    const mod=await import('./adapter/supabase-client.js');
+    const {data:sid}=await mod.supabase.rpc('my_workday_store');
+    if(sid){
+      try{localStorage.setItem('vflow_todaystore_'+todayKey(),sid);}catch(e){}
+      if(onDone)onDone();
+      return;
+    }
+  }catch(e){}
   const ov=document.createElement('div');
   ov.id='storepick-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(20,28,42,0.62);display:flex;align-items:center;justify-content:center;padding:18px;';
@@ -4815,6 +4860,7 @@ function showTodayStorePick(onDone){
     btn.innerHTML=`<span style="font-size:19px;">${s.icon}</span>${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
     btn.onclick=()=>{
       localStorage.setItem('vflow_todaystore_'+todayKey(),s.id);
+      _recordWorkday(s.id); // 서버에도 남긴다 — 이게 있어야 "이 사람이 언제 어디 있었나"를 나중에 볼 수 있다
       ov.remove();
       if(onDone)onDone();else if(curTab==='dashboard')renderDashboardHome();
     };
@@ -4826,6 +4872,7 @@ function showTodayStorePick(onDone){
   off.textContent='오늘은 휴무예요';
   off.onclick=()=>{
     localStorage.setItem('vflow_todayoff_'+todayKey(),'1');
+    _recordDayoff(); // 예전에는 브라우저에만 남아서, 직원은 알렸다고 생각하는데 관리자는 몰랐다
     ov.remove();
   };
   card.appendChild(off);

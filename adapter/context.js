@@ -43,6 +43,16 @@ export async function getContext() {
     overrideActive: _ovActive,
     monitorOnly: !!profile.monitor_only,
   }
+  // 오늘 근무 기록 — 고정 근무지가 있거나 예외 출근 중이면 앱을 여는 것만으로 한 줄 남는다.
+  // 직원이 따로 누를 것은 없다. 순환 근무자(고정 근무지 없음)는 매장을 고른 뒤
+  // index.html 의 오늘 매장 선택에서 남긴다.
+  // 화면을 붙잡지 않도록 기다리지 않는다 — 실패해도 앱 사용에는 지장이 없다.
+  if (window.__vflowProfile.storeId) {
+    supabase.rpc('record_workday', { target_store: null }).then(({ error }) => {
+      if (error) console.warn('[adapter] 근무 기록 실패', error)
+    })
+  }
+
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
   window.__vflowTenant = { id: profile.tenant_id, name: tenantRes.data?.name ?? '', isPlatform: !!tenantRes.data?.is_platform }
   // 운영사(V-Flow 본사) 테넌트만 쓰는 기능 판별 — 가맹 초대 코드 등
