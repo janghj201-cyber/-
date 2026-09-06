@@ -627,33 +627,37 @@ async function writeStaffProjects(ctx, { items }) {
 // scheduleRules와 다르게 "없으면 기본값을 setDoc으로 되써넣기"는 안 한다 — 여기 항목은
 // 테넌트가 온보딩 때 이미 갖고 있는 실제 청소 목록이라, 못 불러왔다고 위베이프 기본값을
 // 저장소에 새로 쓰면 안 되기 때문(원본 UI는 이 두 경로에 setDoc을 아예 안 부른다).
+// 항목은 { text, why } — why는 "왜 하는지" 한 줄(선택). 화면에는 항목 밑에 작게 보인다.
+// cleaning_daily_items.note / cleaning_zones.item_notes(jsonb, items와 같은 순서) 컬럼에 저장.
+const cleanItemOf = (x) => (x && typeof x === 'object') ? { text: String(x.text ?? '').trim(), why: String(x.why ?? '').trim() } : { text: String(x ?? '').trim(), why: '' }
+
 async function readCleanDailyItemsConfig(ctx) {
-  const { data, error } = await supabase.from('cleaning_daily_items').select('label').eq('tenant_id', ctx.tenantId).eq('active', true).order('sort_order')
+  const { data, error } = await supabase.from('cleaning_daily_items').select('label, note').eq('tenant_id', ctx.tenantId).eq('active', true).order('sort_order')
   if (error) throw error
-  return { items: (data ?? []).map((r) => r.label) }
+  return { items: (data ?? []).map((r) => ({ text: r.label, why: r.note ?? '' })) }
 }
 
 async function readCleanZonesConfig(ctx) {
-  const { data, error } = await supabase.from('cleaning_zones').select('title, items').eq('tenant_id', ctx.tenantId).eq('active', true).order('zone_number')
+  const { data, error } = await supabase.from('cleaning_zones').select('title, items, item_notes').eq('tenant_id', ctx.tenantId).eq('active', true).order('zone_number')
   if (error) throw error
-  return { zones: (data ?? []).map((r) => ({ title: r.title, items: r.items })) }
+  return { zones: (data ?? []).map((r) => ({ title: r.title, items: (r.items ?? []).map((t, i) => ({ text: t, why: (Array.isArray(r.item_notes) ? r.item_notes[i] : '') ?? '' })) })) }
 }
 
 // 청소 항목 편집 저장(관리자) — 기본청소/대청소 구역을 diff-sync
 async function writeCleanDailyItemsConfig(ctx, { items }) {
-  const list = (items ?? []).map((x) => String(x).trim()).filter(Boolean)
-  const { data: rows, error } = await supabase.from('cleaning_daily_items').select('id, label, sort_order, active').eq('tenant_id', ctx.tenantId)
+  const list = (items ?? []).map(cleanItemOf).filter((x) => x.text)
+  const { data: rows, error } = await supabase.from('cleaning_daily_items').select('id, label, note, sort_order, active').eq('tenant_id', ctx.tenantId)
   if (error) throw error
   const byLabel = new Map((rows ?? []).map((r) => [r.label, r]))
   const wanted = new Set()
   for (let i = 0; i < list.length; i++) {
-    const label = list[i]; wanted.add(label)
+    const label = list[i].text, note = list[i].why || null; wanted.add(label)
     const cur = byLabel.get(label)
     if (!cur) {
-      const { error: e } = await supabase.from('cleaning_daily_items').insert({ tenant_id: ctx.tenantId, label, sort_order: i, active: true })
+      const { error: e } = await supabase.from('cleaning_daily_items').insert({ tenant_id: ctx.tenantId, label, note, sort_order: i, active: true })
       if (e) throw e
-    } else if (cur.sort_order !== i || !cur.active) {
-      const { error: e } = await supabase.from('cleaning_daily_items').update({ sort_order: i, active: true }).eq('id', cur.id)
+    } else if (cur.sort_order !== i || !cur.active || (cur.note ?? null) !== note) {
+      const { error: e } = await supabase.from('cleaning_daily_items').update({ sort_order: i, note, active: true }).eq('id', cur.id)
       if (e) throw e
     }
   }
@@ -667,20 +671,22 @@ async function writeCleanDailyItemsConfig(ctx, { items }) {
 
 async function writeCleanZonesConfig(ctx, { zones }) {
   const list = (zones ?? []).filter((z) => z && (z.title || (z.items && z.items.length)))
-  const { data: rows, error } = await supabase.from('cleaning_zones').select('id, zone_number, title, items, active').eq('tenant_id', ctx.tenantId)
+  const { data: rows, error } = await supabase.from('cleaning_zones').select('id, zone_number, title, items, item_notes, active').eq('tenant_id', ctx.tenantId)
   if (error) throw error
   const byNum = new Map((rows ?? []).map((r) => [r.zone_number, r]))
   const wantedNums = new Set()
   for (let i = 0; i < list.length; i++) {
     const zone_number = i + 1; wantedNums.add(zone_number)
     const title = String(list[i].title ?? '').trim() || `${zone_number}구역`
-    const items = (list[i].items ?? []).map((x) => String(x).trim()).filter(Boolean)
+    const objs = (list[i].items ?? []).map(cleanItemOf).filter((x) => x.text)
+    const items = objs.map((x) => x.text)
+    const item_notes = objs.map((x) => x.why)
     const cur = byNum.get(zone_number)
     if (!cur) {
-      const { error: e } = await supabase.from('cleaning_zones').insert({ tenant_id: ctx.tenantId, zone_number, title, items, active: true })
+      const { error: e } = await supabase.from('cleaning_zones').insert({ tenant_id: ctx.tenantId, zone_number, title, items, item_notes, active: true })
       if (e) throw e
-    } else if (cur.title !== title || JSON.stringify(cur.items) !== JSON.stringify(items) || !cur.active) {
-      const { error: e } = await supabase.from('cleaning_zones').update({ title, items, active: true }).eq('id', cur.id)
+    } else if (cur.title !== title || JSON.stringify(cur.items) !== JSON.stringify(items) || JSON.stringify(cur.item_notes ?? []) !== JSON.stringify(item_notes) || !cur.active) {
+      const { error: e } = await supabase.from('cleaning_zones').update({ title, items, item_notes, active: true }).eq('id', cur.id)
       if (e) throw e
     }
   }

@@ -139,6 +139,8 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .check-item:last-child{border-bottom:none;}
 .check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);margin-top:1px;flex-shrink:0;cursor:pointer;}
 .check-item label{font-size:13px;color:var(--text);line-height:1.4;cursor:pointer;}
+.check-why{display:block;font-size:11px;color:var(--text-sub);margin-top:1px;line-height:1.35;}
+.check-item input:checked+label .check-why{text-decoration:none;}
 .check-item input:checked+label{text-decoration:line-through;color:var(--text-mute);}
 .checklist-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
 .check-count{font-size:13px;font-weight:600;color:var(--navy);}
@@ -1431,13 +1433,16 @@ const CLEAN_BASE=[
 // 신규 테넌트(가맹·타업종)용 중립 기본값 — 운영사 전용 항목이 남의 회사에 뜨지 않게.
 // 저장된 설정이 없을 때만 쓰이고, 관리자 → 고정업무 → 🧹 청소 항목 편집에서 바로 바꿀 수 있다.
 const NEUTRAL_CLEAN_BASE=[
-  "매장 바닥 청소",
-  "출입문·유리창 닦기",
-  "쓰레기통 비우기",
-  "진열대·집기 정리",
-  "화장실 점검",
-  "카운터 주변 정리"
+  {text:"매장 바닥 청소",why:"들어서자마자 발에 닿는 첫인상"},
+  {text:"출입문·유리창 닦기",why:"손님이 제일 먼저 보는 곳"},
+  {text:"쓰레기통 비우기",why:"냄새는 한 번 나면 오래 기억됨"},
+  {text:"진열대·집기 정리",why:"정돈된 진열이 곧 신뢰"},
+  {text:"화장실 점검",why:"다시 올지 말지가 여기서 갈림"},
+  {text:"카운터 주변 정리",why:"결제할 때 손님 눈높이에 있는 곳"}
 ];
+// 청소 항목은 { text, why } — 옛 데이터(문자열)도 여기로 통일. why는 선택, 비면 안 보인다.
+const cItem=(x)=>(x&&typeof x==='object')?{text:String(x.text??'').trim(),why:String(x.why??'').trim()}:{text:String(x??'').trim(),why:''};
+const cText=(x)=>cItem(x).text;
 // 월간 고정업무 규칙의 기본값(폴백) — Firestore config/schedule_rules 없으면 이걸로 시딩
 const DEFAULT_SCHEDULE_RULES=[
   {key:'order',condType:'weekday',weekday:1,task:'전체 주문 (주간)',meta:'전 품목 발주 · 본사 재고 연동 확인',col:'c-blue'},
@@ -1542,7 +1547,7 @@ async function loadCleanConfig(){
   try{
     const dSnap=await getDoc(doc(db,'config/clean_daily_items'));
     if(dSnap.exists()&&Array.isArray(dSnap.data().items)&&dSnap.data().items.length){
-      CLEAN_BASE.splice(0,CLEAN_BASE.length,...dSnap.data().items);
+      CLEAN_BASE.splice(0,CLEAN_BASE.length,...dSnap.data().items.map(cItem));
     } else if(!(window.__vflowTenant||{}).isPlatform){
       // 저장된 청소 항목이 없는 새 회사 — 운영사 전용 항목 대신 중립 기본값
       CLEAN_BASE.splice(0,CLEAN_BASE.length,...NEUTRAL_CLEAN_BASE);
@@ -1551,7 +1556,7 @@ async function loadCleanConfig(){
   try{
     const zSnap=await getDoc(doc(db,'config/clean_zones'));
     if(zSnap.exists()&&Array.isArray(zSnap.data().zones)&&zSnap.data().zones.length){
-      CSECTIONS.splice(0,CSECTIONS.length,...zSnap.data().zones);
+      CSECTIONS.splice(0,CSECTIONS.length,...zSnap.data().zones.map(z=>({title:z.title,items:(z.items||[]).map(cItem)})));
     }
   }catch(e){}
   try{
@@ -2468,6 +2473,7 @@ const GUIDE_SECTIONS = [
       '✍️ 「남기기」 하나로 오늘 할 일 · 인수인계 · 내 메모를 한 곳에서 적어요',
       '🖥️ 컴퓨터에서는 왼쪽 메뉴 + 3열로 한 화면에 다 보여요',
       '🎤 「남기기」에 말하기 버튼 — 말하면 글로 바뀌고 종류를 제안해요 (테스트 중, 저장은 글로만)',
+      '🧹 청소 항목마다 「왜 하나요?」 한 줄을 적을 수 있어요 (관리자 → 고정업무 → 청소 항목 편집, 선택) — 체크리스트 항목 밑에 작게 보여요',
     ],
   },
   {
@@ -7343,7 +7349,9 @@ function buildCL(mode,secIdx,dateKey){
       const row=document.createElement('div');row.className='check-item';
       const cb=document.createElement('input');cb.type='checkbox';cb.id=`cb_clean_${idx}`;
       if(locked)cb.disabled=true;
-      const lb=document.createElement('label');lb.htmlFor=`cb_clean_${idx}`;lb.textContent=item;
+      const lb=document.createElement('label');lb.htmlFor=`cb_clean_${idx}`;
+      const ci=cItem(item);lb.textContent=ci.text;
+      if(ci.why){const w=document.createElement('span');w.className='check-why';w.textContent=ci.why;lb.appendChild(w);}
       cb.onchange=async()=>{
         syncEl.textContent='저장 중...';
         try{
@@ -7623,7 +7631,7 @@ async function renderTodayTab(content){
     cleanItemList.forEach((item,ii)=>{
       const row=document.createElement('div');row.className='dash-item';
       row.innerHTML=`<div class="dash-check undone" id="dck-${store.id}-${ii}">✓</div>
-        <span class="dash-item-name" id="dname-${store.id}-${ii}">${item}</span>`;
+        <span class="dash-item-name" id="dname-${store.id}-${ii}">${cText(item)}</span>`;
       cleanItemsWrap.appendChild(row);
     });
 
@@ -8860,16 +8868,17 @@ function renderCleanEditor(content){
   const h=document.createElement('div');h.className='dash-store-name';h.innerHTML='🧹 청소 항목 편집';
   card.appendChild(h);
   const desc=document.createElement('div');desc.style.cssText='font-size:12px;color:var(--text-sub);margin:4px 0 10px;';
-  desc.textContent='매일 기본 청소 항목과 대청소 구역별 항목을 직접 수정할 수 있어요. 저장하면 전 지점 체크리스트에 바로 반영됩니다.';
+  desc.textContent='매일 기본 청소 항목과 대청소 구역별 항목을 직접 수정할 수 있어요. 오른쪽 「왜」 칸은 선택 — 적어두면 체크리스트 항목 밑에 작게 보여서, 하는 이유를 같이 읽게 됩니다. 저장하면 전 지점에 바로 반영됩니다.';
   card.appendChild(desc);
 
   // 작업용 복사본
-  const base=CLEAN_BASE.map(x=>x);
-  const zones=CSECTIONS.map(z=>({title:z.title,items:(z.items||[]).map(x=>x)}));
+  const base=CLEAN_BASE.map(cItem);
+  const zones=CSECTIONS.map(z=>({title:z.title,items:(z.items||[]).map(cItem)}));
 
-  const inputCss='flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none;';
+  const inputCss='flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none;min-width:0;';
+  const whyCss='flex:1;border:1px dashed var(--border);border-radius:7px;padding:7px 9px;font-size:12px;font-family:inherit;outline:none;color:var(--text-sub);min-width:0;background:var(--bg);';
   const rowCss='display:flex;gap:6px;align-items:center;margin-bottom:5px;';
-  const delCss='background:none;border:none;color:#e5433a;font-size:14px;cursor:pointer;padding:2px 6px;flex-shrink:0;';
+  const delCss='background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;padding:2px 6px;flex-shrink:0;font-family:inherit;';
   const addCss='background:var(--gold-light);color:var(--orange);border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px;';
 
   // 기본 청소
@@ -8878,16 +8887,18 @@ function renderCleanEditor(content){
   const baseWrap=document.createElement('div');card.appendChild(baseWrap);
   function drawBase(){
     baseWrap.innerHTML='';
-    base.forEach((txt,i)=>{
+    base.forEach((it,i)=>{
       const row=document.createElement('div');row.style.cssText=rowCss;
-      const inp=document.createElement('input');inp.type='text';inp.value=txt;inp.style.cssText=inputCss;
-      inp.oninput=()=>{base[i]=inp.value;};
-      const del=document.createElement('button');del.textContent='🗑';del.style.cssText=delCss;
+      const inp=document.createElement('input');inp.type='text';inp.value=it.text;inp.placeholder='할 일 (예: 출입문·유리창 닦기)';inp.style.cssText=inputCss;
+      inp.oninput=()=>{it.text=inp.value;};
+      const why=document.createElement('input');why.type='text';why.value=it.why;why.placeholder='왜 하나요? (선택)';why.style.cssText=whyCss;
+      why.oninput=()=>{it.why=why.value;};
+      const del=document.createElement('button');del.textContent='삭제';del.style.cssText=delCss;
       del.onclick=()=>{base.splice(i,1);drawBase();};
-      row.appendChild(inp);row.appendChild(del);baseWrap.appendChild(row);
+      row.appendChild(inp);row.appendChild(why);row.appendChild(del);baseWrap.appendChild(row);
     });
     const add=document.createElement('button');add.textContent='+ 기본 청소 항목';add.style.cssText=addCss;
-    add.onclick=()=>{base.push('');drawBase();};
+    add.onclick=()=>{base.push({text:'',why:''});drawBase();};
     baseWrap.appendChild(add);
   }
   drawBase();
@@ -8908,19 +8919,21 @@ function renderCleanEditor(content){
       titleRow.appendChild(tinp);titleRow.appendChild(zdel);zc.appendChild(titleRow);
       z.items.forEach((it,ii)=>{
         const row=document.createElement('div');row.style.cssText=rowCss+'margin-left:10px;';
-        const inp=document.createElement('input');inp.type='text';inp.value=it;inp.style.cssText=inputCss;
-        inp.oninput=()=>{z.items[ii]=inp.value;};
-        const del=document.createElement('button');del.textContent='🗑';del.style.cssText=delCss;
+        const inp=document.createElement('input');inp.type='text';inp.value=it.text;inp.placeholder='할 일';inp.style.cssText=inputCss;
+        inp.oninput=()=>{it.text=inp.value;};
+        const why=document.createElement('input');why.type='text';why.value=it.why;why.placeholder='왜 하나요? (선택)';why.style.cssText=whyCss;
+        why.oninput=()=>{it.why=why.value;};
+        const del=document.createElement('button');del.textContent='삭제';del.style.cssText=delCss;
         del.onclick=()=>{z.items.splice(ii,1);drawZones();};
-        row.appendChild(inp);row.appendChild(del);zc.appendChild(row);
+        row.appendChild(inp);row.appendChild(why);row.appendChild(del);zc.appendChild(row);
       });
       const addItem=document.createElement('button');addItem.textContent='+ 항목';addItem.style.cssText=addCss+'margin-left:10px;';
-      addItem.onclick=()=>{z.items.push('');drawZones();};
+      addItem.onclick=()=>{z.items.push({text:'',why:''});drawZones();};
       zc.appendChild(addItem);
       zoneWrap.appendChild(zc);
     });
     const addZone=document.createElement('button');addZone.textContent='+ 대청소 구역 추가';addZone.style.cssText=addCss;
-    addZone.onclick=()=>{zones.push({title:`${zones.length+1}구역`,items:['']});drawZones();};
+    addZone.onclick=()=>{zones.push({title:`${zones.length+1}구역`,items:[{text:'',why:''}]});drawZones();};
     zoneWrap.appendChild(addZone);
   }
   drawZones();
@@ -8928,8 +8941,8 @@ function renderCleanEditor(content){
   // 저장
   const saveBtn=document.createElement('button');saveBtn.className='dash-refresh';saveBtn.style.marginTop='12px';saveBtn.textContent='💾 청소 항목 저장';
   saveBtn.onclick=async()=>{
-    const cleanBase=base.map(x=>x.trim()).filter(Boolean);
-    const cleanZones=zones.map(z=>({title:(z.title||'').trim(),items:z.items.map(x=>x.trim()).filter(Boolean)})).filter(z=>z.title||z.items.length);
+    const cleanBase=base.map(cItem).filter(x=>x.text);
+    const cleanZones=zones.map(z=>({title:(z.title||'').trim(),items:z.items.map(cItem).filter(x=>x.text)})).filter(z=>z.title||z.items.length);
     savedMsg.textContent='저장 중...';
     try{
       await setDoc(doc(db,'config/clean_daily_items'),{items:cleanBase});
