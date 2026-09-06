@@ -493,6 +493,8 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-metric b{display:block;font-size:20px;font-weight:800;margin-top:6px;color:var(--text);letter-spacing:-.3px;}
 .vh-metric.danger b{color:var(--red);}
 .vh-metric.ok b{color:var(--green);}
+.vh-metric.danger{border-color:var(--red);background:#fffaf9;}
+.vh-metric.ok{border-color:var(--green);background:#f6fbf8;}
 .vh-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-card);padding:14px 15px;box-shadow:var(--shadow-card);margin:0;}
 .vh-ct{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
 .vh-ct strong{font-size:14px;font-weight:800;color:var(--text);}
@@ -4587,7 +4589,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
   met.appendChild(mk('내 청소',totalCl>0?`${dnCl}/${totalCl}`:'—',totalCl>0&&leftCl===0?'ok':(dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>enterMyWork(me)));
-  met.appendChild(mk('근무',workers.length,'',()=>{if(entry)openStoreRoom(entry);}));
+  const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>enterMyWork(me));
+  met.appendChild(m4);
   col1.appendChild(met);
 
   // ── 1열: 우선 확인 ──
@@ -4623,6 +4626,33 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   pri.appendChild(more);
   refreshPri();
   col1.appendChild(pri);
+  // 4번째 칸 — 요청(나에게 온 업무 요청, 비동기) / 요청 기능이 꺼져 있으면 진행 중 프로젝트 수
+  (async()=>{
+    try{
+      if(featOn('workreq')){
+        const rows=await loadMyPendingRequests(me);
+        m4.querySelector('b').textContent=rows.length;
+        m4.classList.toggle('danger',rows.length>0);m4.classList.toggle('ok',rows.length===0);
+        rows.forEach(r=>{
+          const st=STORES.find(x=>x.id===r.store_id);
+          const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.content)}<small>${_wrEsc(r.requester?.name||'익명')} · ${r.recipient?.name===me?'나에게':'공용'} 요청${st?' · '+shortStore(st.name):''}</small></div>`);
+          const b=el('button','vh-btn','수락');
+          b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await wrRespond(r,true)){row.remove();refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);m4.querySelector('b').textContent=n;m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else b.disabled=false;};
+          const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
+          no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await wrRespond(r,false)){row.remove();refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);m4.querySelector('b').textContent=n;m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else no.disabled=false;};
+          row.appendChild(b);row.appendChild(no);
+          // 인수인계 다음, 청소·미등록 앞에 끼운다
+          const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
+          if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
+        });
+        if(rows.length)refreshPri();
+      } else {
+        const ps=await loadProjects(me);
+        const n=ps.filter(x=>!x.done).length;
+        m4.querySelector('b').textContent=n;
+      }
+    }catch(e){m4.querySelector('b').textContent='—';}
+  })();
 
   // ── 1열: 남기기 ──
   const quick=el('div','vh-card vh-quick',`<div class="vh-mic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">할 일 · 인수인계 · 메모 — 적으면 제자리로 가요</span></div><span style="color:#c6cfdb;font-size:16px;">›</span>`);
@@ -5585,22 +5615,26 @@ async function buildStoreProjectSection(store){
 }
 
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
+// 나에게 온 대기 중 요청 — 나에게 지정된 것 + 오늘 매장의 공용 요청 (내가 낸 것 제외)
+async function loadMyPendingRequests(me){
+  const {sb}=await wrApi();
+  const myStoreId=window.__vflowProfile?.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||null;
+  const {data}=await sb.from('work_requests')
+    .select('id,store_id,content,status,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name)')
+    .eq('status','pending').order('created_at',{ascending:true}).limit(30);
+  return (data||[]).filter(r=>{
+    const toMe=r.recipient?.name===me;
+    const isMine=r.requester?.name===me;
+    const myStorePub=!r.recipient?.name&&myStoreId&&r.store_id===myStoreId;
+    return !isMine&&(toMe||myStorePub);
+  });
+}
 async function renderHomeRequests(wrap){
   try{
     if(!featOn('workreq'))return;
     const me=window.__vflowProfile?.name;
     if(!me||!wrap)return;
-    const {sb,ctx}=await wrApi();
-    const myStoreId=window.__vflowProfile?.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||null;
-    const {data}=await sb.from('work_requests')
-      .select('id,store_id,content,status,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name)')
-      .eq('status','pending').order('created_at',{ascending:true}).limit(30);
-    const rows=(data||[]).filter(r=>{
-      const toMe=r.recipient?.name===me;
-      const isMine=r.requester?.name===me;
-      const myStorePub=!r.recipient?.name&&myStoreId&&r.store_id===myStoreId;
-      return !isMine&&(toMe||myStorePub);
-    });
+    const rows=await loadMyPendingRequests(me);
     const old=document.getElementById('home-wr-card');
     if(old)old.remove();
     if(rows.length===0)return;
