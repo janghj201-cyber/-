@@ -519,6 +519,16 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-dot.danger{background:var(--red);}
 .vh-priority{order:2;}
 .vh-priority .vh-item{cursor:pointer;}
+.vh-item.vh-done .vh-main{color:var(--text-mute);text-decoration:line-through;}
+.vh-item.vh-done .vh-main small{text-decoration:none;}
+.vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
+.vh-btn-fb{color:var(--text-sub);}
+.vh-fbs{display:block;margin-top:5px;padding-left:8px;border-left:2px solid var(--gold-light);color:var(--text-sub);font-size:11.5px;line-height:1.5;text-decoration:none!important;}
+.vh-fbs b{color:var(--orange);font-weight:700;}
+.vh-fb-wrap{display:flex;gap:6px;margin-top:7px;}
+.vh-fb-wrap input{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:8px 10px;font-size:13px;font-family:inherit;outline:none;}
+.vh-fb-wrap input:focus{border-color:var(--gold);}
+.vh-fb-wrap .vh-btn{min-height:36px;padding:6px 12px;}
 .vh-priority .vh-item.vh-hide-m{display:none;}
 .vh-more{margin-top:6px;background:none;border:1px dashed var(--border);border-radius:var(--radius-ctl);width:100%;padding:9px;font-size:12px;color:var(--text-sub);font-weight:700;cursor:pointer;font-family:inherit;}
 .vh-quick{order:3;background:var(--navy);border-color:var(--navy);color:#fff;display:flex;align-items:center;gap:13px;cursor:pointer;}
@@ -4608,8 +4618,18 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열: 우선 확인 ──
   const pri=el('div','vh-card vh-priority');
   const items=[];
-  hoRows.forEach(({store,it,toMe})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':shortStore(store.name)} · 인수인계`,btn:'확인',
-    act:async(btn,row)=>{btn.disabled=true;btn.textContent='저장중';try{await toggleHandoverItem(store.id,tKey,it.id,true,me);row.remove();refreshPri();}catch(e){btn.disabled=false;btn.textContent='확인';alert('저장 실패 — 네트워크를 확인해주세요');}},
+  hoRows.forEach(({store,it,toMe})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':shortStore(store.name)} · 인수인계`,btn:'확인',ho:{store,it},
+    act:async(btn,row)=>{
+      btn.disabled=true;btn.textContent='저장중';
+      try{
+        await toggleHandoverItem(store.id,tKey,it.id,true,me);
+        // 바로 지우지 않는다 — 실수로 눌렀을 때 되돌릴 수 있게 「확인됨 · 되돌리기」로 남긴다
+        row.classList.add('vh-done');row.querySelector('.vh-dot').className='vh-dot';
+        btn.textContent='되돌리기';btn.disabled=false;
+        btn.onclick=async(e)=>{e.stopPropagation();btn.disabled=true;try{await toggleHandoverItem(store.id,tKey,it.id,false,me);row.classList.remove('vh-done');row.querySelector('.vh-dot').className='vh-dot danger';btn.textContent='확인';btn.disabled=false;btn.onclick=(e2)=>{e2.stopPropagation();items.find(o=>o.ho&&o.ho.it.id===it.id).act(btn,row);};refreshPri();}catch(e2){btn.disabled=false;alert('저장 실패 — 네트워크를 확인해주세요');}};
+        refreshPri();
+      }catch(e){btn.disabled=false;btn.textContent='확인';alert('저장 실패 — 네트워크를 확인해주세요');}
+    },
     open:()=>{if(entry)openStoreRoom(entry);}}));
   if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} 청소 ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전':`${dnCl}/${totalCl} 진행중`,btn:'체크',act:()=>{if(entry)openQuickClean(entry);},open:()=>{if(entry)openQuickClean(entry);}});
   if(mine.length===0)items.push({lv:1,dot:'warn',text:'오늘 할 일이 아직 없어요',sub:'남기기에서 적거나 내 업무에서 등록',btn:'등록',act:()=>openLeaveSheet(entry,tKey,'todo'),open:()=>enterMyWork(me)});
@@ -4629,6 +4649,33 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   items.forEach(o=>{
     const row=el('div','vh-item',`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>`);
     row.onclick=()=>o.open&&o.open();
+    if(o.ho&&featOn('hofeedback')){
+      // 💬 피드백 — 내 업무 화면의 인수인계 피드백과 같은 저장 위치(handover 문서의 feedbacks)
+      const main=row.querySelector('.vh-main');
+      const fbs=(o.ho.it.feedbacks||[]);
+      if(fbs.length)main.appendChild(el('small','vh-fbs',fbs.map(f=>`<b>${f.author||'익명'}</b> ${f.text}`).join('<br>')));
+      const fbWrap=el('div','vh-fb-wrap',`<input type="text" placeholder="피드백 한 줄" maxlength="200"><button class="vh-btn" type="button">등록</button>`);
+      fbWrap.style.display='none';fbWrap.onclick=(e)=>e.stopPropagation();
+      main.appendChild(fbWrap);
+      const fbBtn=el('button','vh-btn vh-btn-fb','피드백');
+      fbBtn.onclick=(e)=>{e.stopPropagation();const open=fbWrap.style.display!=='none';fbWrap.style.display=open?'none':'flex';if(!open)setTimeout(()=>fbWrap.querySelector('input').focus(),0);};
+      const submit=async()=>{
+        const inp=fbWrap.querySelector('input');const text=inp.value.trim();if(!text)return;
+        try{
+          const ref=doc(db,`handover/${o.ho.store.id}_${tKey}`);
+          const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];
+          const target=its.find(x=>x.id===o.ho.it.id);
+          if(target){if(!target.feedbacks)target.feedbacks=[];target.feedbacks.push({author:me,text,ts:Date.now()});await setDoc(ref,{items:its});}
+          let list=main.querySelector('.vh-fbs');if(!list){list=el('small','vh-fbs','');main.insertBefore(list,fbWrap);}
+          list.innerHTML+=(list.innerHTML?'<br>':'')+`<b>${me}</b> ${text.replace(/</g,'&lt;')}`;
+          inp.value='';fbWrap.style.display='none';
+        }catch(e){alert('저장 실패 — 네트워크를 확인해주세요');}
+      };
+      fbWrap.querySelector('button').onclick=submit;
+      fbWrap.querySelector('input').onkeydown=(e)=>{if(e.key==='Enter')submit();};
+      row.appendChild(fbBtn);
+    }
     const b=el('button','vh-btn',o.btn);
     b.onclick=(e)=>{e.stopPropagation();o.act(b,row);};
     row.appendChild(b);priList.appendChild(row);
@@ -4680,8 +4727,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const fold=el('button','vh-fold','펼치기');
   fold.onclick=()=>{todo.classList.toggle('folded');fold.textContent=todo.classList.contains('folded')?'펼치기':'접기';};
   if(mine.length>0)tRight.appendChild(fold);
-  const manage=el('button','vh-btn','＋ 관리');manage.style.padding='6px 10px';manage.style.minHeight='32px';
-  manage.onclick=()=>enterMyWork(me);
+  const manage=el('button','vh-btn','＋ 할 일 추가');manage.style.padding='6px 10px';manage.style.minHeight='32px';
+  manage.onclick=()=>openLeaveSheet(entry,tKey,'todo');
   tRight.appendChild(manage);
   tHead.appendChild(tRight);
   todo.appendChild(tHead);
