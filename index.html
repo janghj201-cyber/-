@@ -621,6 +621,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .dt-tile.status-pending{border-color:var(--orange);}
 .dt-tile.status-none{border-color:var(--red);}
 .dt-tile.on{box-shadow:0 0 0 3px var(--gold-light);}
+.score-chip{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap;}
 .dt-tile-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;}
 .dt-tile-name{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dt-bar{height:6px;margin-bottom:8px;}
@@ -1433,6 +1434,28 @@ const THEME_DEFS=[
   {key:'dark',label:'미드나잇 다크',navy:'#101216',gold:'#7f8ea3'},
 ];
 let appSettings={features:{},theme:'default'};
+// ── 매장 점수 ──
+// 청소를 다 하면 100. 그 위에 업무 완료 가점, 미확인 인수인계 감점. 초록 기준(기본 100)은
+// "청소만 다 해도 초록"이라는 뜻. 자기 체크로 점수가 오르는 걸 막으려면 사진 필수를 켠다.
+const SCORE_DEFAULT={greenAt:100,yellowAt:60,taskBonus:5,taskBonusMax:30,hoPenalty:5,photoRequired:false};
+function scoreRule(){return {...SCORE_DEFAULT,...(appSettings.score||{})};}
+// checkData: checks 문서({item_0:{v,t,photo}...}) · todoDone · hoUnconfirmed
+function calcStoreScore({cleanData,cleanTotal,todoDone,hoUnconfirmed}){
+  const r=scoreRule();
+  const vals=Object.values(cleanData||{});
+  const done=vals.filter(v=>ckVal(v)&&(!r.photoRequired||(v&&v.photo))).length;
+  const base=cleanTotal>0?Math.round(Math.min(done,cleanTotal)/cleanTotal*100):100;
+  const bonus=Math.min(r.taskBonusMax,(todoDone||0)*r.taskBonus);
+  const penalty=(hoUnconfirmed||0)*r.hoPenalty;
+  const score=Math.max(0,base+bonus-penalty);
+  const level=score>=r.greenAt?'green':score>=r.yellowAt?'orange':'red';
+  return {score,base,bonus,penalty,level,done};
+}
+function scoreChip(sc,extraCss=''){
+  const col=sc.level==='green'?'var(--green)':sc.level==='orange'?'var(--orange)':'var(--red)';
+  const bg=sc.level==='green'?'var(--green-light)':sc.level==='orange'?'var(--orange-light)':'var(--red-light)';
+  return `<span class="score-chip" style="background:${bg};color:${col};${extraCss}" title="청소 ${sc.base} + 업무 ${sc.bonus}${sc.penalty?` − 인수인계 ${sc.penalty}`:''}">${sc.score}점</span>`;
+}
 function featOn(key){return appSettings.features[key]!==false;} // 미설정=켜짐
 function applySettings(){
   FEATURE_DEFS.forEach(f=>document.body.classList.toggle('feat-off-'+f.key,!featOn(f.key)));
@@ -2531,6 +2554,7 @@ const GUIDE_SECTIONS = [
       '🧹 청소 항목마다 「왜 하나요?」 한 줄을 적을 수 있어요 (관리자 → 고정업무 → 청소 항목 편집, 선택) — 체크리스트 항목 밑에 작게 보여요',
       '📷 청소 항목 옆 「사진」 — 찍어 올리면 그 항목이 자동으로 체크돼요. 관리자 현황 상세에서 「사진 보기」로 확인',
       '🏪 관리자 현황·보고가 매장 타일로 바뀌었어요 — 한눈에 6개, 누르면 옆(폰은 아래)에 상세',
+      '🏅 매장 점수 — 청소 다 하면 100, 업무 완료 가점, 미확인 인수인계 감점. 타일·오늘 현황·월간 통계에 보이고 규칙은 설정 탭에서',
     ],
   },
   {
@@ -4383,7 +4407,8 @@ window.renderTodayStatus=async function(){
           if(it.fromDate){const dd=Math.floor((Date.now()-new Date(it.fromDate).getTime())/86400000);if(dd>=3)stale.push({store:s,it,days:dd});}
         });
       }
-      return {s,cleanDone,todoDone,todoTotal,workers,carried,unconf,stale};
+      const score=calcStoreScore({cleanData:(cs&&cs.exists())?cs.data():{},cleanTotal:totalCl,todoDone,hoUnconfirmed:unconf});
+      return {s,cleanDone,todoDone,todoTotal,workers,carried,unconf,stale,score};
     });
 
     body.innerHTML='';
@@ -4410,14 +4435,14 @@ window.renderTodayStatus=async function(){
     grp('🏪 매장 한눈에');
     const tbl=document.createElement('div');
     tbl.style.cssText='background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(23,34,51,.06);';
-    tbl.innerHTML=`<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.4fr;background:var(--navy);color:#fff;font-size:10.5px;font-weight:800;padding:7px 10px;gap:4px;"><span>매장</span><span style="text-align:center;">청소</span><span style="text-align:center;">업무</span><span style="text-align:center;">인수인계</span><span style="text-align:center;">근무</span></div>`;
+    tbl.innerHTML=`<div style="display:grid;grid-template-columns:1.3fr .9fr .8fr .8fr .8fr 1.2fr;background:var(--navy);color:#fff;font-size:10.5px;font-weight:800;padding:7px 10px;gap:4px;"><span>매장</span><span style="text-align:center;">점수</span><span style="text-align:center;">청소</span><span style="text-align:center;">업무</span><span style="text-align:center;">인수인계</span><span style="text-align:center;">근무</span></div>`;
     rows.forEach(r=>{
       const line=document.createElement('div');
-      line.style.cssText='display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.4fr;padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px;gap:4px;align-items:center;cursor:pointer;';
+      line.style.cssText='display:grid;grid-template-columns:1.3fr .9fr .8fr .8fr .8fr 1.2fr;padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px;gap:4px;align-items:center;cursor:pointer;';
       const cl=totalCl>0&&r.cleanDone>=totalCl?'<span style="color:var(--green);font-weight:800;">✓</span>':r.cleanDone>0?`<span style="color:var(--orange);font-weight:800;">${r.cleanDone}/${totalCl}</span>`:`<span style="color:var(--red);font-weight:800;">0/${totalCl}</span>`;
       const tw=r.todoTotal===0?'<span style="color:var(--red);font-weight:800;">미등록</span>':r.todoDone>=r.todoTotal?`<span style="color:var(--green);font-weight:800;">${r.todoDone}/${r.todoTotal}</span>`:`<span style="color:var(--orange);font-weight:800;">${r.todoDone}/${r.todoTotal}</span>`;
       const ho=r.unconf===0?'<span style="color:var(--green);font-weight:800;">0</span>':`<span style="color:var(--red);font-weight:800;">${r.unconf}</span>`;
-      line.innerHTML=`<span style="font-weight:800;">${esc(shortN(r.s.name))}</span><span style="text-align:center;">${cl}</span><span style="text-align:center;">${tw}</span><span style="text-align:center;">${ho}</span><span style="text-align:center;font-size:10.5px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.workers.length?r.workers.map(esc).join('·'):'-'}</span>`;
+      line.innerHTML=`<span style="font-weight:800;">${esc(shortN(r.s.name))}</span><span style="text-align:center;">${scoreChip(r.score,'font-size:11px;padding:2px 7px;')}</span><span style="text-align:center;">${cl}</span><span style="text-align:center;">${tw}</span><span style="text-align:center;">${ho}</span><span style="text-align:center;font-size:10.5px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.workers.length?r.workers.map(esc).join('·'):'-'}</span>`;
       line.onclick=()=>goStore(r.s);
       tbl.appendChild(line);
     });
@@ -4821,8 +4846,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 3열: 매장 상태 (데스크탑만) ──
   if(entry){
     const st=el('div','vh-card vh-store');
-    const ok=hoRows.length===0&&leftCl===0;
-    st.appendChild(el('div','vh-ct',`<strong>${shortStore(entry.name)} 상태</strong><span class="vh-tiny" style="color:${ok?'var(--green)':'var(--orange)'};">● ${ok?'정상':'확인 필요'}</span>`));
+    const _cs=window.__dashClean?window.__dashClean.get(entry.id):null;
+    const _sc=calcStoreScore({cleanData:(_cs&&_cs.exists())?_cs.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(it=>!it.confirmed&&!it.closed).length:0;})()});
+    st.appendChild(el('div','vh-ct',`<strong>${shortStore(entry.name)} 상태</strong>${scoreChip(_sc)}`));
     st.appendChild(el('div','vh-storegrid',
       `<div class="vh-cell"><b>근무</b>${workers.length?workers.slice(0,3).join(' · ')+(workers.length>3?` 외 ${workers.length-3}`:''):'아직 없음'}</div>`+
       `<div class="vh-cell${totalCl>0&&leftCl>0?' alert':''}"><b>청소</b>${totalCl>0?`${dnCl} / ${totalCl} 완료`:'오늘 없음'}</div>`+
@@ -7769,11 +7795,21 @@ async function renderTodayTab(content){
   document.addEventListener('click',outsideClick);
   dashUnsubs.push(()=>{document.removeEventListener('click',outsideClick);document.body.classList.remove('dt-sheet-open');});
   const tileIssue={}; // 매장별 문제 여부 — 첫 자동 선택용
+  const tileState={}; // 점수 재료: clean(checks 문서) · cleanTotal · todoDone · hoUnconf
+  STORES.forEach(st=>tileState[st.id]={clean:{},cleanTotal:0,todoDone:0,hoUnconf:0});
+  function paintTile(store){
+    const st=tileState[store.id];
+    const sc=calcStoreScore({cleanData:st.clean,cleanTotal:st.cleanTotal,todoDone:st.todoDone,hoUnconfirmed:st.hoUnconf});
+    const chip=document.getElementById(`score-${store.id}`);
+    if(chip)chip.innerHTML=scoreChip(sc);
+    const tile=tiles.querySelector(`.dt-tile[data-store="${store.id}"]`);
+    if(tile)tile.className='dt-tile'+(tile.classList.contains('on')?' on':'')+(sc.level==='green'?' status-done':sc.level==='orange'?' status-pending':' status-none');
+  }
 
   for(const store of STORES){
     // ── 타일 ──
     const tile=document.createElement('div');tile.className='dt-tile status-none';tile.dataset.store=store.id;
-    tile.innerHTML=`<div class="dt-tile-head"><span class="dt-tile-name">${shortName(store.name)}</span><span class="dash-store-badge" id="badge-${store.id}"></span></div>
+    tile.innerHTML=`<div class="dt-tile-head"><span class="dt-tile-name">${shortName(store.name)}</span><span id="score-${store.id}"></span></div>
       <div class="progress-bar dt-bar"><div class="progress-fill" style="width:0%"></div></div>
       <div class="dt-row"><span>청소</span><b id="stat-${store.id}">…</b></div>
       <div class="dt-row"><span>업무</span><b id="todostat-${store.id}">…</b></div>
@@ -7857,7 +7893,8 @@ async function renderTodayTab(content){
         else if(done>0){badge.style.cssText='background:var(--gold-light);color:var(--orange)';badge.textContent='진행중';}
         else{badge.style.cssText='background:var(--red-light);color:var(--red)';badge.textContent='미완료';}
       }
-      tile.className='dt-tile'+(tile.classList.contains('on')?' on':'')+(cleanOk?' status-done':done>0?' status-pending':' status-none');
+      tileState[store.id].clean=data;tileState[store.id].cleanTotal=totalClean;
+      paintTile(store);
       tileIssue[store.id]=!cleanOk;
       if(!detailPane.classList.contains('open')&&window.innerWidth>=1024){
         // 데스크탑은 첫 화면부터 상세가 보여야 한다 — 문제 있는 매장 먼저, 없으면 첫 매장
@@ -7880,6 +7917,17 @@ async function renderTodayTab(content){
       });
     });
     dashUnsubs.push(unsub1);
+
+    // 인수인계 미확인 — 점수 감점 재료
+    if(featOn('handover')){
+      const hoRef=doc(db,`handover/${store.id}_${tKey}`);
+      const unsubHo=onSnapshot(hoRef,(snap)=>{
+        const its=snap.exists()?(snap.data().items||[]):[];
+        tileState[store.id].hoUnconf=its.filter(it=>!it.confirmed&&!it.closed).length;
+        paintTile(store);
+      });
+      dashUnsubs.push(unsubHo);
+    }
   }
 
   // 오늘의 업무 + 근무자 실시간 집계 (staff_todos를 storeId 기준으로 매장별 재집계)
@@ -7896,6 +7944,7 @@ async function renderTodayTab(content){
       const done=allItems.filter(i=>i.done).length;
       const el=document.getElementById(`todostat-${store.id}`);
       if(el){el.textContent=allItems.length?`${done} / ${allItems.length}`:'미등록';el.style.color=allItems.length===0?'var(--red)':done<allItems.length?'var(--orange)':'var(--green)';}
+      if(tileState[store.id]){tileState[store.id].todoDone=done;paintTile(store);}
 
       const authors=[...new Set(allItems.map(i=>i.author).filter(Boolean))];
       const workersEl=document.getElementById(`workers-${store.id}`);
@@ -8479,6 +8528,40 @@ async function renderSettingsTab(content){
     secF.appendChild(row);
   });
   content.appendChild(secF);
+
+  // ── 매장 점수 규칙 ──
+  {
+    const r=scoreRule();
+    const secS=document.createElement('div');secS.className='dash-card';secS.style.marginBottom='12px';
+    secS.innerHTML='<div class="dash-store-name">매장 점수 규칙</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">청소를 다 하면 100점. 그 위에 업무 완료 가점, 미확인 인수인계 감점. 점수는 매장 단위로만 보이고 개인 점수는 없어요.</div>';
+    const fields=[
+      ['greenAt','초록 기준 (점 이상)',0,200],['yellowAt','주황 기준 (점 이상)',0,200],
+      ['taskBonus','업무 완료 1건당 가점',0,50],['taskBonusMax','업무 가점 상한',0,100],['hoPenalty','미확인 인수인계 1건당 감점',0,50],
+    ];
+    const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;';
+    const draft={...r};
+    fields.forEach(([k,lb,min,max])=>{
+      const w=document.createElement('label');w.style.cssText='display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--text-sub);font-weight:700;';
+      w.innerHTML=`${lb}<input type="number" min="${min}" max="${max}" value="${r[k]}" style="border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;color:var(--text);">`;
+      w.querySelector('input').oninput=(e)=>{draft[k]=Number(e.target.value);};
+      grid.appendChild(w);
+    });
+    secS.appendChild(grid);
+    const ph=document.createElement('label');ph.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 4px;margin-top:8px;border-top:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;';
+    ph.innerHTML=`<span>사진 있는 청소만 점수로 인정<br><span style="font-size:11px;color:var(--text-sub);font-weight:400;">체크만 하고 안 한 청소를 걸러요. 사진이 자리 잡은 뒤 켜세요</span></span><input type="checkbox" ${r.photoRequired?'checked':''} style="accent-color:var(--gold);width:18px;height:18px;">`;
+    ph.querySelector('input').onchange=(e)=>{draft.photoRequired=e.target.checked;};
+    secS.appendChild(ph);
+    const sv=document.createElement('button');sv.className='dash-refresh';sv.style.marginTop='10px';sv.textContent='점수 규칙 저장';
+    const msg=document.createElement('span');msg.style.cssText='font-size:12px;color:var(--green);margin-left:8px;';
+    sv.onclick=async()=>{
+      if(draft.yellowAt>draft.greenAt){alert('주황 기준은 초록 기준보다 낮아야 해요');return;}
+      appSettings.score={...draft};msg.textContent='저장 중...';
+      try{await saveSettings();msg.textContent='✓ 저장됨 — 전 매장 점수에 바로 반영';}catch(e){msg.textContent='⚠ 저장 실패';}
+    };
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;';row.appendChild(sv);row.appendChild(msg);
+    secS.appendChild(row);
+    content.appendChild(secS);
+  }
 
   const secT=document.createElement('div');secT.className='dash-card';
   secT.innerHTML='<div class="dash-store-name">🎨 컬러테마</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;">선택하면 바로 저장되고 전 직원에게 적용됩니다.</div>';
@@ -9152,37 +9235,46 @@ async function renderMonthlyTab(content){
 
   content.innerHTML=`<div class="monthly-loading">데이터 집계 중... (1~${lastDay}일)</div>`;
 
-  const results=[];
-  for(const store of STORES){
-    let cleanDone=0,cleanTotal=0,todoDone=0,todoTotal=0;
-    for(let d=1;d<=lastDay;d++){
-      const dateKey=dk(y,m,d);
-      cleanTotal+=getCleanItemCount(y,m,d);
-      try{
-        const cSnap=await getDoc(doc(db,`checks/${store.id}/${dateKey}/clean`));
-        if(cSnap.exists())cleanDone+=Object.values(cSnap.data()).filter(ckVal).length;
-      }catch(e){}
-      try{
-        const tSnap=await getDoc(doc(db,`todos/${store.id}_${dateKey}`));
-        if(tSnap.exists()){
-          const items=tSnap.data().items||[];
-          todoTotal+=items.length;
-          todoDone+=items.filter(i=>i.done).length;
-        }
-      }catch(e){}
-    }
-    results.push({store,cleanDone,cleanTotal,todoDone,todoTotal});
+  // 날짜별로 한 번에 읽는다 — 매장 청소 6 + 직원 업무 N + 인수인계 6 을 병렬로.
+  // (예전엔 아무도 안 쓰는 todos/{store}_{date} 를 읽어 업무 열이 늘 '-' 였다)
+  const days=[];
+  for(let d=1;d<=lastDay;d++){
+    const dateKey=dk(y,m,d);
+    const [cleanSnaps,todoPairs,hoSnaps]=await Promise.all([
+      Promise.all(STORES.map(st=>getDoc(doc(db,`checks/${st.id}/${dateKey}/clean`)).catch(()=>null))),
+      Promise.all(staffList.map(async name=>{try{return [name,await loadStaffTodos(name,dateKey)];}catch(e){return [name,[]];}})),
+      Promise.all(STORES.map(st=>getDoc(doc(db,`handover/${st.id}_${dateKey}`)).catch(()=>null))),
+    ]);
+    days.push({d,dateKey,cleanSnaps,todoPairs,hoSnaps,cleanTotal:getCleanItemCount(y,m,d)});
   }
+  const results=STORES.map((store,si)=>{
+    let cleanDone=0,cleanTotal=0,todoDone=0,todoTotal=0,scoreSum=0,scoreDays=0,greenDays=0;
+    days.forEach(day=>{
+      const cs=day.cleanSnaps[si];const cleanData=(cs&&cs.exists())?cs.data():{};
+      cleanTotal+=day.cleanTotal;cleanDone+=Object.values(cleanData).filter(ckVal).length;
+      let dDone=0,dTotal=0;
+      day.todoPairs.forEach(p=>{if(!p)return;const its=p[1].filter(it=>it.storeId===store.id);dTotal+=its.length;dDone+=its.filter(it=>it.done).length;});
+      todoDone+=dDone;todoTotal+=dTotal;
+      const hs=day.hoSnaps[si];const unconf=(hs&&hs.exists())?(hs.data().items||[]).filter(it=>!it.confirmed&&!it.closed).length:0;
+      const sc=calcStoreScore({cleanData,cleanTotal:day.cleanTotal,todoDone:dDone,hoUnconfirmed:unconf});
+      scoreSum+=sc.score;scoreDays++;if(sc.level==='green')greenDays++;
+    });
+    return {store,cleanDone,cleanTotal,todoDone,todoTotal,avg:scoreDays?Math.round(scoreSum/scoreDays):0,greenDays,scoreDays};
+  });
+  const avgAll=results.length?Math.round(results.reduce((a,r)=>a+r.avg,0)/results.length):0;
 
-  let html=`<div class="dash-date">${mns[m]} 1일 ~ ${lastDay}일 누적</div>`;
+  let html=`<div class="dash-date">${mns[m]} 1일 ~ ${lastDay}일 누적 · 전체 평균 <b>${avgAll}점</b> — 평균 아래 매장은 빨갛게</div>`;
   const showClean=featOn('cleaning');
-  html+=`<table class="monthly-table"><tr><th>지점</th>${showClean?'<th>청소</th>':''}<th>오늘의 업무</th></tr>`;
-  results.forEach(r=>{
+  html+=`<table class="monthly-table"><tr><th>지점</th><th>평균 점수</th><th>초록 날</th>${showClean?'<th>청소</th>':''}<th>업무</th></tr>`;
+  results.slice().sort((a,b)=>b.avg-a.avg).forEach(r=>{
     const cleanPct=r.cleanTotal>0?Math.round(r.cleanDone/r.cleanTotal*100):0;
     const todoPct=r.todoTotal>0?Math.round(r.todoDone/r.todoTotal*100):0;
-    html+=`<tr><td>${r.store.icon} ${r.store.name}</td>${showClean?`<td>${r.cleanDone}/${r.cleanTotal} (${cleanPct}%)</td>`:''}<td>${r.todoTotal>0?`${r.todoDone}/${r.todoTotal} (${todoPct}%)`:'-'}</td></tr>`;
+    const below=r.avg<avgAll;
+    html+=`<tr><td style="font-weight:700;">${r.store.name}</td><td style="font-weight:800;color:${below?'var(--red)':'var(--green)'};">${r.avg}점</td><td>${r.greenDays}/${r.scoreDays}</td>${showClean?`<td>${r.cleanDone}/${r.cleanTotal} (${cleanPct}%)</td>`:''}<td>${r.todoTotal>0?`${r.todoDone}/${r.todoTotal} (${todoPct}%)`:'-'}</td></tr>`;
   });
   html+=`</table>`;
+  const r0=scoreRule();
+  html+=`<div class="dash-date" style="margin-top:10px;">점수 = 청소 완료율(최대 100) + 업무 완료 1건당 ${r0.taskBonus}점(최대 ${r0.taskBonusMax}) − 미확인 인수인계 1건당 ${r0.hoPenalty}점 · 초록 ${r0.greenAt}점 이상${r0.photoRequired?' · 사진 있는 청소만 인정':''} — 설정 탭에서 바꿀 수 있어요</div>`;
   content.innerHTML=html;
 }
 
