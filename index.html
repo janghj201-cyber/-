@@ -612,6 +612,38 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .vh-metric{padding:13px 12px;}
 }
 
+/* ── 관리자 현황·보고: 타일 + 상세 ── */
+.dt-layout{display:flex;flex-direction:column;gap:12px;}
+.dt-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.dt-tile{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-card);padding:12px 13px;cursor:pointer;box-shadow:var(--shadow-card);transition:border-color .15s,transform .1s;}
+.dt-tile:active{transform:scale(.98);}
+.dt-tile.status-done{border-color:var(--green);}
+.dt-tile.status-pending{border-color:var(--orange);}
+.dt-tile.status-none{border-color:var(--red);}
+.dt-tile.on{box-shadow:0 0 0 3px var(--gold-light);}
+.dt-tile-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;}
+.dt-tile-name{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dt-bar{height:6px;margin-bottom:8px;}
+.dt-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-sub);padding:3px 0;border-top:1px solid var(--border);}
+.dt-row b{font-size:13px;font-weight:800;color:var(--text);}
+.dt-workers{font-size:11px;color:var(--text-sub);margin-top:7px;padding-top:7px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dt-detail{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-card);box-shadow:var(--shadow-card);}
+.dt-detail.open{display:block;}
+.dt-detail-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);}
+.dt-detail-title{font-size:15px;font-weight:800;}
+.dt-detail-body{padding:12px 14px;}
+.dt-detail-body .feedback-box{margin-top:12px;}
+@media(max-width:1023px){
+  .dt-detail.open{position:fixed;left:0;right:0;bottom:0;z-index:930;max-height:82vh;overflow-y:auto;border-radius:18px 18px 0 0;padding-bottom:var(--safe-bot);box-shadow:0 -8px 30px rgba(23,34,51,.25);}
+  .dt-detail-head{position:sticky;top:0;background:var(--card);z-index:1;}
+  body.dt-sheet-open::after{content:'';position:fixed;inset:0;background:rgba(23,34,51,.45);z-index:929;}
+}
+@media(min-width:1024px){
+  .dt-layout{display:grid;grid-template-columns:1fr 400px;gap:14px;align-items:start;}
+  .dt-tiles{grid-template-columns:repeat(3,1fr);gap:12px;}
+  .dt-detail{position:sticky;top:12px;}
+  .dt-detail-close{display:none;}
+}
 /* 오늘 날짜 강조 */
 .day.today{background:linear-gradient(135deg,#fff9e6 0%,#fff3cc 100%) !important;border-top:3px solid var(--gold) !important;}
 .day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(180,140,0,0.4);}
@@ -2498,6 +2530,7 @@ const GUIDE_SECTIONS = [
       '🎤 「남기기」에 말하기 버튼 — 말하면 글로 바뀌고 종류를 제안해요 (테스트 중, 저장은 글로만)',
       '🧹 청소 항목마다 「왜 하나요?」 한 줄을 적을 수 있어요 (관리자 → 고정업무 → 청소 항목 편집, 선택) — 체크리스트 항목 밑에 작게 보여요',
       '📷 청소 항목 옆 「사진」 — 찍어 올리면 그 항목이 자동으로 체크돼요. 관리자 현황 상세에서 「사진 보기」로 확인',
+      '🏪 관리자 현황·보고가 매장 타일로 바뀌었어요 — 한눈에 6개, 누르면 옆(폰은 아래)에 상세',
     ],
   },
   {
@@ -7705,7 +7738,7 @@ async function renderTodayTab(content){
   const totalClean=getCleanItemCount(y,m,d);
   const evs=getEvs(y,m,d);
   const cleanEv=evs.find(e=>e.t==='clean');
-  const cleanLabel=cleanEv?`🧹 대청소 ${cleanEv.sec}구역 (기본+구역)`:'청소 및 매장 정리 (기본 6항목)';
+  const cleanLabel=cleanEv?`대청소 ${cleanEv.sec}구역 (기본 ${CLEAN_BASE.length} + 구역 ${CSECTIONS[cleanEv.sec-1]?CSECTIONS[cleanEv.sec-1].items.length:0})`:`기본 청소 ${CLEAN_BASE.length}항목`;
 
   const dayLabel=isToday?'오늘':`${m+1}/${d}`;
   const dateEl=document.createElement('div');dateEl.className='dash-date';
@@ -7713,48 +7746,51 @@ async function renderTodayTab(content){
   if(!featOn('cleaning'))dateEl.style.display='none';
   content.appendChild(dateEl);
 
+  // 매장은 타일(격자)로, 누르면 오른쪽(폰은 아래 시트)에 그 매장 상세.
+  // 예전엔 매장마다 긴 카드가 세로로 이어져 6개면 화면 몇 장이었다.
+  const layout=document.createElement('div');layout.className='dt-layout';
+  const tiles=document.createElement('div');tiles.className='dt-tiles';
+  const detailPane=document.createElement('div');detailPane.className='dt-detail';
+  detailPane.innerHTML='<div class="dt-detail-head"><strong class="dt-detail-title">매장을 고르세요</strong><button type="button" class="vh-btn dt-detail-close">닫기</button></div><div class="dt-detail-body"></div>';
+  const detailBody=detailPane.querySelector('.dt-detail-body');
+  layout.appendChild(tiles);layout.appendChild(detailPane);
+  content.appendChild(layout);
+  const shortName=(n)=>n.replace('인천 ','').replace('부천 ','');
+  const selectStore=(store)=>{
+    tiles.querySelectorAll('.dt-tile').forEach(t=>t.classList.toggle('on',t.dataset.store===store.id));
+    detailBody.querySelectorAll('.dt-store-detail').forEach(d=>d.style.display=d.dataset.store===store.id?'':'none');
+    detailPane.querySelector('.dt-detail-title').textContent=`${store.name}`;
+    detailPane.classList.add('open');
+    document.body.classList.add('dt-sheet-open');
+  };
+  const closeDetail=()=>{detailPane.classList.remove('open');document.body.classList.remove('dt-sheet-open');tiles.querySelectorAll('.dt-tile').forEach(t=>t.classList.remove('on'));};
+  detailPane.querySelector('.dt-detail-close').onclick=closeDetail;
+  const outsideClick=(e)=>{if(document.body.classList.contains('dt-sheet-open')&&window.innerWidth<1024&&!detailPane.contains(e.target)&&!tiles.contains(e.target))closeDetail();};
+  document.addEventListener('click',outsideClick);
+  dashUnsubs.push(()=>{document.removeEventListener('click',outsideClick);document.body.classList.remove('dt-sheet-open');});
+  const tileIssue={}; // 매장별 문제 여부 — 첫 자동 선택용
+
   for(const store of STORES){
-    const card=document.createElement('div');card.className='dash-card';
+    // ── 타일 ──
+    const tile=document.createElement('div');tile.className='dt-tile status-none';tile.dataset.store=store.id;
+    tile.innerHTML=`<div class="dt-tile-head"><span class="dt-tile-name">${shortName(store.name)}</span><span class="dash-store-badge" id="badge-${store.id}"></span></div>
+      <div class="progress-bar dt-bar"><div class="progress-fill" style="width:0%"></div></div>
+      <div class="dt-row"><span>청소</span><b id="stat-${store.id}">…</b></div>
+      <div class="dt-row"><span>업무</span><b id="todostat-${store.id}">…</b></div>
+      <div class="dt-workers" id="workers-${store.id}">…</div>`;
+    const pbFill=tile.querySelector('.progress-fill');
+    tile.onclick=()=>selectStore(store);
+    tiles.appendChild(tile);
 
-    const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
-    nameDiv.innerHTML=`${store.icon} ${store.name} <span class="dash-store-badge" id="badge-${store.id}"></span>`;
-    card.appendChild(nameDiv);
-
-    // 근무자
-    const workersEl=document.createElement('div');workersEl.className='dash-workers';workersEl.id=`workers-${store.id}`;
-    workersEl.textContent='👤 근무자: 불러오는 중...';
-    card.appendChild(workersEl);
-
-    // 청소 진행률
-    const pbWrap=document.createElement('div');pbWrap.className='progress-bar';
-    const pbFill=document.createElement('div');pbFill.className='progress-fill';pbFill.style.width='0%';
-    pbWrap.appendChild(pbFill);
-    const statsEl=document.createElement('div');statsEl.className='dash-stats';
-    statsEl.innerHTML=`<span id="stat-${store.id}">불러오는 중...</span><span>${cleanLabel}</span>`;
-    card.appendChild(pbWrap);card.appendChild(statsEl);
-
-    // 오늘의 업무 진행률
-    const todoStats=document.createElement('div');todoStats.className='dash-todo-summary';
-    todoStats.id=`todostat-${store.id}`;
-    todoStats.textContent='📝 업무 불러오는 중...';
-    card.appendChild(todoStats);
-
-    // 상세보기 토글 + 상세 영역
-    const toggleBtn=document.createElement('button');toggleBtn.className='dash-toggle';toggleBtn.id=`toggle-${store.id}`;
-    toggleBtn.textContent='🔍 상세보기 (항목별 현황)';
-    card.appendChild(toggleBtn);
-
-    const detailWrap=document.createElement('div');detailWrap.className='dash-detail';detailWrap.id=`detail-${store.id}`;
+    // ── 상세 (선택 시 표시) ──
+    const card=document.createElement('div');card.className='dt-store-detail';card.dataset.store=store.id;card.style.display='none';
+    const detailWrap=document.createElement('div');detailWrap.className='dash-detail open';detailWrap.id=`detail-${store.id}`;
+    detailWrap.style.cssText='margin-top:0;border-top:none;padding-top:0;';
     detailWrap.innerHTML=`<div class="dash-detail-title">${cleanLabel}</div>
       <div class="dash-items" id="cleanitems-${store.id}"></div>
       <div class="dash-detail-title">📝 오늘의 업무</div>
       <div class="dash-todo-list" id="todoitems-${store.id}"><div class="no-clean">불러오는 중...</div></div>`;
     card.appendChild(detailWrap);
-
-    toggleBtn.onclick=()=>{
-      const open=detailWrap.classList.toggle('open');
-      toggleBtn.textContent=open?'🔼 상세 닫기':'🔍 상세보기 (항목별 현황)';
-    };
 
     // 청소 항목 (기본청소 6 + 대청소일이면 구역항목) 뼈대 렌더
     const cleanItemList=cleanEv?[...CLEAN_BASE,...CSECTIONS[cleanEv.sec-1].items]:[...CLEAN_BASE];
@@ -7782,7 +7818,7 @@ async function renderTodayTab(content){
     fbAdminWrap.appendChild(fbSavedEl);
     card.appendChild(fbAdminWrap);
 
-    content.appendChild(card);
+    detailBody.appendChild(card);
 
     // 기존 피드백 로드 (선택된 날짜)
     const fbRef=doc(db,`feedback/${store.id}/${tKey}/comment`);
@@ -7813,12 +7849,20 @@ async function renderTodayTab(content){
       pbFill.style.width=pct+'%';
       pbFill.className='progress-fill'+(done===0?' empty':done<totalClean?' warn':'');
       const statEl=document.getElementById(`stat-${store.id}`);
-      if(statEl)statEl.textContent=`${done} / ${totalClean} 완료 (${pct}%)`;
+      const cleanOk=done>=totalClean&&totalClean>0;
+      if(statEl){statEl.textContent=totalClean>0?`${done} / ${totalClean}`:'없음';statEl.style.color=cleanOk?'var(--green)':done>0?'var(--orange)':'var(--red)';}
       const badge=document.getElementById(`badge-${store.id}`);
       if(badge){
-        if(done>=totalClean&&totalClean>0){badge.style.cssText='background:var(--green-light);color:var(--green)';badge.textContent='✅ 완료';}
-        else if(done>0){badge.style.cssText='background:var(--gold-light);color:var(--orange)';badge.textContent='🟡 진행중';}
-        else{badge.style.cssText='background:#f3f4f6;color:#9ca3af';badge.textContent='⬜ 미완료';}
+        if(cleanOk){badge.style.cssText='background:var(--green-light);color:var(--green)';badge.textContent='완료';}
+        else if(done>0){badge.style.cssText='background:var(--gold-light);color:var(--orange)';badge.textContent='진행중';}
+        else{badge.style.cssText='background:var(--red-light);color:var(--red)';badge.textContent='미완료';}
+      }
+      tile.className='dt-tile'+(tile.classList.contains('on')?' on':'')+(cleanOk?' status-done':done>0?' status-pending':' status-none');
+      tileIssue[store.id]=!cleanOk;
+      if(!detailPane.classList.contains('open')&&window.innerWidth>=1024){
+        // 데스크탑은 첫 화면부터 상세가 보여야 한다 — 문제 있는 매장 먼저, 없으면 첫 매장
+        const first=STORES.find(st=>tileIssue[st.id])||STORES[0];
+        if(first&&Object.keys(tileIssue).length>=STORES.length)selectStore(first);
       }
       // 항목별 상세
       cleanItemList.forEach((item,ii)=>{
@@ -7851,11 +7895,11 @@ async function renderTodayTab(content){
       });
       const done=allItems.filter(i=>i.done).length;
       const el=document.getElementById(`todostat-${store.id}`);
-      if(el)el.textContent=`📝 오늘의 업무: ${done} / ${allItems.length} 완료`;
+      if(el){el.textContent=allItems.length?`${done} / ${allItems.length}`:'미등록';el.style.color=allItems.length===0?'var(--red)':done<allItems.length?'var(--orange)':'var(--green)';}
 
       const authors=[...new Set(allItems.map(i=>i.author).filter(Boolean))];
       const workersEl=document.getElementById(`workers-${store.id}`);
-      if(workersEl)workersEl.textContent=`👤 근무자: ${authors.length?authors.join(', '):'기록 없음'}`;
+      if(workersEl)workersEl.textContent=authors.length?authors.join(' · '):'업무 등록한 사람 없음';
 
       const todoItemsWrap=document.getElementById(`todoitems-${store.id}`);
       if(todoItemsWrap){
