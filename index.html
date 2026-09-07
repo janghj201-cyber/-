@@ -139,7 +139,14 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .check-item:last-child{border-bottom:none;}
 .check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);margin-top:1px;flex-shrink:0;cursor:pointer;}
 .check-item label{font-size:13px;color:var(--text);line-height:1.4;cursor:pointer;}
-.check-why{display:block;font-size:11px;color:var(--text-sub);margin-top:1px;line-height:1.35;}
+.check-item{align-items:center;}
+.check-item label{flex:1;min-width:0;}
+.check-photo{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.check-photo-btn{border:1px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:var(--radius-ctl);padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;min-height:32px;white-space:nowrap;}
+.check-photo-btn:disabled{opacity:.6;}
+.check-thumb img{width:36px;height:36px;object-fit:cover;border-radius:7px;border:1px solid var(--border);display:block;}
+.dash-photo{margin-left:auto;font-size:10.5px;color:var(--green);font-weight:700;cursor:pointer;white-space:nowrap;}
+.check-why{display:inline-block;width:100%;font-size:11px;color:var(--text-sub);margin-top:1px;line-height:1.35;text-decoration:none;}
 .check-item input:checked+label .check-why{text-decoration:none;}
 .check-item input:checked+label{text-decoration:line-through;color:var(--text-mute);}
 .checklist-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
@@ -1350,7 +1357,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -2490,6 +2497,7 @@ const GUIDE_SECTIONS = [
       '🖥️ 컴퓨터에서는 왼쪽 메뉴 + 3열로 한 화면에 다 보여요',
       '🎤 「남기기」에 말하기 버튼 — 말하면 글로 바뀌고 종류를 제안해요 (테스트 중, 저장은 글로만)',
       '🧹 청소 항목마다 「왜 하나요?」 한 줄을 적을 수 있어요 (관리자 → 고정업무 → 청소 항목 편집, 선택) — 체크리스트 항목 밑에 작게 보여요',
+      '📷 청소 항목 옆 「사진」 — 찍어 올리면 그 항목이 자동으로 체크돼요. 관리자 현황 상세에서 「사진 보기」로 확인',
     ],
   },
   {
@@ -7397,6 +7405,28 @@ function buildHandoverSection(y,m,d){
 // ══════════════════════════════════════
 // 대청소 체크리스트 (Firebase 연동)
 // ══════════════════════════════════════
+// 사진을 폰에서 그대로 올리면 3~5MB. 긴 변 1280px·JPEG로 줄이면 200KB 안팎 — 증거로는 충분.
+async function shrinkPhoto(file,maxSide,quality){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url;});
+    const r=Math.min(1,maxSide/Math.max(img.width,img.height));
+    const w=Math.round(img.width*r),h=Math.round(img.height*r);
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',quality));
+    if(!blob)throw new Error('이미지 변환 실패');
+    return blob;
+  }finally{URL.revokeObjectURL(url);}
+}
+async function showPhotoThumb(ph,path){
+  const url=await getCleanPhotoUrl(path);
+  if(!url)return;
+  let a=ph.querySelector('a.check-thumb');
+  if(!a){a=document.createElement('a');a.className='check-thumb';a.target='_blank';a.rel='noopener';ph.insertBefore(a,ph.firstChild);}
+  a.href=url;a.innerHTML=`<img src="${url}" alt="청소 사진">`;
+}
+window.openCleanPhoto=async function(path){try{const u=await getCleanPhotoUrl(path);if(u)window.open(u,'_blank');}catch(e){alert('사진을 불러올 수 없어요');}};
 function buildCL(mode,secIdx,dateKey){
   const wrap=document.createElement('div');wrap.className='checklist-wrap';wrap.id='cpanel';
   const locked=isDateLocked(dateKey);
@@ -7426,6 +7456,30 @@ function buildCL(mode,secIdx,dateKey){
       const lb=document.createElement('label');lb.htmlFor=`cb_clean_${idx}`;
       const ci=cItem(item);lb.textContent=ci.text;
       if(ci.why){const w=document.createElement('span');w.className='check-why';w.textContent=ci.why;lb.appendChild(w);}
+      // 📷 사진 — 찍으면 올라가고, 그 항목은 자동으로 체크된다. 사진이 곧 '했다'의 증거.
+      const ph=document.createElement('div');ph.className='check-photo';ph.dataset.key=key;
+      if(!locked){
+        const pbtn=document.createElement('button');pbtn.type='button';pbtn.className='check-photo-btn';pbtn.textContent='사진';
+        const finp=document.createElement('input');finp.type='file';finp.accept='image/*';finp.capture='environment';finp.style.display='none';
+        pbtn.onclick=()=>finp.click();
+        finp.onchange=async()=>{
+          const f=finp.files&&finp.files[0];if(!f)return;
+          pbtn.disabled=true;pbtn.textContent='올리는 중';syncEl.textContent='사진 저장 중...';
+          try{
+            const blob=await shrinkPhoto(f,1280,0.82);
+            const path=await uploadCleanPhoto(curStore.id,dateKey,key,blob);
+            const snap=await getDoc(docRef);
+            const cur=snap.exists()?snap.data():{};
+            cur[key]={v:true,t:Date.now(),photo:path};
+            await setDoc(docRef,cur);
+            cb.checked=true;updateCount();
+            await showPhotoThumb(ph,path);
+            syncEl.textContent='✓ 사진 저장됨';setTimeout(()=>syncEl.textContent='',2000);
+          }catch(e){console.warn('[사진]',e);syncEl.textContent='⚠ 사진 저장 실패 — '+(e.message||'네트워크·권한 확인');}
+          pbtn.disabled=false;pbtn.textContent='사진';finp.value='';
+        };
+        ph.appendChild(pbtn);ph.appendChild(finp);
+      }
       cb.onchange=async()=>{
         syncEl.textContent='저장 중...';
         try{
@@ -7438,7 +7492,7 @@ function buildCL(mode,secIdx,dateKey){
         }catch(e){syncEl.textContent='⚠ 저장 실패';}
         updateCount();
       };
-      row.appendChild(cb);row.appendChild(lb);sd.appendChild(row);
+      row.appendChild(cb);row.appendChild(lb);row.appendChild(ph);sd.appendChild(row);
     });
     wrap.appendChild(sd);
   });
@@ -7472,6 +7526,9 @@ function buildCL(mode,secIdx,dateKey){
       cbs.forEach((cb,idx)=>{
         const key=`item_${idx}`;
         cb.checked=ckVal(data[key]);
+        const ph=wrap.querySelector(`.check-photo[data-key="${key}"]`);
+        const path=data[key]&&data[key].photo;
+        if(ph&&path)showPhotoThumb(ph,path).catch(()=>{});
       });
       updateCount();
     }catch(e){ct.textContent='불러오기 실패';}
@@ -7769,7 +7826,13 @@ async function renderTodayTab(content){
         const ck=document.getElementById(`dck-${store.id}-${ii}`);
         const nm=document.getElementById(`dname-${store.id}-${ii}`);
         if(ck)ck.className='dash-check '+(checked?'done':'undone');
-        if(nm)nm.className='dash-item-name '+(checked?'done':'');
+        if(nm){
+          nm.className='dash-item-name '+(checked?'done':'');
+          const photo=data[`item_${ii}`]&&data[`item_${ii}`].photo;
+          let pm=nm.parentElement.querySelector('.dash-photo');
+          if(photo&&!pm){pm=document.createElement('span');pm.className='dash-photo';pm.textContent='사진 보기';pm.onclick=()=>openCleanPhoto(photo);nm.parentElement.appendChild(pm);}
+          else if(!photo&&pm)pm.remove();
+        }
       });
     });
     dashUnsubs.push(unsub1);

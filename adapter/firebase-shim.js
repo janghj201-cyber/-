@@ -877,7 +877,7 @@ async function fetchDeepCleanLogReadOnly(storeId, dateKey) {
   if (!existing) return null
   const { data: itemLogs, error: itemsErr } = await supabase
     .from('cleaning_deep_item_logs')
-    .select('id, item_label, done, completed_at')
+    .select('id, item_label, done, completed_at, photo_path')
     .eq('deep_log_id', existing.id)
     .order('sort_order')
   if (itemsErr) throw itemsErr
@@ -939,7 +939,7 @@ async function readChecks(ctx, originalStoreId, dateKey) {
   if (itemsErr) throw itemsErr
   const { data: logs, error: logsErr } = await supabase
     .from('cleaning_daily_logs')
-    .select('item_id, done, completed_at')
+    .select('item_id, done, completed_at, photo_path')
     .eq('store_id', storeId)
     .eq('log_date', dateKey)
   if (logsErr) throw logsErr
@@ -948,7 +948,7 @@ async function readChecks(ctx, originalStoreId, dateKey) {
   const result = {}
   ;(items ?? []).forEach((item, i) => {
     const log = logByItemId.get(item.id)
-    result[`item_${i}`] = log?.done ? { v: true, t: new Date(log.completed_at).getTime() } : { v: false, t: null }
+    result[`item_${i}`] = log?.done ? { v: true, t: new Date(log.completed_at).getTime(), photo: log.photo_path ?? null } : { v: false, t: null, photo: log?.photo_path ?? null }
   })
 
   const rule = await fetchDeepCleanRule(ctx)
@@ -957,7 +957,7 @@ async function readChecks(ctx, originalStoreId, dateKey) {
     const base = (items ?? []).length
     if (existing) {
       existing.itemLogs.forEach((it, i) => {
-        result[`item_${base + i}`] = it.done ? { v: true, t: it.completed_at ? new Date(it.completed_at).getTime() : null } : { v: false, t: null }
+        result[`item_${base + i}`] = it.done ? { v: true, t: it.completed_at ? new Date(it.completed_at).getTime() : null, photo: it.photo_path ?? null } : { v: false, t: null, photo: it.photo_path ?? null }
       })
     } else {
       // 아직 발생 기록 없음 — 배정될 구역 미리보기만(저장 안 함)
@@ -1023,10 +1023,9 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
     if (idx < dailyCount) {
       const item = (items ?? [])[idx]
       if (!item) continue
-      const { error } = await supabase.from('cleaning_daily_logs').upsert(
-        { tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: item.id, done, completed_by: done ? ctx.profileId : null, completed_at: done ? new Date().toISOString() : null },
-        { onConflict: 'store_id,log_date,item_id' }
-      )
+      const row = { tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, item_id: item.id, done, completed_by: done ? ctx.profileId : null, completed_at: done ? new Date().toISOString() : null }
+      if (val && 'photo' in val) row.photo_path = val.photo || null // 사진은 명시적으로 넘어올 때만 바꾼다
+      const { error } = await supabase.from('cleaning_daily_logs').upsert(row, { onConflict: 'store_id,log_date,item_id' })
       if (error) throw error
       continue
     }
@@ -1035,10 +1034,31 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
     if (!deepLog) continue // 방어적: 대청소일이 아닌데 들어온 인덱스는 무시
     const itemLog = deepLog.itemLogs[idx - dailyCount]
     if (!itemLog) continue
-    const { error, count } = await supabase.from('cleaning_deep_item_logs').update({ done, completed_at: done ? new Date().toISOString() : null }, { count: 'exact' }).eq('id', itemLog.id)
+    const patch = { done, completed_at: done ? new Date().toISOString() : null }
+    if (val && 'photo' in val) patch.photo_path = val.photo || null
+    const { error, count } = await supabase.from('cleaning_deep_item_logs').update(patch, { count: 'exact' }).eq('id', itemLog.id)
     if (error) throw error
     assertAffected(count, '대청소 체크')
   }
+}
+
+// ── 청소 사진 (Supabase Storage 'clean-photos', 비공개) ──
+// 경로: {tenant_id}/{store_id}/{dateKey}/{item_key}_{ts}.jpg — 첫 폴더가 테넌트라 storage RLS가
+// 같은 회사만 읽고 쓰게 막는다. 사진의 소재는 cleaning_*_logs.photo_path 에 남긴다.
+export async function uploadCleanPhoto(originalStoreId, dateKey, itemKey, blob) {
+  const ctx = await getContext()
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) throw new Error('매장을 알 수 없어요')
+  const path = `${ctx.tenantId}/${storeId}/${dateKey}/${itemKey}_${Date.now()}.jpg`
+  const { error } = await supabase.storage.from('clean-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false })
+  if (error) throw error
+  return path
+}
+export async function getCleanPhotoUrl(path, seconds = 3600) {
+  if (!path) return null
+  const { data, error } = await supabase.storage.from('clean-photos').createSignedUrl(path, seconds)
+  if (error) throw error
+  return data?.signedUrl ?? null
 }
 
 // ── config/staff (5-1 신원통합: 가짜 이름 16명 → 실제 테넌트 프로필) ──
