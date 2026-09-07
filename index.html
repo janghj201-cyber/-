@@ -478,6 +478,12 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 
 
 /* ── A안 홈 (Quiet Executive) ── */
+.vf-ic{width:16px;height:16px;vertical-align:-3px;margin-right:5px;flex-shrink:0;}
+.back-btn .vf-ic,.nav-btn .vf-ic{width:15px;height:15px;vertical-align:-3px;margin-right:4px;}
+#vf-side .vs-item .vf-ic{width:17px;height:17px;margin-right:9px;color:var(--text-mute);}
+#vf-side .vs-item.active .vf-ic{color:var(--gold);}
+.tab-icon .vf-ic{width:22px;height:22px;margin:0;vertical-align:0;}
+.vh-links .vf-ic{color:var(--text-sub);margin-right:8px;}
 .vh-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:2px 0 14px;flex-wrap:wrap;}
 .vh-head h1{font-size:19px;font-weight:800;margin:0 0 3px;color:var(--text);letter-spacing:-.2px;}
 .vh-head .vh-sub{font-size:12px;color:var(--text-sub);}
@@ -1012,7 +1018,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <!-- 게시글 상세 화면 -->
 <div class="board-detail-bg" id="board-detail-screen">
   <div class="board-detail-header">
-    <button class="back-btn" onclick="closeBoardDetail()">← 목록</button>
+    <button class="back-btn" onclick="closeBoardDetail()"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>목록</button>
     <div style="font-size:14px;font-weight:700;">게시글</div>
     <div style="display:flex;gap:6px;">
       <button id="board-detail-edit-btn" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;" onclick="editBoardPost()">수정</button>
@@ -1096,7 +1102,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   <div class="header">
     <div><div class="header-title" id="monthly-store-title">매장을 선택하세요</div><div class="header-sub" id="monthly-hsub"></div></div>
     <div class="nav-btns">
-      <button class="nav-btn" onclick="switchTab('dashboard')" title="홈으로">홈</button>
+      <button class="nav-btn" onclick="switchTab('dashboard')" title="홈으로"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>홈</button>
       <div id="monthly-store-selector" style="display:flex;gap:4px;align-items:center;">
         <button class="nav-btn" onclick="chgMonthlyStore(-1)">‹</button>
         <button class="nav-btn today-btn" onclick="openStoreSelect()">지점</button>
@@ -1152,7 +1158,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my">
   <div class="header">
     <div><div class="header-title">내 업무</div><div class="header-sub">직원을 선택하세요</div></div>
-    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">홈</button><button class="back-btn" onclick="openMyConsents()">내 동의</button><button class="back-btn" onclick="doChangePw()">비밀번호</button><button class="back-btn" onclick="doLogout()">로그아웃</button></div>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>홈</button><button class="back-btn" onclick="openMyConsents()">내 동의</button><button class="back-btn" onclick="doChangePw()">비밀번호</button><button class="back-btn" onclick="doLogout()">로그아웃</button></div>
   </div>
   <div id="staff-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;"></div>
   <div class="pb"></div>
@@ -1162,7 +1168,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-my-work">
   <div class="header">
     <div><div class="header-title" id="my-work-name">-</div><div class="header-sub" id="my-work-sub"></div></div>
-    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')">홈</button><button class="back-btn" onclick="backToStaffSelect()">← 직원 선택</button></div>
+    <div style="display:flex;gap:6px;"><button class="back-btn" onclick="switchTab('dashboard')"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>홈</button><button class="back-btn" onclick="backToStaffSelect()"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>직원 선택</button></div>
   </div>
 
   <!-- 지난달 미완료 알림 배너 (월 첫날에만 표시) -->
@@ -1294,7 +1300,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen has-tab-bar" id="screen-admin">
   <div class="header">
     <div><div class="header-title">관리자</div><div class="header-sub" id="dash-sub"></div></div>
-    <button class="back-btn" onclick="exitAdmin()">← 홈</button>
+    <button class="back-btn" onclick="exitAdmin()"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>홈</button>
   </div>
   <div class="dash-wrap" id="dash-wrap" style="max-width:1100px;margin:0 auto;"></div>
   <div class="pb"></div>
@@ -1322,11 +1328,11 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <div class="tab-bar" id="tab-bar">
   <button class="tab-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
-    <div class="tab-icon">⌂</div>
+    <div class="tab-icon"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
     <div class="tab-label">홈</div>
   </button>
   <button class="tab-item" id="tab-status" onclick="switchTab('status')" style="display:none;">
-    <div class="tab-icon">▤</div>
+    <div class="tab-icon"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></div>
     <div class="tab-label">오늘 현황</div>
   </button>
 </div>
@@ -4709,11 +4715,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 2열: 바로가기 목록 ──
   const links=el('div','vh-card vh-links');
   const ll=el('div','vh-list');
-  const mkLink=(title,desc,fn,cnt)=>{const r=el('div','vh-item link',`<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow">›</span>`);r.onclick=fn;return r;};
-  if(entry)ll.appendChild(mkLink(`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
-  ll.appendChild(mkLink('내 업무','프로젝트 · 개인 메모 · 히스토리',()=>enterMyWork(me)));
-  ll.appendChild(mkLink('월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
-  ll.appendChild(mkLink('오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',async()=>{
+  const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('div','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow">›</span>`);r.onclick=fn;return r;};
+  if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
+  ll.appendChild(mkLink(VF_ICONS.task,'내 업무','프로젝트 · 개인 메모 · 히스토리',()=>enterMyWork(me)));
+  ll.appendChild(mkLink(VF_ICONS.cal,'월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
+  ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',async()=>{
     try{
       const uid=window.__vflowProfile?.id||'';
       localStorage.removeItem(`vflow_brief_${uid}_${tKey}`);
@@ -4836,6 +4842,8 @@ function openLeaveSheet(entry,tKey,preset){
 }
 window.openLeaveSheet=openLeaveSheet;
 
+// 선형 아이콘 (이모지 대신) — 같은 굵기 2px, currentColor
+const VF_ICONS={home:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,task:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>`,store:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>`,cal:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,status:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,admin:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,guide:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,user:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,brief:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>`,back:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`};
 // 🖥️ 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
   const side=document.getElementById('vf-side');
@@ -4844,22 +4852,23 @@ function renderSideNav(active){
   const isAdm=vp.role==='owner'||vp.role==='manager';
   const me=vp.name||'';
   const entry=STORES.find(s=>s.id===(vp.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||''))||null;
+  const IC=VF_ICONS;
   const items=[
-    {k:'dashboard',lb:'홈',fn:()=>switchTab('dashboard')},
-    {k:'my',lb:'내 업무',fn:()=>enterMyWork(me)},
-    {k:'room',lb:entry?`${entry.name.replace('인천 ','').replace('부천 ','')} 방`:'매장 방',fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
-    {k:'monthly',lb:'월간 스케줄',fn:()=>switchTab('monthly')},
+    {k:'dashboard',lb:'홈',ic:IC.home,fn:()=>switchTab('dashboard')},
+    {k:'my',lb:'내 업무',ic:IC.task,fn:()=>enterMyWork(me)},
+    {k:'room',lb:entry?`${entry.name.replace('인천 ','').replace('부천 ','')} 방`:'매장 방',ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
+    {k:'monthly',lb:'월간 스케줄',ic:IC.cal,fn:()=>switchTab('monthly')},
   ];
-  if(isAdm&&!vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',fn:()=>switchTab('status')},{k:'admin',lb:'관리자',fn:()=>openPwModal()});
-  if(vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',fn:()=>switchTab('status')});
+  if(isAdm&&!vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')},{k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()});
+  if(vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')});
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
-    b.innerHTML=`<span>${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
+    b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
   });
   const gap=document.createElement('div');gap.className='vs-gap';side.appendChild(gap);
-  [['가이드',()=>openGuideModal()],['내 계정',()=>openAppMenu()]].forEach(([lb,fn])=>{
-    const b=document.createElement('button');b.className='vs-item';b.innerHTML=`<span>${lb}</span>`;b.onclick=fn;side.appendChild(b);
+  [['가이드',IC.guide,()=>openGuideModal()],['내 계정',IC.user,()=>openAppMenu()]].forEach(([lb,ic,fn])=>{
+    const b=document.createElement('button');b.className='vs-item';b.innerHTML=`<span>${ic}${lb}</span>`;b.onclick=fn;side.appendChild(b);
   });
 }
 
