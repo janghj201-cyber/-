@@ -574,6 +574,10 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-voice .vh-btn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
 .vh-voice .vh-btn.on .vh-mic-dot{background:var(--red);animation:vhPulse 1s infinite;}
 @keyframes vhPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.vh-until{margin-top:8px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-sub);}
+.vh-until label{display:flex;align-items:center;gap:7px;cursor:pointer;line-height:1.4;}
+.vh-until input[type=checkbox]{width:17px;height:17px;accent-color:var(--gold);}
+.vh-until input[type=date]{border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text);}
 .vh-sheet-btns{display:flex;gap:8px;margin-top:12px;}
 .vh-sheet-btns .vh-btn{flex:1;min-height:46px;font-size:14px;}
 /* 데스크탑 사이드바 (≥1024) — 폰의 하단 탭이 왼쪽으로 옮겨간 것 */
@@ -2255,10 +2259,12 @@ async function renderMyHandoverList(){
     }
     listEl.innerHTML='';
     const isAdminUser=(window.__vflowProfile?.role==='owner'||window.__vflowProfile?.role==='manager');
-    const forMeUnc=items.filter(i=>!i.confirmed && i.recipient===myStaff);
-    const otherUnc=items.filter(i=>!i.confirmed && i.recipient!==myStaff);
-    const doneItems=items.filter(i=>i.confirmed);
-    const sorted=[...forMeUnc,...otherUnc,...doneItems];
+    hoAutoCloseExpired(myStore.id,dateKey,items);
+    const longs=items.filter(i=>hoLongActive(i,dateKey));
+    const forMeUnc=items.filter(i=>!hoIsLong(i)&&!i.confirmed && i.recipient===myStaff);
+    const otherUnc=items.filter(i=>!hoIsLong(i)&&!i.confirmed && i.recipient!==myStaff);
+    const doneItems=items.filter(i=>!hoIsLong(i)&&i.confirmed);
+    const sorted=[...forMeUnc,...otherUnc,...longs,...doneItems];
 
     sorted.forEach(item=>{
       const row=document.createElement('div');
@@ -2267,10 +2273,14 @@ async function renderMyHandoverList(){
       row.className='my-todo-note'+(item.confirmed?' done':'')+((forMe&&!item.confirmed)?' recip-me':'');
       const carry=(item.fromDate&&item.fromDate!==dateKey)?`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`:'';
       const feedbacks=item.feedbacks||[];
+      const isLong=hoIsLong(item);
+      const fallback=!isLong&&!item.confirmed&&!!item.recipient&&!forMe&&hoOpenToAll(item,dateKey);
       const recipLine=item.recipient
-        ? `<span class="ho-recip${forMe?' ho-recip-me':''}">→ ${item.recipient}${forMe?' (나)':''}</span>`
+        ? `<span class="ho-recip${forMe?' ho-recip-me':''}">→ ${item.recipient}${forMe?' (나)':''}${fallback?` <span style="color:var(--orange);">· ${hoAgeDays(item,dateKey)}일째 부재, 누구나 확인 가능</span>`:''}</span>`
         : `<span class="ho-recip ho-recip-any">→ 다음 근무자 누구나</span>`;
-      const statusTop=item.confirmed
+      const statusTop=isLong
+        ? `<span class="ho-badge" style="background:var(--blue-light);color:var(--blue);">알아둘 것 ${hoUntilLabel(item)}</span>`
+        : item.confirmed
         ? `<span class="ho-badge ho-badge-done">✅ ${item.confirmedBy||'확인'} 확인함</span>`
         : `<span class="ho-badge ho-badge-need">확인 필요</span>`;
       row.innerHTML=`
@@ -2290,11 +2300,11 @@ async function renderMyHandoverList(){
             <button class="feedback-submit" style="background:var(--gold);color:var(--navy);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">등록</button>
           </div>
           <div class="ho-actions">
-            ${item.confirmed
+            ${isLong?'':item.confirmed
               ? `<button class="ho-btn ho-btn-undo" data-act="unconfirm">확인 취소</button>`
               : `<button class="ho-btn ho-btn-confirm" data-act="confirm">✓ 확인</button>`}
             <button class="ho-btn ho-btn-fb" data-act="fb">💬 피드백</button>
-            ${(!item.confirmed&&(isMine||isAdminUser))?`<button class="ho-btn ho-btn-close" data-act="close">확인없이 종료</button>`:''}
+            ${(!item.confirmed&&(isMine||isAdminUser))?`<button class="ho-btn ho-btn-close" data-act="close">${isLong?'끝내기 (보관)':'확인없이 종료'}</button>`:''}
             ${isMine?`<button class="ho-btn ho-btn-edit" data-act="edit">✏️ 수정</button>`:''}
             ${isMine?`<button class="ho-btn ho-btn-del" data-act="del">🗑️</button>`:''}
           </div>
@@ -2307,7 +2317,7 @@ async function renderMyHandoverList(){
         await toggleHandoverItem(myStore.id,dateKey,item.id,false,myStaff); renderMyHandoverList();
       });
       row.querySelector('[data-act="close"]')?.addEventListener('click',async()=>{
-        if(!confirm('이 인수인계를 "확인 없이 종료"할까요? 목록에서 사라집니다.'))return;
+        if(!confirm(hoIsLong(item)?'이 장기 인수인계를 끝낼까요? 목록에서 사라집니다.':'이 인수인계를 "확인 없이 종료"할까요? 목록에서 사라집니다.'))return;
         await closeHandoverItem(myStore.id,dateKey,item.id); renderMyHandoverList();
       });
       row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
@@ -2555,6 +2565,8 @@ const GUIDE_SECTIONS = [
       '📷 청소 항목 옆 「사진」 — 찍어 올리면 그 항목이 자동으로 체크돼요. 관리자 현황 상세에서 「사진 보기」로 확인',
       '🏪 관리자 현황·보고가 매장 타일로 바뀌었어요 — 한눈에 6개, 누르면 옆(폰은 아래)에 상세',
       '🏅 매장 점수 — 청소 다 하면 100, 업무 완료 가점, 미확인 인수인계 감점. 타일·오늘 현황·월간 통계에 보이고 규칙은 설정 탭에서',
+      '🔁 특정 사람에게 남긴 인수인계가 2일 지나도 미확인이면 그 매장 누구나 확인할 수 있어요 (일수는 설정에서)',
+      '📌 「남기기」 인수인계에 「장기」 — 확인이 아니라 계속 알아둘 것(휴가 대행, AS 대기). 정한 날짜까지 매일 보이고 점수엔 안 들어가요',
     ],
   },
   {
@@ -4222,7 +4234,7 @@ async function renderDashboardHome(){
     try{
       const hs=dashHoByStore.get(store.id);
       if(hs&&hs.exists()){
-        handoverUnchecked=(hs.data().items||[]).filter(i=>!i.confirmed).length;
+        handoverUnchecked=(hs.data().items||[]).filter(hoNeedsConfirm).length;
       }
     }catch(e){}
 
@@ -4402,7 +4414,7 @@ window.renderTodayStatus=async function(){
       const hs=hoSnaps[i];
       if(hs&&hs.exists()){
         (hs.data().items||[]).forEach(it=>{
-          if(it.confirmed||it.closed)return;
+          if(!hoNeedsConfirm(it))return;
           unconf++;
           if(it.fromDate){const dd=Math.floor((Date.now()-new Date(it.fromDate).getTime())/86400000);if(dd>=3)stale.push({store:s,it,days:dd});}
         });
@@ -4619,15 +4631,19 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const pair=(todosByName||[]).find(p=>p&&p[0]===me);
   const mine=pair?pair[1]:[];
   const todoDone=mine.filter(i=>i.done).length, todoLeft=mine.length-todoDone;
-  const hoRows=[];
+  const hoRows=[],longRows=[];
   try{
     for(const store of STORES){
       const snap=hoByStore.get(store.id);
       if(!snap||!snap.exists())continue;
-      (snap.data().items||[]).forEach(it=>{
-        if(it.confirmed||it.closed)return;
+      const its=snap.data().items||[];
+      if(entry&&store.id===entry.id)hoAutoCloseExpired(store.id,tKey,its);
+      its.forEach(it=>{
+        if(entry&&store.id===entry.id&&hoLongActive(it,tKey)){longRows.push({store,it});return;}
+        if(!hoNeedsConfirm(it))return;
         const toMe=it.recipient===me;
-        if(toMe||(entry&&store.id===entry.id&&!it.recipient))hoRows.push({store,it,toMe});
+        const fallback=!toMe&&!!it.recipient&&hoOpenToAll(it,tKey);
+        if(toMe||(entry&&store.id===entry.id&&hoOpenToAll(it,tKey)))hoRows.push({store,it,toMe,fallback});
       });
     }
   }catch(e){}
@@ -4684,7 +4700,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열: 우선 확인 ──
   const pri=el('div','vh-card vh-priority');
   const items=[];
-  hoRows.forEach(({store,it,toMe})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':shortStore(store.name)} · 인수인계`,btn:'확인',ho:{store,it},
+  hoRows.forEach(({store,it,toMe,fallback})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':fallback?`${it.recipient} ${hoAgeDays(it,tKey)}일째 부재 → 누구나`:shortStore(store.name)} · 인수인계`,btn:'확인',ho:{store,it},
     act:async(btn,row)=>{
       btn.disabled=true;btn.textContent='저장중';
       try{
@@ -4699,6 +4715,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     open:()=>{if(entry)openStoreRoom(entry);}}));
   if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} 청소 ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전':`${dnCl}/${totalCl} 진행중`,btn:'체크',act:()=>{if(entry)openQuickClean(entry);},open:()=>{if(entry)openQuickClean(entry);}});
   if(mine.length===0)items.push({lv:1,dot:'warn',text:'오늘 할 일이 아직 없어요',sub:'남기기에서 적거나 내 업무에서 등록',btn:'등록',act:()=>openLeaveSheet(entry,tKey,'todo'),open:()=>enterMyWork(me)});
+  longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${it.author||'익명'} · 알아둘 것 ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
   items.sort((a,b)=>a.lv-b.lv);
   const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);
   pri.appendChild(priHead);
@@ -4742,9 +4759,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       fbWrap.querySelector('input').onkeydown=(e)=>{if(e.key==='Enter')submit();};
       row.appendChild(fbBtn);
     }
-    const b=el('button','vh-btn',o.btn);
-    b.onclick=(e)=>{e.stopPropagation();o.act(b,row);};
-    row.appendChild(b);priList.appendChild(row);
+    if(o.btn){const b=el('button','vh-btn',o.btn);b.onclick=(e)=>{e.stopPropagation();o.act(b,row);};row.appendChild(b);}
+    priList.appendChild(row);
   });
   const more=el('button','vh-more','');
   more.onclick=()=>{priList.querySelectorAll('.vh-item').forEach(r=>r.classList.remove('vh-hide-m'));more.style.display='none';};
@@ -4847,7 +4863,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   if(entry){
     const st=el('div','vh-card vh-store');
     const _cs=window.__dashClean?window.__dashClean.get(entry.id):null;
-    const _sc=calcStoreScore({cleanData:(_cs&&_cs.exists())?_cs.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(it=>!it.confirmed&&!it.closed).length:0;})()});
+    const _sc=calcStoreScore({cleanData:(_cs&&_cs.exists())?_cs.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(hoNeedsConfirm).length:0;})()});
     st.appendChild(el('div','vh-ct',`<strong>${shortStore(entry.name)} 상태</strong>${scoreChip(_sc)}`));
     st.appendChild(el('div','vh-storegrid',
       `<div class="vh-cell"><b>근무</b>${workers.length?workers.slice(0,3).join(' · ')+(workers.length>3?` 외 ${workers.length-3}`:''):'아직 없음'}</div>`+
@@ -4891,10 +4907,13 @@ function openLeaveSheet(entry,tKey,preset){
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+    <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
   let kind=preset||'todo';
   const kinds=sh.querySelectorAll('.vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
-  const setKind=(k)=>{kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));recip.style.display=k==='handover'?'':'none';ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':'나만 볼 메모';};
+  const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
+  longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
+  const setKind=(k)=>{kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));recip.style.display=k==='handover'?'':'none';untilWrap.style.display=k==='handover'?'':'none';ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':'나만 볼 메모';};
   kinds.forEach(b=>b.onclick=()=>setKind(b.dataset.k));
   setKind(kind);
   // 🎤 음성 → 글 (테스트 단계). 브라우저 내장 인식(Web Speech API) — 우리 서버에는 음성이 안 가고 저장도 안 한다.
@@ -4957,7 +4976,10 @@ function openLeaveSheet(entry,tKey,preset){
     const btn=e.currentTarget;btn.disabled=true;btn.textContent='저장중';
     try{
       if(kind==='todo')await addTodoItem(entry.id,tKey,text,me);
-      else if(kind==='handover')await addHandoverItem(entry.id,tKey,text,me,recip.value||'');
+      else if(kind==='handover'){
+        if(longCb.checked&&(!untilInp.value||untilInp.value<tKey)){alert('언제까지 보일지 날짜를 골라주세요');btn.disabled=false;btn.textContent='저장';return;}
+        await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null);
+      }
       else{
         const ref=doc(db,`staff_memo/${me}`);
         const snap=await getDoc(ref);
@@ -5135,10 +5157,10 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
     const snap=hoByStore.get(store.id);
     if(!snap||!snap.exists())continue;
     (snap.data().items||[]).forEach(it=>{
-      if(it.confirmed||it.closed)return;
+      if(!hoNeedsConfirm(it))return;
       const toMe=it.recipient===me;
       const isMyStore=myDefaultStoreId&&store.id===myDefaultStoreId;
-      if(toMe||(isMyStore&&!it.recipient))hoRows.push({store,it,toMe});
+      if(toMe||(isMyStore&&hoOpenToAll(it,tKey)))hoRows.push({store,it,toMe});
     });
   }
   hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
@@ -5823,9 +5845,9 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
     const snap=hoByStore.get(store.id);
     if(!snap||!snap.exists())continue;
     (snap.data().items||[]).forEach(it=>{
-      if(it.confirmed||it.closed)return;
+      if(!hoNeedsConfirm(it))return;
       const toMe=it.recipient===me;
-      if(toMe||(myStoreId&&store.id===myStoreId&&!it.recipient))hoRows.push({store,it,toMe});
+      if(toMe||(myStoreId&&store.id===myStoreId&&hoOpenToAll(it,tKey)))hoRows.push({store,it,toMe});
     });
   }
   hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
@@ -7202,11 +7224,28 @@ async function loadHandoverItems(storeId,dateKey){
   const snap=await getDoc(doc(db,`handover/${storeId}_${dateKey}`));
   return snap.exists()?(snap.data().items||[]):[];
 }
-async function addHandoverItem(storeId,dateKey,text,author,recipient){
+// ── 인수인계 보완 두 가지 ──
+// ① 부재 넘김: 특정 사람에게 남긴 것이 N일(기본 2) 지나도 미확인이면, 그 매장 누구나 확인할 수 있게 연다.
+//    담당자가 휴무·휴가로 비우면 인수인계가 그 사람 앞에 계속 쌓이던 문제.
+// ② 장기: until(종료일)이 있으면 '확인할 것'이 아니라 '알아둘 것'. 그 날짜까지 매일 보이고,
+//    확인 대상·점수 감점에서 뺀다. 종료일이 지나면 처음 본 사람 화면에서 조용히 보관된다.
+function hoRule(){return {fallbackDays:2,...(appSettings.handover||{})};}
+function hoAgeDays(it,tKey){const d=it.since||it.fromDate||tKey;return Math.max(0,Math.round((new Date(tKey)-new Date(d))/86400000));}
+function hoIsLong(it){return !!(it&&it.until);}
+function hoOpenToAll(it,tKey){if(!it.recipient)return true;return hoAgeDays(it,tKey)>=hoRule().fallbackDays;}
+function hoNeedsConfirm(it){return !!it&&!it.confirmed&&!it.closed&&!hoIsLong(it);}
+function hoLongActive(it,tKey){return hoIsLong(it)&&!it.closed&&it.until>=tKey;}
+function hoUntilLabel(it){return it.until?`~${it.until.slice(5).replace('-','/')}`:'';}
+// 종료일 지난 장기 인수인계는 보관 처리 (한 번만, 실패해도 조용히)
+const _hoExpired=new Set();
+function hoAutoCloseExpired(storeId,tKey,items){
+  (items||[]).forEach(it=>{if(hoIsLong(it)&&!it.closed&&it.until<tKey&&!_hoExpired.has(it.id)){_hoExpired.add(it.id);closeHandoverItem(storeId,tKey,it.id).catch(()=>{});}});
+}
+async function addHandoverItem(storeId,dateKey,text,author,recipient,until){
   const ref=doc(db,`handover/${storeId}_${dateKey}`);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false});
+  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false,until:until||null});
   await setDoc(ref,{items});
 }
 // 확인 없이 종료(마감) — 못 받아서 영영 미확인으로 쌓이는 것 방지
@@ -7923,7 +7962,7 @@ async function renderTodayTab(content){
       const hoRef=doc(db,`handover/${store.id}_${tKey}`);
       const unsubHo=onSnapshot(hoRef,(snap)=>{
         const its=snap.exists()?(snap.data().items||[]):[];
-        tileState[store.id].hoUnconf=its.filter(it=>!it.confirmed&&!it.closed).length;
+        tileState[store.id].hoUnconf=its.filter(hoNeedsConfirm).length;
         paintTile(store);
       });
       dashUnsubs.push(unsubHo);
@@ -8561,6 +8600,17 @@ async function renderSettingsTab(content){
     const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;';row.appendChild(sv);row.appendChild(msg);
     secS.appendChild(row);
     content.appendChild(secS);
+  }
+  // ── 인수인계 규칙 ──
+  {
+    const hr=hoRule();
+    const secH=document.createElement('div');secH.className='dash-card';secH.style.marginBottom='12px';
+    secH.innerHTML='<div class="dash-store-name">인수인계 규칙</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">특정 사람에게 남긴 인수인계가 이 일수만큼 지나도 미확인이면, 그 매장 누구나 확인할 수 있게 열립니다. 담당자가 휴무·휴가로 비울 때 쌓이지 않게.</div>';
+    const w=document.createElement('label');w.style.cssText='display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;';
+    w.innerHTML=`<input type="number" min="0" max="30" value="${hr.fallbackDays}" style="width:70px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;color:var(--text);"> 일 지나면 누구나 확인 가능 <span style="font-size:11px;color:var(--text-mute);font-weight:400;">(0이면 처음부터 누구나)</span>`;
+    const msg2=document.createElement('span');msg2.style.cssText='font-size:12px;color:var(--green);margin-left:8px;';
+    w.querySelector('input').onchange=async(e)=>{appSettings.handover={...(appSettings.handover||{}),fallbackDays:Math.max(0,Number(e.target.value)||0)};msg2.textContent='저장 중...';try{await saveSettings();msg2.textContent='✓ 저장됨';}catch(err){msg2.textContent='⚠ 저장 실패';}};
+    w.appendChild(msg2);secH.appendChild(w);content.appendChild(secH);
   }
 
   const secT=document.createElement('div');secT.className='dash-card';
@@ -9255,7 +9305,7 @@ async function renderMonthlyTab(content){
       let dDone=0,dTotal=0;
       day.todoPairs.forEach(p=>{if(!p)return;const its=p[1].filter(it=>it.storeId===store.id);dTotal+=its.length;dDone+=its.filter(it=>it.done).length;});
       todoDone+=dDone;todoTotal+=dTotal;
-      const hs=day.hoSnaps[si];const unconf=(hs&&hs.exists())?(hs.data().items||[]).filter(it=>!it.confirmed&&!it.closed).length:0;
+      const hs=day.hoSnaps[si];const unconf=(hs&&hs.exists())?(hs.data().items||[]).filter(hoNeedsConfirm).length:0;
       const sc=calcStoreScore({cleanData,cleanTotal:day.cleanTotal,todoDone:dDone,hoUnconfirmed:unconf});
       scoreSum+=sc.score;scoreDays++;if(sc.level==='green')greenDays++;
     });

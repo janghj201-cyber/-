@@ -245,7 +245,7 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
   // 잡히면 안 되므로.
   const { data: currentRows, error: selErr } = await supabase
     .from('handovers')
-    .select('id, content, confirmed, closed')
+    .select('id, content, confirmed, closed, until_date')
     .eq('store_id', storeId)
     .is('deleted_at', null)
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
@@ -282,6 +282,7 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
           confirmed: item.confirmed ?? false,
           recipient_id: recipientId,
           closed: item.closed ?? false,
+          until_date: item.until || null,
         })
         .select('id')
         .single()
@@ -292,6 +293,7 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
       if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
       const patch = {}
       if (current.content !== item.text) patch.content = item.text
+      if ('until' in item && (current.until_date ?? null) !== (item.until || null)) patch.until_date = item.until || null
       if (current.confirmed !== item.confirmed) {
         patch.confirmed = item.confirmed
         patch.confirmed_by = item.confirmed ? ctx.profileId : null
@@ -317,7 +319,7 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
   if (!storeId) return []
   const { data, error } = await supabase
     .from('handovers')
-    .select('id, content, handover_date, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
+    .select('id, content, handover_date, until_date, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
     .eq('store_id', storeId)
     .is('deleted_at', null)
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
@@ -349,6 +351,8 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     confirmedBy: h.confirmer?.name ?? null,
     confirmedAt: h.confirmed_at ? new Date(h.confirmed_at).getTime() : null,
     fromDate: h.handover_date !== dateKey ? h.handover_date : null,
+    since: h.handover_date, // 처음 남긴 날 — 부재 판단·장기 표시용
+    until: h.until_date ?? null, // 장기 인수인계: 이 날짜까지 매일 보인다 (확인 대상 아님)
     recipient: h.recip?.name ?? null,
     closed: h.closed ?? false,
     closedBy: h.closer?.name ?? null,
