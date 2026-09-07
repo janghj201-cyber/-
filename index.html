@@ -4835,36 +4835,54 @@ function openLeaveSheet(entry,tKey,preset){
   // 결과 문장을 보고 종류(할 일/인수인계/메모)를 제안만 하고, 확정은 사람이 한다.
   const micBtn=sh.querySelector('[data-mic]'), vstat=sh.querySelector('[data-vstat]');
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let rec=null, listening=false;
+  let rec=null, listening=false, wantListening=false, startedAt=0;
+  const MAX_MS=120000; // 한 번 누르면 최대 2분. 브라우저가 중간에 끊어도 이 안에서는 다시 잇는다
   const guessKind=(t)=>{
     if(/인수인계|다음 근무|전달|알려|넘겨|부탁/.test(t))return 'handover';
     if(/메모|기억|잊지|개인적|나중에 참고/.test(t))return 'memo';
     return 'todo';
   };
   if(!SR){micBtn.disabled=true;vstat.textContent='이 브라우저는 음성 인식이 없어요 — 크롬·사파리에서 테스트';}
-  micBtn.onclick=()=>{
-    if(!SR)return;
-    if(listening){try{rec.stop();}catch(e){}return;}
-    rec=new SR();rec.lang='ko-KR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+  const setMicUI=(on)=>{micBtn.classList.toggle('on',on);micBtn.lastChild.textContent=on?'듣는 중… 누르면 끝':'말하기';};
+  const finish=()=>{
+    wantListening=false;listening=false;setMicUI(false);
+    const t=ta.value.trim();
+    if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${g==='todo'?'오늘 할 일':g==='handover'?'인수인계':'내 메모'}」로 보여요 — 아니면 위에서 바꿔주세요`;}
+    else if(!/실패|권한/.test(vstat.textContent))vstat.textContent='들린 말이 없어요';
+    try{console.log('[voice-test]',JSON.stringify({text:t,guess:t?guessKind(t):null,ms:Date.now()-startedAt,at:new Date().toISOString()}));}catch(e){}
+  };
+  // 브라우저 인식은 말이 잠깐 끊기면 저절로 멈춘다(2~3초). 사람이 끝내기 전엔 계속 이어 듣는다.
+  const startSession=()=>{
+    rec=new SR();rec.lang='ko-KR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=true;
     const base=ta.value?ta.value.replace(/\s+$/,'')+' ':'';
     let final='';
-    rec.onstart=()=>{listening=true;micBtn.classList.add('on');micBtn.lastChild.textContent='듣는 중… 다시 누르면 끝';vstat.textContent='말씀하세요';};
+    rec.onstart=()=>{listening=true;setMicUI(true);vstat.textContent='말씀하세요 — 다 말했으면 버튼을 다시 누르세요';};
     rec.onresult=(ev)=>{
       let interim='';
       for(let i=ev.resultIndex;i<ev.results.length;i++){const r=ev.results[i];if(r.isFinal)final+=r[0].transcript;else interim+=r[0].transcript;}
       ta.value=base+final+interim;
     };
-    rec.onerror=(ev)=>{vstat.textContent=ev.error==='not-allowed'?'마이크 권한이 꺼져 있어요 — 브라우저 설정에서 허용':ev.error==='no-speech'?'소리가 안 들렸어요 — 다시 눌러 말해보세요':'인식 실패: '+ev.error;};
-    rec.onend=()=>{
-      listening=false;micBtn.classList.remove('on');micBtn.lastChild.textContent='말하기';
-      const t=ta.value.trim();
-      if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${g==='todo'?'오늘 할 일':g==='handover'?'인수인계':'내 메모'}」로 보여요 — 아니면 위에서 바꿔주세요`;}
-      else if(!vstat.textContent.includes('실패')&&!vstat.textContent.includes('권한'))vstat.textContent='들린 말이 없어요';
-      try{console.log('[voice-test]',JSON.stringify({text:t,guess:t?guessKind(t):null,at:new Date().toISOString()}));}catch(e){}
+    rec.onerror=(ev)=>{
+      if(ev.error==='no-speech'||ev.error==='aborted')return; // 잠깐 조용한 건 오류가 아니다 — onend에서 이어감
+      wantListening=false;
+      vstat.textContent=ev.error==='not-allowed'?'마이크 권한이 꺼져 있어요 — 브라우저 설정에서 허용':'인식 실패: '+ev.error;
     };
-    try{rec.start();}catch(e){vstat.textContent='시작 실패 — 페이지를 새로고침해 보세요';}
+    rec.onend=()=>{
+      listening=false;
+      ta.value=base+final; // 확정된 것만 남기고 다음 세션은 여기에 이어 붙인다
+      if(wantListening&&Date.now()-startedAt<MAX_MS){try{startSession();return;}catch(e){}}
+      if(wantListening&&Date.now()-startedAt>=MAX_MS)vstat.textContent='2분이 지나 멈췄어요 — 더 말하려면 다시 누르세요';
+      finish();
+    };
+    rec.start();
   };
-  const close=()=>{try{if(rec)rec.abort();}catch(e){}ov.remove();};
+  micBtn.onclick=()=>{
+    if(!SR)return;
+    if(wantListening){wantListening=false;try{rec.stop();}catch(e){finish();}return;}
+    wantListening=true;startedAt=Date.now();
+    try{startSession();}catch(e){wantListening=false;vstat.textContent='시작 실패 — 페이지를 새로고침해 보세요';}
+  };
+  const close=()=>{wantListening=false;try{if(rec)rec.abort();}catch(e){}ov.remove();};
   sh.querySelector('[data-cancel]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
   sh.querySelector('[data-save]').onclick=async(e)=>{
