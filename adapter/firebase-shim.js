@@ -1058,6 +1058,35 @@ export async function uploadCleanPhoto(originalStoreId, dateKey, itemKey, blob) 
   if (error) throw error
   return path
 }
+// 오래된 청소 사진 정리 — keepDays 보다 오래된 날짜 폴더의 파일을 지우고, 기록의 photo_path 도 비운다.
+// 관리자(owner/manager)만. storage RLS의 delete 정책이 같은 조건을 다시 확인한다.
+export async function deleteOldCleanPhotos(keepDays) {
+  const ctx = await getContext()
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - Math.max(1, keepDays | 0))
+  const cutoffKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
+  const bucket = supabase.storage.from('clean-photos')
+  const list = async (prefix) => { const { data, error } = await bucket.list(prefix, { limit: 1000 }); if (error) throw error; return data ?? [] }
+  let files = 0, folders = 0
+  const stores = await list(ctx.tenantId)
+  for (const st of stores) {
+    if (st.id) continue // 파일이 아니라 폴더만
+    const dates = await list(`${ctx.tenantId}/${st.name}`)
+    for (const d of dates) {
+      if (d.id || !/^\d{4}-\d{2}-\d{2}$/.test(d.name) || d.name >= cutoffKey) continue
+      const prefix = `${ctx.tenantId}/${st.name}/${d.name}`
+      const objs = await list(prefix)
+      const paths = objs.filter((o) => o.id).map((o) => `${prefix}/${o.name}`)
+      for (let i = 0; i < paths.length; i += 100) {
+        const { error } = await bucket.remove(paths.slice(i, i + 100)); if (error) throw error
+      }
+      files += paths.length; folders++
+    }
+  }
+  // 기록 쪽 소재도 비운다 (사진이 없는데 '사진 보기'가 남지 않게)
+  const { error: e1 } = await supabase.from('cleaning_daily_logs').update({ photo_path: null }).eq('tenant_id', ctx.tenantId).lt('log_date', cutoffKey).not('photo_path', 'is', null)
+  if (e1) throw e1
+  return { files, folders, cutoffKey }
+}
 export async function getCleanPhotoUrl(path, seconds = 3600) {
   if (!path) return null
   const { data, error } = await supabase.storage.from('clean-photos').createSignedUrl(path, seconds)
