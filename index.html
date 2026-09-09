@@ -649,6 +649,90 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .dt-detail{position:sticky;top:12px;}
   .dt-detail-close{display:none;}
 }
+/* ── UX v2 보정 (GPT 검토안 2026-09-09 반영) — 접근성·모바일 폭·초점·상태 표시 ── */
+
+:root {
+  --vf-focus-ring: 0 0 0 3px rgba(214, 162, 70, .32);
+  --vf-control-min: 44px;
+  --vf-icon-stroke: 1.75;
+}
+
+/* 동일한 24px 그리드와 둥근 1.75px 획을 강제합니다. */
+.vf-ic, .vf-ic * { stroke-width: var(--vf-icon-stroke); stroke-linecap: round; stroke-linejoin: round; }
+.vf-ic { width: 20px; height: 20px; vertical-align: middle; margin-right: 7px; }
+.tab-icon .vf-ic { width: 22px; height: 22px; }
+
+button, select, input, textarea { font: inherit; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible,
+[tabindex]:focus-visible { outline: 0; box-shadow: var(--vf-focus-ring); }
+button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* 요약 지표: 색 테두리 경쟁을 줄이고 숫자·상태가 먼저 읽히게 합니다. */
+.vh-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.vh-metric { min-width: 0; min-height: 72px; text-align: left; color: inherit; font-family: inherit; }
+.vh-metric.danger, .vh-metric.ok { border-color: var(--border); background: var(--card); }
+.vh-metric.danger { box-shadow: inset 0 3px 0 var(--red); }
+.vh-metric.ok { box-shadow: inset 0 3px 0 var(--green); }
+.vh-metric:hover { background: var(--bg); }
+
+/* 클릭 가능한 행과 주요 행동을 재사용 버튼으로 안전하게 만듭니다. */
+.vh-item.link { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: transparent; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.vh-quick { width: 100%; text-align: left; font-family: inherit; min-height: 72px; }
+.vh-quick:hover { filter: brightness(1.04); }
+.vh-arrow { color: #c6cfdb; font-size: 18px; }
+.vh-btn, .vh-kind, .vh-fold, .vh-more { min-height: var(--vf-control-min); }
+
+/* 모바일 머리: 매장 전환과 남기기를 한 행에 유지하되 압축하지 않습니다. */
+@media (max-width: 600px) {
+  .vh-head { align-items: stretch; }
+  .vh-head > :first-child { width: 100%; }
+  .vh-actions { width: 100%; }
+  .vh-store-sel { flex: 1 1 auto; min-width: 0; max-width: none; min-height: 44px; }
+  .vh-actions .vh-btn.primary { flex: 0 0 auto; }
+  .vh-metric { padding: 10px 8px; }
+  .vh-metric span { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vh-priority .vh-main { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+
+/* 관리자 타일: 390px에서 두 열이 절대 넘치지 않도록 내부 최소폭을 해제합니다. */
+.dt-layout, .dt-tiles, .dt-tile { min-width: 0; }
+.dt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dt-tile { width: 100%; overflow: hidden; text-align: left; color: inherit; font-family: inherit; appearance: none; }
+.dt-tile-head { min-width: 0; }
+.dt-tile-name { min-width: 0; flex: 1 1 auto; }
+.score-chip { flex: 0 0 auto; font-size: 11px; padding: 3px 7px; }
+.dt-tile:hover { background: #fffdf8; }
+.dt-tile.on { box-shadow: var(--vf-focus-ring); }
+
+@media (max-width: 420px) {
+  .dt-tiles { gap: 8px; }
+  .dt-tile { padding: 11px 10px; }
+  .dt-tile-head { align-items: flex-start; flex-wrap: wrap; }
+  .dt-tile-name { flex-basis: 100%; }
+  .dt-workers { white-space: normal; min-height: 30px; }
+}
+
+/* 모바일 상세 시트: 시트임을 즉시 인지하고 닫기·내용을 분리합니다. */
+.vh-sheet-handle { width: 36px; height: 4px; margin: -5px auto 12px; border-radius: 999px; background: var(--border); }
+@media (max-width: 1023px) {
+  .dt-detail.open::before { content: ''; display: block; width: 36px; height: 4px; margin: 8px auto 0; border-radius: 999px; background: var(--border); }
+  .dt-detail-body { padding-bottom: calc(28px + var(--safe-bot)); }
+}
+
+/* 사진 체크는 썸네일과 상태 텍스트가 함께 보여야 합니다. */
+.check-photo-btn { min-width: 64px; min-height: 44px; }
+.check-item:has(.check-photo-btn:not(:disabled)) { scroll-margin-top: 72px; }
+
+
+/* 타일: 점수보다 상태 글자가 먼저 — 색만으로 구분하지 않는다 */
+.dt-status { font-size: 11px; font-weight: 800; white-space: nowrap; }
+.dt-tile.status-done .dt-status { color: var(--green); }
+.dt-tile.status-pending .dt-status { color: var(--orange); }
+.dt-tile.status-none .dt-status { color: var(--red); }
+.dt-tile-head { gap: 6px; }
+.dt-tile-head .score-chip { margin-left: auto; }
+
 /* 오늘 날짜 강조 */
 .day.today{background:linear-gradient(135deg,#fff9e6 0%,#fff3cc 100%) !important;border-top:3px solid var(--gold) !important;}
 .day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(180,140,0,0.4);}
@@ -4683,7 +4767,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
 
   // ── 1열: 오늘 요약 4칸 ──
   const met=el('div','vh-metrics');
-  const mk=(lb,val,cls,fn)=>{const m=el('div','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.onclick=fn;return m;};
+  const mk=(lb,val,cls,fn)=>{const m=el('button','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.type='button';m.setAttribute('aria-label',`${lb} ${val}`);m.onclick=fn;return m;};
   met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
   met.appendChild(mk('내 청소',totalCl>0?`${dnCl}/${totalCl}`:'—',totalCl>0&&leftCl===0?'ok':(dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>enterMyWork(me)));
@@ -4790,7 +4874,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   })();
 
   // ── 1열: 남기기 ──
-  const quick=el('div','vh-card vh-quick',`<div class="vh-mic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">할 일 · 인수인계 · 메모 — 적으면 제자리로 가요</span></div><span style="color:#c6cfdb;font-size:16px;">›</span>`);
+  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">할 일 · 인수인계 · 메모 — 적으면 제자리로 가요</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
+  quick.type='button';quick.setAttribute('aria-label','남기기: 할 일, 인수인계 또는 메모 작성');
   quick.onclick=()=>openLeaveSheet(entry,tKey,'todo');
   col1.appendChild(quick);
 
@@ -4838,7 +4923,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 2열: 바로가기 목록 ──
   const links=el('div','vh-card vh-links');
   const ll=el('div','vh-list');
-  const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('div','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow">›</span>`);r.onclick=fn;return r;};
+  const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('button','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.setAttribute('aria-label',`${title}: ${desc}`);r.onclick=fn;return r;};
   if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
   ll.appendChild(mkLink(VF_ICONS.task,'내 업무','프로젝트 · 개인 메모 · 히스토리',()=>enterMyWork(me)));
   ll.appendChild(mkLink(VF_ICONS.cal,'월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
@@ -4896,7 +4981,8 @@ function openLeaveSheet(entry,tKey,preset){
   if(!entry){alert('오늘 근무 매장을 먼저 골라주세요');return;}
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';
-  sh.innerHTML=`<h3>남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span>
+  sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span>
     <div class="vh-kinds"><button class="vh-kind" data-k="todo">오늘 할 일</button><button class="vh-kind" data-k="handover">인수인계</button><button class="vh-kind" data-k="memo">내 메모</button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
@@ -4962,7 +5048,10 @@ function openLeaveSheet(entry,tKey,preset){
     wantListening=true;startedAt=Date.now();
     try{startSession();}catch(e){wantListening=false;vstat.textContent='시작 실패 — 페이지를 새로고침해 보세요';}
   };
-  const close=()=>{wantListening=false;try{if(rec)rec.abort();}catch(e){}ov.remove();};
+  const opener=document.activeElement;
+  const onKey=(e)=>{if(e.key==='Escape')close();};
+  const close=()=>{wantListening=false;try{if(rec)rec.abort();}catch(e){}document.removeEventListener('keydown',onKey);ov.remove();if(opener&&opener.focus)try{opener.focus();}catch(e){}};
+  document.addEventListener('keydown',onKey);
   sh.querySelector('[data-cancel]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
   sh.querySelector('[data-save]').onclick=async(e)=>{
@@ -7858,8 +7947,8 @@ async function renderTodayTab(content,opts={}){
 
   for(const store of STORES){
     // ── 타일 ──
-    const tile=document.createElement('div');tile.className='dt-tile status-none';tile.dataset.store=store.id;
-    tile.innerHTML=`<div class="dt-tile-head"><span class="dt-tile-name">${shortName(store.name)}</span><span id="score-${store.id}"></span></div>
+    const tile=document.createElement('button');tile.type='button';tile.className='dt-tile status-none';tile.dataset.store=store.id;tile.setAttribute('aria-label',`${store.name} 상세 보기`);
+    tile.innerHTML=`<div class="dt-tile-head"><span class="dt-tile-name">${shortName(store.name)}</span><span class="dt-status" id="dtst-${store.id}">…</span><span id="score-${store.id}"></span></div>
       <div class="progress-bar dt-bar"><div class="progress-fill" style="width:0%"></div></div>
       <div class="dt-row"><span>청소</span><b id="stat-${store.id}">…</b></div>
       <div class="dt-row"><span>업무</span><b id="todostat-${store.id}">…</b></div>
@@ -7944,6 +8033,8 @@ async function renderTodayTab(content,opts={}){
         else{badge.style.cssText='background:var(--red-light);color:var(--red)';badge.textContent='미완료';}
       }
       tileState[store.id].clean=data;tileState[store.id].cleanTotal=totalClean;
+      const stEl=document.getElementById(`dtst-${store.id}`);
+      if(stEl)stEl.textContent=totalClean===0?'청소 없음':cleanOk?'청소 완료':done>0?'청소 진행중':'청소 미완료';
       paintTile(store);
       tileIssue[store.id]=!cleanOk;
       if(!detailPane.classList.contains('open')&&window.innerWidth>=1024){
