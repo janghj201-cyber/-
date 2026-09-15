@@ -600,6 +600,27 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-add input:focus{border-color:var(--gold);}
 .vh-add .vh-btn{min-height:44px;padding:0 14px;}
 .vh-head .score-chip{margin-left:2px;}
+.vh-add .vh-btn.vh-bulk-btn{padding:0 10px;color:var(--text-sub);}
+.vh-bulk{margin-top:8px;}
+.vh-bulk[hidden]{display:none;}
+.vh-bulk textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:96px;resize:vertical;outline:none;line-height:1.5;color:var(--text);}
+.vh-bulk textarea:focus{border-color:var(--gold);}
+.vh-bulk .vh-row{display:flex;gap:6px;margin-top:6px;justify-content:flex-end;}
+/* 내 메모 — 홈에서 바로 보고 고친다 (자동 저장). 폰은 접혀서 첫 두 줄만 */
+.vh-memo{order:4;}
+.vh-memo textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:120px;resize:vertical;outline:none;line-height:1.55;color:var(--text);background:var(--card);}
+.vh-memo textarea:focus{border-color:var(--gold);}
+.vh-memo .vh-memo-peek{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;min-height:20px;}
+.vh-memo .vh-memo-peek.empty{color:var(--text-mute);}
+.vh-memo.folded .vh-memo-body{display:none;}
+.vh-memo:not(.folded) .vh-memo-peek{display:none;}
+.vh-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;margin-left:6px;vertical-align:1px;}
+@media(min-width:1024px){
+  .vh-memo{order:0;}
+  .vh-memo.folded .vh-memo-body{display:block;}
+  .vh-memo .vh-memo-peek{display:none;}
+  .vh-memo .vh-fold{display:none;}
+}
 .vh-fixed-wrap{margin-bottom:6px;}
 .vh-fixed-head{font-size:11px;font-weight:700;color:var(--text-sub);padding:2px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .vh-fixed-head .vh-tiny{font-weight:600;}
@@ -2866,7 +2887,10 @@ const GUIDE_SECTIONS = [
       '🧭 관리자 상단 탭 7개가 사라졌어요 — 폰은 「현황·보고 | 기록 ▾ | 설정」 세 개(기록을 누르면 리포트·활동·통계·프로젝트·휴무), 컴퓨터는 왼쪽 메뉴의 관리자 아래 항목으로',
       '⚙️ 설정은 다섯 묶음 목록이 첫 화면이에요 — 아이콘과 한 줄 설명을 보고 들어가고, 「← 설정」으로 돌아와요. 컴퓨터는 왼쪽 목록·오른쪽 내용',
       '✂️ 홈의 겹치는 문을 걷어냈어요 — 남기기는 검은 카드 하나, 오늘 할 일은 카드 안에서 바로 적고 엔터, 「매장 상태」·「퇴근 전」·「전체 화면 보기」 카드는 뺐어요(같은 숫자·같은 문이었어요)',
-      '📋 게시판은 홈 바로가기(폰)·왼쪽 메뉴(컴퓨터)의 「게시판」에서 열려요. 옛 홈은 없어졌어요',
+      '📋 게시판은 홈 바로가기(폰)·왼쪽 메뉴(컴퓨터)의 「게시판」에서 열려요. 옛 홈은 없어졌어요. 마지막으로 본 뒤 새 글이 있으면 우선 확인에 「새 글 N건」 줄과 숫자 배지가 떠요',
+      '📝 「내 메모」 카드가 홈에 생겼어요 — 보고 바로 고치면 자동 저장. 남기기 시트는 인수인계·요청 둘만',
+      '📚 오늘 할 일 입력줄 옆 「여러 개」 — 한 줄에 하나씩 붙여 넣고 한 번에 추가',
+      '👋 퇴사 처리는 설정 → 사람 → 직원 근무지 설정의 각 직원 줄 맨 오른쪽(대표만). 복직은 그 아래 퇴사자 관리',
       '🖥️ 컴퓨터에서는 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 바로가기 카드는 숨겨요. 관리자 아래는 현황·보고 / 기록 / 설정 셋',
     ],
   },
@@ -5095,9 +5119,26 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     }catch(e){m4.querySelector('b').textContent='—';}
   })();
 
+  // 게시판 새 글 — 마지막으로 본 뒤 올라온 글이 있으면 여기서 알려준다 (게시판을 열면 사라진다)
+  (async()=>{
+    try{
+      const {n,latest}=await countNewBoardPosts();
+      if(!n)return;
+      const cat=latest&&latest.cat==='notice'?'공지':latest&&latest.cat==='suggest'?'건의':latest&&latest.cat==='history'?'히스토리':'업무공유';
+      const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">게시판 새 글 ${n}건<small>${latest?`${cat} · ${_wrEsc((latest.title||latest.text||'').slice(0,40))}`:'누르면 게시판'}</small></div>`);
+      const b=el('button','vh-btn','보기');
+      const go=(e)=>{if(e)e.stopPropagation();openBoardOverlay();row.remove();refreshPri();};
+      b.onclick=go;row.onclick=()=>go();row.appendChild(b);
+      const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
+      if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
+      refreshPri();
+      wrap.querySelectorAll('[data-board-link]').forEach(l=>{const t=l.querySelector('b');if(t&&!t.querySelector('.vh-badge'))t.insertAdjacentHTML('beforeend',`<span class="vh-badge" data-board>${n}</span>`);});
+    }catch(e){}
+  })();
+
   // ── 1열: 남기기 ──
-  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">${featOn('workreq')?'인수인계 · 요청 · 메모':'인수인계 · 메모'} — 적으면 제자리로 가요</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
-  quick.type='button';quick.setAttribute('aria-label','남기기: 인수인계, 요청 또는 메모 작성');
+  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">${featOn('workreq')?'다음 근무자에게 인수인계 · 동료에게 요청':'다음 근무자에게 인수인계'}</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
+  quick.type='button';quick.setAttribute('aria-label','남기기: 인수인계 또는 요청 작성');
   quick.onclick=()=>openLeaveSheet(entry,tKey,'handover');
   col1.appendChild(quick);
   // 즉시 실행 — 한 번 눌러 바로 하는 것만 (승인: 청소 사진 · 요청 보내기). 휴무·예외출근은 월간 스케줄에 그대로.
@@ -5154,8 +5195,21 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     });
   }
   // 바로 적는 입력줄 — 시트를 열고 종류를 고르는 두 번의 클릭을 없앤다 (내 업무 화면의 「할 일 한 줄」과 같은 저장)
-  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button>`);
-  const addInp=addRow.querySelector('input'),addBtn=addRow.querySelector('button');
+  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button><button type="button" class="vh-btn vh-bulk-btn" title="여러 개를 한 번에 — 한 줄에 하나씩" aria-label="여러 개 한 번에 입력">여러 개</button>`);
+  const addInp=addRow.querySelector('input'),addBtn=addRow.querySelector('.vh-btn.primary'),bulkBtn=addRow.querySelector('.vh-bulk-btn');
+  // 여러 개 한 번에 — 한 줄에 하나씩. 내 업무 화면의 「여러 개 한번에 입력」과 같은 저장(addTodoItems)
+  const bulk=el('div','vh-bulk',`<textarea placeholder="한 줄에 하나씩&#10;예) 재고 확인&#10;쇼케이스 정리" aria-label="여러 개 한 번에 입력"></textarea><div class="vh-row"><button type="button" class="vh-btn" data-bulk-cancel>닫기</button><button type="button" class="vh-btn primary" data-bulk-save>한 번에 추가</button></div>`);
+  bulk.hidden=true;
+  const bulkTa=bulk.querySelector('textarea'),bulkSave=bulk.querySelector('[data-bulk-save]');
+  bulkBtn.onclick=()=>{bulk.hidden=!bulk.hidden;if(!bulk.hidden)setTimeout(()=>bulkTa.focus(),0);};
+  bulk.querySelector('[data-bulk-cancel]').onclick=()=>{bulk.hidden=true;};
+  bulkSave.onclick=async()=>{
+    const lines=bulkTa.value.split('\n').map(x=>x.trim()).filter(Boolean);
+    if(!lines.length||!entry)return;
+    bulkSave.disabled=true;bulkSave.textContent='저장중';
+    try{await addTodoItems(entry.id,tKey,lines,me);bulkTa.value='';try{await renderDashboardHome();}catch(e2){}}
+    catch(e){bulkSave.disabled=false;bulkSave.textContent='한 번에 추가';saveFailNotice(e,'할 일');}
+  };
   const doAdd=async()=>{
     const t=addInp.value.trim();if(!t||!entry)return;
     addBtn.disabled=true;addBtn.textContent='저장중';
@@ -5165,7 +5219,38 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   addBtn.onclick=doAdd;addInp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
   todo.appendChild(tBody);
   todo.appendChild(addRow); // 접혀 있어도 보인다 — 적는 데 펼치기부터 누르게 하지 않는다
+  todo.appendChild(bulk);
   col2.appendChild(todo);
+
+  // ── 2열: 내 메모 (보고 바로 고친다 · 자동 저장 · 남기기 시트에는 없다) ──
+  if(featOn('memo')){
+    const memo=el('div','vh-card vh-memo folded');
+    const mHead=el('div','vh-ct',`<strong>내 메모</strong>`);
+    const mRight=el('div','');mRight.style.cssText='display:flex;gap:8px;align-items:center;';
+    const mStat=el('span','vh-tiny','');mRight.appendChild(mStat);
+    const mFold=el('button','vh-fold','펼치기');mFold.type='button';
+    mFold.onclick=()=>{memo.classList.toggle('folded');mFold.textContent=memo.classList.contains('folded')?'펼치기':'접기';if(!memo.classList.contains('folded'))setTimeout(()=>mTa.focus(),0);};
+    mRight.appendChild(mFold);mHead.appendChild(mRight);memo.appendChild(mHead);
+    const peek=el('div','vh-memo-peek empty','나만 보는 메모 — 누르면 적을 수 있어요');
+    peek.onclick=()=>mFold.onclick();
+    memo.appendChild(peek);
+    const mBody=el('div','vh-memo-body');
+    const mTa=document.createElement('textarea');mTa.placeholder='나만 보는 메모 — 자동으로 저장돼요';mTa.setAttribute('aria-label','내 메모');
+    mBody.appendChild(mTa);memo.appendChild(mBody);
+    col2.appendChild(memo);
+    const mRef=doc(db,`staff_memo/${me}`);
+    let mLoaded='',mTimer=null;
+    const paintPeek=()=>{const t=mTa.value.trim();peek.textContent=t||'나만 보는 메모 — 누르면 적을 수 있어요';peek.classList.toggle('empty',!t);};
+    (async()=>{try{const sn=await getDoc(mRef);if(sn.exists())mTa.value=sn.data().text||'';mLoaded=mTa.value;paintPeek();}catch(e){mStat.textContent='불러오기 실패';}})();
+    const saveMemo=async()=>{
+      const t=mTa.value;if(t===mLoaded)return;
+      mStat.textContent='저장 중…';
+      try{await setDoc(mRef,{text:t,updatedAt:Date.now()});mLoaded=t;mStat.textContent='저장됨';setTimeout(()=>{if(mStat.textContent==='저장됨')mStat.textContent='';},1500);paintPeek();}
+      catch(e){mStat.textContent='저장 실패 — 적은 글은 남아 있어요';}
+    };
+    mTa.addEventListener('input',()=>{mStat.textContent='';clearTimeout(mTimer);mTimer=setTimeout(saveMemo,900);});
+    mTa.addEventListener('blur',()=>{clearTimeout(mTimer);saveMemo();});
+  }
   (async()=>{
     if(!entry)return;
     try{fixedRows=await loadStoreFixedTodos(entry.id,tKey);}catch(e){return;} // 표(SQL) 전이거나 권한 문제면 조용히 생략
@@ -5195,9 +5280,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const ll=el('div','vh-list');
   const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('button','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.setAttribute('aria-label',`${title}: ${desc}`);r.onclick=fn;return r;};
   if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
-  ll.appendChild(mkLink(VF_ICONS.task,'내 업무','프로젝트 · 개인 메모 · 히스토리',()=>enterMyWork(me)));
+  ll.appendChild(mkLink(VF_ICONS.task,'내 업무','지난 날짜 · 프로젝트 · 히스토리 · 휴무',()=>enterMyWork(me)));
   ll.appendChild(mkLink(VF_ICONS.cal,'월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
-  if(featOn('board'))ll.appendChild(mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay()));
+  if(featOn('board')){const bl=mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay());bl.setAttribute('data-board-link','');ll.appendChild(bl);}
   ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
   col2.appendChild(links);
@@ -5221,14 +5306,14 @@ function openLeaveSheet(entry,tKey,preset){
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
-    <div class="vh-kinds"><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}<button class="vh-kind" data-k="memo">내 메모</button></div>
+    <div class="vh-kinds"><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}</div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
   let kind=preset||'handover';
-  if(kind==='todo')kind='handover'; // 오늘 할 일은 홈 카드에서 바로 적는다 — 시트에서는 뺐다
+  if(kind==='todo'||kind==='memo')kind='handover'; // 오늘 할 일·내 메모는 홈 카드에서 바로 적는다 — 시트에서는 뺐다
   if(kind==='request'&&!featOn('workreq'))kind='handover';
   const kinds=sh.querySelectorAll('.vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
   const recipDefault=recip.querySelector('option');
@@ -5243,7 +5328,7 @@ function openLeaveSheet(entry,tKey,preset){
   const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
   longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
   const setKind=(k)=>{
-    if(k==='todo')k='handover';
+    if(k==='todo'||k==='memo')k='handover';
     if(k==='request'&&!featOn('workreq'))k='handover';
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
     recip.style.display=(k==='handover'||k==='request')?'':'none';
@@ -5268,7 +5353,6 @@ function openLeaveSheet(entry,tKey,preset){
   const guessKind=(t)=>{
     if(featOn('workreq')&&/요청|부탁|해 ?줄 수|해 ?주세요|맡아/.test(t))return 'request';
     if(/인수인계|다음 근무|전달|알려|넘겨|부탁/.test(t))return 'handover';
-    if(/메모|기억|잊지|개인적|나중에 참고/.test(t))return 'memo';
     return 'handover';
   };
   if(!SR){micBtn.disabled=true;vstat.textContent='이 브라우저는 음성 인식이 없어요 — 크롬·사파리에서 테스트';}
@@ -5386,13 +5470,14 @@ function renderSideNav(active){
   ];
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
-  if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay()});
+  if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
   if(isAdm&&!vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')},{k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()});
   if(vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')});
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
+    if(it.badge==='board'){countNewBoardPosts().then(({n})=>{if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-board>${n}</span>`);}).catch(()=>{});}
     if(it.k==='admin'&&active==='admin'){
       // 관리자 안에서는 상단 탭줄 대신 여기서 고른다 — 폰과 같은 셋: 현황·보고 / 기록 / 설정. 기록은 눌렀을 때만 펼침
       const defs=adminTabDefs();
@@ -5447,6 +5532,23 @@ function fixedTodoRow(it,opts){
   return row;
 }
 
+// 게시판 새 글 — 마지막으로 게시판을 연 시각(이 기기) 이후에 올라온 글 수. 홈 우선 확인·사이드바·바로가기 배지에 쓴다.
+function boardSeenKey(){return 'vflow_board_seen_'+((window.__vflowProfile||{}).id||'u');}
+async function countNewBoardPosts(){
+  if(!featOn('board'))return {n:0,latest:null};
+  try{
+    const snap=await getDoc(doc(db,'board/posts'));
+    const items=snap.exists()?(snap.data().items||[]):[];
+    let seen=0;try{seen=parseInt(localStorage.getItem(boardSeenKey())||'0',10)||0;}catch(e){}
+    if(!seen){ // 처음 쓰는 기기 — 지난 글을 전부 "새 글"로 몰지 않는다. 지금부터 센다
+      try{localStorage.setItem(boardSeenKey(),String(Date.now()));}catch(e){}
+      return {n:0,latest:null};
+    }
+    const fresh=items.filter(it=>typeof it.ts==='number'&&it.ts>seen).sort((a,b)=>b.ts-a.ts);
+    return {n:fresh.length,latest:fresh[0]||null};
+  }catch(e){return {n:0,latest:null};}
+}
+function markBoardSeen(){try{localStorage.setItem(boardSeenKey(),String(Date.now()));}catch(e){}document.querySelectorAll('.vh-badge[data-board]').forEach(b=>b.remove());}
 // 게시판 — 옛 홈 안에만 있던 것을 제자리(#screen-dashboard .board-section)에 둔 채 오버레이로 끌어와 보여준다.
 // 게시판 코드가 id로 요소를 찾으므로 DOM 노드를 옮겼다가 닫을 때 되돌린다.
 function openBoardOverlay(){
@@ -5465,6 +5567,7 @@ function openBoardOverlay(){
   ov.querySelector('[data-close]').onclick=close;
   document.body.appendChild(ov);
   try{loadBoard();}catch(e){}
+  markBoardSeen();
 }
 window.openBoardOverlay=openBoardOverlay;
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
@@ -9557,7 +9660,7 @@ async function renderSettingsTab(content){
 
   // ── 직원 근무지 설정 (고정/순환) ──
   const secW=document.createElement('div');secW.className='dash-card';secW.style.marginTop='12px';
-  secW.innerHTML='<div class="dash-store-name">직원 근무지 설정</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">이름을 누르면 <b>이름 수정</b>, 직함 칸으로 <b>관리자 지정</b>을 할 수 있어요.<br>고정 직원은 배정 매장의 업무·인수인계만, 순환 직원은 전 매장 접근. 변경 후 해당 직원은 앱을 새로고침해야 반영됩니다.</div><div id="workplace-list"></div>';
+  secW.innerHTML='<div class="dash-store-name">직원 근무지 설정</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">이름을 누르면 <b>이름 수정</b>, 직함 칸으로 <b>관리자 지정</b>, 맨 오른쪽 <b>퇴사 처리</b>.<br>고정 직원은 배정 매장의 업무·인수인계만, 순환 직원은 전 매장 접근. 변경 후 해당 직원은 앱을 새로고침해야 반영됩니다.</div><div id="workplace-list"></div>';
   content.appendChild(secW);
   (async()=>{
     try{
@@ -9643,7 +9746,22 @@ async function renderSettingsTab(content){
           p.store_id=target;
           alert(`${p.name} 님 → ${label} 변경 완료.\n해당 직원은 앱 새로고침 후 반영됩니다.`);
         };
-        row.appendChild(sel);listEl.appendChild(row);
+        row.appendChild(sel);
+        // 퇴사 처리 — 대표만, 본인 제외. (예전엔 직원 선택 화면 카드의 「×」에만 있어 찾기 어려웠다) 복직은 아래 「퇴사자 관리」
+        if(_iAmOwner && p.id!==(window.__vflowProfile||{}).id){
+          const off=document.createElement('button');off.type='button';off.textContent='퇴사 처리';
+          off.style.cssText='font-size:11px;font-weight:800;border-radius:8px;padding:6px 9px;border:1px solid var(--border);background:var(--card);color:var(--red);cursor:pointer;font-family:inherit;white-space:nowrap;';
+          off.onclick=async()=>{
+            if(!confirm(`${p.name} 님을 퇴사 처리할까요?\n\n• 직원 목록·카드에서 사라집니다\n• 그동안의 업무·인수인계 기록은 그대로 보존됩니다\n• 아래 「퇴사자 관리」에서 되살릴 수 있어요`))return;
+            off.disabled=true;
+            const {error,count}=await supabase.from('profiles').update({status:'inactive'},{count:'exact'}).eq('id',p.id);
+            if(error||count===0){alert('퇴사 처리 실패'+(error?': '+error.message:' — 권한을 확인해주세요'));off.disabled=false;return;}
+            row.remove();
+            alert(`${p.name} 님을 퇴사 처리했어요. 직원 목록은 새로고침 후 반영됩니다.`);
+          };
+          row.appendChild(off);
+        }
+        listEl.appendChild(row);
       });
     }catch(e){const le=secW.querySelector('#workplace-list');if(le)le.innerHTML='<div style="font-size:12px;color:var(--red);">불러오기 실패 — 새로고침 후 다시 시도해주세요</div>';}
   })();
