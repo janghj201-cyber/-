@@ -71,6 +71,24 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .screen>.app-footer{margin-top:auto;}
 #room-overlay{display:flex;flex-direction:column;}#room-overlay>.app-footer{margin-top:auto;}
 #board-overlay{display:flex;flex-direction:column;}#board-overlay>.app-footer{margin-top:auto;}
+/* 게시판 오버레이 — 홈 문법. 카드 격자로 폭을 쓴다 */
+#board-overlay .bo-body{padding:12px;flex:0 0 auto;}
+#board-overlay .board-section{margin:0;box-shadow:var(--shadow-card);border-radius:var(--radius-card);}
+#board-overlay .board-header{padding:14px 15px 0;}
+#board-overlay .board-title{font-size:14px;font-weight:800;}
+#board-overlay .board-write-btn{border-radius:var(--radius-ctl);min-height:38px;padding:8px 14px;}
+#board-overlay .board-tabs{padding:8px 15px 0;overflow-x:auto;}
+#board-overlay .board-tab{flex:0 0 auto;padding:10px 14px;min-height:44px;}
+#board-overlay .board-list{padding:12px 15px 15px;display:grid;grid-template-columns:1fr;gap:10px;}
+#board-overlay .board-item{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--card);}
+#board-overlay .board-item:hover{background:var(--bg);}
+#board-overlay .board-item-title{font-size:14px;}
+#board-overlay .board-item-preview{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5;}
+#board-overlay #board-expand-row{display:none!important;}
+@media(min-width:1024px){
+  #board-overlay .board-list{grid-template-columns:repeat(3,minmax(0,1fr));}
+  #board-overlay .board-item{min-height:120px;}
+}
 
 /* ── 지점 선택 ── */
 .store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
@@ -655,7 +673,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .tg-emp .rm-worker small.ok{color:var(--green);}.tg-emp .rm-worker small.danger{color:var(--red);}
 @media(min-width:1024px){.tg-wrap{padding:0;}}
 /* ── 매장 방 — 홈 문법(카드 · 선 아이콘 · 데스크탑 2열) ── */
-.rm-body{padding:12px 12px 32px;box-sizing:border-box;} /* 좌우 여백 없이 — 매장 상황은 넓게 */
+.rm-body{padding:12px 12px 32px;box-sizing:border-box;flex:0 0 auto;} /* 좌우 여백 없이 — 매장 상황은 넓게 */
 .rm-grid{display:flex;flex-direction:column;gap:10px;}
 .rm-col{display:contents;}
 /* 폰 순서: 오늘 이 매장 → 인수인계 → 요청 → 프로젝트 → 고정 정보 → 월간. 데스크탑은 2열이라 order 무시 */
@@ -5500,7 +5518,7 @@ function openLeaveSheet(entry,tKey,preset){
       clearDraft();
       close();
       try{await renderDashboardHome();}catch(e2){}
-      try{const ro=document.getElementById('room-overlay');if(ro&&ro.style.display==='block')openStoreRoom(entry);}catch(e3){} // 매장 방에서 남겼으면 방도 새로
+      try{const ro=document.getElementById('room-overlay');if(ro&&ro.style.display!=='none')openStoreRoom(entry);}catch(e3){} // 매장 방에서 남겼으면 방도 새로
     }catch(err){
       btn.disabled=false;btn.textContent='다시 저장';
       const off=!navigator.onLine||/오프라인|Failed to fetch|NetworkError/i.test(String(err&&err.message||err));
@@ -5546,7 +5564,7 @@ function renderSideNav(active){
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;
     b.onclick=()=>{
-      const ro=document.getElementById('room-overlay');if(ro&&ro.style.display==='block'&&it.k!=='room'){ro.style.display='none';document.body.style.overflow='';}
+      const ro=document.getElementById('room-overlay');if(ro&&ro.style.display!=='none'&&it.k!=='room'){ro.style.display='none';document.body.style.overflow='';}
       const bo=document.getElementById('board-overlay');if(bo&&it.k!=='board'){const cl=bo.querySelector('[data-close]');if(cl)cl.click();}
       it.fn();
     };
@@ -5633,10 +5651,11 @@ function openBoardOverlay(){
   sec.parentNode.insertBefore(ph,sec);
   const ov=document.createElement('div');ov.id='board-overlay';
   ov.style.cssText='position:fixed;inset:0;z-index:900;background:var(--bg);overflow-y:auto;';
-  ov.innerHTML=`<div class="header" style="position:sticky;top:0;z-index:10;"><div><div class="header-title">게시판</div><div class="header-sub">공지 · 업무공유 · 히스토리 · 건의</div></div><button class="back-btn" type="button" data-close>닫기</button></div><div data-body style="padding:12px;max-width:860px;margin:0 auto;"></div>`;
+  ov.innerHTML=`<div class="header" style="position:sticky;top:0;z-index:10;"><div><div class="header-title">게시판</div><div class="header-sub">공지 · 업무공유 · 히스토리 · 건의</div></div><button class="back-btn" type="button" data-close>닫기</button></div><div data-body class="bo-body"></div>`;
   ov.querySelector('[data-body]').appendChild(sec);
+  boardExpanded=true; // 오버레이에서는 접지 않는다 — 전부 보인다
   try{const f=document.querySelector('#screen-dashboard .app-footer');if(f)ov.appendChild(f.cloneNode(true));}catch(e){}
-  const close=()=>{document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();try{const adm=document.getElementById('screen-admin');renderSideNav(adm&&adm.classList.contains('active')?'admin':(curTab||'dashboard'));}catch(e){}};
+  const close=()=>{boardExpanded=false;document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();try{const adm=document.getElementById('screen-admin');renderSideNav(adm&&adm.classList.contains('active')?'admin':(curTab||'dashboard'));}catch(e){}};
   const onKey=(e)=>{if(e.key==='Escape')close();};
   document.addEventListener('keydown',onKey);
   ov.querySelector('[data-close]').onclick=close;
@@ -6814,7 +6833,7 @@ function openStoreRoom(store){
   mo.onclick=()=>{window.closeStoreRoom();switchTab('monthly');};
   col1.appendChild(mo);
 
-  ov.style.display='block';
+  ov.style.display='flex';
   ov.scrollTop=0;
   document.body.style.overflow='hidden';
   try{renderSideNav('room');}catch(e){}
