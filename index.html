@@ -644,6 +644,13 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-links{order:5;}
 .vh-extra{order:7;display:flex;flex-direction:column;gap:10px;}.vh-extra:empty{display:none;}.vh-extra .hp-card{margin:0;}
 .vh-check{width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;}
+/* 관리자 현황·보고 — 오늘의 「지금 확인할 것 · 직원 오늘」 */
+.tg-wrap{padding:0 12px;}
+.tg-card{margin:0 auto 12px;max-width:1100px;}
+.tg-card .vh-item.link{cursor:pointer;}
+.tg-emp{display:flex;gap:6px;flex-wrap:wrap;}
+.tg-emp .rm-worker small.ok{color:var(--green);}.tg-emp .rm-worker small.danger{color:var(--red);}
+@media(min-width:1024px){.tg-wrap{padding:0;}}
 /* ── 매장 방 — 홈 문법(카드 · 선 아이콘 · 데스크탑 2열) ── */
 .rm-body{padding:12px 12px 32px;max-width:1100px;margin:0 auto;box-sizing:border-box;}
 .rm-grid{display:flex;flex-direction:column;gap:10px;}
@@ -1644,23 +1651,14 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 </div>
 
 <!-- 오늘 현황 (관리자 전용) -->
-<div class="screen has-tab-bar" id="screen-status">
-  <div class="header">
-    <div><div class="header-title">오늘 현황</div><div class="header-sub">누락 먼저 · 매장 한눈에 · 직원 오늘</div></div>
-    <button class="back-btn" onclick="renderTodayStatus()">새로고침</button>
-  </div>
-  <div style="padding:14px 14px 24px;max-width:1100px;margin:0 auto;" id="status-body"></div>
-  <div class="pb"></div>
-</div>
-
 <div class="tab-bar" id="tab-bar">
   <button class="tab-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
     <div class="tab-icon"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
     <div class="tab-label">홈</div>
   </button>
-  <button class="tab-item" id="tab-status" onclick="switchTab('status')" style="display:none;">
+  <button class="tab-item" id="tab-status" onclick="openPwModal()" style="display:none;">
     <div class="tab-icon"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></div>
-    <div class="tab-label">오늘 현황</div>
+    <div class="tab-label">관리자</div>
   </button>
 </div>
 </div><!-- /app-shell -->
@@ -2936,6 +2934,8 @@ const GUIDE_SECTIONS = [
       '📝 「내 메모」 카드가 홈에 생겼어요 — 보고 바로 고치면 자동 저장. 남기기 시트는 인수인계·요청 둘만',
       '📚 오늘 할 일 입력줄 옆 「여러 개」 — 한 줄에 하나씩 붙여 넣고 한 번에 추가',
       '👋 퇴사 처리는 설정 → 사람 → 직원 근무지 설정의 각 직원 줄 맨 오른쪽(대표만). 복직은 그 아래 퇴사자 관리',
+      '🧭 「오늘 현황」 화면이 없어졌어요 — 그 알맹이(지금 확인할 것 · 직원 오늘)는 관리자 → 현황·보고의 오늘 날짜 맨 위에 그대로 있어요. 폰 아래 탭은 「홈 | 관리자」',
+      '📅 월간 스케줄은 메뉴에서 내렸어요 — 매장 방 맨 아래 「월간 스케줄」로 들어가요(앞날 대청소·고정업무·공휴일 볼 때). 휴무 신청은 내 업무의 「휴무 설정」',
       '🏪 매장 방이 홈과 같은 모양이 됐어요 — 「오늘 이 매장」(청소 · 매장 할 일 · 근무자) · 인수인계(확인·피드백·기록) · 업무 요청 · 고정 정보(자동 저장) · 프로젝트. 남기기·요청은 홈과 같은 시트. 방에 있던 「오늘의 업무」 편집은 내 것과 같은 걸 다시 보여주던 것이라 뺐어요',
       '🖥️ 컴퓨터에서는 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 바로가기 카드는 숨겨요. 관리자 아래는 현황·보고 / 기록 / 설정 셋',
     ],
@@ -4416,6 +4416,7 @@ window.switchTab = function(tab){
     const btn=document.getElementById(`tab-${t}`);
     if(btn)btn.className='tab-item'+(t===tab?' active':'');
   });
+  if(tab==='admin'){const b=document.getElementById('tab-status');if(b)b.className='tab-item active';}
   // 직원은 탭바 없음 — 첫 화면이 전부. 관리자·Ⓜ️ 모니터링은 [대시보드|오늘 현황]
   const _vpT=window.__vflowProfile||{};
   const _adminBar=(_vpT.role==='owner'||_vpT.role==='manager');
@@ -4425,8 +4426,8 @@ window.switchTab = function(tab){
     showScreen('screen-dashboard');
     renderDashboardHome();
   } else if(tab==='status'){
-    showScreen('screen-status');
-    renderTodayStatus();
+    // 오늘 현황 화면은 관리자 현황·보고에 흡수됐다 — 옛 링크는 그리로
+    openPwModal();return;
   } else if(tab==='monthly'){
     showScreen('screen-monthly');
     if(!curStore)curStore=STORES[0];
@@ -4755,10 +4756,11 @@ window.openAppMenu=function(){
 };
 
 // 오늘 현황 — 관리자 전용: 누락 먼저 → 매장 신호등 → 직원 오늘 → 바로가기
-window.renderTodayStatus=async function(){
-  const body=document.getElementById('status-body');
-  if(!body)return;
-  body.innerHTML='<div class="project-overview-empty">불러오는 중...</div>';
+// 지금 확인할 것 · 직원 오늘 — 옛 「오늘 현황」 화면의 알맹이. 관리자 현황·보고가 오늘 날짜일 때 타일 위에 얹는다.
+// (매장 타일과 관리자 링크는 같은 화면에 이미 있어서 뺐다)
+async function renderTodayGaps(body){
+  const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!=null)x.innerHTML=html;return x;};
+  const wrap=el('div','tg-wrap');body.appendChild(wrap);
   try{
     const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
     const tKey=todayKey();
@@ -4771,89 +4773,61 @@ window.renderTodayStatus=async function(){
     ]);
     const dayoffData=(dayoffSnap&&dayoffSnap.exists&&dayoffSnap.exists())?(dayoffSnap.data()||{}):{};
     const offToday=(name)=>{const d=dayoffData[name]||{};return !!d[tKey];};
-    const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const esc=_wrEsc;
     const shortN=(n)=>n.replace('인천 ','').replace('부천 ','').replace('구월 ','');
-
     const rows=STORES.map((s,i)=>{
       const cs=cleanSnaps[i];
       const cleanDone=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;
-      let todoDone=0,todoTotal=0,workers=[],carried=0;
+      let workers=[],carried=0;
       for(const p of todosByName){
         if(!p)continue;
         const st_=p[1].filter(it=>it.storeId===s.id);
-        if(st_.length){workers.push(p[0]);todoTotal+=st_.length;todoDone+=st_.filter(it=>it.done).length;carried+=st_.filter(it=>!it.done&&it.fromDate&&it.fromDate!==tKey).length;}
+        if(st_.length){workers.push(p[0]);carried+=st_.filter(it=>!it.done&&it.fromDate&&it.fromDate!==tKey).length;}
       }
-      let unconf=0;const stale=[];
+      const stale=[];
       const hs=hoSnaps[i];
-      if(hs&&hs.exists()){
-        (hs.data().items||[]).forEach(it=>{
-          if(!hoNeedsConfirm(it))return;
-          unconf++;
-          if(it.fromDate){const dd=Math.floor((Date.now()-new Date(it.fromDate).getTime())/86400000);if(dd>=3)stale.push({store:s,it,days:dd});}
-        });
-      }
-      const score=calcStoreScore({cleanData:(cs&&cs.exists())?cs.data():{},cleanTotal:totalCl,todoDone,hoUnconfirmed:unconf});
-      return {s,cleanDone,todoDone,todoTotal,workers,carried,unconf,stale,score};
+      if(hs&&hs.exists()){(hs.data().items||[]).forEach(it=>{if(!hoNeedsConfirm(it))return;if(it.fromDate){const dd=Math.floor((Date.now()-new Date(it.fromDate).getTime())/86400000);if(dd>=3)stale.push({store:s,it,days:dd});}});}
+      return {s,cleanDone,workers,carried,stale};
     });
-
-    body.innerHTML='';
-    const grp=(label)=>{const g=document.createElement('div');g.className='cf-grp';g.innerHTML=`${label} <span class="ln"></span>`;body.appendChild(g);};
-    const missRow=(ico,title,meta,fn,warn)=>{
-      const r=document.createElement('div');
-      r.style.cssText=`display:flex;gap:9px;padding:9px 10px;border-radius:10px;border:1px solid var(--border);border-left:4px solid ${warn?'var(--orange)':'var(--red)'};background:${warn?'#fffdf6':'#fffaf9'};margin-bottom:6px;cursor:pointer;align-items:center;font-size:12.5px;`;
-      r.innerHTML=`<span>${ico}</span><div style="flex:1;"><b style="font-weight:800;">${title}</b><div style="font-size:10.5px;color:var(--text-mute);margin-top:2px;">${meta}</div></div><span style="color:var(--text-mute);font-size:14px;">›</span>`;
-      r.onclick=fn;body.appendChild(r);
-    };
-    const goStore=(s)=>{switchTab('dashboard');setTimeout(()=>{try{openStoreRoom(s);}catch(e){}},80);};
-
-    grp('지금 확인할 것');
-    let missCnt=0;
-    rows.filter(r=>totalCl>0&&r.cleanDone===0).forEach(r=>{missCnt++;missRow('🧹',`${esc(r.s.name)} 청소 미체크`,`오늘 항목 ${totalCl}개 중 0개${r.workers.length?` · 근무: ${r.workers.map(esc).join(' · ')}`:''}`,()=>goStore(r.s));});
+    const goStore=(s)=>{try{openStoreRoom(s);}catch(e){}};
+    const items=[];
+    // 청소 미체크 — 매장마다 한 줄이면 아침엔 전 매장이 줄줄이 뜬다. 근무자가 있는 매장(진짜 누락)과 없는 매장(아직 출근 전)을 나눠 한 줄씩
+    const noClean=rows.filter(r=>totalCl>0&&r.cleanDone===0);
+    const ncW=noClean.filter(r=>r.workers.length),ncN=noClean.filter(r=>!r.workers.length);
+    if(ncW.length)items.push({dot:'danger',text:`청소 미체크 ${ncW.length}곳 — 근무자 있음`,sub:ncW.map(r=>`${esc(shortN(r.s.name))}(${r.workers.map(esc).join('·')})`).join(' · '),fn:()=>goStore(ncW[0].s)});
+    if(ncN.length)items.push({dot:'warn',text:`청소 미체크 ${ncN.length}곳 — 아직 근무자 없음`,sub:ncN.map(r=>esc(shortN(r.s.name))).join(' · '),fn:()=>goStore(ncN[0].s)});
     const staleAll=rows.flatMap(r=>r.stale);
-    if(staleAll.length){missCnt++;missRow('📝',`3일 이상 미확인 인수인계 ${staleAll.length}건`,staleAll.slice(0,2).map(x=>`${shortN(x.store.name)} · ${esc(x.it.text).slice(0,20)}${x.it.recipient?` · 수신: ${esc(x.it.recipient)}`:''}`).join(' / ')+(staleAll.length>2?` 외 ${staleAll.length-2}건`:''),()=>goStore(staleAll[0].store));}
+    if(staleAll.length)items.push({dot:'danger',text:`3일 이상 미확인 인수인계 ${staleAll.length}건`,sub:staleAll.slice(0,2).map(x=>`${shortN(x.store.name)} · ${esc(x.it.text).slice(0,20)}${x.it.recipient?` · ${esc(x.it.recipient)}에게`:''}`).join(' / ')+(staleAll.length>2?` 외 ${staleAll.length-2}건`:''),fn:()=>goStore(staleAll[0].store)});
     const noTask=staffList.filter(n=>{const p=todosByName.find(x=>x&&x[0]===n);return (!p||p[1].length===0)&&!offToday(n);});
-    if(noTask.length){missCnt++;missRow('✍️',`오늘 업무 미등록 ${noTask.length}명`,noTask.map(esc).join(' · ')+' — 휴무 아님',()=>{if(noTask[0])enterMyWork(noTask[0]);},true);}
+    if(noTask.length)items.push({dot:'warn',text:`오늘 업무 미등록 ${noTask.length}명`,sub:noTask.map(esc).join(' · ')+' — 휴무 아님',fn:()=>{if(noTask[0])enterMyWork(noTask[0]);}});
     const carrySum=rows.reduce((a,r)=>a+r.carried,0);
-    if(carrySum){missCnt++;missRow('↩️',`미완료 이월 ${carrySum}건`,rows.filter(r=>r.carried).map(r=>`${shortN(r.s.name)} ${r.carried}건`).join(' · '),()=>switchTab('dashboard'),true);}
-    if(!missCnt){const ok=document.createElement('div');ok.style.cssText='background:var(--green-light);border:1px solid var(--green);border-radius:10px;padding:12px;font-size:13px;font-weight:800;color:var(--green);text-align:center;margin-bottom:6px;';ok.textContent='오늘은 누락이 없어요 ✅';body.appendChild(ok);}
+    if(carrySum)items.push({dot:'warn',text:`미완료 이월 ${carrySum}건`,sub:rows.filter(r=>r.carried).map(r=>`${shortN(r.s.name)} ${r.carried}건`).join(' · '),fn:null});
 
-    grp('매장 한눈에 — 누르면 상세');
-    // 관리자 대시보드 '날짜별 현황'과 같은 부품(타일 + 상세). 표는 여기서 없앴다 — 같은 정보가 두 모양이던 것을 하나로.
-    const tilesHolder=document.createElement('div');body.appendChild(tilesHolder);
-    clearDashUnsubs();
-    try{await renderTodayTab(tilesHolder,{noNav:true});}catch(e){console.warn('[status tiles]',e);}
-
-    grp('직원 오늘 — 누르면 그 직원 업무로');
-    const emp=document.createElement('div');emp.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+    const card=el('div','vh-card tg-card');
+    card.appendChild(el('div','vh-ct',`<strong>지금 확인할 것</strong><span class="vh-tiny">${items.length?`${items.length}건`:''}</span>`));
+    const list=el('div','vh-list');
+    if(!items.length)list.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>청소 · 인수인계 · 업무 등록 · 이월 모두 정상</small></div>`));
+    items.forEach(o=>{const r=el('div','vh-item'+(o.fn?' link':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;list.appendChild(r);});
+    card.appendChild(list);
+    // 직원 오늘 — 칩, 누르면 그 직원 업무
+    const emp=el('div','tg-emp');
     staffList.forEach(n=>{
-      const p=todosByName.find(x=>x&&x[0]===n);
-      const items=p?p[1]:[];
-      const off=offToday(n);
-      const chip=document.createElement('button');
-      let style='background:var(--card);border:1px solid var(--border);border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
-      let label;
-      if(off){label=`${esc(n)} 휴무`;style+='opacity:.5;';}
-      else if(items.length===0){label=`${esc(n)} 미등록`;style+='border-color:var(--red);color:var(--red);';}
-      else{
-        const dn=items.filter(i=>i.done).length;
-        if(dn>=items.length){label=`${esc(n)} ${dn}/${items.length} ✓`;style+='border-color:var(--green);color:var(--green);';}
-        else{label=`${esc(n)} ${dn}/${items.length}`;style+='border-color:var(--orange);color:var(--orange);';}
-      }
-      chip.style.cssText=style;chip.innerHTML=label;
+      const p=todosByName.find(x=>x&&x[0]===n);const its=p?p[1]:[];const off=offToday(n);
+      const chip=el('button','rm-worker');chip.type='button';
+      let cls='',lab='';
+      if(off){lab=`${esc(n)}<small>휴무</small>`;chip.style.opacity='.55';}
+      else if(!its.length){lab=`${esc(n)}<small class="danger">미등록</small>`;}
+      else{const dn=its.filter(i=>i.done).length;lab=`${esc(n)}<small class="${dn>=its.length?'ok':''}">${dn}/${its.length}</small>`;}
+      chip.innerHTML=`<span class="rm-av">${esc(n[0]||'')}</span>${lab}`;
       chip.onclick=()=>enterMyWork(n);
       emp.appendChild(chip);
     });
-    body.appendChild(emp);
-
-    grp('더 보기');
-    const ql=document.createElement('div');ql.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;';
-    const mkq=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 6px;font-size:11px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;';b.onclick=fn;ql.appendChild(b);};
-    mkq('주간 리포트',()=>{dashTab='report';showScreen('screen-admin');renderDashboard();});
-    mkq('활동 모아보기',()=>{dashTab='activity';showScreen('screen-admin');renderDashboard();});
-    mkq('프로젝트 · 협업',()=>{dashTab='projects';showScreen('screen-admin');renderDashboard();});
-    body.appendChild(ql);
-  }catch(e){console.warn('[status]',e);body.innerHTML='<div class="project-overview-empty">불러오기 실패 — 새로고침 해주세요</div>';}
-};
+    card.appendChild(el('div','vh-fixed-head',`<span>직원 오늘</span><span class="vh-tiny">누르면 그 직원 업무</span>`));
+    card.appendChild(emp);
+    wrap.appendChild(card);
+  }catch(e){console.warn('[gaps]',e);wrap.innerHTML='';}
+}
+window.renderTodayStatus=function(){openPwModal();}; // 옛 진입점 호환
 
 // ── 주간 1:1 상담 자동 배정 (팀장 2명 고정 · 화상 · 매주 직원 1명 순번) ──
 function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return dk(x.getFullYear(),x.getMonth(),x.getDate());}
@@ -5327,7 +5301,6 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('button','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.setAttribute('aria-label',`${title}: ${desc}`);r.onclick=fn;return r;};
   if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
   ll.appendChild(mkLink(VF_ICONS.task,'내 업무','지난 날짜 · 프로젝트 · 히스토리 · 휴무',()=>enterMyWork(me)));
-  ll.appendChild(mkLink(VF_ICONS.cal,'월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
   if(featOn('board')){const bl=mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay());bl.setAttribute('data-board-link','');ll.appendChild(bl);}
   ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
@@ -5513,13 +5486,11 @@ function renderSideNav(active){
     {k:'dashboard',lb:'홈',ic:IC.home,fn:()=>switchTab('dashboard')},
     {k:'my',lb:'내 업무',ic:IC.task,fn:()=>enterMyWork(me)},
     {k:'room',lb:entry?`${entry.name.replace('인천 ','').replace('부천 ','')} 방`:'매장 방',ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
-    {k:'monthly',lb:'월간 스케줄',ic:IC.cal,fn:()=>switchTab('monthly')},
-  ];
+  ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
-  if(isAdm&&!vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')},{k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()});
-  if(vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')});
+  if(isAdm)items.push({k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()}); // 오늘 현황은 관리자 현황·보고에 흡수
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
@@ -8674,6 +8645,7 @@ async function renderTodayTab(content,opts={}){
   dateEl.textContent=cleanEv?`${dayLabel}은 대청소 ${cleanEv.sec}구역 날입니다`:`${dayLabel}은 기본 청소만 진행하는 날입니다`;
   if(!featOn('cleaning')||opts.noNav)dateEl.style.display='none';
   content.appendChild(dateEl);
+  if(isToday&&!opts.noNav)renderTodayGaps(content); // 오늘만 — 지난 날짜는 타일·상세만
 
   // 매장은 타일(격자)로, 누르면 오른쪽(폰은 아래 시트)에 그 매장 상세.
   // 예전엔 매장마다 긴 카드가 세로로 이어져 6개면 화면 몇 장이었다.
@@ -10376,6 +10348,7 @@ window.openPwModal=function(){
     dashViewDate=null;
     showScreen('screen-admin');
     renderDashboard();
+    try{['dashboard','status'].forEach(t=>{const b=document.getElementById(`tab-${t}`);if(b)b.className='tab-item'+(t==='status'?' active':'');});}catch(e){}
   } else {
     alert('관리자 권한이 없습니다.\n(관리자 화면은 owner/manager 계정만 볼 수 있어요)');
   }
