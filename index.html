@@ -272,9 +272,46 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .confirm-tag{font-size:10px;color:var(--green);background:var(--green-light);padding:1px 6px;border-radius:8px;margin-left:6px;}
 
 /* ── 관리자 탭/날짜네비/월간통계 ── */
-.dash-tabs{display:flex;gap:6px;padding:12px 12px;flex-wrap:wrap;}
-.dash-tab{flex:1;min-width:72px;padding:9px 6px;border-radius:var(--radius-ctl);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text-sub);white-space:nowrap;}
-.dash-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+/* 관리자 상단 — 폰: 현황·보고 | 기록 ▾ | 설정. 데스크탑은 사이드바가 대신하므로 숨김 */
+.dash-nav{display:flex;gap:6px;padding:12px 12px 4px;align-items:stretch;}
+.dash-nav .dn-btn{flex:1;min-width:0;min-height:44px;padding:8px 10px;border-radius:var(--radius-ctl);border:1px solid var(--border);background:var(--card);color:var(--text-sub);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-nav .dn-btn.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+.dash-nav .dn-btn .vf-ic{margin:0;flex:0 0 auto;}
+.dash-nav .dn-btn.dn-icon{flex:0 0 44px;padding:0;}
+.dash-nav .dn-btn.dn-icon.on .vf-ic{color:#fff;}
+.dash-nav .dn-caret{font-size:10px;opacity:.7;}
+@media(min-width:1024px){.dash-nav{display:none;}}
+/* 기록 시트 · 설정 메뉴 공용 — 아이콘 + 제목 + 한 줄 설명 */
+.menu-list{display:flex;flex-direction:column;}
+.menu-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border);padding:13px 4px;cursor:pointer;font-family:inherit;color:var(--text);min-height:60px;}
+.menu-row:first-child{border-top:none;}
+.menu-row .mr-ic{width:38px;height:38px;border-radius:11px;background:var(--soft);color:var(--navy);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.menu-row .mr-ic .vf-ic{width:19px;height:19px;margin:0;}
+.menu-row .mr-main{flex:1;min-width:0;}
+.menu-row .mr-main b{display:block;font-size:15px;font-weight:800;line-height:1.3;}
+.menu-row .mr-main small{display:block;font-size:12px;color:var(--text-sub);margin-top:3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.menu-row .vh-arrow{color:var(--text-mute);font-size:16px;}
+.menu-row.on{background:var(--bg);border-radius:10px;border-top-color:transparent;}
+.menu-row.on .mr-ic{background:var(--navy);color:#fff;}
+.menu-row.on+.menu-row{border-top-color:transparent;}
+/* 설정 — 폰: 목록 → 묶음(뒤로 막대). 데스크탑: 왼쪽 메뉴 + 오른쪽 내용 */
+.st-menu{margin-bottom:12px;}
+.st-menu .menu-row{padding-left:12px;padding-right:10px;}
+.st-back{display:flex;align-items:center;gap:8px;margin:0 0 12px;}
+.st-back .vh-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;}
+.st-back .vh-btn .vf-ic{margin:0;}
+.st-back .st-cur{font-size:15px;font-weight:800;color:var(--text);}
+.st-back .st-cur small{display:block;font-size:11.5px;color:var(--text-sub);font-weight:600;margin-top:2px;}
+.st-group>.dash-card{margin-top:0;margin-bottom:12px;}
+@media(min-width:1024px){
+  .st-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start;}
+  .st-menu{position:sticky;top:12px;margin:0;padding:6px 6px;}
+  .st-menu .menu-row{min-height:56px;padding:10px 10px;border-top:none;border-radius:10px;}
+  .st-menu .menu-row.on{box-shadow:inset 3px 0 0 var(--gold);border-radius:10px;}
+  .st-menu .menu-row .vh-arrow{display:none;}
+  .st-menu .menu-row .mr-main small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .st-back{display:none;}
+}
 .dash-datenav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;}
 .dash-datenav button{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;}
 .dash-datenav button:disabled{opacity:0.3;cursor:default;}
@@ -625,6 +662,10 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   #vf-side .vs-item{padding:11px 12px;border-radius:9px;font-size:13px;color:var(--text-sub);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:inherit;background:none;border:none;text-align:left;width:100%;}
   #vf-side .vs-item:hover{background:var(--bg);}
   #vf-side .vs-item.active{background:var(--bg);color:var(--text);font-weight:800;}
+  #vf-side .vs-item.vs-sub{padding:8px 12px 8px 38px;font-size:12.5px;position:relative;}
+  #vf-side .vs-item.vs-sub::before{content:'';position:absolute;left:19px;top:0;bottom:0;width:1px;background:var(--border);}
+  #vf-side .vs-item.vs-sub.active{background:none;color:var(--text);font-weight:800;}
+  #vf-side .vs-item.vs-sub.active::before{background:var(--gold);width:2px;left:18.5px;}
   #vf-side .vs-item .vs-badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;}
   #vf-side .vs-item .vs-cnt{font-size:12px;color:var(--text-mute);}
   #vf-side .vs-gap{flex:1;}
@@ -819,10 +860,6 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 }
 
 /* ── 설정 묶음 ── */
-.st-nav{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;}
-.st-chip{flex:0 0 auto;background:var(--card);border:1.5px solid var(--border);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;min-height:40px;}
-.st-chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
-.st-group>.dash-card{margin-top:0;margin-bottom:12px;}
 /* 오늘 날짜 강조 */
 .day.today{background:linear-gradient(135deg,#fff9e6 0%,#fff3cc 100%) !important;border-top:3px solid var(--gold) !important;}
 .day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(180,140,0,0.4);}
@@ -2822,6 +2859,8 @@ const GUIDE_SECTIONS = [
       '⚙️ 관리자 설정이 다섯 묶음이 됐어요 — 일하는 방식 · 매장 · 사람 · 화면 · 내 계정. 예전 「고정업무」 탭은 「일하는 방식」 안으로',
       '📅 고정업무마다 「달력에 표시」와 「그날 할 일에 자동 추가」를 켜고 끌 수 있어요. 자동 추가를 켜면 그날 매장마다 「매장 할 일」 1건이 생기고 근무자 누구나 체크해요 (홈·내 업무·관리자 상세에 보여요)',
       '🧹 대청소 요일과 몇 번째 주를 설정에서 바꿀 수 있어요 (그동안은 일요일 고정). 구역은 등록한 수만큼 돌아가요',
+      '🧭 관리자 상단 탭 7개가 사라졌어요 — 폰은 「현황·보고 | 기록 ▾ | 설정」 세 개(기록을 누르면 리포트·활동·통계·프로젝트·휴무), 컴퓨터는 왼쪽 메뉴의 관리자 아래 항목으로',
+      '⚙️ 설정은 다섯 묶음 목록이 첫 화면이에요 — 아이콘과 한 줄 설명을 보고 들어가고, 「← 설정」으로 돌아와요. 컴퓨터는 왼쪽 목록·오른쪽 내용',
     ],
   },
   {
@@ -5327,7 +5366,15 @@ function openLeaveSheet(entry,tKey,preset){
 window.openLeaveSheet=openLeaveSheet;
 
 // 선형 아이콘 (이모지 대신) — 같은 굵기 2px, currentColor
-const VF_ICONS={home:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,task:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>`,store:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>`,cal:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,status:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,admin:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,guide:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,user:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,brief:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>`,back:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`,camera:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,send:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>`};
+const VF_ICONS={home:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,task:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>`,store:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>`,cal:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,status:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,admin:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,guide:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,user:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,brief:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>`,back:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`,camera:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,send:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>`,
+sliders:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>`,
+users:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>`,
+monitor:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`,
+archive:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`,
+flag:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg>`,
+chart:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg>`,
+activity:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+off:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M9.5 14.5l5 5M14.5 14.5l-5 5"/></svg>`};
 // 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
   const side=document.getElementById('vf-side');
@@ -5349,6 +5396,13 @@ function renderSideNav(active){
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
+    if(it.k==='admin'&&active==='admin'){
+      // 관리자 안에서는 상단 탭줄 대신 여기서 화면을 고른다
+      adminTabDefs().forEach(t=>{
+        const sb=document.createElement('button');sb.className='vs-item vs-sub'+(dashTab===t.id?' active':'');
+        sb.innerHTML=`<span>${t.label}</span>`;sb.onclick=()=>goDashTab(t.id);if(dashTab===t.id)sb.setAttribute('aria-current','page');side.appendChild(sb);
+      });
+    }
   });
   const gap=document.createElement('div');gap.className='vs-gap';side.appendChild(gap);
   [['가이드',IC.guide,()=>openGuideModal()],['내 계정',IC.user,()=>openAppMenu()]].forEach(([lb,ic,fn])=>{
@@ -8119,29 +8173,59 @@ function buildAS(y,m){
 // ══════════════════════════════════════
 // 관리자 대시보드
 // ══════════════════════════════════════
+// 관리자 화면 목록 — 매일 여는 「현황·보고」 하나, 가끔 보는 기록 다섯, 설정.
+// 폰은 위에 [현황·보고 | 기록 ▾ | 설정] 세 개만, 데스크탑은 왼쪽 사이드바 하위 항목.
+function adminTabDefs(){
+  const IC=VF_ICONS;
+  return [
+    {id:'today',label:'현황·보고',group:'main',ic:IC.status,desc:'오늘 매장 타일 · 지난 날짜'},
+    {id:'report',label:'주간 리포트',group:'records',ic:IC.brief,desc:'매주 월요일 자동 생성 — 지난주 요약'},
+    {id:'activity',label:'직원 활동',group:'records',ic:IC.activity,desc:'직원별 주간 활동 원문'},
+    {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:'이번 달 매장별 누적'},
+    {id:'projects',label:'프로젝트',group:'records',ic:IC.flag,desc:'진행 중 · 협업 프로젝트 현황'},
+    {id:'dayoff',label:'휴무',group:'records',ic:IC.off,desc:'직원 휴무 신청 · 승인'},
+    {id:'settings',label:'설정',group:'settings',ic:IC.admin,desc:'일하는 방식 · 매장 · 사람 · 화면 · 내 계정'},
+  ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
+}
+function goDashTab(id){dashTab=id;dashViewDate=null;renderDashboard();try{const sc=document.getElementById('screen-admin');if(sc)sc.scrollTop=0;window.scrollTo(0,0);}catch(e){}}
+// 기록 시트 — 폰에서 「기록 ▾」를 누르면 아래에서 올라온다
+function openRecordsSheet(){
+  const defs=adminTabDefs().filter(t=>t.group==='records');
+  const ov=document.createElement('div');ov.className='vh-sheet-bg';
+  const sh=document.createElement('div');sh.className='vh-sheet';
+  sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-label','기록');
+  sh.innerHTML='<div class="vh-sheet-handle" aria-hidden="true"></div><h3>기록</h3><span class="vh-tiny">가끔 보는 것 — 리포트 · 통계 · 프로젝트 · 휴무</span>';
+  const list=document.createElement('div');list.className='menu-list';
+  defs.forEach(t=>{
+    const b=document.createElement('button');b.type='button';b.className='menu-row'+(dashTab===t.id?' on':'');
+    b.innerHTML=`<span class="mr-ic">${t.ic}</span><span class="mr-main"><b>${t.label}</b><small>${t.desc}</small></span><span class="vh-arrow" aria-hidden="true">›</span>`;
+    b.onclick=()=>{close();goDashTab(t.id);};
+    list.appendChild(b);
+  });
+  sh.appendChild(list);
+  const opener=document.activeElement;
+  const onKey=(e)=>{if(e.key==='Escape')close();};
+  const close=()=>{document.removeEventListener('keydown',onKey);ov.remove();if(opener&&opener.focus)try{opener.focus();}catch(e){}};
+  document.addEventListener('keydown',onKey);
+  ov.onclick=(e)=>{if(e.target===ov)close();};
+  ov.appendChild(sh);document.body.appendChild(ov);
+  sh.tabIndex=-1;setTimeout(()=>{try{sh.focus({preventScroll:true});}catch(e){}},30); // 키보드는 Tab으로 첫 줄, 터치는 링 없음
+}
 async function renderDashboard(){
   clearDashUnsubs();
   const wrap=document.getElementById('dash-wrap');wrap.innerHTML='';
 
-  const tabs=document.createElement('div');tabs.className='dash-tabs';
-  const tabDefs=[
-    {id:'today',label:'날짜별 현황'},
-    {id:'report',label:'주간 리포트'},
-    {id:'activity',label:'직원 활동'},
-    {id:'monthly',label:'월간 통계'},
-    {id:'projects',label:'프로젝트'},
-    {id:'dayoff',label:'휴무'},
-    {id:'settings',label:'설정'}
-  ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
+  const tabDefs=adminTabDefs();
   if(!tabDefs.some(td=>td.id===dashTab))dashTab='today';
-  tabDefs.forEach(td=>{
-    const b=document.createElement('button');
-    b.className='dash-tab'+(dashTab===td.id?' active':'');
-    b.textContent=td.label;
-    b.onclick=()=>{dashTab=td.id;renderDashboard();};
-    tabs.appendChild(b);
-  });
-  wrap.appendChild(tabs);
+  const cur=tabDefs.find(td=>td.id===dashTab);
+  const nav=document.createElement('div');nav.className='dash-nav';
+  const mkNav=(cls,html,on,fn,aria)=>{const b=document.createElement('button');b.type='button';b.className='dn-btn'+(cls?' '+cls:'')+(on?' on':'');b.innerHTML=html;b.onclick=fn;if(aria)b.setAttribute('aria-label',aria);if(on)b.setAttribute('aria-current','page');return b;};
+  nav.appendChild(mkNav('',`${VF_ICONS.status}<span>현황·보고</span>`,dashTab==='today',()=>goDashTab('today')));
+  const inRec=cur&&cur.group==='records';
+  nav.appendChild(mkNav('',`${VF_ICONS.archive}<span>${inRec?cur.label:'기록'}</span><span class="dn-caret" aria-hidden="true">▾</span>`,inRec,openRecordsSheet,inRec?`기록: ${cur.label} — 누르면 다른 기록 선택`:'기록 열기'));
+  nav.appendChild(mkNav('dn-icon',VF_ICONS.admin,dashTab==='settings',()=>goDashTab('settings'),'설정'));
+  wrap.appendChild(nav);
+  try{renderSideNav('admin');}catch(e){}
 
   const content=document.createElement('div');content.id='dash-content';
   wrap.appendChild(content);
@@ -9530,20 +9614,28 @@ async function renderSettingsTab(content){
 
   // ── 다섯 묶음으로 정리. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류해 옮긴다 ──
   const GROUPS=[
-    ['work','일하는 방식',['고정업무','대청소 규칙','청소 항목 편집','매장 점수 규칙','인수인계 규칙','청소 사진 보관']],
-    ['store','매장',['매장 관리','매장 아이콘']],
-    ['people','사람',['직원 초대','직원 근무지 설정','퇴사자 관리','주간 1:1 상담','가맹 초대 코드']],
-    ['screen','화면',['기능 켜기 / 끄기','컬러테마']],
-    ['me','내 계정',['내 계정','내 동의 관리']],
+    ['work','일하는 방식',['고정업무','대청소 규칙','청소 항목 편집','매장 점수 규칙','인수인계 규칙','청소 사진 보관'],VF_ICONS.sliders,'고정업무 · 대청소 · 청소 항목 · 점수 · 인수인계 · 사진 보관'],
+    ['store','매장',['매장 관리','매장 아이콘'],VF_ICONS.store,'매장 추가·삭제 · 아이콘'],
+    ['people','사람',['직원 초대','직원 근무지 설정','퇴사자 관리','주간 1:1 상담','가맹 초대 코드'],VF_ICONS.users,'직원 초대 · 근무지·직함 · 퇴사자 · 1:1 상담'],
+    ['screen','화면',['기능 켜기 / 끄기','컬러테마'],VF_ICONS.monitor,'기능 켜기/끄기 · 컬러테마'],
+    ['me','내 계정',['내 계정','내 동의 관리'],VF_ICONS.user,'내 이름 · 동의 관리'],
   ];
-  const nav=document.createElement('div');nav.className='st-nav';
+  const layout=document.createElement('div');layout.className='st-layout';
+  const nav=document.createElement('div');nav.className='st-menu dash-card';
+  const navList=document.createElement('div');navList.className='menu-list';nav.appendChild(navList);
+  const right=document.createElement('div');right.className='st-right';
+  const backBar=document.createElement('div');backBar.className='st-back';
+  backBar.innerHTML=`<button type="button" class="vh-btn" data-st-back>${VF_ICONS.back}설정</button><div class="st-cur"><span data-st-title></span><small data-st-desc></small></div>`;
   const groupsEl=document.createElement('div');groupsEl.className='st-groups';
+  right.appendChild(backBar);right.appendChild(groupsEl);
+  layout.appendChild(nav);layout.appendChild(right);
   const groupBox={};
-  GROUPS.forEach(([k,lb])=>{
+  GROUPS.forEach(([k,lb,names,ic,desc])=>{
     const g=document.createElement('section');g.className='st-group';g.dataset.g=k;g.hidden=true;
     groupsEl.appendChild(g);groupBox[k]=g;
-    const b=document.createElement('button');b.type='button';b.className='st-chip';b.dataset.g=k;b.textContent=lb;
-    b.onclick=()=>showSettingsGroup(k);nav.appendChild(b);
+    const b=document.createElement('button');b.type='button';b.className='menu-row';b.dataset.g=k;
+    b.innerHTML=`<span class="mr-ic">${ic}</span><span class="mr-main"><b>${lb}</b><small>${desc}</small></span><span class="vh-arrow" aria-hidden="true">›</span>`;
+    b.onclick=()=>showSettingsGroup(k);navList.appendChild(b);
   });
   // 고정업무·대청소·청소 항목은 '일하는 방식' 맨 앞에 — 예전 고정업무 탭 내용 그대로
   const fixedHolder=document.createElement('div');
@@ -9557,19 +9649,30 @@ async function renderSettingsTab(content){
     const hit=GROUPS.find(([k,lb,names])=>names.some(n=>t.trim().startsWith(n)));
     (hit?groupBox[hit[0]]:groupBox.screen).appendChild(card);
   });
-  content.insertBefore(groupsEl,savedEl);content.insertBefore(nav,groupsEl);
+  content.insertBefore(layout,savedEl);
+  const isDesk=()=>window.innerWidth>=1024;
+  let curGroup=null;
+  // 폰: 목록이 첫 화면, 고르면 그 묶음만 + 「← 설정」 막대. 데스크탑: 왼쪽 목록 고정, 오른쪽에 묶음.
   const showSettingsGroup=(k)=>{
+    curGroup=k;
     Object.entries(groupBox).forEach(([gk,g])=>g.hidden=gk!==k);
-    nav.querySelectorAll('.st-chip').forEach(c=>c.classList.toggle('on',c.dataset.g===k));
+    nav.querySelectorAll('.menu-row').forEach(c=>{c.classList.toggle('on',c.dataset.g===k);if(c.dataset.g===k)c.setAttribute('aria-current','page');else c.removeAttribute('aria-current');});
+    const def=GROUPS.find(g=>g[0]===k);
+    backBar.querySelector('[data-st-title]').textContent=def?def[1]:'';backBar.querySelector('[data-st-desc]').textContent=def?def[4]:'';
+    if(!isDesk()){nav.hidden=true;right.hidden=false;try{const sc=document.getElementById('screen-admin');if(sc)sc.scrollTop=0;window.scrollTo(0,0);}catch(e){}}
+    else{nav.hidden=false;right.hidden=false;}
     try{localStorage.setItem('vflow_settings_group',k);}catch(e){}
   };
-  let first='work';try{first=localStorage.getItem('vflow_settings_group')||'work';}catch(e){}
-  if(!groupBox[first])first='work';
-  showSettingsGroup(first);
+  const showSettingsMenu=()=>{
+    if(isDesk()){let f='work';try{f=localStorage.getItem('vflow_settings_group')||'work';}catch(e){}showSettingsGroup(groupBox[f]?f:'work');return;}
+    curGroup=null;nav.hidden=false;right.hidden=true;
+  };
+  backBar.querySelector('[data-st-back]').onclick=showSettingsMenu;
+  showSettingsMenu();
   attachSettingsFinder(content);
-  // 찾기에 글자를 넣으면 모든 묶음을 펼쳐 검색, 지우면 다시 한 묶음
+  // 찾기에 글자를 넣으면 모든 묶음을 펼쳐 검색, 지우면 원래대로
   const sq=content.querySelector('[data-sq]');
-  if(sq){sq.addEventListener('input',()=>{const q=sq.value.trim();if(q){Object.values(groupBox).forEach(g=>g.hidden=false);nav.style.display='none';}else{nav.style.display='';showSettingsGroup(nav.querySelector('.st-chip.on')?.dataset.g||'work');}});}
+  if(sq){sq.addEventListener('input',()=>{const q=sq.value.trim();if(q){Object.values(groupBox).forEach(g=>g.hidden=false);nav.hidden=true;right.hidden=false;backBar.hidden=true;}else{backBar.hidden=false;if(curGroup)showSettingsGroup(curGroup);else showSettingsMenu();}});}
 }
 
 // ── 설정 찾기 — 카드가 많아져서 스크롤로만 찾던 문제 ──
@@ -9586,7 +9689,7 @@ function attachSettingsFinder(content){
     const none=bar.querySelector('[data-none]');
     const cards=()=>Array.from(content.querySelectorAll('.dash-card'));
 
-    const grouped=()=>!!content.querySelector('.st-nav'); // 다섯 묶음 탐색이 있으면 제목 칩은 중복 — 숨긴다
+    const grouped=()=>!!content.querySelector('.st-menu'); // 다섯 묶음 메뉴가 있으면 제목 칩은 중복 — 숨긴다
     const buildChips=()=>{
       chips.innerHTML='';
       if(grouped()){chips.style.display='none';return;}
