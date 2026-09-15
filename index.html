@@ -652,7 +652,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .tg-emp .rm-worker small.ok{color:var(--green);}.tg-emp .rm-worker small.danger{color:var(--red);}
 @media(min-width:1024px){.tg-wrap{padding:0;}}
 /* ── 매장 방 — 홈 문법(카드 · 선 아이콘 · 데스크탑 2열) ── */
-.rm-body{padding:12px 12px 32px;max-width:1100px;margin:0 auto;box-sizing:border-box;}
+.rm-body{padding:12px 12px 32px;box-sizing:border-box;} /* 좌우 여백 없이 — 매장 상황은 넓게 */
 .rm-grid{display:flex;flex-direction:column;gap:10px;}
 .rm-col{display:contents;}
 /* 폰 순서: 오늘 이 매장 → 인수인계 → 요청 → 프로젝트 → 고정 정보 → 월간. 데스크탑은 2열이라 order 무시 */
@@ -692,7 +692,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .rm-hh .todo-empty{font-size:12px;color:var(--text-mute);padding:8px 0;}
 @media(min-width:1024px){
   .rm-body{padding:22px 26px 40px;}
-  .rm-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start;}
+  .rm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;}
   .rm-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
   .rm-today,.rm-ho,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
   #room-overlay,#board-overlay{left:224px!important;} /* 사이드바(224px) 옆에서 시작 — 왼쪽 메뉴는 그대로 */
@@ -887,7 +887,7 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 
 
 /* ── 내 업무 (홈 문법) ── */
-.mw-wrap{padding:12px 12px 0;max-width:1400px;margin:0 auto;width:100%;box-sizing:border-box;}
+.mw-wrap{padding:12px 12px 0;width:100%;box-sizing:border-box;}
 .mw-top{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
 .mw-lbl{font-size:11px;color:var(--text-sub);font-weight:700;display:block;margin-bottom:6px;}
 .mw-store .my-store-select{padding:0;}
@@ -924,6 +924,8 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .mw-day.today small{color:var(--orange);}
 .mw-day.sun small{color:var(--red);}.mw-day.sat small{color:var(--blue,#2b5fa8);}
 .mw-day.off{opacity:.55;}
+/* 프로젝트 행 — 접으면 제목·D+·진행률만 */
+.mp-row.folded > :not(.my-project-item):not(.project-progress-wrap){display:none!important;}
 .mw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
 .mw-stat{background:var(--bg);border-radius:10px;padding:10px 8px;text-align:center;}
 .mw-stat b{display:block;font-size:20px;font-weight:800;color:var(--text);}
@@ -955,7 +957,7 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 @media(min-width:1024px){
   .mw-wrap{padding:22px 26px 0;}
   .mw-top{flex-direction:row;align-items:flex-end;justify-content:space-between;margin-bottom:14px;}
-  .mw-grid{display:grid;grid-template-columns:1.15fr 1fr .9fr;gap:14px;align-items:start;}
+  .mw-grid{display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:14px;align-items:start;}
   .mw-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
   .mw-metrics{margin-bottom:14px;max-width:760px;}
 }
@@ -1590,6 +1592,8 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
             <button type="button" class="vh-btn" onclick="addProjectQuick()">추가</button>
           </div>
         </div>
+      </section>
+      <section class="mw-col">
         <!-- 히스토리 -->
         <div class="vh-card my-section mw-card" id="mw-hist">
           <div class="vh-ct"><strong>이번 달</strong><button type="button" class="vh-fold" onclick="toggleMyHistory()" id="my-history-toggle-btn">전체 히스토리</button></div>
@@ -2230,6 +2234,8 @@ function enterMyWork(name){
   }
   showScreen('screen-my-work');
   renderMyWorkScreen();
+  curTab='my';
+  try{renderSideNav('my');}catch(e){}
 }
 
 window.backToStaffSelect=function(){
@@ -3940,17 +3946,27 @@ async function renderMyProjectBanner(){
 
       // 프로젝트 행
       const row=document.createElement('div');
-      row.style.cssText='border-bottom:1px solid rgba(167,139,250,0.2);padding-bottom:6px;margin-bottom:6px;';
+      row.className='mp-row'+((window.__mpOpen||new Set()).has(String(item.id))?'':' folded');
+      row.style.cssText='border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:6px;';
 
       // 프로젝트 헤더
       const header=document.createElement('div');
       header.className='my-project-item';
       header.innerHTML=`<input type="checkbox" data-id="${item.id}">
-        <span style="flex:1;font-weight:600;">${item.text}</span>
+        <span style="flex:1;font-weight:600;cursor:pointer;" data-fold="${item.id}" title="누르면 일지 펼치기/접기">${item.text}</span>
         <span style="font-size:10px;color:var(--text-mute);">D+${days}</span>
+        <button type="button" class="vh-fold" data-foldbtn="${item.id}" style="font-size:11px;">${row.classList.contains('folded')?'펼치기':'접기'}</button>
         <button data-help="${item.id}" title="막힌 부분을 전 직원 홈에 알립니다" style="background:var(--red-light);color:var(--red);border:1.5px dashed var(--red);border-radius:8px;padding:3px 9px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">도움 요청</button>
-        <button data-del="${item.id}" style="background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:13px;padding:0 4px;">🗑️</button>`;
+        <button data-del="${item.id}" class="vh-fold" style="color:var(--text-mute);font-size:11px;">삭제</button>`;
       row.appendChild(header);
+      const _toggleFold=()=>{
+        const set=window.__mpOpen||(window.__mpOpen=new Set());
+        const k=String(item.id);
+        if(row.classList.contains('folded')){row.classList.remove('folded');set.add(k);}else{row.classList.add('folded');set.delete(k);}
+        const fb=header.querySelector(`[data-foldbtn="${item.id}"]`);if(fb)fb.textContent=row.classList.contains('folded')?'펼치기':'접기';
+      };
+      header.querySelector(`[data-fold="${item.id}"]`).onclick=_toggleFold;
+      header.querySelector(`[data-foldbtn="${item.id}"]`).onclick=_toggleFold;
 
       // 도움 요청 상태/버튼 (개인 프로젝트 — 실제 uuid가 있는 항목만)
       const _canHelp=/^[0-9a-f-]{36}$/i.test(String(item.id));
@@ -6583,8 +6599,8 @@ function openStoreRoom(store){
   try{(window.__dashTodos||[]).forEach(p=>{if(!p)return;const its=p[1].filter(i=>i.storeId===store.id);if(its.length){workers.push(p[0]);workerStat[p[0]]={done:its.filter(i=>i.done).length,all:its.length};}});}catch(e){}
   document.getElementById('room-sub').textContent=workers.length?`오늘 근무 ${workers.length}명 · ${workers.join(' · ')}`:'오늘 근무자 아직 없음';
   body.innerHTML='';
-  const grid=el('div','rm-grid');const col1=el('section','rm-col'),col2=el('section','rm-col');
-  grid.appendChild(col1);grid.appendChild(col2);body.appendChild(grid);
+  const grid=el('div','rm-grid');const col1=el('section','rm-col'),col2=el('section','rm-col'),col3=el('section','rm-col');
+  grid.appendChild(col1);grid.appendChild(col2);grid.appendChild(col3);body.appendChild(grid);
 
   // ── 오늘 이 매장 ──
   const todayCard=el('div','vh-card rm-today');
@@ -6732,7 +6748,7 @@ function openStoreRoom(store){
       }catch(e){wrList.innerHTML='<div class="rm-empty">업무 요청 기능이 아직 켜지지 않았어요 — 관리자에게 문의</div>';}
     };
     paintWr();
-    col2.appendChild(wrCard);
+    col3.appendChild(wrCard);
   }
 
   // ── 매장 고정 정보 (접힘 · 자동 저장) ──
@@ -6752,7 +6768,7 @@ function openStoreRoom(store){
     iFold.onclick=()=>{info.classList.toggle('folded');const f=info.classList.contains('folded');iFold.textContent=f?'펼치기':'접기';iPeek.hidden=!f;if(!f){load();setTimeout(()=>ta.focus(),0);}};
     iPeek.style.cursor='pointer';iPeek.onclick=()=>iFold.onclick();
     load();
-    col1.appendChild(info);
+    col3.appendChild(info);
   }
 
   // ── 이 매장 프로젝트 ──
@@ -6777,7 +6793,7 @@ function openStoreRoom(store){
         });
       }catch(e){pList.innerHTML='<div class="rm-empty">불러오기 실패</div>';}
     })();
-    col1.appendChild(pj);
+    col3.appendChild(pj);
   }
 
   // ── 월간 스케줄로 ──
