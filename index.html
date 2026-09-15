@@ -695,6 +695,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .rm-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start;}
   .rm-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
   .rm-today,.rm-ho,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
+  #room-overlay,#board-overlay{left:224px!important;} /* 사이드바(224px) 옆에서 시작 — 왼쪽 메뉴는 그대로 */
 }
 /* 남기기 시트 */
 .vh-sheet-bg{position:fixed;inset:0;z-index:950;background:rgba(23,34,51,.55);display:flex;align-items:flex-end;justify-content:center;}
@@ -908,6 +909,30 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .mw-select{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:9px 10px;font-size:13px;font-family:inherit;margin-top:10px;background:var(--card);color:var(--text);}
 .mw-ho-list{display:flex;flex-direction:column;gap:0;}
 .mw-ho-form .my-input-row{margin-top:6px;}
+/* 이번 주 띠 */
+.mw-week{margin-bottom:10px;}
+.mw-strip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.mw-strip::-webkit-scrollbar{display:none;}
+.mw-day{flex:0 0 auto;width:56px;min-height:64px;border:1.5px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px;color:var(--text);}
+.mw-day small{font-size:10.5px;color:var(--text-sub);font-weight:700;}
+.mw-day b{font-size:16px;font-weight:800;line-height:1.1;}
+.mw-day .mw-cnt{font-size:10.5px;color:var(--text-mute);font-weight:700;min-height:13px;}
+.mw-day .mw-cnt.ok{color:var(--green);}.mw-day .mw-cnt.left{color:var(--orange);}
+.mw-day.on{border-color:var(--navy);background:var(--navy);color:#fff;}
+.mw-day.on small,.mw-day.on .mw-cnt{color:#c6cfdb;}
+.mw-day.today{border-color:var(--gold);}
+.mw-day.today small{color:var(--orange);}
+.mw-day.sun small{color:var(--red);}.mw-day.sat small{color:var(--blue,#2b5fa8);}
+.mw-day.off{opacity:.55;}
+.mw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.mw-stat{background:var(--bg);border-radius:10px;padding:10px 8px;text-align:center;}
+.mw-stat b{display:block;font-size:20px;font-weight:800;color:var(--text);}
+.mw-stat span{font-size:11px;color:var(--text-sub);font-weight:600;}
+.mw-card .mw-store{margin:0 0 8px;}
+.mw-card .mw-store .mw-lbl{display:none;}
+.mw-card .my-input-row{flex-wrap:wrap;}
+@media(min-width:1024px){.mw-day{width:64px;}}
+@media(max-width:600px){.mw-week-hint{display:none;}}
 /* 할 일 행 — 홈의 hp-todo 와 같은 결 */
 .mw-card .my-todo-item{background:none;border:none;border-top:1px solid var(--border);border-radius:0;padding:10px 0;box-shadow:none;align-items:center;}
 .mw-card .my-todo-item:first-child{border-top:none;}
@@ -1516,96 +1541,64 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
 
   <div class="mw-wrap">
-    <!-- 지난달 미완료 · 어제 미완료 배너 -->
+    <!-- 지난달 미완료 (1일에만) · 어제 이 매장 미완료(이어받기) -->
     <div id="carry-banner-wrap"></div>
-    <div id="prevday-incomplete-wrap"></div>
-
-    <!-- 위: 오늘 매장 · 날짜 · 휴무 -->
-    <div class="mw-top">
-      <div class="mw-store"><span class="mw-lbl">오늘 근무 매장</span><div class="my-store-select" id="my-store-select"></div></div>
-      <div class="mw-date">
-        <button type="button" class="vh-btn mw-nav" onclick="chgMyDate(-1)" aria-label="전날">‹</button>
-        <span id="my-date-label" class="mw-date-lbl"></span>
-        <button type="button" class="vh-btn mw-nav" id="my-next-btn" onclick="chgMyDate(1)" aria-label="다음날">›</button>
-        <button type="button" class="vh-btn" onclick="openMyDayoffModal()">휴무 설정</button>
-      </div>
-    </div>
     <div id="my-dayoff-banner" class="mw-banner" style="display:none;">
-      <span>오늘은 휴무일입니다</span>
+      <span>이날은 휴무입니다</span>
       <button type="button" class="vh-btn" onclick="toggleMyDayoff()">취소</button>
     </div>
     <div id="handover-unread-banner" style="display:none;"></div>
 
-    <!-- 요약 4칸 — 누르면 그 카드로 -->
-    <div class="vh-metrics mw-metrics">
-      <button type="button" class="vh-metric" data-go="mw-todo"><span>남은 할 일</span><b id="mw-m-todo">—</b></button>
-      <button type="button" class="vh-metric" data-go="mw-ho"><span>인수인계</span><b id="mw-m-ho">—</b></button>
-      <button type="button" class="vh-metric" data-go="mw-todo"><span>이월</span><b id="mw-m-carry">—</b></button>
-      <button type="button" class="vh-metric" data-go="mw-proj"><span>프로젝트</span><b id="mw-m-proj">—</b></button>
+    <!-- 이번 주 띠 — 지난 7일 · 오늘 · 앞 7일. 오늘은 홈에서 -->
+    <div class="vh-card mw-card mw-week" id="mw-week">
+      <div class="vh-ct"><strong>날짜</strong><div style="display:flex;gap:8px;align-items:center;"><span class="vh-tiny mw-week-hint">오늘 것은 홈에서 · 지난 날은 기록 · 앞날은 미리 적기</span><button type="button" class="vh-btn" onclick="openMyDayoffModal()" style="min-height:34px;padding:6px 10px;">휴무 설정</button></div></div>
+      <div class="mw-strip" id="mw-strip" role="tablist" aria-label="날짜 선택"></div>
     </div>
 
     <div class="mw-grid">
       <section class="mw-col">
-        <!-- 할 일 -->
+        <!-- 그날 할 일 -->
         <div class="vh-card my-section mw-card" id="mw-todo">
-          <div class="vh-ct"><strong><span id="my-task-date-label">오늘</span>의 업무</strong><span class="vh-tiny" id="mw-todo-sub"></span></div>
-          <div class="mw-fixed" id="mw-fixed-list" hidden></div>
+          <div class="vh-ct"><strong><span id="my-task-date-label">그날</span>의 할 일</strong><span class="vh-tiny" id="mw-todo-sub"></span></div>
+          <div class="mw-store"><span class="mw-lbl">매장</span><div class="my-store-select" id="my-store-select"></div></div>
           <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
           <div class="my-input-row">
             <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄" onkeydown="if(event.key==='Enter')addMyTodo()">
             <button type="button" class="vh-btn primary" onclick="addMyTodo()">추가</button>
+            <button type="button" class="vh-btn" onclick="toggleMyBulk()" title="여러 개를 한 번에 — 한 줄에 하나씩">여러 개</button>
           </div>
           <div class="mw-bulk">
-            <button type="button" class="vh-fold" onclick="toggleMyBulk()">여러 개 한번에 입력</button>
             <div id="my-bulk-wrap" style="display:none;margin-top:8px;">
-              <textarea id="my-bulk-textarea" class="mw-ta" placeholder="한 줄에 하나씩&#10;예) 재고 확인&#10;청소 완료 체크"></textarea>
-              <div style="display:flex;gap:6px;margin-top:6px;">
-                <button type="button" class="vh-btn primary" style="flex:1;" onclick="addMyBulk()">일괄 추가</button>
-                <button type="button" class="vh-btn" onclick="toggleMyBulk()">취소</button>
+              <textarea id="my-bulk-textarea" class="mw-ta" placeholder="한 줄에 하나씩&#10;예) 재고 확인&#10;쇼케이스 정리"></textarea>
+              <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">
+                <button type="button" class="vh-btn" onclick="toggleMyBulk()">닫기</button>
+                <button type="button" class="vh-btn primary" onclick="addMyBulk()">한 번에 추가</button>
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="mw-col">
-        <!-- 인수인계 -->
-        <div class="vh-card my-section mw-card" id="mw-ho">
-          <div class="vh-ct"><strong>인수인계</strong><span class="vh-tiny">다음 근무자에게</span></div>
-          <div id="my-handover-list" class="mw-ho-list"><div class="my-empty">불러오는 중...</div></div>
-          <div class="mw-ho-form">
-            <select id="my-handover-recipient" class="mw-select"><option value="">받는 사람: 다음 근무자 누구나</option></select>
-            <div class="my-input-row">
-              <input type="text" class="my-input" id="my-handover-input" placeholder="다음 근무자가 알아야 할 것" onkeydown="if(event.key==='Enter')addMyHandover()">
-              <button type="button" class="vh-btn primary" onclick="addMyHandover()">추가</button>
-            </div>
-          </div>
-        </div>
+        <div id="prevday-incomplete-wrap"></div>
       </section>
 
       <section class="mw-col">
         <!-- 프로젝트 -->
         <div class="vh-card my-section mw-card" id="mw-proj">
-          <div class="vh-ct"><strong>프로젝트</strong><button type="button" class="vh-fold" id="project-banner-toggle" onclick="toggleProjectBanner()">펼치기</button></div>
+          <div class="vh-ct"><strong>프로젝트</strong><span class="vh-tiny">며칠 걸리는 일</span></div>
+          <div id="my-project-banner-wrap"><div id="my-project-banner"></div></div>
           <div class="proj-quick-add my-input-row" style="padding:0;">
-            <input type="text" id="proj-quick-input" class="my-input" placeholder="새 프로젝트 (며칠 걸리는 일)" onkeydown="if(event.key==='Enter')addProjectQuick()">
+            <input type="text" id="proj-quick-input" class="my-input" placeholder="새 프로젝트 한 줄" onkeydown="if(event.key==='Enter')addProjectQuick()">
             <button type="button" class="vh-btn" onclick="addProjectQuick()">추가</button>
-          </div>
-          <div id="my-project-banner-wrap" style="display:none;"><div id="my-project-banner"></div></div>
-        </div>
-        <!-- 내 메모 -->
-        <div class="vh-card my-section mw-card" id="mw-memo">
-          <div class="vh-ct"><strong>내 메모</strong><span class="vh-tiny">나만 봐요</span></div>
-          <textarea id="my-memo-textarea" class="mw-ta" placeholder="기억할 것을 자유롭게 — 인수인계와 달리 나만 봅니다"></textarea>
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;">
-            <span id="my-memo-saved" class="vh-tiny" style="color:var(--green);"></span>
-            <button type="button" class="vh-btn" onclick="saveMyMemo()">저장</button>
           </div>
         </div>
         <!-- 히스토리 -->
         <div class="vh-card my-section mw-card" id="mw-hist">
-          <div class="vh-ct"><strong>내 전체 히스토리</strong><button type="button" class="vh-fold" onclick="toggleMyHistory()" id="my-history-toggle-btn">펼치기</button></div>
-          <div id="my-history-wrap" style="display:none;">
+          <div class="vh-ct"><strong>이번 달</strong><button type="button" class="vh-fold" onclick="toggleMyHistory()" id="my-history-toggle-btn">전체 히스토리</button></div>
+          <div class="mw-stats">
+            <div class="mw-stat"><b id="my-stat-total">—</b><span>등록</span></div>
+            <div class="mw-stat"><b id="my-stat-done">—</b><span>완료</span></div>
+            <div class="mw-stat"><b id="my-stat-carry">—</b><span>이월</span></div>
+          </div>
+          <div id="my-history-wrap" style="display:none;margin-top:10px;">
             <div class="cf-chips" style="margin:0 0 8px;">
               <button type="button" onclick="filterMyHistory('all')" id="mhf-all" class="my-store-chip active">전체</button>
               <button type="button" onclick="filterMyHistory('undone')" id="mhf-undone" class="my-store-chip">미완료</button>
@@ -1769,8 +1762,8 @@ const DAILY=[
 // 기본 청소 (매일 공통, 평일/대청소일 모두 포함)
 // ── 빈 화면 안내 — "없습니다"에서 끝내지 않고 다음 행동을 알려준다 ──
 function EMPTY(ico,title,hint){
+  // 이모지 아이콘은 그리지 않는다 — 글자만 (A안: 이모지 대신 선 아이콘·글자)
   return '<div style="text-align:center;padding:10px 6px;">'+
-    '<div style="font-size:24px;opacity:.5;line-height:1.2;">'+ico+'</div>'+
     '<div style="font-size:12.5px;font-weight:800;color:var(--text-sub);margin-top:7px;">'+title+'</div>'+
     (hint?'<div style="font-size:11px;color:var(--text-mute);margin-top:4px;line-height:1.55;">'+hint+'</div>':'')+
     '</div>';
@@ -2221,7 +2214,8 @@ function enterMyWork(name){
   // 5-2: 타인 카드는 조회 전용(보기 O, 수정 X) — 어댑터도 타인 쓰기를 차단함
   const _vSelf=window.__vflowProfile;
   document.getElementById('screen-my-work').classList.toggle('view-only',!!(_vSelf&&_vSelf.name!==name));
-  myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  // 오늘 것은 홈에 있으니 본인은 어제부터(지난 것 확인). 남의 카드(조회)는 오늘
+  myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-((_vSelf&&_vSelf.name===name)?1:0));
   // 직원 기본 매장 자동 설정 — 홈에서 정한 "오늘 매장"(고정/예외출근/순환 당일선택)이 최우선 (본인일 때)
   let _todayPick=null;
   if(_vSelf&&_vSelf.name===name){
@@ -2243,6 +2237,45 @@ window.backToStaffSelect=function(){
 };
 function backToStaffSelect(){window.backToStaffSelect();}
 
+// 이번 주 띠 — 지난 7일 · 오늘 · 앞 7일. 날짜마다 그날 할 일 완료/전체를 붙인다(뒤에서 조용히).
+let _mwStripSeq=0;
+async function renderMyWeekStrip(){
+  const strip=document.getElementById('mw-strip');if(!strip||!myStaff)return;
+  const seq=++_mwStripSeq;
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const sel=new Date(myDate.getFullYear(),myDate.getMonth(),myDate.getDate()).getTime();
+  const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;
+  const dows=['일','월','화','수','목','금','토'];
+  strip.innerHTML='';
+  const days=[];
+  for(let i=-7;i<=7;i++){const d=new Date(t0);d.setDate(d.getDate()+i);days.push(d);}
+  days.forEach(d=>{
+    const isT=d.getTime()===t0.getTime();
+    const b=document.createElement('button');b.type='button';b.className='mw-day'+(d.getTime()===sel?' on':'')+(isT?' today':'')+(d.getDay()===0?' sun':d.getDay()===6?' sat':'');
+    b.setAttribute('role','tab');b.setAttribute('aria-selected',d.getTime()===sel?'true':'false');
+    b.innerHTML=`<small>${isT?'오늘':dows[d.getDay()]}</small><b>${d.getDate()}</b><span class="mw-cnt" data-k="${dk(d.getFullYear(),d.getMonth(),d.getDate())}"></span>`;
+    b.onclick=()=>{
+      if(isT&&self){switchTab('dashboard');return;} // 오늘 것은 홈에서
+      myDate=new Date(d);renderMyWorkScreen();
+    };
+    strip.appendChild(b);
+  });
+  // 선택한 날이 보이게
+  try{const on=strip.querySelector('.mw-day.on')||strip.querySelector('.mw-day.today');if(on)on.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+  // 완료/전체 — 15일치. 앞날은 등록 수만
+  for(const d of days){
+    if(seq!==_mwStripSeq)return;
+    const key=dk(d.getFullYear(),d.getMonth(),d.getDate());
+    try{
+      const its=await loadStaffTodos(myStaff,key);
+      const el=strip.querySelector(`.mw-cnt[data-k="${key}"]`);if(!el)continue;
+      if(!its.length){el.textContent='';continue;}
+      const dn=its.filter(i=>i.done).length;
+      if(d>t0){el.textContent=`${its.length}건`;el.className='mw-cnt';}
+      else{el.textContent=`${dn}/${its.length}`;el.className='mw-cnt '+(dn>=its.length?'ok':'left');}
+    }catch(e){}
+  }
+}
 function renderMyWorkScreen(){
   if(!myStaff||!myStore)return;
   const dows=['일','월','화','수','목','금','토'];
@@ -2252,17 +2285,13 @@ function renderMyWorkScreen(){
   const isFuture=myDate>new Date(today.getFullYear(),today.getMonth(),today.getDate());
 
   document.getElementById('my-work-name').textContent=document.getElementById('screen-my-work').classList.contains('view-only')?`${myStaff} (조회 전용)`:`${myStaff}`;
-  document.getElementById('my-work-sub').textContent=`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})${isToday?' · 오늘':''}`;
+  document.getElementById('my-work-sub').textContent='지난 날짜 · 앞날 계획 · 프로젝트 · 히스토리';
 
   const dateLabel=document.getElementById('my-date-label');
   if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일${isToday?' (오늘)':''}`;
   const taskLabel=document.getElementById('my-task-date-label');
-  if(taskLabel)taskLabel.textContent=isToday?'오늘':isFuture?`${mns[tm]} ${td}일 (예정)`:`${mns[tm]} ${td}일`;
-  const nextBtn=document.getElementById('my-next-btn');
-  if(nextBtn){
-    const max=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
-    nextBtn.disabled=myDate>=max;
-  }
+  if(taskLabel)taskLabel.textContent=isToday?'오늘':isFuture?`${mns[tm]} ${td}일 (${dows[myDate.getDay()]}) 예정`:`${mns[tm]} ${td}일 (${dows[myDate.getDay()]})`;
+  renderMyWeekStrip().catch(()=>{});
 
   // 매장 선택 칩
   const storeSelect=document.getElementById('my-store-select');
@@ -2277,25 +2306,17 @@ function renderMyWorkScreen(){
       const short=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
       chip.textContent=`${short}${isDefault?' ★':''}`;
       chip.title=isDefault?'기본 매장':'';
-      chip.onclick=()=>{myStore=s;renderMyTodoList();renderMyHandoverList();loadMyStats();renderMyWorkScreen();};
+      chip.onclick=()=>{myStore=s;renderMyWorkScreen();};
       storeSelect.appendChild(chip);
     });
   }
 
   renderMyTodoList();
-  renderMyFixedTodos().catch(()=>{});
-  renderMyHandoverList();
-  loadMyMemo();
   loadMyStats();
   checkLastMonthCarry();
-  checkHandoverUnread();
   checkPrevDayStoreIncomplete();
-  // 프로젝트 배너 기본 접힘
-  const projWrap=document.getElementById('my-project-banner-wrap');
-  const projBtn=document.getElementById('project-banner-toggle');
-  if(projWrap)projWrap.style.display='none';
-  if(projBtn)projBtn.textContent='펼치기';
-  renderMyProjectBanner().catch(()=>{}); // 접혀 있어도 그려둔다 — 요약 칸의 프로젝트 수
+  // 인수인계·내 메모·오늘 요약은 홈으로 갔다 — 여기선 그날 할 일·프로젝트·히스토리만
+  renderMyProjectBanner().catch(()=>{});
   // 타입 초기화
   setTaskType('daily');
   // 휴무 상태 체크
@@ -2456,7 +2477,7 @@ async function renderMyTodoList(){
               <div data-subhost></div>
             </div>
             <div class="todo-actions">
-              <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">☑</button>
+              <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">세부</button>
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
               ${!carryDays||item.done?`
@@ -2936,6 +2957,7 @@ const GUIDE_SECTIONS = [
       '👋 퇴사 처리는 설정 → 사람 → 직원 근무지 설정의 각 직원 줄 맨 오른쪽(대표만). 복직은 그 아래 퇴사자 관리',
       '🧭 「오늘 현황」 화면이 없어졌어요 — 그 알맹이(지금 확인할 것 · 직원 오늘)는 관리자 → 현황·보고의 오늘 날짜 맨 위에 그대로 있어요. 폰 아래 탭은 「홈 | 관리자」',
       '📅 월간 스케줄은 메뉴에서 내렸어요 — 매장 방 맨 아래 「월간 스케줄」로 들어가요(앞날 대청소·고정업무·공휴일 볼 때). 휴무 신청은 내 업무의 「휴무 설정」',
+      '🗂️ 「내 업무」는 이제 오늘이 아닌 것만 — 위의 날짜 띠(지난 7일 · 오늘 · 앞 7일)에서 날을 고르면 그날 할 일을 보고 적어요(지난 날은 기록, 앞날은 미리). 오늘은 홈에서. 인수인계·메모 카드는 홈으로 갔고, 프로젝트와 이번 달 통계·히스토리가 남았어요',
       '🏪 매장 방이 홈과 같은 모양이 됐어요 — 「오늘 이 매장」(청소 · 매장 할 일 · 근무자) · 인수인계(확인·피드백·기록) · 업무 요청 · 고정 정보(자동 저장) · 프로젝트. 남기기·요청은 홈과 같은 시트. 방에 있던 「오늘의 업무」 편집은 내 것과 같은 걸 다시 보여주던 것이라 뺐어요',
       '🖥️ 컴퓨터에서는 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 바로가기 카드는 숨겨요. 관리자 아래는 현황·보고 / 기록 / 설정 셋',
     ],
@@ -3900,7 +3922,7 @@ async function renderMyProjectBanner(){
     banner.style.display='block';
     const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
     banner.innerHTML='';
-    banner.style.display='block';
+    const _pw=document.getElementById('my-project-banner-wrap');if(_pw)_pw.style.display='';
 
     const wrap=document.createElement('div');
     wrap.className='my-project-banner';
@@ -4133,6 +4155,7 @@ async function renderMyProjectBanner(){
 let myHistoryFilter='all';
 
 window.toggleMyHistory=async function(){
+  try{const _b=document.getElementById('my-history-toggle-btn');const _w=document.getElementById('my-history-wrap');if(_b&&_w)_b.textContent=(_w.style.display==='none')?'접기':'전체 히스토리';}catch(e){}
   const wrap=document.getElementById('my-history-wrap');
   const btn=document.getElementById('my-history-toggle-btn');
   if(!wrap||!btn)return;
@@ -5494,7 +5517,13 @@ function renderSideNav(active){
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
-    b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
+    b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;
+    b.onclick=()=>{
+      const ro=document.getElementById('room-overlay');if(ro&&ro.style.display==='block'&&it.k!=='room'){ro.style.display='none';document.body.style.overflow='';}
+      const bo=document.getElementById('board-overlay');if(bo&&it.k!=='board'){const cl=bo.querySelector('[data-close]');if(cl)cl.click();}
+      it.fn();
+    };
+    side.appendChild(b);
     if(it.badge==='board'){countNewBoardPosts().then(({n})=>{if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-board>${n}</span>`);}).catch(()=>{});}
     if(it.k==='admin'&&active==='admin'){
       // 관리자 안에서는 상단 탭줄 대신 여기서 고른다 — 폰과 같은 셋: 현황·보고 / 기록 / 설정. 기록은 눌렀을 때만 펼침
@@ -5579,13 +5608,14 @@ function openBoardOverlay(){
   ov.style.cssText='position:fixed;inset:0;z-index:900;background:var(--bg);overflow-y:auto;';
   ov.innerHTML=`<div class="header" style="position:sticky;top:0;z-index:10;"><div><div class="header-title">게시판</div><div class="header-sub">공지 · 업무공유 · 히스토리 · 건의</div></div><button class="back-btn" type="button" data-close>닫기</button></div><div data-body style="padding:12px;max-width:860px;margin:0 auto;"></div>`;
   ov.querySelector('[data-body]').appendChild(sec);
-  const close=()=>{document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();};
+  const close=()=>{document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();try{const adm=document.getElementById('screen-admin');renderSideNav(adm&&adm.classList.contains('active')?'admin':(curTab||'dashboard'));}catch(e){}};
   const onKey=(e)=>{if(e.key==='Escape')close();};
   document.addEventListener('keydown',onKey);
   ov.querySelector('[data-close]').onclick=close;
   document.body.appendChild(ov);
   try{loadBoard();}catch(e){}
   markBoardSeen();
+  try{renderSideNav('board');}catch(e){}
 }
 window.openBoardOverlay=openBoardOverlay;
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
@@ -6531,6 +6561,7 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
 window.closeStoreRoom=function(){
   document.getElementById('room-overlay').style.display='none';
   document.body.style.overflow='';
+  try{const adm=document.getElementById('screen-admin');renderSideNav(adm&&adm.classList.contains('active')?'admin':(curTab||'dashboard'));}catch(e){}
   try{renderDashboardHome().catch(()=>{});}catch(e){} // 홈 배지·버튼 상태 즉시 갱신
 };
 function openStoreRoom(store){
@@ -6758,6 +6789,7 @@ function openStoreRoom(store){
   ov.style.display='block';
   ov.scrollTop=0;
   document.body.style.overflow='hidden';
+  try{renderSideNav('room');}catch(e){}
 }
 
 // ══════════════════════════════════════
