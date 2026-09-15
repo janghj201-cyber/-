@@ -738,12 +738,13 @@ const SCHEDULE_RULE_COLOR_REVERSE = Object.fromEntries(Object.entries(SCHEDULE_R
 async function writeScheduleRulesConfig(ctx, { rules }) {
   const { data: rows, error } = await supabase
     .from('calendar_event_types')
-    .select('id, label, color, recurrence, sort_order, active')
+    .select('id, label, color, recurrence, sort_order, active, description, show_on_calendar, auto_todo')
     .eq('tenant_id', ctx.tenantId)
   if (error) throw error
   const editable = (rows ?? []).filter((r) => ['weekly', 'monthly_day', 'last_biz_day_before'].includes(r.recurrence?.type))
   const byLabel = new Map(editable.map((r) => [r.label, r]))
-  const wanted = new Set()
+  const byId = new Map(editable.map((r) => [r.id, r]))
+  const wanted = new Set() // 남길 행의 id
   let i = 0
   for (const rule of rules ?? []) {
     let recurrence = null
@@ -756,24 +757,36 @@ async function writeScheduleRulesConfig(ctx, { rules }) {
     }
     const color = SCHEDULE_RULE_COLOR_REVERSE[rule.col] ?? 'blue'
     const label = (rule.task ?? '').trim() || '(제목없음)'
-    wanted.add(label)
-    const cur = byLabel.get(label)
+    const description = (rule.meta ?? '').trim() || null
+    const show_on_calendar = rule.show !== false
+    const auto_todo = !!rule.autoTodo
+    // id가 있으면 id로 찾는다(이름을 바꿔도 같은 규칙). 없으면 예전처럼 이름으로.
+    const cur = (rule.id && byId.get(rule.id)) || byLabel.get(label)
     if (!cur) {
-      const { error: e } = await supabase
+      const { data: ins, error: e } = await supabase
         .from('calendar_event_types')
-        .insert({ tenant_id: ctx.tenantId, label, color, recurrence, sort_order: i, active: true })
+        .insert({ tenant_id: ctx.tenantId, label, color, recurrence, sort_order: i, active: true, description, show_on_calendar, auto_todo })
+        .select('id').single()
       if (e) throw e
-    } else if (cur.color !== color || JSON.stringify(cur.recurrence) !== JSON.stringify(recurrence) || cur.sort_order !== i || !cur.active) {
-      const { error: e } = await supabase
-        .from('calendar_event_types')
-        .update({ color, recurrence, sort_order: i, active: true })
-        .eq('id', cur.id)
-      if (e) throw e
+      rule.id = ins?.id
+      if (rule.id) wanted.add(rule.id)
+    } else {
+      wanted.add(cur.id)
+      const changed = cur.label !== label || cur.color !== color || JSON.stringify(cur.recurrence) !== JSON.stringify(recurrence) || cur.sort_order !== i || !cur.active
+        || (cur.description ?? null) !== description || (cur.show_on_calendar !== false) !== show_on_calendar || !!cur.auto_todo !== auto_todo
+      if (changed) {
+        const { error: e } = await supabase
+          .from('calendar_event_types')
+          .update({ label, color, recurrence, sort_order: i, active: true, description, show_on_calendar, auto_todo })
+          .eq('id', cur.id)
+        if (e) throw e
+      }
+      rule.id = cur.id
     }
     i++
   }
   for (const r of editable) {
-    if (!wanted.has(r.label) && r.active) {
+    if (!wanted.has(r.id) && r.active) {
       const { error: e } = await supabase.from('calendar_event_types').update({ active: false }).eq('id', r.id)
       if (e) throw e
     }
@@ -783,7 +796,7 @@ async function writeScheduleRulesConfig(ctx, { rules }) {
 async function readScheduleRulesConfig(ctx) {
   const { data, error } = await supabase
     .from('calendar_event_types')
-    .select('label, color, recurrence')
+    .select('id, label, color, recurrence, description, show_on_calendar, auto_todo')
     .eq('tenant_id', ctx.tenantId)
     .eq('active', true)
     .order('sort_order')
@@ -796,12 +809,14 @@ async function readScheduleRulesConfig(ctx) {
     // 원본 '월간 보고 마감' 배지의 안내 패널(작성 가이드)은 rule.report 플래그로 열린다 —
     // 라벨이 보고 계열로 매핑되면 플래그를 되살린다(최종점검에서 발견·복원).
     const report = key === 'report'
+    // id: 이름을 바꿔도 같은 규칙으로 이어지게 · show: 달력 표시 · autoTodo: 그날 매장 할 일에 자동 추가
+    const extra = { id: row.id, meta: row.description ?? '', show: row.show_on_calendar !== false, autoTodo: !!row.auto_todo, col, report }
     if (rec.type === 'weekly') {
-      rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, meta: '', col, report })
+      rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, ...extra })
     } else if (rec.type === 'monthly_day') {
-      rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, meta: '', col, report })
+      rules.push({ key, condType: 'monthdays', days: rec.days, task: row.label, ...extra })
     } else if (rec.type === 'last_biz_day_before') {
-      rules.push({ key, condType: 'lastBizDayBefore', targetDay: rec.targetDay ?? 16, task: row.label, meta: '', col, report })
+      rules.push({ key, condType: 'lastBizDayBefore', targetDay: rec.targetDay ?? 16, task: row.label, ...extra })
     }
     // 그 외(monthly_weekday_occurrences 등 대청소류)는 청소 체크리스트가 이미 처리 — 스킵
   })
@@ -814,7 +829,13 @@ async function readScheduleRulesConfig(ctx) {
 // 시 한 번 읽어 DEEP_CLEAN_OCCURRENCES를 채운다.
 async function readCleanDeepRuleConfig(ctx) {
   const rule = await fetchDeepCleanRule(ctx)
-  return { occurrences: rule.occurrences }
+  return { weekday: rule.weekday ?? 0, occurrences: rule.occurrences ?? [] }
+}
+// 관리자 설정에서 저장 — 요일·몇 번째 주. 테넌트당 한 행(upsert).
+async function writeCleanDeepRuleConfig(ctx, { weekday, occurrences }) {
+  const recurrence = { type: 'monthly_weekday_occurrences', weekday: Number(weekday) || 0, occurrences: (occurrences ?? []).map(Number).filter((n) => n >= 1 && n <= 5) }
+  const { error } = await supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: ctx.tenantId, recurrence }, { onConflict: 'tenant_id' })
+  if (error) throw error
 }
 
 async function fetchDeepCleanRule(ctx) {
@@ -845,7 +866,9 @@ async function projectedDeepCleanZoneNumber(ctx, storeId) {
     .limit(1)
     .maybeSingle()
   if (error) throw error
-  return lastLog ? (lastLog.zone_number % 4) + 1 : 1
+  const { count } = await supabase.from('cleaning_zones').select('id', { count: 'exact', head: true }).eq('tenant_id', ctx.tenantId).eq('active', true)
+  const n = Math.max(1, count ?? 4)
+  return lastLog ? (lastLog.zone_number % n) + 1 : 1
 }
 
 // 그 발생일에 daily_tasks를 남긴 직원(=근무자로 간주) 중 대청소를 가장 오래전에 맡은
@@ -1044,6 +1067,38 @@ async function writeChecks(ctx, originalStoreId, dateKey, data) {
     if (error) throw error
     assertAffected(count, '대청소 체크')
   }
+}
+
+// ── 매장 단위 고정 할 일 (store_fixed_todos) ──
+// 고정업무 규칙에 '그날 할 일에 자동 추가'가 켜져 있으면, 그 날 그 매장에 1건만 생긴다.
+// 근무자 누구나 체크하면 완료. 사람마다 각자 목록에 넣지 않는 이유: 셋이면 세 번 뜨고 셋 다 체크해야 하니까.
+export async function listStoreFixedTodos(originalStoreId, dateKey) {
+  const ctx = await getContext()
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId) return []
+  const { data, error } = await supabase
+    .from('store_fixed_todos')
+    .select('id, rule_key, title, done, done_at, doer:profiles!done_by(name)')
+    .eq('store_id', storeId).eq('log_date', dateKey).order('created_at')
+  if (error) throw error
+  return (data ?? []).map((r) => ({ id: r.id, ruleKey: r.rule_key, title: r.title, done: !!r.done, doneAt: r.done_at, doneBy: r.doer?.name ?? null }))
+}
+// 오늘 규칙에 맞는 항목을 없으면 만든다 — (store, date, rule) 유일 제약이라 동시에 여러 사람이 열어도 1건
+export async function ensureStoreFixedTodos(originalStoreId, dateKey, items) {
+  const ctx = await getContext()
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  if (!storeId || !(items ?? []).length) return
+  const rows = items.map((it) => ({ tenant_id: ctx.tenantId, store_id: storeId, log_date: dateKey, rule_key: String(it.ruleKey), title: it.title }))
+  const { error } = await supabase.from('store_fixed_todos').upsert(rows, { onConflict: 'store_id,log_date,rule_key', ignoreDuplicates: true })
+  if (error) throw error
+}
+export async function setStoreFixedTodoDone(id, done) {
+  const ctx = await getContext()
+  const { error, count } = await supabase.from('store_fixed_todos')
+    .update({ done: !!done, done_by: done ? ctx.profileId : null, done_at: done ? new Date().toISOString() : null }, { count: 'exact' })
+    .eq('id', id)
+  if (error) throw error
+  if (count === 0) throw new Error('저장된 행이 없어요 — 권한을 확인해주세요')
 }
 
 // ── 청소 사진 (Supabase Storage 'clean-photos', 비공개) ──
@@ -1466,6 +1521,11 @@ export async function setDoc(ref, data) {
 
   if (ref.path === 'config/schedule_rules') {
     await writeScheduleRulesConfig(ctx, data)
+    return
+  }
+
+  if (ref.path === 'config/clean_deep_clean_rule') {
+    await writeCleanDeepRuleConfig(ctx, data)
     return
   }
 

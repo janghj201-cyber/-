@@ -552,7 +552,29 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-quick .vh-mic{width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .vh-quick h3{margin:0 0 3px;font-size:15px;font-weight:800;}
 .vh-quick .vh-tiny{color:#c6cfdb;}
+.vh-quickrow{order:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.vh-quickrow:has(> :only-child){grid-template-columns:1fr;}
+.vh-qa{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;min-height:46px;padding:8px 10px;font-size:12.5px;font-weight:800;color:var(--text);cursor:pointer;font-family:inherit;box-shadow:var(--shadow-card);}
+.vh-qa .vf-ic{color:var(--navy);margin:0;}
+.vh-qa:active{opacity:.85;}
 .vh-todo{order:4;}
+.vh-fixed-wrap{margin-bottom:6px;}
+.vh-fixed-head{font-size:11px;font-weight:700;color:var(--text-sub);padding:2px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.vh-fixed-head .vh-tiny{font-weight:600;}
+.hp-todo.vh-fixed{border-top-color:var(--border);}
+.hp-todo.vh-fixed:first-of-type{border-top:none;}
+.vh-tag{display:inline-block;font-size:10px;font-weight:800;color:var(--navy);background:var(--soft);border-radius:6px;padding:2px 6px;margin-right:6px;vertical-align:1px;letter-spacing:.2px;}
+.hp-todo.done .vh-tag{color:var(--text-mute);}
+.vh-fixed-by{font-size:11px;color:var(--text-sub);font-weight:600;flex:0 0 auto;white-space:nowrap;}
+.qc-hint{animation:qcHint 1.6s ease-out 1;}
+@keyframes qcHint{0%{box-shadow:0 0 0 0 rgba(214,162,70,.0)}20%{box-shadow:0 0 0 4px rgba(214,162,70,.55)}100%{box-shadow:0 0 0 0 rgba(214,162,70,0)}}
+/* 내 업무 — 매장 할 일 블록 */
+.mw-fixed{margin-bottom:8px;}
+.mw-fixed .hp-todo{padding:10px 0;font-size:13.5px;}
+.mw-fixed .hp-todo:first-of-type{border-top:none;}
+.mw-fixed .hp-todo+.hp-todo{border-top:1px solid var(--border);}
+.mw-fixed+.my-todo-list .my-todo-item:first-child{border-top:1px solid var(--border);}
+#screen-my-work.view-only .mw-fixed input[type=checkbox]{pointer-events:none;opacity:.55}
 .vh-todo .hp-todo{border-top-color:var(--border);}
 .vh-todo.folded .vh-todo-body{display:none;}
 .vh-fold{background:none;border:none;color:var(--text-sub);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;}
@@ -614,7 +636,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .vh-head{margin-bottom:16px;}
   .vh-grid{display:grid;grid-template-columns:1.15fr 1fr .85fr;gap:14px;align-items:start;}
   .vh-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
-  .vh-metrics,.vh-priority,.vh-quick,.vh-todo,.vh-links,.vh-store,.vh-end,.vh-full{order:0;}
+  .vh-metrics,.vh-priority,.vh-quick,.vh-quickrow,.vh-todo,.vh-links,.vh-store,.vh-end,.vh-full{order:0;}
   .vh-store{display:block;}
   .vh-priority .vh-item.vh-hide-m{display:flex;}
   .vh-more{display:none;}
@@ -796,6 +818,11 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
   .mw-metrics{margin-bottom:14px;max-width:760px;}
 }
 
+/* ── 설정 묶음 ── */
+.st-nav{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;}
+.st-chip{flex:0 0 auto;background:var(--card);border:1.5px solid var(--border);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;min-height:40px;}
+.st-chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+.st-group>.dash-card{margin-top:0;margin-bottom:12px;}
 /* 오늘 날짜 강조 */
 .day.today{background:linear-gradient(135deg,#fff9e6 0%,#fff3cc 100%) !important;border-top:3px solid var(--gold) !important;}
 .day.today .day-num{background:var(--gold);color:var(--navy);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(180,140,0,0.4);}
@@ -1408,6 +1435,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
         <!-- 할 일 -->
         <div class="vh-card my-section mw-card" id="mw-todo">
           <div class="vh-ct"><strong><span id="my-task-date-label">오늘</span>의 업무</strong><span class="vh-tiny" id="mw-todo-sub"></span></div>
+          <div class="mw-fixed" id="mw-fixed-list" hidden></div>
           <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
           <div class="my-input-row">
             <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄" onkeydown="if(event.key==='Enter')addMyTodo()">
@@ -1532,7 +1560,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -1783,6 +1811,7 @@ async function loadCleanConfig(){
     const rSnap=await getDoc(doc(db,'config/clean_deep_clean_rule'));
     if(rSnap.exists()&&Array.isArray(rSnap.data().occurrences)&&rSnap.data().occurrences.length){
       DEEP_CLEAN_OCCURRENCES=rSnap.data().occurrences;
+      if(typeof rSnap.data().weekday==='number')DEEP_CLEAN_WEEKDAY=rSnap.data().weekday;
     }
   }catch(e){}
 }
@@ -1815,7 +1844,20 @@ function dk(y,m,d){return `${y}-${pad(m+1)}-${pad(d)}`;}
 // 청소 체크 값 판독 (구버전 boolean / 신버전 {v,t} 객체 모두 지원)
 function ckVal(x){return (x&&typeof x==='object')?!!x.v:!!x;}
 function todayKey(){return dk(today.getFullYear(),today.getMonth(),today.getDate());}
-function sundays(y,m){let s=[],d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()===0)s.push(d.getDate());d.setDate(d.getDate()+1);}return s;}
+// 대청소 요일 — 예전엔 일요일로 박혀 있었다. 이제 설정(config/clean_deep_clean_rule.weekday)을 따른다
+let DEEP_CLEAN_WEEKDAY=0;
+function weekdaysOf(y,m,wd){let s=[],d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()===wd)s.push(d.getDate());d.setDate(d.getDate()+1);}return s;}
+function sundays(y,m){return weekdaysOf(y,m,DEEP_CLEAN_WEEKDAY);}
+// 그 날짜에 맞는 고정업무 규칙들 (달력 표시 여부와 무관) — 자동 할 일 추가에도 쓴다
+function rulesForDate(y,m,d){
+  const dow=new Date(y,m,d).getDay();
+  return scheduleRules.filter(rule=>{
+    if(rule.condType==='weekday') return dow===rule.weekday;
+    if(rule.condType==='monthdays') return (rule.days||[]).includes(d);
+    if(rule.condType==='lastBizDayBefore') return d===getLastBizDayOnOrBefore(y,m,rule.targetDay||16);
+    return false;
+  });
+}
 
 function getLastBizDayOnOrBefore(y,m,targetDay){
   let d=targetDay;
@@ -1836,13 +1878,7 @@ function getAsSendDate(y,m){
 function getEvs(y,m,d){
   const ev=[],dow=new Date(y,m,d).getDay(),key=dk(y,m,d);
   if(HOLIDAYS[key])ev.push({t:'holiday',label:HOLIDAYS[key]});
-  scheduleRules.forEach(rule=>{
-    let match=false;
-    if(rule.condType==='weekday') match = dow===rule.weekday;
-    else if(rule.condType==='monthdays') match = (rule.days||[]).includes(d);
-    else if(rule.condType==='lastBizDayBefore') match = d===getLastBizDayOnOrBefore(y,m,rule.targetDay||16);
-    if(match) ev.push({t:rule.key});
-  });
+  rulesForDate(y,m,d).forEach(rule=>{ if(rule.show!==false) ev.push({t:rule.key}); });
   // 대청소 발생 요일은 원본 그대로(일요일) 유지하되, "그 달 몇 번째 일요일이냐"는
   // DEEP_CLEAN_OCCURRENCES(V-Flow 테넌트 설정, loadCleanConfig가 채움)로 판정한다 —
   // 원본은 1~4번째 일요일 전부(매주), V-Flow 기본값은 1·3번째만(격주).
@@ -1850,7 +1886,7 @@ function getEvs(y,m,d){
   // 진짜 매장별 로테이션 배정과 다를 수 있다 — 텍스트 라벨만 어긋나고 실제 체크리스트
   // 데이터/완료율은 항상 정확함(어댑터가 실제 배정 기준으로 채움). 매장 텍스트 슬러그
   // 문제(staff_todos 공용업무)와 같은 계열이라 5단계(매장 구조 정리)로 미룸.
-  if(dow===0){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))ev.push({t:'clean',sec:i+1});}
+  if(dow===DEEP_CLEAN_WEEKDAY){const ss=sundays(y,m);const i=ss.indexOf(d);if(i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))ev.push({t:'clean',sec:i+1});}
   return ev;
 }
 
@@ -1858,7 +1894,7 @@ function getEvs(y,m,d){
 function getTodayCleanSec(){
   const d=today.getDate(),m=today.getMonth(),y=today.getFullYear();
   const dow=today.getDay();
-  if(dow!==0)return -1;
+  if(dow!==DEEP_CLEAN_WEEKDAY)return -1;
   const ss=sundays(y,m);
   const i=ss.indexOf(d);
   return (i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))?i+1:-1;
@@ -2045,7 +2081,9 @@ function saveMyMemo(){window.saveMyMemo();}
 function updateMyMetrics(){
   const q=(sel)=>document.querySelectorAll(sel).length;
   const set=(id,v,cls)=>{const b=document.getElementById(id);if(!b)return;b.textContent=v;const m=b.closest('.vh-metric');if(m){m.classList.remove('danger','ok');if(cls)m.classList.add(cls);}};
-  const todoAll=q('#my-todo-list .my-todo-item'),todoDone=q('#my-todo-list .my-todo-item.done'),left=todoAll-todoDone;
+  // 매장 할 일(고정업무 자동 추가)도 같이 센다 — 홈의 「할 일」 칸과 같은 셈법
+  const fxAll=q('#mw-fixed-list .hp-todo'),fxDone=q('#mw-fixed-list .hp-todo.done');
+  const todoAll=q('#my-todo-list .my-todo-item')+fxAll,todoDone=q('#my-todo-list .my-todo-item.done')+fxDone,left=todoAll-todoDone;
   set('mw-m-todo',todoAll?left:'—',todoAll?(left===0?'ok':''):'');
   const sub=document.getElementById('mw-todo-sub');if(sub)sub.textContent=todoAll?`${todoDone}/${todoAll} 완료`:'';
   const carry=q('#my-todo-list .my-todo-carry, #my-todo-list .carry-3day');
@@ -2059,7 +2097,7 @@ function updateMyMetrics(){
 let _mwObs=null;
 function initMyMetrics(){
   if(_mwObs)return;
-  const targets=['my-todo-list','my-handover-list','my-project-banner'].map(id=>document.getElementById(id)).filter(Boolean);
+  const targets=['mw-fixed-list','my-todo-list','my-handover-list','my-project-banner'].map(id=>document.getElementById(id)).filter(Boolean);
   if(!targets.length)return;
   let t=null;
   _mwObs=new MutationObserver(()=>{clearTimeout(t);t=setTimeout(updateMyMetrics,60);});
@@ -2132,7 +2170,7 @@ function renderMyWorkScreen(){
       const isDefault=s.id===defaultStoreId;
       chip.className='my-store-chip'+(isSelected?' active':'');
       const short=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
-      chip.textContent=`${s.icon} ${short}${isDefault?' ★':''}`;
+      chip.textContent=`${short}${isDefault?' ★':''}`;
       chip.title=isDefault?'기본 매장':'';
       chip.onclick=()=>{myStore=s;renderMyTodoList();renderMyHandoverList();loadMyStats();renderMyWorkScreen();};
       storeSelect.appendChild(chip);
@@ -2140,6 +2178,7 @@ function renderMyWorkScreen(){
   }
 
   renderMyTodoList();
+  renderMyFixedTodos().catch(()=>{});
   renderMyHandoverList();
   loadMyMemo();
   loadMyStats();
@@ -2157,6 +2196,35 @@ function renderMyWorkScreen(){
   // 휴무 상태 체크
   const _dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
   getMyDayoffStatus(myStaff,_dateKey).then(status=>updateDayoffUI(status));
+}
+
+// 내 업무 — 매장 할 일 블록. 오늘은 만들면서 보여주고, 지난 날은 있는 것만, 앞날은 규칙만 「예정」으로.
+let _mwFixedSeq=0;
+async function renderMyFixedTodos(){
+  const wrap=document.getElementById('mw-fixed-list');
+  if(!wrap||!myStore)return;
+  const seq=++_mwFixedSeq;
+  const key=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
+  const isToday=myDate.getTime()===t0, isFuture=myDate.getTime()>t0;
+  const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;
+  wrap.hidden=true;wrap.innerHTML='';
+  let rows=[];
+  if(isFuture){
+    rows=fixedRulesForKey(key).map(r=>({id:null,title:r.task,done:false,doneBy:null,preview:true}));
+  } else {
+    try{rows=await loadStoreFixedTodos(myStore.id,key,{ensure:isToday});}catch(e){return;}
+  }
+  if(seq!==_mwFixedSeq)return; // 그 사이 날짜·매장이 바뀜
+  if(!rows.length)return;
+  wrap.hidden=false;
+  const head=document.createElement('div');head.className='vh-fixed-head';
+  head.innerHTML=`<span>매장 할 일</span><span class="vh-tiny">${isFuture?'예정 — 그날 근무자가 체크':'근무자 누구나 체크'}</span>`;
+  wrap.appendChild(head);
+  rows.forEach(it=>wrap.appendChild(fixedTodoRow(it,{canCheck:!it.preview&&self&&!isFuture,me:myStaff,onChange:updateMyMetrics})));
+  const mine=document.createElement('div');mine.className='vh-fixed-head';mine.style.marginTop='6px';mine.innerHTML='<span>내 할 일</span>';
+  wrap.appendChild(mine);
+  updateMyMetrics();
 }
 
 // 관리자 — 직원 추가/삭제
@@ -2749,6 +2817,11 @@ const GUIDE_SECTIONS = [
       '🧹 체크리스트는 남은 일이 위에, 끝낸 건 아래로 접혀요 (「완료 N개 보기」)',
       '✍️ 관리자 상세 머리에 「피드백」 버튼 — 긴 목록 끝까지 안 내려가도 돼요',
       '🗂️ 「내 업무」 화면이 홈과 같은 모양이 됐어요 — 위 요약 4칸(남은 할 일·인수인계·이월·프로젝트), 컴퓨터는 3열',
+      '⚡ 홈 「남기기」 아래에 바로 하는 버튼 둘 — 「청소 사진」(체크리스트가 열리며 첫 미완료 항목으로) · 「요청 보내기」(다른 직원에게 업무 요청)',
+      '🗣️ 「남기기」에 「요청」 종류 — 받는 사람을 고르면 그 사람이 수락했을 때 그 사람 할 일이 돼요. 안 고르면 누구나 수락',
+      '⚙️ 관리자 설정이 다섯 묶음이 됐어요 — 일하는 방식 · 매장 · 사람 · 화면 · 내 계정. 예전 「고정업무」 탭은 「일하는 방식」 안으로',
+      '📅 고정업무마다 「달력에 표시」와 「그날 할 일에 자동 추가」를 켜고 끌 수 있어요. 자동 추가를 켜면 그날 매장마다 「매장 할 일」 1건이 생기고 근무자 누구나 체크해요 (홈·내 업무·관리자 상세에 보여요)',
+      '🧹 대청소 요일과 몇 번째 주를 설정에서 바꿀 수 있어요 (그동안은 일요일 고정). 구역은 등록한 수만큼 돌아가요',
     ],
   },
   {
@@ -4974,6 +5047,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   quick.type='button';quick.setAttribute('aria-label','남기기: 할 일, 인수인계 또는 메모 작성');
   quick.onclick=()=>openLeaveSheet(entry,tKey,'todo');
   col1.appendChild(quick);
+  // 즉시 실행 — 한 번 눌러 바로 하는 것만 (승인: 청소 사진 · 요청 보내기). 휴무·예외출근은 월간 스케줄에 그대로.
+  const qrow=el('div','vh-quickrow');
+  const mkQa=(ic,lb,fn,aria)=>{const b=el('button','vh-qa',`${ic}<span>${lb}</span>`);b.type='button';b.setAttribute('aria-label',aria||lb);b.onclick=fn;return b;};
+  qrow.appendChild(mkQa(VF_ICONS.camera,'청소 사진',()=>{if(entry)openQuickClean(entry,{photo:true});},'청소 사진: 오늘 체크리스트를 열고 첫 미완료 항목의 사진 버튼으로'));
+  if(featOn('workreq'))qrow.appendChild(mkQa(VF_ICONS.send,'요청 보내기',()=>openLeaveSheet(entry,tKey,'request'),'요청 보내기: 다른 직원에게 업무 요청'));
+  col1.appendChild(qrow);
 
   // ── 2열: 오늘 할 일 (홈에서 바로 체크 · 폰은 접힘) ──
   const todo=el('div','vh-card vh-todo'+(mine.length>0?' folded':''));
@@ -4990,6 +5069,18 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   tHead.appendChild(tRight);
   todo.appendChild(tHead);
   const tBody=el('div','vh-todo-body');
+  // 매장 할 일 — 고정업무 중 「그날 할 일에 자동 추가」인 것. 매장당 1건, 근무자 누구나 체크. 내 할 일과 합쳐 센다.
+  let fixedRows=[];
+  const fixedWrap=el('div','vh-fixed-wrap');fixedWrap.hidden=true;
+  tBody.appendChild(fixedWrap);
+  const refreshTodoCounts=()=>{
+    const fl=fixedRows.filter(r=>!r.done).length;
+    const dn=mine.filter(i=>i.done).length;
+    const left=(mine.length-dn)+fl;
+    const any=mine.length>0||fixedRows.length>0;
+    tLeftLbl.textContent=any?(left?`${left}개 남음`:'모두 완료'):'없음';
+    const m3=met.children[2];if(m3){m3.querySelector('b').textContent=any?left:'—';m3.classList.toggle('ok',any&&left===0);m3.classList.toggle('danger',!any);}
+  };
   if(mine.length===0){
     tBody.appendChild(el('div','hp-empty','오늘 등록된 업무가 없어요 — 「남기기」로 바로 적을 수 있어요'));
   } else {
@@ -5006,8 +5097,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           const dn=mine.filter(i=>i.done).length;
           prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;
           prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;
-          tLeftLbl.textContent=`${mine.length-dn}개 남음`;
-          const m3=met.children[2];if(m3){m3.querySelector('b').textContent=mine.length-dn;m3.classList.toggle('ok',mine.length-dn===0);}
+          refreshTodoCounts();
         }catch(e){cb.checked=!cb.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
       };
       row.appendChild(cb);row.appendChild(sp);tBody.appendChild(row);
@@ -5015,6 +5105,28 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   }
   todo.appendChild(tBody);
   col2.appendChild(todo);
+  (async()=>{
+    if(!entry)return;
+    try{fixedRows=await loadStoreFixedTodos(entry.id,tKey);}catch(e){return;} // 표(SQL) 전이거나 권한 문제면 조용히 생략
+    if(!fixedRows.length)return;
+    fixedWrap.hidden=false;
+    fixedWrap.appendChild(el('div','vh-fixed-head',`<span>매장 할 일</span><span class="vh-tiny">근무자 누구나 체크</span>`));
+    fixedRows.forEach(it=>fixedWrap.appendChild(fixedTodoRow(it,{canCheck:true,me,onChange:refreshTodoCounts})));
+    const emp=tBody.querySelector('.hp-empty');if(emp)emp.textContent='내 할 일은 아직 없어요 — 「남기기」로 바로 적을 수 있어요';
+    if(mine.length>0)tBody.insertBefore(el('div','vh-fixed-head','<span>내 할 일</span>'),fixedWrap.nextSibling);
+    refreshTodoCounts();
+    // 우선 확인에도 한 줄 — 폰에서 카드가 접혀 있어도 놓치지 않게
+    const fl=fixedRows.filter(r=>!r.done).length;
+    if(fl>0){
+      const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${shortStore(entry.name)} 매장 할 일 ${fl}건<small>${_wrEsc(fixedRows.filter(r=>!r.done).map(r=>r.title).join(' · '))}</small></div>`);
+      const b=el('button','vh-btn','보기');
+      const go=(e)=>{if(e)e.stopPropagation();todo.classList.remove('folded');fold.textContent='접기';todo.scrollIntoView({behavior:'smooth',block:'start'});};
+      b.onclick=go;row.onclick=()=>go();row.appendChild(b);
+      const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
+      if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
+      refreshPri();
+    }
+  })();
 
   // ── 2열: 바로가기 목록 ──
   const links=el('div','vh-card vh-links');
@@ -5079,14 +5191,17 @@ function openLeaveSheet(entry,tKey,preset){
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
-    <div class="vh-kinds"><button class="vh-kind" data-k="todo">오늘 할 일</button><button class="vh-kind" data-k="handover">인수인계</button><button class="vh-kind" data-k="memo">내 메모</button></div>
+    <div class="vh-kinds"><button class="vh-kind" data-k="todo">오늘 할 일</button><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}<button class="vh-kind" data-k="memo">내 메모</button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
   let kind=preset||'todo';
+  if(kind==='request'&&!featOn('workreq'))kind='todo';
   const kinds=sh.querySelectorAll('.vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
+  const recipDefault=recip.querySelector('option');
+  const KIND_LABEL={todo:'오늘 할 일',handover:'인수인계',request:'요청',memo:'내 메모'};
   // 임시 저장 — 저장에 실패하거나 실수로 닫아도 적던 글이 남는다 (성공하면 지운다)
   const DRAFT_KEY='vflow_leave_draft_'+(window.__vflowProfile?.id||me);
   const errEl=sh.querySelector('[data-err]');
@@ -5096,7 +5211,15 @@ function openLeaveSheet(entry,tKey,preset){
   ta.addEventListener('input',saveDraft);
   const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
   longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
-  const setKind=(k)=>{kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));recip.style.display=k==='handover'?'':'none';untilWrap.style.display=k==='handover'?'':'none';ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':'나만 볼 메모';};
+  const setKind=(k)=>{
+    if(k==='request'&&!featOn('workreq'))k='todo';
+    kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+    recip.style.display=(k==='handover'||k==='request')?'':'none';
+    if(recipDefault)recipDefault.textContent=k==='request'?'받는 사람: 공용 — 누구나 수락':'받는 사람: 다음 근무자 누구나';
+    untilWrap.style.display=k==='handover'?'':'none';
+    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':k==='request'?'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요':'나만 볼 메모';
+    const sb=sh.querySelector('[data-save]');if(sb&&!sb.disabled)sb.textContent=k==='request'?'보내기':'저장';
+  };
   kinds.forEach(b=>b.onclick=()=>{setKind(b.dataset.k);saveDraft();});
   setKind(kind);
   try{
@@ -5111,6 +5234,7 @@ function openLeaveSheet(entry,tKey,preset){
   let rec=null, listening=false, wantListening=false, startedAt=0;
   const MAX_MS=120000; // 한 번 누르면 최대 2분. 브라우저가 중간에 끊어도 이 안에서는 다시 잇는다
   const guessKind=(t)=>{
+    if(featOn('workreq')&&/요청|부탁|해 ?줄 수|해 ?주세요|맡아/.test(t))return 'request';
     if(/인수인계|다음 근무|전달|알려|넘겨|부탁/.test(t))return 'handover';
     if(/메모|기억|잊지|개인적|나중에 참고/.test(t))return 'memo';
     return 'todo';
@@ -5120,7 +5244,7 @@ function openLeaveSheet(entry,tKey,preset){
   const finish=()=>{
     wantListening=false;listening=false;setMicUI(false);
     const t=ta.value.trim();
-    if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${g==='todo'?'오늘 할 일':g==='handover'?'인수인계':'내 메모'}」로 보여요 — 아니면 위에서 바꿔주세요`;}
+    if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${KIND_LABEL[g]||g}」로 보여요 — 아니면 위에서 바꿔주세요`;}
     else if(!/실패|권한/.test(vstat.textContent))vstat.textContent='들린 말이 없어요';
     try{console.log('[voice-test]',JSON.stringify({text:t,guess:t?guessKind(t):null,ms:Date.now()-startedAt,at:new Date().toISOString()}));}catch(e){}
   };
@@ -5177,6 +5301,10 @@ function openLeaveSheet(entry,tKey,preset){
         if(longCb.checked&&(!untilInp.value||untilInp.value<tKey)){alert('언제까지 보일지 날짜를 골라주세요');btn.disabled=false;btn.textContent='저장';return;}
         await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null);
       }
+      else if(kind==='request'){
+        // 업무 요청 — 「내 업무」의 요청 보내기와 같은 저장(work_requests). 받는 사람이 수락하면 그 사람 오늘 업무로.
+        await wrCreate(entry.id,text,recip.value||'');
+      }
       else{
         const ref=doc(db,`staff_memo/${me}`);
         const snap=await getDoc(ref);
@@ -5199,7 +5327,7 @@ function openLeaveSheet(entry,tKey,preset){
 window.openLeaveSheet=openLeaveSheet;
 
 // 선형 아이콘 (이모지 대신) — 같은 굵기 2px, currentColor
-const VF_ICONS={home:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,task:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>`,store:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>`,cal:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,status:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,admin:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,guide:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,user:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,brief:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>`,back:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`};
+const VF_ICONS={home:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,task:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>`,store:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>`,cal:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,status:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,admin:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,guide:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,user:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,brief:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>`,back:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`,camera:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,send:`<svg class="vf-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>`};
 // 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
   const side=document.getElementById('vf-side');
@@ -5228,8 +5356,42 @@ function renderSideNav(active){
   });
 }
 
+// ── 매장 할 일 — 고정업무(설정 → 일하는 방식)의 「그날 할 일에 자동 추가」 ──
+// 규칙에 맞는 날이면 매장당 1건씩 생기고, 그 매장 근무자 누구나 체크한다. 개인 할 일(staff_todos)과는 별개.
+function fixedRulesForKey(tKey){
+  const [y,m,d]=String(tKey||'').split('-').map(Number);
+  if(!y||!m||!d)return [];
+  try{return rulesForDate(y,m-1,d).filter(r=>r.autoTodo&&r.task);}catch(e){return [];}
+}
+async function loadStoreFixedTodos(storeId,tKey,opts){
+  const ensure=!opts||opts.ensure!==false;
+  const rules=fixedRulesForKey(tKey);
+  if(ensure&&rules.length){
+    try{await ensureStoreFixedTodos(storeId,tKey,rules.map(r=>({ruleKey:r.id||r.key,title:r.task})));}catch(e){console.warn('[매장 할 일] 생성 실패',e);}
+  }
+  return await listStoreFixedTodos(storeId,tKey);
+}
+function fixedTodoRow(it,opts){
+  opts=opts||{};
+  const row=document.createElement('div');row.className='hp-todo vh-fixed'+(it.done?' done':'');
+  const cb=document.createElement('input');cb.type='checkbox';cb.className='vh-check';cb.checked=!!it.done;cb.disabled=!opts.canCheck;
+  cb.setAttribute('aria-label',`매장 할 일: ${it.title}`);
+  const sp=document.createElement('span');sp.style.flex='1';sp.style.minWidth='0';
+  const by=document.createElement('small');by.className='vh-fixed-by';
+  const paint=()=>{sp.innerHTML=`<span class="vh-tag">매장</span>${_wrEsc(it.title)}`;by.textContent=it.done&&it.doneBy?it.doneBy:'';by.hidden=!by.textContent;row.classList.toggle('done',!!it.done);};
+  paint();
+  cb.onchange=async()=>{
+    cb.disabled=true;
+    try{await setStoreFixedTodoDone(it.id,cb.checked);it.done=cb.checked;it.doneBy=cb.checked?(opts.me||null):null;paint();if(opts.onChange)opts.onChange(it);}
+    catch(e){cb.checked=!cb.checked;alert('저장 실패 — '+(e&&e.message||'네트워크를 확인해주세요'));}
+    cb.disabled=false;
+  };
+  row.appendChild(cb);row.appendChild(sp);row.appendChild(by);
+  return row;
+}
+
 // 원터치 청소 체크 — 첫 화면 버튼에서 오늘 이 매장 체크리스트 바로 열기
-function openQuickClean(store){
+function openQuickClean(store,opts){
   curStore=store;
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
   const ce=getEvs(ty,tm,td).find(e=>e.t==='clean');
@@ -5241,6 +5403,24 @@ function openQuickClean(store){
     <div style="font-size:15px;font-weight:800;">${store.name} 청소 체크${ce?` <span style="font-size:11px;color:var(--green);font-weight:700;">· 대청소 ${ce.sec}구역 포함</span>`:''}</div>
     <button data-qc-close style="background:none;border:none;font-size:19px;cursor:pointer;color:var(--text-sub);font-family:inherit;">✕</button></div>`;
   try{card.appendChild(buildCL(ce?'combined':'base',ce?ce.sec-1:null,todayKey()));}catch(e){}
+  if(opts&&opts.photo){
+    // 체크 상태는 잠시 뒤에 들어온다 — 들어온 뒤 첫 미완료 항목의 「사진」으로 데려간다 (카메라는 사람이 누른다)
+    let fired=false;
+    const go=()=>{
+      if(fired)return;fired=true;
+      const item=card.querySelector('.check-item:not(.is-done)')||card.querySelector('.check-item');
+      if(!item)return;
+      item.scrollIntoView({behavior:'smooth',block:'center'});
+      const pb=item.querySelector('.check-photo-btn');
+      (pb||item).classList.add('qc-hint');setTimeout(()=>(pb||item).classList.remove('qc-hint'),1700);
+      if(pb)try{pb.focus({preventScroll:true});}catch(e){}
+    };
+    let t=setTimeout(go,1500); // 불러오기가 늦어도 1.5초면 간다
+    const loaded=()=>{const c=card.querySelector('.check-count');return !!c&&!/불러오는 중/.test(c.textContent||'');};
+    const mo=new MutationObserver(()=>{if(loaded()){clearTimeout(t);mo.disconnect();setTimeout(go,120);}});
+    mo.observe(card,{childList:true,subtree:true,characterData:true});
+    setTimeout(()=>mo.disconnect(),4000);
+  }
   const close=()=>{ov.remove();try{renderDashboardHome().catch(()=>{});}catch(e){}};
   card.querySelector('[data-qc-close]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
@@ -5680,10 +5860,10 @@ async function renderSetupChecklist(wrap){
        btn:'초대 만들기', go:()=>goAdminTab('settings','sec-invite')},
       {k:'fixed', done:_setupDone('fixed'), ico:'⚙️', t:'고정업무 확인',
        d:'매달 반복되는 발주·재고·마감을 우리 매장에 맞게 고치세요',
-       btn:'보러 가기', go:()=>{markSetupStep('fixed');goAdminTab('fixedtasks');}},
+       btn:'보러 가기', go:()=>{markSetupStep('fixed');goAdminTab('settings');}},
       {k:'clean', done:_setupDone('clean'), ico:'🧹', t:'청소 항목 확인',
        d:'매일 체크할 청소 목록과 대청소 구역을 우리 매장 것으로',
-       btn:'보러 가기', go:()=>{markSetupStep('clean');goAdminTab('fixedtasks');}},
+       btn:'보러 가기', go:()=>{markSetupStep('clean');goAdminTab('settings');}},
       {k:'install', done:installed||_setupDone('install'), ico:'📲', t:'앱으로 설치',
        d:'홈 화면·바탕화면에 추가하면 매번 주소를 치지 않아도 돼요',
        btn:'설치하기', go:()=>{markSetupStep('install');try{openInstallModal();}catch(e){}}},
@@ -6074,12 +6254,7 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
   let fixedLabels=[];
   try{
     getEvs(ty,tm,td).forEach(e=>{
-      if(e.t==='order')fixedLabels.push('전체주문일');
-      else if(e.t==='stock')fixedLabels.push('재고실사');
-      else if(e.t==='pod')fixedLabels.push('팟형기기점검');
-      else if(e.t==='aio')fixedLabels.push('일체형기기점검');
-      else if(e.t==='report')fixedLabels.push('월간보고 마감');
-      else if(e.t==='as_deadline')fixedLabels.push('A/S 접수 마감');
+      if(false){}
       else if(e.t==='as_send')fixedLabels.push('A/S 발송일');
       else if(e.t==='clean')fixedLabels.push('대청소 '+e.sec+'구역');
       else if(e.t==='holiday')fixedLabels.push(e.label||'공휴일');
@@ -6163,13 +6338,6 @@ function openStoreRoom(store){
     evs.forEach(e=>{
       const t=document.createElement('div');t.className='dtag';
       if(e.t==='holiday'){t.style.cssText='background:var(--red-light);color:var(--red)';t.textContent=e.label;}
-      else if(e.t==='order'){t.style.cssText='background:var(--blue-light);color:var(--blue)';t.textContent='전체주문일';}
-      else if(e.t==='stock'){t.style.cssText='background:var(--orange-light);color:var(--orange)';t.textContent='재고실사';}
-      else if(e.t==='pod'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='팟형기기점검';}
-      else if(e.t==='aio'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='일체형기기점검';}
-      else if(e.t==='report'){t.style.cssText='background:var(--pink-light);color:var(--pink)';t.textContent='월간보고 마감일';}
-      else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='A/S 접수 마감일';}
-      else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='A/S 발송일';}
       else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
       else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
       else return;
@@ -6959,13 +7127,6 @@ function renderCal(){
       evs.forEach(e=>{
         const b=document.createElement('div');b.className='badge';
         if(e.t==='holiday'){b.className+=' b-red';b.textContent=e.label.slice(0,4);}
-        else if(e.t==='order'){b.className+=' b-blue';b.textContent='전체주문';}
-        else if(e.t==='stock'){b.className+=' b-orange';b.textContent='재고실사';}
-        else if(e.t==='pod'){b.className+=' b-purple';b.textContent='팟점검';}
-        else if(e.t==='aio'){b.className+=' b-purple';b.textContent='일체형점검';}
-        else if(e.t==='report'){b.className+=' b-pink';b.textContent='보고마감';}
-        else if(e.t==='as_deadline'){b.className+=' b-teal';b.textContent='AS접수마감';}
-        else if(e.t==='as_send'){b.className+=' b-teal2';b.textContent='AS발송일';}
         else if(e.t==='clean'){b.className+=' b-green';b.textContent='대청소'+e.sec;}
         else if(SPECIALS[e.t]){b.className+=' '+((SPECIALS[e.t].col||'c-blue').replace('c-','b-'));b.textContent=SPECIALS[e.t].task.replace(/\([^)]*\)/g,'').replace(/\s+/g,'').slice(0,7);}
         bd.appendChild(b);
@@ -7050,13 +7211,6 @@ function showDetail(y,m,d){
   evs.forEach(e=>{
     const t=document.createElement('div');t.className='dtag';
     if(e.t==='holiday'){t.style.cssText='background:var(--red-light);color:var(--red)';t.textContent=e.label;}
-    else if(e.t==='order'){t.style.cssText='background:var(--blue-light);color:var(--blue)';t.textContent='전체주문일';}
-    else if(e.t==='stock'){t.style.cssText='background:var(--orange-light);color:var(--orange)';t.textContent='재고실사';}
-    else if(e.t==='pod'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='팟형기기점검';}
-    else if(e.t==='aio'){t.style.cssText='background:var(--purple-light);color:var(--purple)';t.textContent='일체형기기점검';}
-    else if(e.t==='report'){t.style.cssText='background:var(--pink-light);color:var(--pink)';t.textContent='월간보고 마감일';}
-    else if(e.t==='as_deadline'){t.style.cssText='background:var(--teal-light);color:var(--teal)';t.textContent='A/S 접수 마감일';}
-    else if(e.t==='as_send'){t.style.cssText='background:var(--teal);color:#fff';t.textContent='A/S 발송일';}
     else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
     else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
     tg.appendChild(t);
@@ -7977,7 +8131,6 @@ async function renderDashboard(){
     {id:'monthly',label:'월간 통계'},
     {id:'projects',label:'프로젝트'},
     {id:'dayoff',label:'휴무'},
-    {id:'fixedtasks',label:'고정업무'},
     {id:'settings',label:'설정'}
   ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
   if(!tabDefs.some(td=>td.id===dashTab))dashTab='today';
@@ -7996,13 +8149,13 @@ async function renderDashboard(){
   if(dashTab==='today')await renderTodayTab(content);
   else if(dashTab==='projects')await renderProjectsTab(content);
   else if(dashTab==='dayoff')await renderDayoffTab(content);
-  else if(dashTab==='fixedtasks')await renderFixedTasksTab(content);
+  else if(dashTab==='fixedtasks'){dashTab='settings';await renderSettingsTab(content);}
   else if(dashTab==='settings')await renderSettingsTab(content);
   else if(dashTab==='activity')await renderActivityTab(content);
   else if(dashTab==='report')await renderReportTab(content);
   else await renderMonthlyTab(content);
 
-  if(dashTab!=='monthly'&&dashTab!=='fixedtasks'){
+  if(dashTab!=='monthly'){
     const refreshBtn=document.createElement('button');
     refreshBtn.className='dash-refresh';
     refreshBtn.textContent='새로고침';
@@ -8129,9 +8282,26 @@ async function renderTodayTab(content,opts={}){
     detailWrap.style.cssText='margin-top:0;border-top:none;padding-top:0;';
     detailWrap.innerHTML=`<div class="dash-detail-title">${cleanLabel}</div>
       <div class="dash-items" id="cleanitems-${store.id}"></div>
+      <div class="dash-detail-title" id="fixedtitle-${store.id}" hidden>매장 할 일</div>
+      <div class="dash-todo-list" id="fixeditems-${store.id}" hidden></div>
       <div class="dash-detail-title">오늘의 업무</div>
       <div class="dash-todo-list" id="todoitems-${store.id}"><div class="no-clean">불러오는 중...</div></div>`;
     card.appendChild(detailWrap);
+    // 매장 할 일(고정업무 자동 추가) — 오늘이면 없을 때 만들어 두고, 지난 날은 있는 것만
+    (async()=>{
+      try{
+        const rows=await loadStoreFixedTodos(store.id,tKey,{ensure:tKey===todayKey()});
+        if(!rows.length)return;
+        const tt=document.getElementById(`fixedtitle-${store.id}`),wrapF=document.getElementById(`fixeditems-${store.id}`);
+        if(!tt||!wrapF)return;
+        tt.hidden=false;wrapF.hidden=false;wrapF.innerHTML='';
+        rows.forEach(it=>{
+          const row=document.createElement('div');row.className='dash-todo-item'+(it.done?' done':'');
+          row.innerHTML=`<span class="ico" style="color:${it.done?'var(--green)':'var(--text-mute)'}">${it.done?'✓':'○'}</span><span class="txt">${_wrEsc(it.title)} <span style="color:var(--text-mute)">(${it.done?_wrEsc(it.doneBy||'완료'):'미완료'})</span></span>`;
+          wrapF.appendChild(row);
+        });
+      }catch(e){}
+    })();
 
     // 청소 항목 (기본청소 6 + 대청소일이면 구역항목) 뼈대 렌더
     const cleanItemList=cleanEv?[...CLEAN_BASE,...CSECTIONS[cleanEv.sec-1].items]:[...CLEAN_BASE];
@@ -8266,7 +8436,7 @@ async function renderTodayTab(content,opts={}){
           allItems.forEach(it=>{
             const carry=(it.fromDate&&it.fromDate!==tKey)?` <span style="color:var(--orange)">[${it.fromDate.slice(5)} 이월]</span>`:'';
             const row=document.createElement('div');row.className='dash-todo-item'+(it.done?' done':'');
-            row.innerHTML=`<span class="ico">${it.done?'✅':'⬜'}</span><span class="txt">${it.text} <span style="color:#bbb">(${it.author||'익명'})</span>${carry}</span>`;
+            row.innerHTML=`<span class="ico" style="color:${it.done?'var(--green)':'var(--text-mute)'}">${it.done?'✓':'○'}</span><span class="txt">${it.text} <span style="color:var(--text-mute)">(${it.author||'익명'})</span>${carry}</span>`;
             todoItemsWrap.appendChild(row);
           });
         }
@@ -8592,9 +8762,14 @@ function buildRuleForm(rule){
   const taskInput=document.createElement('input');taskInput.type='text';taskInput.style.cssText=inputStyle;taskInput.value=rule.task||'';
   box.appendChild(taskInput);
 
-  box.appendChild(mk('설명'));
+  box.appendChild(mk('설명 (직원에게 보이는 한 줄)'));
   const metaInput=document.createElement('input');metaInput.type='text';metaInput.style.cssText=inputStyle;metaInput.value=rule.meta||'';
   box.appendChild(metaInput);
+  // 달력 표시 · 그날 할 일 자동 추가 — 업종마다 '달력엔 안 보여도 그날 꼭 해야 하는 일'이 있다
+  const tog=(label,desc,on)=>{const w=document.createElement('label');w.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-top:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:700;';w.innerHTML=`<span>${label}<br><span style="font-size:11px;color:var(--text-sub);font-weight:400;">${desc}</span></span><input type="checkbox" ${on?'checked':''} style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;">`;return w;};
+  const showTog=tog('달력에 표시','끄면 월간 달력과 홈 브리핑에서 숨어요. 규칙은 그대로',rule.show!==false);
+  const autoTog=tog('그날 할 일에 자동 추가','해당 날짜에 매장마다 1건씩 「매장 할 일」로 생겨요. 근무자 누구나 체크하면 완료',!!rule.autoTodo);
+  const togWrap=document.createElement('div');togWrap.style.marginTop='10px';togWrap.appendChild(showTog);togWrap.appendChild(autoTog);box.appendChild(togWrap);
 
   box.appendChild(mk('색상 태그'));
   const colSel=document.createElement('select');colSel.style.cssText=inputStyle;
@@ -8614,6 +8789,8 @@ function buildRuleForm(rule){
     rule.task=taskInput.value.trim()||'(제목없음)';
     rule.meta=metaInput.value.trim();
     rule.col=colSel.value;
+    rule.show=showTog.querySelector('input').checked;
+    rule.autoTodo=autoTog.querySelector('input').checked;
     savedEl.textContent='저장 중...';
     await saveScheduleRules();
     savedEl.textContent='✓ 저장됨';
@@ -8788,7 +8965,7 @@ async function renderReportTab(content){
 }
 
 async function renderSettingsTab(content){
-  document.getElementById('dash-sub').textContent='기능 켜기/끄기 · 컬러테마 (전 직원 적용)';
+  document.getElementById('dash-sub').textContent='일하는 방식 · 매장 · 사람 · 화면 · 내 계정 (전 직원 적용)';
   const savedEl=document.createElement('div');savedEl.className='feedback-saved';savedEl.style.cssText='margin:8px 0;min-height:16px;';
 
   // ── 내 계정 (신규 가입자가 "내가 누구인지" 바로 알 수 있게) ──
@@ -9350,7 +9527,49 @@ async function renderSettingsTab(content){
   })();
 
   content.appendChild(savedEl);
+
+  // ── 다섯 묶음으로 정리. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류해 옮긴다 ──
+  const GROUPS=[
+    ['work','일하는 방식',['고정업무','대청소 규칙','청소 항목 편집','매장 점수 규칙','인수인계 규칙','청소 사진 보관']],
+    ['store','매장',['매장 관리','매장 아이콘']],
+    ['people','사람',['직원 초대','직원 근무지 설정','퇴사자 관리','주간 1:1 상담','가맹 초대 코드']],
+    ['screen','화면',['기능 켜기 / 끄기','컬러테마']],
+    ['me','내 계정',['내 계정','내 동의 관리']],
+  ];
+  const nav=document.createElement('div');nav.className='st-nav';
+  const groupsEl=document.createElement('div');groupsEl.className='st-groups';
+  const groupBox={};
+  GROUPS.forEach(([k,lb])=>{
+    const g=document.createElement('section');g.className='st-group';g.dataset.g=k;g.hidden=true;
+    groupsEl.appendChild(g);groupBox[k]=g;
+    const b=document.createElement('button');b.type='button';b.className='st-chip';b.dataset.g=k;b.textContent=lb;
+    b.onclick=()=>showSettingsGroup(k);nav.appendChild(b);
+  });
+  // 고정업무·대청소·청소 항목은 '일하는 방식' 맨 앞에 — 예전 고정업무 탭 내용 그대로
+  const fixedHolder=document.createElement('div');
+  await renderFixedTasksTab(fixedHolder);
+  const fixedTitle=document.createElement('div');fixedTitle.className='dash-card';fixedTitle.innerHTML='<div class="dash-store-name">고정업무</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 0;line-height:1.6;">매주·매월 반복되는 일. 규칙마다 달력 표시와 그날 할 일 자동 추가를 정할 수 있고, 고치면 전 매장 달력에 바로 반영돼요. 공휴일은 자동으로 표시됩니다.</div>';
+  groupBox.work.appendChild(fixedTitle);
+  [...fixedHolder.children].forEach(el=>groupBox.work.appendChild(el));
+  // 나머지 카드는 제목으로 분류. 못 찾는 카드는 '화면' 묶음 끝에
+  [...content.querySelectorAll(':scope > .dash-card')].forEach(card=>{
+    const t=(card.querySelector('.dash-store-name')||{}).textContent||'';
+    const hit=GROUPS.find(([k,lb,names])=>names.some(n=>t.trim().startsWith(n)));
+    (hit?groupBox[hit[0]]:groupBox.screen).appendChild(card);
+  });
+  content.insertBefore(groupsEl,savedEl);content.insertBefore(nav,groupsEl);
+  const showSettingsGroup=(k)=>{
+    Object.entries(groupBox).forEach(([gk,g])=>g.hidden=gk!==k);
+    nav.querySelectorAll('.st-chip').forEach(c=>c.classList.toggle('on',c.dataset.g===k));
+    try{localStorage.setItem('vflow_settings_group',k);}catch(e){}
+  };
+  let first='work';try{first=localStorage.getItem('vflow_settings_group')||'work';}catch(e){}
+  if(!groupBox[first])first='work';
+  showSettingsGroup(first);
   attachSettingsFinder(content);
+  // 찾기에 글자를 넣으면 모든 묶음을 펼쳐 검색, 지우면 다시 한 묶음
+  const sq=content.querySelector('[data-sq]');
+  if(sq){sq.addEventListener('input',()=>{const q=sq.value.trim();if(q){Object.values(groupBox).forEach(g=>g.hidden=false);nav.style.display='none';}else{nav.style.display='';showSettingsGroup(nav.querySelector('.st-chip.on')?.dataset.g||'work');}});}
 }
 
 // ── 설정 찾기 — 카드가 많아져서 스크롤로만 찾던 문제 ──
@@ -9367,8 +9586,10 @@ function attachSettingsFinder(content){
     const none=bar.querySelector('[data-none]');
     const cards=()=>Array.from(content.querySelectorAll('.dash-card'));
 
+    const grouped=()=>!!content.querySelector('.st-nav'); // 다섯 묶음 탐색이 있으면 제목 칩은 중복 — 숨긴다
     const buildChips=()=>{
       chips.innerHTML='';
+      if(grouped()){chips.style.display='none';return;}
       cards().forEach(c=>{
         const t=c.querySelector('.dash-store-name');
         if(!t)return;
@@ -9393,7 +9614,7 @@ function attachSettingsFinder(content){
         c.style.display=ok?'':'none';
         if(ok)hit++;
       });
-      chips.style.display=kw?'none':'flex';
+      chips.style.display=(kw||grouped())?'none':'flex';
       if(kw&&hit===0){none.style.display='block';none.textContent='"'+q+'" 에 해당하는 설정이 없어요. 다른 단어로 찾아보세요.';}
       else none.style.display='none';
     };
@@ -9405,17 +9626,11 @@ function attachSettingsFinder(content){
 }
 
 async function renderFixedTasksTab(content){
-  document.getElementById('dash-sub').textContent='매월 반복되는 고정 업무 규칙 관리';
-
-  const introEl=document.createElement('div');introEl.className='dash-date';
-  introEl.textContent='여기서 수정하면 전 지점 월간 캘린더에 즉시 반영됩니다. 공휴일은 자동으로 조회되어 표시되니 따로 입력하지 않아도 돼요.';
-  content.appendChild(introEl);
-
   scheduleRules.forEach((rule,idx)=>{
     const card=document.createElement('div');card.className='dash-card';card.style.marginBottom='10px';
 
     const nameDiv=document.createElement('div');nameDiv.className='dash-store-name';
-    nameDiv.innerHTML=`${rule.task||'(제목없음)'} <span class="dash-store-badge" style="background:#f3f4f6;color:#555">${condSummary(rule)}</span>`;
+    nameDiv.innerHTML=`${rule.task||'(제목없음)'} <span class="dash-store-badge" style="background:var(--soft);color:var(--text-sub)">${condSummary(rule)}</span>${rule.show===false?' <span class="dash-store-badge" style="background:var(--soft);color:var(--text-mute)">달력 숨김</span>':''}${rule.autoTodo?' <span class="dash-store-badge" style="background:var(--green-light);color:var(--green)">할 일 자동</span>':''}`;
     card.appendChild(nameDiv);
 
     if(rule.meta){
@@ -9449,13 +9664,44 @@ async function renderFixedTasksTab(content){
   addBtn.className='dash-refresh';
   addBtn.textContent='+ 새 고정업무 추가';
   addBtn.onclick=async()=>{
-    scheduleRules.push({key:'custom_'+Date.now(),condType:'monthdays',days:[1],task:'새 고정업무',meta:'',col:'c-blue'});
+    scheduleRules.push({key:'custom_'+Date.now(),condType:'monthdays',days:[1],task:'새 고정업무',meta:'',col:'c-blue',show:true,autoTodo:false});
     await saveScheduleRules();
     renderDashboard();
   };
   content.appendChild(addBtn);
 
+  renderDeepCleanCard(content);
   renderCleanEditor(content);
+}
+
+// ── 대청소 규칙 — 요일·몇 번째 주·구역 순환을 한 카드에서 ──
+function renderDeepCleanCard(content){
+  const card=document.createElement('div');card.className='dash-card';card.style.marginTop='16px';
+  card.innerHTML='<div class="dash-store-name">대청소 규칙</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">어느 요일, 그 달의 몇 번째 주에 대청소를 할지. 구역은 아래 「청소 항목 편집」의 대청소 구역 순서대로 매장마다 돌아가며 배정돼요.</div>';
+  const wdSel=document.createElement('select');wdSel.style.cssText='border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text);background:var(--card);';
+  wdSel.innerHTML=['일','월','화','수','목','금','토'].map((d,i)=>`<option value="${i}">${d}요일</option>`).join('');wdSel.value=String(DEEP_CLEAN_WEEKDAY);
+  const row1=document.createElement('div');row1.style.cssText='display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;font-weight:700;';
+  row1.append('매주 ',wdSel);card.appendChild(row1);
+  const occ=document.createElement('div');occ.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;';
+  [1,2,3,4,5].forEach(n=>{const l=document.createElement('label');l.className='my-store-chip'+(DEEP_CLEAN_OCCURRENCES.includes(n)?' active':'');l.style.cssText='display:inline-flex;align-items:center;gap:6px;cursor:pointer;';l.innerHTML=`<input type="checkbox" value="${n}" ${DEEP_CLEAN_OCCURRENCES.includes(n)?'checked':''} style="display:none;">${n}번째 주`;l.querySelector('input').onchange=(e)=>l.classList.toggle('active',e.target.checked);occ.appendChild(l);});
+  card.appendChild(occ);
+  const info=document.createElement('div');info.className='dash-date';info.style.marginTop='8px';
+  info.textContent=`지금 구역 ${CSECTIONS.length}개 — 매장마다 지난번 다음 구역으로 돌아갑니다. 예: 1·3번째 주면 한 달에 두 번, 구역 ${CSECTIONS.length}개면 ${Math.ceil(CSECTIONS.length/2)}달에 한 바퀴`;
+  card.appendChild(info);
+  const sv=document.createElement('button');sv.className='dash-refresh';sv.style.marginTop='10px';sv.textContent='대청소 규칙 저장';
+  const msg=document.createElement('span');msg.style.cssText='font-size:12px;color:var(--green);margin-left:8px;';
+  sv.onclick=async()=>{
+    const occs=[...occ.querySelectorAll('input:checked')].map(i=>Number(i.value));
+    if(!occs.length){alert('몇 번째 주에 할지 하나는 골라주세요');return;}
+    msg.textContent='저장 중...';
+    try{
+      await setDoc(doc(db,'config/clean_deep_clean_rule'),{weekday:Number(wdSel.value),occurrences:occs});
+      DEEP_CLEAN_WEEKDAY=Number(wdSel.value);DEEP_CLEAN_OCCURRENCES=occs;
+      msg.textContent='✓ 저장됨 — 달력에 바로 반영';
+    }catch(e){msg.textContent='⚠ 저장 실패 — '+(e.message||'권한/네트워크');}
+  };
+  const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;';r.appendChild(sv);r.appendChild(msg);card.appendChild(r);
+  content.appendChild(card);
 }
 
 // ── 청소 항목 편집(관리자) — 기본청소/대청소 구역 ──
