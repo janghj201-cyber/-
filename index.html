@@ -595,6 +595,11 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-qa .vf-ic{color:var(--navy);margin:0;}
 .vh-qa:active{opacity:.85;}
 .vh-todo{order:4;}
+.vh-add{display:flex;gap:6px;margin-top:10px;}
+.vh-add input{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none;min-height:44px;box-sizing:border-box;}
+.vh-add input:focus{border-color:var(--gold);}
+.vh-add .vh-btn{min-height:44px;padding:0 14px;}
+.vh-head .score-chip{margin-left:2px;}
 .vh-fixed-wrap{margin-bottom:6px;}
 .vh-fixed-head{font-size:11px;font-weight:700;color:var(--text-sub);padding:2px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .vh-fixed-head .vh-tiny{font-weight:600;}
@@ -616,15 +621,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-todo.folded .vh-todo-body{display:none;}
 .vh-fold{background:none;border:none;color:var(--text-sub);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;}
 .vh-links{order:5;}
-.vh-store{order:6;display:none;}
-.vh-storegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.vh-store .vh-cell{padding:10px;background:var(--bg);border-radius:10px;font-size:12px;color:var(--text);}
-.vh-store .vh-cell b{display:block;margin-bottom:4px;color:var(--text-sub);font-weight:600;font-size:11px;}
-.vh-store .vh-cell.alert{color:var(--red);font-weight:700;}
 .vh-extra{order:7;display:flex;flex-direction:column;gap:10px;}.vh-extra:empty{display:none;}.vh-extra .hp-card{margin:0;}
-.vh-end{order:8;}
-.vh-end .vh-row{display:flex;align-items:center;gap:10px;}
-.vh-full{order:9;display:block;width:100%;text-align:center;background:none;border:1px dashed var(--border);border-radius:var(--radius-card);padding:11px;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;}
 .vh-check{width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;}
 /* 남기기 시트 */
 .vh-sheet-bg{position:fixed;inset:0;z-index:950;background:rgba(23,34,51,.55);display:flex;align-items:flex-end;justify-content:center;}
@@ -666,6 +663,10 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   #vf-side .vs-item.vs-sub::before{content:'';position:absolute;left:19px;top:0;bottom:0;width:1px;background:var(--border);}
   #vf-side .vs-item.vs-sub.active{background:none;color:var(--text);font-weight:800;}
   #vf-side .vs-item.vs-sub.active::before{background:var(--gold);width:2px;left:18.5px;}
+  #vf-side .vs-item.vs-sub2{padding-left:52px;font-size:12px;}
+  #vf-side .vs-item.vs-sub2::before{left:38px;}
+  #vf-side .vs-item.vs-sub2.active::before{left:37.5px;}
+  #vf-side .vs-caret{font-size:10px;color:var(--text-mute);margin-left:4px;}
   #vf-side .vs-item .vs-badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;}
   #vf-side .vs-item .vs-cnt{font-size:12px;color:var(--text-mute);}
   #vf-side .vs-gap{flex:1;}
@@ -675,10 +676,12 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .screen{flex:1;min-width:0;}
   .vh-head h1{font-size:24px;}
   .vh-head{margin-bottom:16px;}
-  .vh-grid{display:grid;grid-template-columns:1.15fr 1fr .85fr;gap:14px;align-items:start;}
+  .vh-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:start;}
+  .vh-links,.vh-priority .vh-item.vh-hide-d{display:none!important;}
+  /* 데스크탑은 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 관리자 화면의 홈 버튼은 중복 — 숨김 (인라인 style 위라 !important) */
+  #screen-dashboard .header .vh-head-btns,#screen-admin .header .back-btn{display:none!important;}
   .vh-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
-  .vh-metrics,.vh-priority,.vh-quick,.vh-quickrow,.vh-todo,.vh-links,.vh-store,.vh-end,.vh-full{order:0;}
-  .vh-store{display:block;}
+  .vh-metrics,.vh-priority,.vh-quick,.vh-quickrow,.vh-todo,.vh-links{order:0;}
   .vh-priority .vh-item.vh-hide-m{display:flex;}
   .vh-more{display:none;}
   .vh-todo.folded .vh-todo-body{display:block;}
@@ -1304,7 +1307,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 <div class="screen active has-tab-bar" id="screen-dashboard">
   <div class="header">
     <div><div class="header-title" id="home-greeting">V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
-    <div style="display:flex;gap:6px;">
+    <div class="vh-head-btns" style="display:flex;gap:6px;">
       <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">가이드</button>
       <button onclick="openAppMenu()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" title="내 계정">내 계정</button>
       <button class="admin-btn" onclick="openPwModal()">관리자</button>
@@ -1356,7 +1359,8 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div id="dashboard-collab-list"></div>
   </div>
   <div class="app-footer">
-    <div class="app-footer-title" id="footer-app-name">매장 운영 스케줄 시스템</div>
+    <div class="app-footer-title">V-Flow</div>
+    <div id="footer-app-name" style="font-size:12px;color:var(--text-sub);margin-top:2px;"></div>
     <div style="font-size:10.5px;color:var(--text-mute);margin:2px 0 4px;">버전 <b class="app-version-label" style="color:var(--text-sub);"></b></div>
     <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
     <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지 · <a href="legal.html" target="_blank" style="color:inherit;text-decoration:underline;">약관·개인정보</a></div>
@@ -2861,6 +2865,9 @@ const GUIDE_SECTIONS = [
       '🧹 대청소 요일과 몇 번째 주를 설정에서 바꿀 수 있어요 (그동안은 일요일 고정). 구역은 등록한 수만큼 돌아가요',
       '🧭 관리자 상단 탭 7개가 사라졌어요 — 폰은 「현황·보고 | 기록 ▾ | 설정」 세 개(기록을 누르면 리포트·활동·통계·프로젝트·휴무), 컴퓨터는 왼쪽 메뉴의 관리자 아래 항목으로',
       '⚙️ 설정은 다섯 묶음 목록이 첫 화면이에요 — 아이콘과 한 줄 설명을 보고 들어가고, 「← 설정」으로 돌아와요. 컴퓨터는 왼쪽 목록·오른쪽 내용',
+      '✂️ 홈의 겹치는 문을 걷어냈어요 — 남기기는 검은 카드 하나, 오늘 할 일은 카드 안에서 바로 적고 엔터, 「매장 상태」·「퇴근 전」·「전체 화면 보기」 카드는 뺐어요(같은 숫자·같은 문이었어요)',
+      '📋 게시판은 홈 바로가기(폰)·왼쪽 메뉴(컴퓨터)의 「게시판」에서 열려요. 옛 홈은 없어졌어요',
+      '🖥️ 컴퓨터에서는 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 바로가기 카드는 숨겨요. 관리자 아래는 현황·보고 / 기록 / 설정 셋',
     ],
   },
   {
@@ -4773,7 +4780,7 @@ window.renderTodayStatus=async function(){
     const mkq=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 6px;font-size:11px;font-weight:700;color:var(--text-sub);cursor:pointer;font-family:inherit;';b.onclick=fn;ql.appendChild(b);};
     mkq('주간 리포트',()=>{dashTab='report';showScreen('screen-admin');renderDashboard();});
     mkq('활동 모아보기',()=>{dashTab='activity';showScreen('screen-admin');renderDashboard();});
-    mkq('협업 흐름',()=>{window.__homeFull=true;switchTab('dashboard');setTimeout(()=>{try{document.getElementById('dashboard-collab-section')?.scrollIntoView({behavior:'smooth'});}catch(e){}},600);});
+    mkq('프로젝트 · 협업',()=>{dashTab='projects';showScreen('screen-admin');renderDashboard();});
     body.appendChild(ql);
   }catch(e){console.warn('[status]',e);body.innerHTML='<div class="project-overview-empty">불러오기 실패 — 새로고침 해주세요</div>';}
 };
@@ -4959,15 +4966,22 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     sel.onchange=()=>{localStorage.setItem(_lsKey,sel.value);_recordWorkday(sel.value).catch(()=>{});renderHomePersonal(tKey,todosByName,hoByStore);};
     acts.appendChild(sel);
   }
-  const leaveBtn=el('button','vh-btn primary','＋ 남기기');
-  leaveBtn.onclick=()=>openLeaveSheet(entry,tKey,'todo');
-  acts.appendChild(leaveBtn);
+  // 매장 점수 — 예전엔 오른쪽 「상태」 카드에 있었는데 그 카드는 요약 4칸과 같은 숫자라 뺐다. 점수만 여기로.
+  if(entry){
+    try{
+      const _cs0=window.__dashClean?window.__dashClean.get(entry.id):null;
+      const _sc0=calcStoreScore({cleanData:(_cs0&&_cs0.exists())?_cs0.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(hoNeedsConfirm).length:0;})()});
+      const chip=el('span','',scoreChip(_sc0));chip.title='오늘 이 매장 점수 — 청소·업무·인수인계';
+      acts.appendChild(chip);
+    }catch(e){}
+  }
   head.appendChild(acts);
   wrap.appendChild(head);
+  window.__briefCtx={tKey,todosByName,hoByStore}; // 사이드바의 「오늘의 브리핑」이 쓴다
 
   const grid=el('div','vh-grid');
-  const col1=el('section','vh-col'),col2=el('section','vh-col'),col3=el('section','vh-col');
-  grid.appendChild(col1);grid.appendChild(col2);grid.appendChild(col3);
+  const col1=el('section','vh-col'),col2=el('section','vh-col');
+  grid.appendChild(col1);grid.appendChild(col2);
   wrap.appendChild(grid);
 
   // 시작 체크리스트 (관리자·미완료 시) — 1열 맨 위
@@ -4978,8 +4992,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const mk=(lb,val,cls,fn)=>{const m=el('button','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.type='button';m.setAttribute('aria-label',`${lb} ${val}`);m.onclick=fn;return m;};
   met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
   met.appendChild(mk('내 청소',totalCl>0?`${dnCl}/${totalCl}`:'—',totalCl>0&&leftCl===0?'ok':(dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
-  met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>enterMyWork(me)));
-  const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>enterMyWork(me));
+  met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
+  const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>{if(featOn('workreq')){const p=wrap.querySelector('.vh-priority');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}else enterMyWork(me);});
   met.appendChild(m4);
   col1.appendChild(met);
 
@@ -4999,8 +5013,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       }catch(e){btn.disabled=false;btn.textContent='확인';alert('저장 실패 — 네트워크를 확인해주세요');}
     },
     open:()=>{if(entry)openStoreRoom(entry);}}));
-  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} 청소 ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전':`${dnCl}/${totalCl} 진행중`,btn:'체크',act:()=>{if(entry)openQuickClean(entry);},open:()=>{if(entry)openQuickClean(entry);}});
-  if(mine.length===0)items.push({lv:1,dot:'warn',text:'오늘 할 일이 아직 없어요',sub:'남기기에서 적거나 내 업무에서 등록',btn:'등록',act:()=>openLeaveSheet(entry,tKey,'todo'),open:()=>enterMyWork(me)});
+  // 청소로 가는 문은 「내 청소」 칸과 「청소 사진」 칩이 이미 있다 — 여기선 상태만, 누르면 열림
+  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} 청소 ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전 — 누르면 체크리스트':`${dnCl}/${totalCl} 진행중 — 누르면 체크리스트`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
   longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${it.author||'익명'} · 알아둘 것 ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
   items.sort((a,b)=>a.lv-b.lv);
   const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);
@@ -5082,9 +5096,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   })();
 
   // ── 1열: 남기기 ──
-  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">할 일 · 인수인계 · 메모 — 적으면 제자리로 가요</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
-  quick.type='button';quick.setAttribute('aria-label','남기기: 할 일, 인수인계 또는 메모 작성');
-  quick.onclick=()=>openLeaveSheet(entry,tKey,'todo');
+  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">${featOn('workreq')?'인수인계 · 요청 · 메모':'인수인계 · 메모'} — 적으면 제자리로 가요</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
+  quick.type='button';quick.setAttribute('aria-label','남기기: 인수인계, 요청 또는 메모 작성');
+  quick.onclick=()=>openLeaveSheet(entry,tKey,'handover');
   col1.appendChild(quick);
   // 즉시 실행 — 한 번 눌러 바로 하는 것만 (승인: 청소 사진 · 요청 보내기). 휴무·예외출근은 월간 스케줄에 그대로.
   const qrow=el('div','vh-quickrow');
@@ -5102,9 +5116,6 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const fold=el('button','vh-fold','펼치기');
   fold.onclick=()=>{todo.classList.toggle('folded');fold.textContent=todo.classList.contains('folded')?'펼치기':'접기';};
   if(mine.length>0)tRight.appendChild(fold);
-  const manage=el('button','vh-btn','＋ 할 일 추가');manage.style.padding='6px 10px';manage.style.minHeight='32px';
-  manage.onclick=()=>openLeaveSheet(entry,tKey,'todo');
-  tRight.appendChild(manage);
   tHead.appendChild(tRight);
   todo.appendChild(tHead);
   const tBody=el('div','vh-todo-body');
@@ -5121,7 +5132,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const m3=met.children[2];if(m3){m3.querySelector('b').textContent=any?left:'—';m3.classList.toggle('ok',any&&left===0);m3.classList.toggle('danger',!any);}
   };
   if(mine.length===0){
-    tBody.appendChild(el('div','hp-empty','오늘 등록된 업무가 없어요 — 「남기기」로 바로 적을 수 있어요'));
+    tBody.appendChild(el('div','hp-empty','오늘 할 일이 아직 없어요 — 아래에 한 줄 적고 엔터'));
   } else {
     const prog=el('div','hp-prog',`<div class="hp-prog-bar"><div class="hp-prog-fill" style="width:${Math.round(todoDone/mine.length*100)}%"></div></div><span class="hp-prog-num">${todoDone}/${mine.length}</span>`);
     tBody.appendChild(prog);
@@ -5142,7 +5153,18 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       row.appendChild(cb);row.appendChild(sp);tBody.appendChild(row);
     });
   }
+  // 바로 적는 입력줄 — 시트를 열고 종류를 고르는 두 번의 클릭을 없앤다 (내 업무 화면의 「할 일 한 줄」과 같은 저장)
+  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button>`);
+  const addInp=addRow.querySelector('input'),addBtn=addRow.querySelector('button');
+  const doAdd=async()=>{
+    const t=addInp.value.trim();if(!t||!entry)return;
+    addBtn.disabled=true;addBtn.textContent='저장중';
+    try{await addTodoItem(entry.id,tKey,t,me);addInp.value='';try{await renderDashboardHome();}catch(e2){}}
+    catch(e){addBtn.disabled=false;addBtn.textContent='추가';saveFailNotice(e,'할 일');}
+  };
+  addBtn.onclick=doAdd;addInp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
   todo.appendChild(tBody);
+  todo.appendChild(addRow); // 접혀 있어도 보인다 — 적는 데 펼치기부터 누르게 하지 않는다
   col2.appendChild(todo);
   (async()=>{
     if(!entry)return;
@@ -5151,13 +5173,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     fixedWrap.hidden=false;
     fixedWrap.appendChild(el('div','vh-fixed-head',`<span>매장 할 일</span><span class="vh-tiny">근무자 누구나 체크</span>`));
     fixedRows.forEach(it=>fixedWrap.appendChild(fixedTodoRow(it,{canCheck:true,me,onChange:refreshTodoCounts})));
-    const emp=tBody.querySelector('.hp-empty');if(emp)emp.textContent='내 할 일은 아직 없어요 — 「남기기」로 바로 적을 수 있어요';
+    const emp=tBody.querySelector('.hp-empty');if(emp)emp.textContent='내 할 일은 아직 없어요 — 아래에 한 줄 적고 엔터';
     if(mine.length>0)tBody.insertBefore(el('div','vh-fixed-head','<span>내 할 일</span>'),fixedWrap.nextSibling);
     refreshTodoCounts();
     // 우선 확인에도 한 줄 — 폰에서 카드가 접혀 있어도 놓치지 않게
     const fl=fixedRows.filter(r=>!r.done).length;
     if(fl>0){
-      const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${shortStore(entry.name)} 매장 할 일 ${fl}건<small>${_wrEsc(fixedRows.filter(r=>!r.done).map(r=>r.title).join(' · '))}</small></div>`);
+      // 폰은 오늘 할 일 카드가 접혀 있어 여기서 알려준다. 데스크탑은 옆 카드에 바로 보이므로 숨김(vh-hide-d)
+      const row=el('div','vh-item vh-hide-d',`<span class="vh-dot warn"></span><div class="vh-main">${shortStore(entry.name)} 매장 할 일 ${fl}건<small>${_wrEsc(fixedRows.filter(r=>!r.done).map(r=>r.title).join(' · '))}</small></div>`);
       const b=el('button','vh-btn','보기');
       const go=(e)=>{if(e)e.stopPropagation();todo.classList.remove('folded');fold.textContent='접기';todo.scrollIntoView({behavior:'smooth',block:'start'});};
       b.onclick=go;row.onclick=()=>go();row.appendChild(b);
@@ -5174,50 +5197,18 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
   ll.appendChild(mkLink(VF_ICONS.task,'내 업무','프로젝트 · 개인 메모 · 히스토리',()=>enterMyWork(me)));
   ll.appendChild(mkLink(VF_ICONS.cal,'월간 스케줄 · 휴무','달력 · 날짜별 기록 · 휴무는 여기서',()=>switchTab('monthly')));
-  ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',async()=>{
-    try{
-      const uid=window.__vflowProfile?.id||'';
-      localStorage.removeItem(`vflow_brief_${uid}_${tKey}`);
-      const shown=await maybeShowDailyBriefing(tKey,todosByName,hoByStore);
-      if(shown===false)alert('오늘은 브리핑에 새로 표시할 내용이 없어요 ✓');
-    }catch(e){}
-  }));
+  if(featOn('board'))ll.appendChild(mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay()));
+  ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
   col2.appendChild(links);
 
-  // ── 3열: 매장 상태 (데스크탑만) ──
-  if(entry){
-    const st=el('div','vh-card vh-store');
-    const _cs=window.__dashClean?window.__dashClean.get(entry.id):null;
-    const _sc=calcStoreScore({cleanData:(_cs&&_cs.exists())?_cs.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(hoNeedsConfirm).length:0;})()});
-    st.appendChild(el('div','vh-ct',`<strong>${shortStore(entry.name)} 상태</strong>${scoreChip(_sc)}`));
-    st.appendChild(el('div','vh-storegrid',
-      `<div class="vh-cell"><b>근무</b>${workers.length?workers.slice(0,3).join(' · ')+(workers.length>3?` 외 ${workers.length-3}`:''):'아직 없음'}</div>`+
-      `<div class="vh-cell${totalCl>0&&leftCl>0?' alert':''}"><b>청소</b>${totalCl>0?`${dnCl} / ${totalCl} 완료`:'오늘 없음'}</div>`+
-      `<div class="vh-cell${hoRows.length?' alert':''}"><b>인수인계</b>${hoRows.length?`${hoRows.length}건 확인 필요`:'모두 확인'}</div>`+
-      `<div class="vh-cell"><b>내 할 일</b>${mine.length?`${todoDone} / ${mine.length} 완료`:'미등록'}</div>`));
-    col3.appendChild(st);
-  }
-
-  // ── 3열: 상담 · 설치 · 알림 카드 (있을 때만) ──
+  // ── 2열 아래: 상담 · 설치 · 알림 카드 (있을 때만) ──
+  // 「매장 상태」 카드(요약 4칸과 같은 숫자)·「퇴근 전」(남기기 중복)·「전체 화면 보기」(옛 홈)는 뺐다.
   const extra=el('div','vh-extra');
-  col3.appendChild(extra);
+  col2.appendChild(extra);
   renderHomeMeetingCard(extra,null);
   renderHomeInstallCard(extra);
   renderHomePushCard(extra);
-
-  // ── 3열: 퇴근 전 ──
-  const end=el('div','vh-card vh-end');
-  end.appendChild(el('div','vh-ct',`<strong>퇴근 전</strong><span class="vh-tiny">${todoLeft>0?`미완료 ${todoLeft}`:''}</span>`));
-  const er=el('div','vh-row',`<div style="flex:1;font-size:13px;">다음 근무자에게 인수인계</div>`);
-  const eb=el('button','vh-btn gold','남기기');
-  eb.onclick=()=>openLeaveSheet(entry,tKey,'handover');
-  er.appendChild(eb);end.appendChild(er);
-  col3.appendChild(end);
-
-  const full=el('button','vh-full','전체 화면 보기 →');
-  full.onclick=()=>{window.__homeFull=true;renderHomePersonal(tKey,todosByName,hoByStore);};
-  col3.appendChild(full);
 }
 
 // 남기기 — 한 곳에 적으면 종류에 따라 제자리(오늘 할 일 / 인수인계 / 개인 메모)로 간다.
@@ -5230,14 +5221,15 @@ function openLeaveSheet(entry,tKey,preset){
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
-    <div class="vh-kinds"><button class="vh-kind" data-k="todo">오늘 할 일</button><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}<button class="vh-kind" data-k="memo">내 메모</button></div>
+    <div class="vh-kinds"><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}<button class="vh-kind" data-k="memo">내 메모</button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
-  let kind=preset||'todo';
-  if(kind==='request'&&!featOn('workreq'))kind='todo';
+  let kind=preset||'handover';
+  if(kind==='todo')kind='handover'; // 오늘 할 일은 홈 카드에서 바로 적는다 — 시트에서는 뺐다
+  if(kind==='request'&&!featOn('workreq'))kind='handover';
   const kinds=sh.querySelectorAll('.vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
   const recipDefault=recip.querySelector('option');
   const KIND_LABEL={todo:'오늘 할 일',handover:'인수인계',request:'요청',memo:'내 메모'};
@@ -5251,7 +5243,8 @@ function openLeaveSheet(entry,tKey,preset){
   const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
   longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
   const setKind=(k)=>{
-    if(k==='request'&&!featOn('workreq'))k='todo';
+    if(k==='todo')k='handover';
+    if(k==='request'&&!featOn('workreq'))k='handover';
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
     recip.style.display=(k==='handover'||k==='request')?'':'none';
     if(recipDefault)recipDefault.textContent=k==='request'?'받는 사람: 공용 — 누구나 수락':'받는 사람: 다음 근무자 누구나';
@@ -5276,7 +5269,7 @@ function openLeaveSheet(entry,tKey,preset){
     if(featOn('workreq')&&/요청|부탁|해 ?줄 수|해 ?주세요|맡아/.test(t))return 'request';
     if(/인수인계|다음 근무|전달|알려|넘겨|부탁/.test(t))return 'handover';
     if(/메모|기억|잊지|개인적|나중에 참고/.test(t))return 'memo';
-    return 'todo';
+    return 'handover';
   };
   if(!SR){micBtn.disabled=true;vstat.textContent='이 브라우저는 음성 인식이 없어요 — 크롬·사파리에서 테스트';}
   const setMicUI=(on)=>{micBtn.classList.toggle('on',on);micBtn.lastChild.textContent=on?'듣는 중… 누르면 끝':'말하기';};
@@ -5374,7 +5367,8 @@ archive:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="non
 flag:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg>`,
 chart:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg>`,
 activity:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
-off:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M9.5 14.5l5 5M14.5 14.5l-5 5"/></svg>`};
+off:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M9.5 14.5l5 5M14.5 14.5l-5 5"/></svg>`,
+board:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>`};
 // 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
   const side=document.getElementById('vf-side');
@@ -5390,6 +5384,9 @@ function renderSideNav(active){
     {k:'room',lb:entry?`${entry.name.replace('인천 ','').replace('부천 ','')} 방`:'매장 방',ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
     {k:'monthly',lb:'월간 스케줄',ic:IC.cal,fn:()=>switchTab('monthly')},
   ];
+  // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
+  items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
+  if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay()});
   if(isAdm&&!vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')},{k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()});
   if(vp.monitorOnly)items.push({k:'status',lb:'오늘 현황',ic:IC.status,fn:()=>switchTab('status')});
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
@@ -5397,11 +5394,17 @@ function renderSideNav(active){
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;b.onclick=it.fn;side.appendChild(b);
     if(it.k==='admin'&&active==='admin'){
-      // 관리자 안에서는 상단 탭줄 대신 여기서 화면을 고른다
-      adminTabDefs().forEach(t=>{
-        const sb=document.createElement('button');sb.className='vs-item vs-sub'+(dashTab===t.id?' active':'');
-        sb.innerHTML=`<span>${t.label}</span>`;sb.onclick=()=>goDashTab(t.id);if(dashTab===t.id)sb.setAttribute('aria-current','page');side.appendChild(sb);
-      });
+      // 관리자 안에서는 상단 탭줄 대신 여기서 고른다 — 폰과 같은 셋: 현황·보고 / 기록 / 설정. 기록은 눌렀을 때만 펼침
+      const defs=adminTabDefs();
+      const recs=defs.filter(t=>t.group==='records');
+      const inRec=recs.some(t=>t.id===dashTab);
+      const open=inRec||!!window.__sideRecOpen;
+      const mkSub=(lb,on,fn,cls)=>{const sb=document.createElement('button');sb.className='vs-item vs-sub'+(cls?' '+cls:'')+(on?' active':'');sb.innerHTML=`<span>${lb}</span>`;sb.onclick=fn;if(on)sb.setAttribute('aria-current','page');side.appendChild(sb);return sb;};
+      mkSub('현황·보고',dashTab==='today',()=>{window.__sideRecOpen=false;goDashTab('today');});
+      const rb=mkSub(`기록 <span class="vs-caret">${open?'▴':'▾'}</span>`,inRec&&!open,()=>{window.__sideRecOpen=!open;renderSideNav('admin');});
+      rb.setAttribute('aria-expanded',open?'true':'false');
+      if(open)recs.forEach(t=>mkSub(t.label,dashTab===t.id,()=>goDashTab(t.id),'vs-sub2'));
+      mkSub('설정',dashTab==='settings',()=>{window.__sideRecOpen=false;goDashTab('settings');});
     }
   });
   const gap=document.createElement('div');gap.className='vs-gap';side.appendChild(gap);
@@ -5443,6 +5446,43 @@ function fixedTodoRow(it,opts){
   row.appendChild(cb);row.appendChild(sp);row.appendChild(by);
   return row;
 }
+
+// 게시판 — 옛 홈 안에만 있던 것을 제자리(#screen-dashboard .board-section)에 둔 채 오버레이로 끌어와 보여준다.
+// 게시판 코드가 id로 요소를 찾으므로 DOM 노드를 옮겼다가 닫을 때 되돌린다.
+function openBoardOverlay(){
+  const sec=document.querySelector('#screen-dashboard .board-section');
+  if(!sec)return;
+  if(document.getElementById('board-overlay'))return;
+  const ph=document.createElement('div');ph.id='board-overlay-ph';ph.style.display='none';
+  sec.parentNode.insertBefore(ph,sec);
+  const ov=document.createElement('div');ov.id='board-overlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:900;background:var(--bg);overflow-y:auto;';
+  ov.innerHTML=`<div class="header" style="position:sticky;top:0;z-index:10;"><div><div class="header-title">게시판</div><div class="header-sub">공지 · 업무공유 · 히스토리 · 건의</div></div><button class="back-btn" type="button" data-close>닫기</button></div><div data-body style="padding:12px;max-width:860px;margin:0 auto;"></div>`;
+  ov.querySelector('[data-body]').appendChild(sec);
+  const close=()=>{document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();};
+  const onKey=(e)=>{if(e.key==='Escape')close();};
+  document.addEventListener('keydown',onKey);
+  ov.querySelector('[data-close]').onclick=close;
+  document.body.appendChild(ov);
+  try{loadBoard();}catch(e){}
+}
+window.openBoardOverlay=openBoardOverlay;
+// 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
+function openBriefingNow(){
+  const c=window.__briefCtx;
+  const go=async()=>{
+    const ctx=window.__briefCtx;if(!ctx)return;
+    try{
+      const uid=window.__vflowProfile?.id||'';
+      localStorage.removeItem(`vflow_brief_${uid}_${ctx.tKey}`);
+      const shown=await maybeShowDailyBriefing(ctx.tKey,ctx.todosByName,ctx.hoByStore);
+      if(shown===false)alert('오늘은 브리핑에 새로 표시할 내용이 없어요');
+    }catch(e){}
+  };
+  if(c&&document.getElementById('screen-dashboard')?.classList.contains('active'))go();
+  else{switchTab('dashboard');setTimeout(go,700);}
+}
+window.openBriefingNow=openBriefingNow;
 
 // 원터치 청소 체크 — 첫 화면 버튼에서 오늘 이 매장 체크리스트 바로 열기
 function openQuickClean(store,opts){
@@ -9448,6 +9488,27 @@ async function renderSettingsTab(content){
   })();
 
   // ── 매장 관리 (추가 / 폐업) ──
+  // ── 회사 이름 (대표만) — 머리·발자국·문서 제목에 쓰인다. 가입 때 정한 값을 여기서 고친다 ──
+  if((window.__vflowProfile||{}).role==='owner'){
+    const secCo=document.createElement('div');secCo.className='dash-card';secCo.style.marginTop='12px';
+    const coName=(window.__vflowTenant||{}).name||'';
+    secCo.innerHTML=`<div class="dash-store-name">회사 이름</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">화면 머리와 발자국, 브라우저 제목에 이 이름이 들어가요. 직원들은 새로고침하면 반영됩니다.</div><div style="display:flex;gap:8px;"><input id="co-name" type="text" maxlength="40" value="${_wrEsc(coName).replace(/"/g,'&quot;')}" placeholder="회사 이름" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><button id="co-save" class="vh-btn primary" type="button" style="white-space:nowrap;">저장</button></div><div id="co-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>`;
+    content.appendChild(secCo);
+    secCo.querySelector('#co-save').onclick=async()=>{
+      const inp=secCo.querySelector('#co-name'),msg=secCo.querySelector('#co-msg');
+      const t=inp.value.trim();if(!t){msg.textContent='이름을 적어주세요';return;}
+      msg.textContent='저장 중...';
+      try{
+        const {sb,ctx}=await wrApi();
+        const {error,count}=await sb.from('tenants').update({name:t},{count:'exact'}).eq('id',ctx.tenantId);
+        if(error)throw error;
+        if(count===0)throw new Error('권한이 없어요 — 회사 표 수정 권한(SQL)이 필요합니다');
+        if(window.__vflowTenant)window.__vflowTenant.name=t;
+        try{applyTenantBranding();}catch(e){}
+        msg.style.color='var(--green)';msg.textContent='✓ 저장됨';
+      }catch(e){msg.style.color='var(--red)';msg.textContent='저장 실패 — '+(e&&e.message||'네트워크');}
+    };
+  }
   const secM=document.createElement('div');secM.className='dash-card';secM.style.marginTop='12px';
   secM.innerHTML='<div class="dash-store-name">매장 관리</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">새 매장 추가와 폐업 처리. 폐업해도 그동안의 업무·인수인계·청소 기록은 지워지지 않고 목록에서만 빠져요. 변경 후 전 직원이 새로고침하면 반영됩니다.</div><div id="storemgmt-list"></div><div style="display:flex;gap:8px;margin-top:10px;"><input id="storemgmt-name" type="text" placeholder="새 매장 이름 (예: 인천 검단점)" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><button id="storemgmt-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 매장 추가</button></div><div id="storemgmt-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
   content.appendChild(secM);
@@ -9615,7 +9676,7 @@ async function renderSettingsTab(content){
   // ── 다섯 묶음으로 정리. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류해 옮긴다 ──
   const GROUPS=[
     ['work','일하는 방식',['고정업무','대청소 규칙','청소 항목 편집','매장 점수 규칙','인수인계 규칙','청소 사진 보관'],VF_ICONS.sliders,'고정업무 · 대청소 · 청소 항목 · 점수 · 인수인계 · 사진 보관'],
-    ['store','매장',['매장 관리','매장 아이콘'],VF_ICONS.store,'매장 추가·삭제 · 아이콘'],
+    ['store','매장',['회사 이름','매장 관리','매장 아이콘'],VF_ICONS.store,'회사 이름 · 매장 추가·삭제 · 아이콘'],
     ['people','사람',['직원 초대','직원 근무지 설정','퇴사자 관리','주간 1:1 상담','가맹 초대 코드'],VF_ICONS.users,'직원 초대 · 근무지·직함 · 퇴사자 · 1:1 상담'],
     ['screen','화면',['기능 켜기 / 끄기','컬러테마'],VF_ICONS.monitor,'기능 켜기/끄기 · 컬러테마'],
     ['me','내 계정',['내 계정','내 동의 관리'],VF_ICONS.user,'내 이름 · 동의 관리'],
@@ -10168,7 +10229,7 @@ function applyTenantBranding(){
     if(el.textContent.includes('위베이프')||el.textContent.includes('V-Flow'))el.textContent=`${name}`;
   });
   const footerName=document.getElementById('footer-app-name');
-  if(footerName)footerName.textContent=`${name} — 매장 운영 스케줄 시스템`;
+  if(footerName)footerName.textContent=name;
 }
 
 // 비밀번호 변경 — 로그인된 본인이 직접 (모달 없이 안전하게 prompt 2회)
