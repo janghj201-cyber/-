@@ -67,7 +67,10 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 
 /* ── 화면 전환 ── */
 .screen{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;}
-.screen.active{display:block;}
+.screen.active{display:flex;flex-direction:column;}
+.screen>.app-footer{margin-top:auto;}
+#room-overlay{display:flex;flex-direction:column;}#room-overlay>.app-footer{margin-top:auto;}
+#board-overlay{display:flex;flex-direction:column;}#board-overlay>.app-footer{margin-top:auto;}
 
 /* ── 지점 선택 ── */
 .store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
@@ -1460,7 +1463,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   </div>
   <div class="app-footer">
     <div class="app-footer-title">V-Flow</div>
-    <div id="footer-app-name" style="font-size:12px;color:var(--text-sub);margin-top:2px;"></div>
+    <div class="footer-app-name" style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;"></div>
     <div style="font-size:10.5px;color:var(--text-mute);margin:2px 0 4px;">버전 <b class="app-version-label" style="color:var(--text-sub);"></b></div>
     <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
     <div class="app-footer-disclaimer">내부 운영 전용 · 무단 배포 및 재사용 금지 · <a href="legal.html" target="_blank" style="color:inherit;text-decoration:underline;">약관·개인정보</a></div>
@@ -2847,6 +2850,14 @@ async function autoPostDayoffNotice(){
 const GUIDE_VERSION = 'v5.6';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
+// 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
+(function(){
+  const src=document.querySelector('#screen-dashboard .app-footer');if(!src)return;
+  document.querySelectorAll('.screen:not(#screen-dashboard), #room-overlay').forEach(sc=>{
+    if(sc.querySelector(':scope > .app-footer'))return;
+    const f=src.cloneNode(true);f.classList.add('app-footer-clone');sc.appendChild(f);
+  });
+})();
 document.querySelectorAll('.app-version-label').forEach(el=>el.textContent=`${GUIDE_VERSION} · ${BUILD_DATE.slice(5).replace('-','/')} 갱신`);
 // ── 가이드: 역할별 입문 코스 ──
 const GUIDE_START = {
@@ -5624,6 +5635,7 @@ function openBoardOverlay(){
   ov.style.cssText='position:fixed;inset:0;z-index:900;background:var(--bg);overflow-y:auto;';
   ov.innerHTML=`<div class="header" style="position:sticky;top:0;z-index:10;"><div><div class="header-title">게시판</div><div class="header-sub">공지 · 업무공유 · 히스토리 · 건의</div></div><button class="back-btn" type="button" data-close>닫기</button></div><div data-body style="padding:12px;max-width:860px;margin:0 auto;"></div>`;
   ov.querySelector('[data-body]').appendChild(sec);
+  try{const f=document.querySelector('#screen-dashboard .app-footer');if(f)ov.appendChild(f.cloneNode(true));}catch(e){}
   const close=()=>{document.removeEventListener('keydown',onKey);const p=document.getElementById('board-overlay-ph');if(p){p.parentNode.insertBefore(sec,p);p.remove();}ov.remove();try{const adm=document.getElementById('screen-admin');renderSideNav(adm&&adm.classList.contains('active')?'admin':(curTab||'dashboard'));}catch(e){}};
   const onKey=(e)=>{if(e.key==='Escape')close();};
   document.addEventListener('keydown',onKey);
@@ -10591,8 +10603,7 @@ function applyTenantBranding(){
   document.querySelectorAll('.header-title').forEach(el=>{
     if(el.textContent.includes('위베이프')||el.textContent.includes('V-Flow'))el.textContent=`${name}`;
   });
-  const footerName=document.getElementById('footer-app-name');
-  if(footerName)footerName.textContent=name;
+  document.querySelectorAll('.footer-app-name').forEach(el=>el.textContent=name);
 }
 
 // 비밀번호 변경 — 로그인된 본인이 직접 (모달 없이 안전하게 prompt 2회)
