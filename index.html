@@ -644,6 +644,51 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-links{order:5;}
 .vh-extra{order:7;display:flex;flex-direction:column;gap:10px;}.vh-extra:empty{display:none;}.vh-extra .hp-card{margin:0;}
 .vh-check{width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;}
+/* ── 매장 방 — 홈 문법(카드 · 선 아이콘 · 데스크탑 2열) ── */
+.rm-body{padding:12px 12px 32px;max-width:1100px;margin:0 auto;box-sizing:border-box;}
+.rm-grid{display:flex;flex-direction:column;gap:10px;}
+.rm-col{display:contents;}
+/* 폰 순서: 오늘 이 매장 → 인수인계 → 요청 → 프로젝트 → 고정 정보 → 월간. 데스크탑은 2열이라 order 무시 */
+.rm-today{order:1;}.rm-ho{order:2;}.rm-wr{order:3;}.rm-proj{order:4;}.rm-info{order:5;}.rm-mo{order:6;}
+.rm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.rm-chip{font-size:11px;font-weight:800;border-radius:8px;padding:4px 9px;background:var(--soft);color:var(--text-sub);}
+.rm-chip.clean{background:var(--green-light);color:var(--green);}
+.rm-chip.holiday{background:var(--red-light);color:var(--red);}
+.rm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:13px;min-height:44px;}
+.rm-row:first-child{border-top:none;}
+.rm-row .rm-main{flex:1;min-width:0;}
+.rm-row .rm-main small{display:block;color:var(--text-sub);font-size:11.5px;margin-top:2px;}
+.rm-row .rm-val{font-weight:800;font-size:13px;white-space:nowrap;}
+.rm-row .rm-val.ok{color:var(--green);}.rm-row .rm-val.warn{color:var(--orange);}.rm-row .rm-val.danger{color:var(--red);}
+.rm-row.link{cursor:pointer;}
+.rm-worker{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 11px 5px 8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text);min-height:34px;}
+.rm-worker .rm-av{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;}
+.rm-worker small{color:var(--text-sub);font-weight:600;}
+.rm-workers{display:flex;gap:6px;flex-wrap:wrap;}
+.rm-ho .vh-item{align-items:flex-start;}
+.rm-ho .vh-check{margin-top:3px;}
+.rm-ho .vh-item.done .vh-main{color:var(--text-mute);text-decoration:line-through;}
+.rm-ho .vh-item.done .vh-main small,.rm-ho .vh-item.done .vh-fbs{text-decoration:none;}
+.rm-body .rm-tag{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px;background:var(--gold-light);color:var(--orange);white-space:nowrap;}
+.rm-body .rm-tag.long{background:var(--soft);color:var(--text-sub);}
+.rm-acts{display:flex;gap:4px;flex:0 0 auto;}
+.rm-acts .vh-btn{min-height:34px;padding:6px 9px;font-size:11.5px;}
+.rm-acts .vh-btn.quiet{color:var(--text-sub);}
+.rm-more{margin-top:6px;background:none;border:1px dashed var(--border);border-radius:var(--radius-ctl);width:100%;padding:9px;font-size:12px;color:var(--text-sub);font-weight:700;cursor:pointer;font-family:inherit;}
+.rm-info textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:120px;resize:vertical;outline:none;line-height:1.55;color:var(--text);}
+.rm-info textarea:focus{border-color:var(--gold);}
+.rm-info.folded .rm-info-body{display:none;}
+.rm-proj .rm-bar{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin-top:6px;}
+.rm-proj .rm-bar div{height:100%;background:var(--navy);border-radius:4px;}
+.rm-empty{font-size:12.5px;color:var(--text-mute);padding:10px 0;}
+.rm-hh{background:none!important;border:none!important;padding:0!important;margin:8px 0 0!important;box-shadow:none!important;}
+.rm-hh .todo-empty{font-size:12px;color:var(--text-mute);padding:8px 0;}
+@media(min-width:1024px){
+  .rm-body{padding:22px 26px 40px;}
+  .rm-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start;}
+  .rm-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
+  .rm-today,.rm-ho,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
+}
 /* 남기기 시트 */
 .vh-sheet-bg{position:fixed;inset:0;z-index:950;background:rgba(23,34,51,.55);display:flex;align-items:flex-end;justify-content:center;}
 .vh-sheet{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:560px;padding:16px 16px calc(18px + var(--safe-bot));}
@@ -1595,7 +1640,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div><div class="header-title" id="room-title">매장</div><div class="header-sub" id="room-sub"></div></div>
     <button class="back-btn" onclick="closeStoreRoom()">닫기</button>
   </div>
-  <div id="room-body" style="padding:12px;max-width:860px;margin:0 auto;"></div>
+  <div id="room-body" class="rm-body"></div>
 </div>
 
 <!-- 오늘 현황 (관리자 전용) -->
@@ -2891,6 +2936,7 @@ const GUIDE_SECTIONS = [
       '📝 「내 메모」 카드가 홈에 생겼어요 — 보고 바로 고치면 자동 저장. 남기기 시트는 인수인계·요청 둘만',
       '📚 오늘 할 일 입력줄 옆 「여러 개」 — 한 줄에 하나씩 붙여 넣고 한 번에 추가',
       '👋 퇴사 처리는 설정 → 사람 → 직원 근무지 설정의 각 직원 줄 맨 오른쪽(대표만). 복직은 그 아래 퇴사자 관리',
+      '🏪 매장 방이 홈과 같은 모양이 됐어요 — 「오늘 이 매장」(청소 · 매장 할 일 · 근무자) · 인수인계(확인·피드백·기록) · 업무 요청 · 고정 정보(자동 저장) · 프로젝트. 남기기·요청은 홈과 같은 시트. 방에 있던 「오늘의 업무」 편집은 내 것과 같은 걸 다시 보여주던 것이라 뺐어요',
       '🖥️ 컴퓨터에서는 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 바로가기 카드는 숨겨요. 관리자 아래는 현황·보고 / 기록 / 설정 셋',
     ],
   },
@@ -5431,6 +5477,7 @@ function openLeaveSheet(entry,tKey,preset){
       clearDraft();
       close();
       try{await renderDashboardHome();}catch(e2){}
+      try{const ro=document.getElementById('room-overlay');if(ro&&ro.style.display==='block')openStoreRoom(entry);}catch(e3){} // 매장 방에서 남겼으면 방도 새로
     }catch(err){
       btn.disabled=false;btn.textContent='다시 저장';
       const off=!navigator.onLine||/오프라인|Failed to fetch|NetworkError/i.test(String(err&&err.message||err));
@@ -6266,9 +6313,9 @@ async function buildRequestSection(store){
 function buildHandoverHistorySection(store){
   const wrap=document.createElement('div');
   wrap.className='handover-section';
-  wrap.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin:12px 0 4px;" data-hh-toggle>
-      <div class="handover-sub" style="margin:0;">인수인계 기록 (최근 30일)</div>
-      <span style="color:var(--gold);font-size:12px;font-weight:800;" data-hh-arrow>펼치기 ▼</span>
+  wrap.innerHTML=`<div class="vh-ct" data-hh-toggle style="cursor:pointer;margin:8px 0 4px;min-height:36px;">
+      <strong style="font-size:12px;color:var(--text-sub);font-weight:700;">기록 (최근 30일)</strong>
+      <button type="button" class="vh-fold" data-hh-arrow>펼치기</button>
     </div>
     <div data-hh-body style="display:none;"></div>`;
   const body=wrap.querySelector('[data-hh-body]');
@@ -6277,7 +6324,7 @@ function buildHandoverHistorySection(store){
   wrap.querySelector('[data-hh-toggle]').onclick=async()=>{
     const open=body.style.display!=='none';
     body.style.display=open?'none':'block';
-    arrow.textContent=open?'펼치기 ▼':'접기 ▲';
+    arrow.textContent=open?'펼치기':'접기';
     if(open||loaded)return;
     loaded=true;
     body.innerHTML='<div class="todo-empty">불러오는 중...</div>';
@@ -6516,49 +6563,226 @@ window.closeStoreRoom=function(){
   try{renderDashboardHome().catch(()=>{});}catch(e){} // 홈 배지·버튼 상태 즉시 갱신
 };
 function openStoreRoom(store){
+  // 매장 = 방. 홈이 "나의 오늘"이라면 방은 "이 매장의 오늘과 기록" — 근무자·청소·매장 할 일·인수인계·요청·고정 정보·프로젝트.
+  // 데이터 함수는 그대로 쓰고(handover/·storeinfo/·work_requests·projects) 배치만 홈 문법으로.
   curStore=store;
   const ov=document.getElementById('room-overlay');
   const body=document.getElementById('room-body');
   if(!ov||!body)return;
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
-  document.getElementById('room-title').textContent=`${store.icon} ${store.name}`;
+  const tKey=todayKey();
+  const me=window.__vflowProfile?.name||getUsername()||'';
+  const shortStore=(n)=>(n||'').replace('인천 ','').replace('부천 ','');
+  const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!=null)x.innerHTML=html;return x;};
+  const esc=_wrEsc;
+  document.getElementById('room-title').textContent=store.name;
   let workers=[];
-  try{(window.__dashTodos||[]).forEach(p=>{if(p&&p[1].some(i=>i.storeId===store.id))workers.push(p[0]);});}catch(e){}
-  document.getElementById('room-sub').textContent=workers.length?`오늘 근무자: ${workers.join(' · ')}`:'오늘 근무자 없음';
+  const workerStat={};
+  try{(window.__dashTodos||[]).forEach(p=>{if(!p)return;const its=p[1].filter(i=>i.storeId===store.id);if(its.length){workers.push(p[0]);workerStat[p[0]]={done:its.filter(i=>i.done).length,all:its.length};}});}catch(e){}
+  document.getElementById('room-sub').textContent=workers.length?`오늘 근무 ${workers.length}명 · ${workers.join(' · ')}`:'오늘 근무자 아직 없음';
   body.innerHTML='';
+  const grid=el('div','rm-grid');const col1=el('section','rm-col'),col2=el('section','rm-col');
+  grid.appendChild(col1);grid.appendChild(col2);body.appendChild(grid);
 
-  // 오늘 고정 업무 칩
-  const evs=getEvs(ty,tm,td);
-  if(evs.length>0){
-    const tw=document.createElement('div');
-    tw.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;';
-    evs.forEach(e=>{
-      const t=document.createElement('div');t.className='dtag';
-      if(e.t==='holiday'){t.style.cssText='background:var(--red-light);color:var(--red)';t.textContent=e.label;}
-      else if(e.t==='clean'){t.style.cssText='background:var(--green-light);color:var(--green)';t.textContent='대청소 구역 '+e.sec;}
-      else if(SPECIALS[e.t]){const _c=(SPECIALS[e.t].col||'c-blue').replace('c-','');t.style.cssText='background:var(--'+_c+'-light);color:var(--'+_c+')';t.textContent=SPECIALS[e.t].task;}
-      else return;
-      tw.appendChild(t);
+  // ── 오늘 이 매장 ──
+  const todayCard=el('div','vh-card rm-today');
+  todayCard.appendChild(el('div','vh-ct',`<strong>오늘 이 매장</strong><span class="vh-tiny">${tm+1}/${td}</span>`));
+  const chips=el('div','rm-chips');
+  try{
+    getEvs(ty,tm,td).forEach(ev=>{
+      if(ev.t==='holiday')chips.appendChild(el('span','rm-chip holiday',esc(ev.label||'휴일')));
+      else if(ev.t==='clean')chips.appendChild(el('span','rm-chip clean',`대청소 구역 ${ev.sec}`));
+      else if(SPECIALS[ev.t])chips.appendChild(el('span','rm-chip',esc(SPECIALS[ev.t].task)));
     });
-    if(tw.children.length>0)body.appendChild(tw);
+  }catch(e){}
+  if(chips.children.length)todayCard.appendChild(chips);
+  const tl=el('div','vh-list');
+  // 청소
+  let totalCl=0,dnCl=0;
+  try{totalCl=getCleanItemCount(ty,tm,td);const cs=window.__dashClean?window.__dashClean.get(store.id):null;dnCl=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;}catch(e){}
+  const clRow=el('div','rm-row link',`<div class="rm-main">청소<small>${totalCl?'누르면 체크리스트 · 사진':'오늘 청소 항목 없음'}</small></div><span class="rm-val ${totalCl===0?'':dnCl>=totalCl?'ok':dnCl>0?'warn':'danger'}">${totalCl?`${dnCl} / ${totalCl}`:'—'}</span><span class="vh-arrow" aria-hidden="true">›</span>`);
+  clRow.onclick=()=>openQuickClean(store);
+  tl.appendChild(clRow);
+  // 매장 할 일 (고정업무 자동 추가) — 비동기
+  const fxWrap=el('div','');
+  tl.appendChild(fxWrap);
+  (async()=>{
+    try{
+      const rows=await loadStoreFixedTodos(store.id,tKey);
+      if(!rows.length)return;
+      fxWrap.appendChild(el('div','vh-fixed-head',`<span>매장 할 일</span><span class="vh-tiny">근무자 누구나 체크</span>`));
+      rows.forEach(it=>fxWrap.appendChild(fixedTodoRow(it,{canCheck:true,me})));
+    }catch(e){}
+  })();
+  // 근무자 — 누르면 그 사람 업무(조회)
+  const wRow=el('div','rm-row',`<div class="rm-main">근무자<small>${workers.length?'누르면 그 사람 오늘 업무':'오늘 이 매장에 업무를 등록한 사람이 아직 없어요'}</small></div>`);
+  if(workers.length){
+    const ws=el('div','rm-workers');
+    workers.forEach(n=>{const st=workerStat[n]||{done:0,all:0};const b=el('button','rm-worker',`<span class="rm-av">${esc(n[0]||'')}</span>${esc(n)}<small>${st.done}/${st.all}</small>`);b.type='button';b.onclick=()=>{window.closeStoreRoom();enterMyWork(n);};ws.appendChild(b);});
+    wRow.querySelector('.rm-main').appendChild(ws);
+  }
+  tl.appendChild(wRow);
+  todayCard.appendChild(tl);
+  col1.appendChild(todayCard);
+
+  // ── 인수인계 (이 매장 · 오늘 문서 = 미확인 이월분 포함) ──
+  const hoCard=el('div','vh-card rm-ho');
+  const hoHead=el('div','vh-ct',`<strong>인수인계</strong>`);
+  const hoRight=el('div','');hoRight.style.cssText='display:flex;gap:8px;align-items:center;';
+  const hoCnt=el('span','vh-tiny','');hoRight.appendChild(hoCnt);
+  const hoAdd=el('button','vh-btn gold','남기기');hoAdd.type='button';
+  hoAdd.onclick=()=>openLeaveSheet(store,tKey,'handover');
+  hoRight.appendChild(hoAdd);hoHead.appendChild(hoRight);hoCard.appendChild(hoHead);
+  const hoList=el('div','vh-list');hoCard.appendChild(hoList);
+  const hoMore=el('button','rm-more','');hoMore.type='button';hoMore.hidden=true;hoCard.appendChild(hoMore);
+  let showDone=false;
+  hoMore.onclick=()=>{showDone=!showDone;paintHo();};
+  let hoItems=[];
+  const paintHo=()=>{
+    hoList.innerHTML='';
+    const open=hoItems.filter(i=>!i.confirmed&&!i.closed);
+    const done=hoItems.filter(i=>i.confirmed||i.closed);
+    hoCnt.textContent=open.length?`확인 필요 ${open.filter(hoNeedsConfirm).length}`:'';
+    const list=showDone?[...open,...done]:open;
+    if(!list.length)hoList.appendChild(el('div','rm-empty',done.length?'남은 인수인계가 없어요':'아직 남긴 인수인계가 없어요 — 「남기기」로 한 줄'));
+    list.forEach(it=>{
+      const row=el('div','vh-item'+((it.confirmed||it.closed)?' done':''));
+      const cb=document.createElement('input');cb.type='checkbox';cb.className='vh-check';cb.checked=!!it.confirmed;
+      cb.disabled=hoIsLong(it)&&!it.confirmed; // 장기 항목은 확인이 아니라 알아둘 것 — 종료로 끝낸다
+      cb.setAttribute('aria-label','확인');
+      const tags=(hoIsLong(it)?`<span class="rm-tag long">알아둘 것 ${hoUntilLabel(it)}</span>`:'')+(it.recipient?`<span class="rm-tag">${esc(it.recipient)}에게</span>`:'')+((it.fromDate&&it.fromDate!==tKey)?`<span class="rm-tag long">${it.fromDate.slice(5).replace('-','/')}부터</span>`:'');
+      const cts=it.confirmedAt?(d=>`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)(new Date(it.confirmedAt)):'';
+      const main=el('div','vh-main',`${esc(it.text)}${tags}<small>${esc(it.author||'익명')}${it.confirmed?` · ${esc(it.confirmedBy||'')} 확인 ${cts}`:it.closed?' · 종료':''}</small>`);
+      const fbs=it.feedbacks||[];
+      if(fbs.length)main.appendChild(el('small','vh-fbs',fbs.map(f=>`<b>${esc(f.author||'익명')}</b> ${esc(f.text)}`).join('<br>')));
+      const fbWrap=el('div','vh-fb-wrap',`<input type="text" placeholder="피드백 한 줄" maxlength="200"><button class="vh-btn" type="button">등록</button>`);
+      fbWrap.style.display='none';main.appendChild(fbWrap);
+      const submitFb=async()=>{
+        const inp=fbWrap.querySelector('input');const t=inp.value.trim();if(!t)return;
+        try{
+          const ref=doc(db,`handover/${store.id}_${tKey}`);const snap=await getDoc(ref);
+          const its=snap.exists()?(snap.data().items||[]):[];const target=its.find(x=>x.id===it.id);
+          if(target){if(!target.feedbacks)target.feedbacks=[];target.feedbacks.push({author:me||'익명',text:t,ts:Date.now()});await setDoc(ref,{items:its});}
+          await loadHo();
+        }catch(e){alert('피드백 저장 실패 — 네트워크를 확인해주세요');}
+      };
+      fbWrap.querySelector('button').onclick=submitFb;fbWrap.querySelector('input').onkeydown=(e)=>{if(e.key==='Enter')submitFb();};
+      cb.onchange=async()=>{
+        cb.disabled=true;
+        try{await toggleHandoverItem(store.id,tKey,it.id,cb.checked,me);await loadHo();}
+        catch(e){cb.checked=!cb.checked;cb.disabled=false;alert('저장 실패 — 네트워크를 확인해주세요');}
+      };
+      const acts=el('div','rm-acts');
+      if(featOn('hofeedback')){const fb=el('button','vh-btn quiet','피드백');fb.type='button';fb.onclick=()=>{const o=fbWrap.style.display!=='none';fbWrap.style.display=o?'none':'flex';if(!o)setTimeout(()=>fbWrap.querySelector('input').focus(),0);};acts.appendChild(fb);}
+      if(!it.confirmed&&(it.author===me||isAdmin)){
+        if(hoIsLong(it)&&!it.closed){const cl=el('button','vh-btn quiet','종료');cl.type='button';cl.onclick=async()=>{if(!confirm('이 장기 인수인계를 종료할까요? (기록에는 남아요)'))return;try{await closeHandoverItem(store.id,tKey,it.id);await loadHo();}catch(e){alert('실패');}};acts.appendChild(cl);}
+        const ed=el('button','vh-btn quiet','수정');ed.type='button';
+        ed.onclick=async()=>{const v=prompt('내용 수정',it.text);if(v===null)return;const t=v.trim();if(!t||t===it.text)return;try{await editHandoverItem(store.id,tKey,it.id,t);await loadHo();}catch(e){alert('수정 실패');}};
+        const dl=el('button','vh-btn quiet','삭제');dl.type='button';
+        dl.onclick=async()=>{if(!confirm('삭제할까요? (기록에는 남아요)'))return;try{await deleteHandoverItem(store.id,tKey,it.id);await loadHo();}catch(e){alert('삭제 실패');}};
+        acts.appendChild(ed);acts.appendChild(dl);
+      }
+      row.appendChild(cb);row.appendChild(main);if(acts.children.length)row.appendChild(acts);
+      hoList.appendChild(row);
+    });
+    hoMore.hidden=!done.length;hoMore.textContent=showDone?`완료 ${done.length}건 접기`:`완료 ${done.length}건 보기`;
+  };
+  const loadHo=async()=>{try{hoItems=await loadHandoverItems(store.id,tKey);paintHo();}catch(e){hoList.innerHTML='<div class="rm-empty">불러오기 실패 — 새로고침 해주세요</div>';}};
+  hoList.innerHTML='<div class="rm-empty">불러오는 중…</div>';
+  loadHo();
+  // 기록 (최근 30일) — 접힘
+  try{const hh=buildHandoverHistorySection(store);hh.classList.add('rm-hh');hoCard.appendChild(hh);}catch(e){}
+  col2.appendChild(hoCard);
+
+  // ── 업무 요청 (이 매장) ──
+  if(featOn('workreq')){
+    const wrCard=el('div','vh-card rm-wr');
+    const wrHead=el('div','vh-ct',`<strong>업무 요청</strong>`);
+    const wrBtn=el('button','vh-btn','요청 보내기');wrBtn.type='button';wrBtn.onclick=()=>openLeaveSheet(store,tKey,'request');
+    wrHead.appendChild(wrBtn);wrCard.appendChild(wrHead);
+    const wrList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');wrCard.appendChild(wrList);
+    const paintWr=async()=>{
+      try{
+        const {sb}=await wrApi();
+        const {data}=await sb.from('work_requests')
+          .select('id,store_id,content,status,decline_reason,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)')
+          .eq('store_id',store.id).order('created_at',{ascending:false}).limit(20);
+        const rows=data||[];
+        wrList.innerHTML='';
+        if(!rows.length){wrList.appendChild(el('div','rm-empty','들어온 요청이 없어요 — 「요청 보내기」로 이 매장 근무자에게 부탁할 수 있어요'));return;}
+        rows.forEach(r=>{
+          const days=wrDaysAgo(r.created_at);
+          const st=r.status==='accepted'?`<span class="rm-tag" style="background:var(--green-light);color:var(--green)">${esc(r.responder?.name||'')} 수락</span>`:r.status==='declined'?`<span class="rm-tag" style="background:var(--red-light);color:var(--red)">거절 — ${esc(r.decline_reason||'')}</span>`:days>=3?`<span class="rm-tag" style="background:var(--red-light);color:var(--red)">${days}일째 응답 없음</span>`:`<span class="rm-tag">대기중</span>`;
+          const row=el('div','vh-item'+(r.status!=='pending'?' done':''),`<span class="vh-dot ${r.status==='pending'?'warn':''}"></span><div class="vh-main">${esc(r.content)}${st}<small>${esc(r.requester?.name||'익명')} → ${r.recipient?.name?esc(r.recipient.name):'근무자 누구나'} · ${r.created_at.slice(5,10).replace('-','/')}</small></div>`);
+          const acts=el('div','rm-acts');
+          if(r.status==='pending'&&me&&(!r.recipient?.name||r.recipient.name===me)){
+            const ok=el('button','vh-btn','수락');ok.type='button';ok.onclick=async()=>{if(await wrRespond(r,true))paintWr();};
+            const no=el('button','vh-btn quiet','거절');no.type='button';no.onclick=async()=>{if(await wrRespond(r,false))paintWr();};
+            acts.appendChild(ok);acts.appendChild(no);
+          } else if(r.status==='pending'&&r.requester?.name===me){
+            const del=el('button','vh-btn quiet','취소');del.type='button';
+            del.onclick=async()=>{if(!confirm('이 요청을 취소할까요?'))return;const {error,count}=await sb.from('work_requests').delete({count:'exact'}).eq('id',r.id);if(error||count===0){alert('취소 실패');return;}paintWr();};
+            acts.appendChild(del);
+          }
+          if(acts.children.length)row.appendChild(acts);
+          wrList.appendChild(row);
+        });
+      }catch(e){wrList.innerHTML='<div class="rm-empty">업무 요청 기능이 아직 켜지지 않았어요 — 관리자에게 문의</div>';}
+    };
+    paintWr();
+    col2.appendChild(wrCard);
   }
 
-  // 금일 업무 (이 매장에 등록된 오늘 업무 — 편집 가능)
-  body.appendChild(buildTodoSection(ty,tm,td,false));
-  // 매장 고정 정보(접이식) + 이 매장 인수인계
-  body.appendChild(buildHandoverSection(ty,tm,td));
-  // 업무 요청 (비동기 — 준비되면 붙음)
-  buildRequestSection(store).then(sec=>{const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
-  // 이 매장 프로젝트 (비동기)
-  buildStoreProjectSection(store).then(sec=>{if(!sec)return;const gb=body.querySelector('#room-go-monthly');body.insertBefore(sec,gb||null);}).catch(()=>{});
+  // ── 매장 고정 정보 (접힘 · 자동 저장) ──
+  if(featOn('storeinfo')){
+    const info=el('div','vh-card rm-info folded');
+    const iHead=el('div','vh-ct',`<strong>매장 고정 정보</strong>`);
+    const iRight=el('div','');iRight.style.cssText='display:flex;gap:8px;align-items:center;';
+    const iStat=el('span','vh-tiny','');const iFold=el('button','vh-fold','펼치기');iFold.type='button';
+    iRight.appendChild(iStat);iRight.appendChild(iFold);iHead.appendChild(iRight);info.appendChild(iHead);
+    const iPeek=el('div','rm-empty','와이파이 · 도어락 · POS 등 이 매장에서 늘 필요한 것');info.appendChild(iPeek);
+    const iBody=el('div','rm-info-body');const ta=document.createElement('textarea');ta.placeholder='예) 와이파이 이름 / 비밀번호\n도어락 번호\nPOS 로그인';ta.setAttribute('aria-label','매장 고정 정보');
+    iBody.appendChild(ta);info.appendChild(iBody);
+    let loaded=null,timer=null;
+    const load=async()=>{if(loaded!==null)return;try{ta.value=await loadStoreInfo(store.id);loaded=ta.value;iPeek.textContent=(ta.value.trim().split('\n')[0]||'와이파이 · 도어락 · POS 등 이 매장에서 늘 필요한 것');}catch(e){iStat.textContent='불러오기 실패';}};
+    const save=async()=>{const t=ta.value;if(t===loaded)return;iStat.textContent='저장 중…';try{await saveStoreInfo(store.id,t);loaded=t;iStat.textContent='저장됨';setTimeout(()=>{if(iStat.textContent==='저장됨')iStat.textContent='';},1500);}catch(e){iStat.textContent='저장 실패 — 적은 글은 남아 있어요';}};
+    ta.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(save,900);});ta.addEventListener('blur',()=>{clearTimeout(timer);save();});
+    iFold.onclick=()=>{info.classList.toggle('folded');const f=info.classList.contains('folded');iFold.textContent=f?'펼치기':'접기';iPeek.hidden=!f;if(!f){load();setTimeout(()=>ta.focus(),0);}};
+    iPeek.style.cursor='pointer';iPeek.onclick=()=>iFold.onclick();
+    load();
+    col1.appendChild(info);
+  }
 
-  // 월간 스케줄로 가는 통로 유지
-  const goBtn=document.createElement('button');
-  goBtn.id='room-go-monthly';
-  goBtn.style.cssText='display:block;width:100%;margin:12px 0 24px;padding:12px;background:var(--navy);color:var(--gold);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
-  goBtn.textContent='이 매장 월간 스케줄 보기';
-  goBtn.onclick=()=>{window.closeStoreRoom();switchTab('monthly');};
-  body.appendChild(goBtn);
+  // ── 이 매장 프로젝트 ──
+  if(featOn('collab')){
+    const pj=el('div','vh-card rm-proj');
+    const pHead=el('div','vh-ct',`<strong>이 매장 프로젝트</strong>`);
+    const pAdd=el('button','vh-btn','＋ 만들기');pAdd.type='button';pAdd.onclick=()=>{window.closeStoreRoom();openCollabCreate(store.id);};
+    pHead.appendChild(pAdd);pj.appendChild(pHead);
+    const pList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');pj.appendChild(pList);
+    (async()=>{
+      try{
+        const rows=await loadCollabList();
+        pList.innerHTML='';
+        if(rows===null){pList.appendChild(el('div','rm-empty','협업 기능이 아직 켜지지 않았어요'));return;}
+        const mine=rows.filter(r=>r.store_id===store.id&&r.status!=='done');
+        if(!mine.length){pList.appendChild(el('div','rm-empty','진행 중인 매장 프로젝트가 없어요'));return;}
+        mine.forEach(r=>{
+          const pct=Math.max(0,Math.min(100,r.progress||0));
+          const row=el('div','vh-item link',`<div class="vh-main"><b>${esc(r.title)}</b>${r.help_message?'<span class="rm-tag" style="background:var(--red-light);color:var(--red)">도움 요청</span>':''}<small>${esc(r.owner?.name||'')}${(r.project_members||[]).length?` 외 ${r.project_members.length}명`:''} · ${pct}%</small><div class="rm-bar"><div style="width:${pct}%"></div></div></div><span class="vh-arrow" aria-hidden="true">›</span>`);
+          row.onclick=()=>{window.closeStoreRoom();openCollabDetail(r.id);};
+          pList.appendChild(row);
+        });
+      }catch(e){pList.innerHTML='<div class="rm-empty">불러오기 실패</div>';}
+    })();
+    col1.appendChild(pj);
+  }
+
+  // ── 월간 스케줄로 ──
+  const mo=el('button','menu-row',`<span class="mr-ic">${VF_ICONS.cal}</span><span class="mr-main"><b>월간 스케줄</b><small>이 매장의 달력 · 지난 날짜 기록</small></span><span class="vh-arrow" aria-hidden="true">›</span>`);
+  mo.type='button';mo.classList.add('rm-mo');mo.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:var(--radius-card);padding:10px 14px;';
+  mo.onclick=()=>{window.closeStoreRoom();switchTab('monthly');};
+  col1.appendChild(mo);
 
   ov.style.display='block';
   ov.scrollTop=0;
