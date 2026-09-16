@@ -2307,8 +2307,8 @@ function enterMyWork(name){
   // 5-2: 타인 카드는 조회 전용(보기 O, 수정 X) — 어댑터도 타인 쓰기를 차단함
   const _vSelf=window.__vflowProfile;
   document.getElementById('screen-my-work').classList.toggle('view-only',!!(_vSelf&&_vSelf.name!==name));
-  // 오늘 것은 홈에 있으니 본인은 어제부터(지난 것 확인). 남의 카드(조회)는 오늘
-  myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-((_vSelf&&_vSelf.name===name)?1:0));
+  // 오늘부터 연다 — 창고에서 「오늘로」 꺼낸 것을 여기서 바로 보기 위해. 오늘 체크 자체는 홈에서도 된다
+  myDate=new Date(today.getFullYear(),today.getMonth(),today.getDate());
   // 직원 기본 매장 자동 설정 — 홈에서 정한 "오늘 매장"(고정/예외출근/순환 당일선택)이 최우선 (본인일 때)
   let _todayPick=null;
   if(_vSelf&&_vSelf.name===name){
@@ -2349,10 +2349,7 @@ async function renderMyWeekStrip(){
     const b=document.createElement('button');b.type='button';b.className='mw-day'+(d.getTime()===sel?' on':'')+(isT?' today':'')+(d.getDay()===0?' sun':d.getDay()===6?' sat':'');
     b.setAttribute('role','tab');b.setAttribute('aria-selected',d.getTime()===sel?'true':'false');
     b.innerHTML=`<small>${isT?'오늘':dows[d.getDay()]}</small><b>${d.getDate()}</b><span class="mw-cnt" data-k="${dk(d.getFullYear(),d.getMonth(),d.getDate())}"></span>`;
-    b.onclick=()=>{
-      if(isT&&self){switchTab('dashboard');return;} // 오늘 것은 홈에서
-      myDate=new Date(d);renderMyWorkScreen();
-    };
+    b.onclick=()=>{myDate=new Date(d);renderMyWorkScreen();};
     strip.appendChild(b);
   });
   // 선택한 날이 보이게
