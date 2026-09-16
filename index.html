@@ -989,6 +989,8 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .wh-empty{padding:14px 0 6px;font-size:13px;color:var(--text-mute);}
 #screen-my-work.view-only #mw-wh{display:none;}
 @media(max-width:600px){.wh-row{flex-wrap:wrap;}.wh-row .wh-t{flex-basis:100%;}.wh-row .vh-btn:not(.wh-cal){flex:1;}}
+.hp-todo .hp-wh-back{background:none;border:none;color:var(--text-mute);font:inherit;font-size:11.5px;font-weight:700;padding:2px 4px;cursor:pointer;flex:0 0 auto;white-space:nowrap;}
+.hp-todo .hp-wh-back:hover{color:var(--text);}
 /* 홈 「창고 N」 — 오늘 할 일 머리 오른쪽 끝, 작게 */
 .vh-wh-btn{background:none;border:1px solid var(--border);border-radius:999px;color:var(--text-sub);font:inherit;font-size:11.5px;font-weight:700;padding:4px 9px;cursor:pointer;min-height:26px;line-height:1;}
 .vh-wh-btn:hover{background:var(--bg);color:var(--text);}
@@ -5459,7 +5461,23 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           refreshTodoCounts();
         }catch(e){cb.checked=!cb.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
       };
-      row.appendChild(cb);row.appendChild(sp);tBody.appendChild(row);
+      row.appendChild(cb);row.appendChild(sp);
+      // 창고로 — 오늘 말고 나중에. 아직 안 한 것만, 실제 저장된 행만 (날짜만 비운다)
+      if(!it.done&&/^[0-9a-f-]{36}$/i.test(String(it.id))){
+        const wb=el('button','hp-wh-back','창고로');wb.type='button';wb.title='날짜를 떼고 창고에 둔다';
+        wb.onclick=async()=>{
+          wb.disabled=true;
+          try{await unscheduleTodo(it.id);}catch(e){wb.disabled=false;alert('창고로 못 보냈어요 — '+(e.message||'네트워크를 확인해주세요'));return;}
+          row.remove();const i=mine.indexOf(it);if(i>=0)mine.splice(i,1);
+          refreshTodoCounts();
+          const dn=mine.filter(x=>x.done).length;
+          if(mine.length){prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;}
+          else prog.remove();
+          listBacklog().then(items=>{whBtn.textContent=items.length?`창고 ${items.length}`:'창고';}).catch(()=>{});
+        };
+        row.appendChild(wb);
+      }
+      tBody.appendChild(row);
     });
   }
   // 바로 적는 입력줄 — 시트를 열고 종류를 고르는 두 번의 클릭을 없앤다 (내 업무 화면의 「할 일 한 줄」과 같은 저장)
