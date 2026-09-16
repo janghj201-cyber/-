@@ -1101,6 +1101,77 @@ export async function setStoreFixedTodoDone(id, done) {
   if (count === 0) throw new Error('저장된 행이 없어요 — 권한을 확인해주세요')
 }
 
+// ── 창고 — 날짜 없는 개인 할 일 ──
+// 시트의 「업무 쏟아내기」 자리. 새 표 없이 daily_tasks에서 task_date가 null인 행을 창고로 본다.
+// 「오늘로」는 날짜만 채우고, 그날 할 일의 「창고로」는 날짜만 비운다 — 행은 그대로라 기록이 안 끊긴다.
+// readStaffTodos의 오늘 쿼리(task_date.lt.오늘)에 null은 안 끼어든다(SQL에서 null 비교는 거짓).
+// task_date에 NOT NULL이 걸려 있으면 SQL_창고.sql로 먼저 풀어야 한다.
+export async function listBacklog() {
+  const ctx = await getContext()
+  const { data, error } = await supabase.from('daily_tasks')
+    .select('id, content, store_id, created_at')
+    .eq('employee_id', ctx.profileId).is('task_date', null).eq('status', 'pending')
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((r) => ({ id: r.id, text: r.content, storeId: reverseResolveStoreId(r.store_id, ctx) ?? undefined, createdAt: r.created_at }))
+}
+export async function addBacklog(texts, originalStoreId) {
+  const ctx = await getContext()
+  const storeId = resolveStoreId(originalStoreId, ctx)
+  const list = (Array.isArray(texts) ? texts : [texts]).map((t) => String(t ?? '').trim()).filter(Boolean)
+  if (!list.length) return
+  const rows = list.map((content) => ({ tenant_id: ctx.tenantId, store_id: storeId, employee_id: ctx.profileId, task_date: null, content, status: 'pending' }))
+  const { error } = await supabase.from('daily_tasks').insert(rows)
+  if (error) throw error
+}
+// 창고 → 그날 할 일 맨 뒤로
+export async function scheduleBacklog(id, dateKey) {
+  const ctx = await getContext()
+  const { data: last } = await supabase.from('daily_tasks').select('sort_order')
+    .eq('employee_id', ctx.profileId).eq('task_date', dateKey)
+    .order('sort_order', { ascending: false, nullsFirst: false }).limit(1)
+  const sortOrder = ((last && last[0] && typeof last[0].sort_order === 'number') ? last[0].sort_order : -1) + 1
+  const { error, count } = await supabase.from('daily_tasks')
+    .update({ task_date: dateKey, sort_order: sortOrder }, { count: 'exact' })
+    .eq('id', id).eq('employee_id', ctx.profileId)
+  if (error) throw error
+  assertAffected(count, '창고에서 꺼내기')
+}
+// 그날 할 일 → 창고 (아직 안 한 것만)
+export async function unscheduleTodo(id) {
+  const ctx = await getContext()
+  const { error, count } = await supabase.from('daily_tasks')
+    .update({ task_date: null, sort_order: null }, { count: 'exact' })
+    .eq('id', id).eq('employee_id', ctx.profileId).eq('status', 'pending')
+  if (error) throw error
+  assertAffected(count, '창고로 보내기')
+}
+export async function deleteBacklog(id) {
+  const ctx = await getContext()
+  const { error, count } = await supabase.from('daily_tasks').delete({ count: 'exact' })
+    .eq('id', id).eq('employee_id', ctx.profileId).is('task_date', null)
+  if (error) throw error
+  assertAffected(count, '창고 삭제')
+}
+
+// ── 관리자 첫 줄 — 이번 달 숫자 (인수인계 확인률 · 남은 기록 건수) ──
+// 세 표의 건수만 센다(head:true). 인수인계 확인률은 「확인 대상」(장기 until_date 없는 것)만 분모.
+export async function monthKpi(y, m) {
+  const ctx = await getContext()
+  const p2 = (n) => String(n).padStart(2, '0')
+  const from = `${y}-${p2(m + 1)}-01`
+  const to = m === 11 ? `${y + 1}-01-01` : `${y}-${p2(m + 2)}-01`
+  const T = ctx.tenantId
+  const [ho, hoOk, clean, tasks] = await Promise.all([
+    supabase.from('handovers').select('id', { count: 'exact', head: true }).eq('tenant_id', T).is('deleted_at', null).is('until_date', null).gte('handover_date', from).lt('handover_date', to),
+    supabase.from('handovers').select('id', { count: 'exact', head: true }).eq('tenant_id', T).is('deleted_at', null).is('until_date', null).eq('confirmed', true).gte('handover_date', from).lt('handover_date', to),
+    supabase.from('cleaning_daily_logs').select('id', { count: 'exact', head: true }).eq('tenant_id', T).eq('done', true).gte('log_date', from).lt('log_date', to),
+    supabase.from('daily_tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', T).gte('task_date', from).lt('task_date', to),
+  ])
+  for (const r of [ho, hoOk, clean, tasks]) if (r.error) throw r.error
+  return { handovers: ho.count ?? 0, handoversConfirmed: hoOk.count ?? 0, cleanChecks: clean.count ?? 0, tasks: tasks.count ?? 0 }
+}
+
 // ── 청소 사진 (Supabase Storage 'clean-photos', 비공개) ──
 // 경로: {tenant_id}/{store_id}/{dateKey}/{item_key}_{ts}.jpg — 첫 폴더가 테넌트라 storage RLS가
 // 같은 회사만 읽고 쓰게 막는다. 사진의 소재는 cleaning_*_logs.photo_path 에 남긴다.

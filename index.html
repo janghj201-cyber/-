@@ -663,11 +663,38 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-todo.folded .vh-todo-body{display:none;}
 .vh-fold{background:none;border:none;color:var(--text-sub);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;}
 .vh-links{order:5;}
+/* 프로젝트 타일 — 진행 %와 몇 건 중 몇 건. 도움 요청은 위 빨간 선(기존 vh-metric.danger와 같은 문법) */
+.vh-proj{order:6;}
+.vh-ptiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.vh-ptile{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:left;border:none;font-family:inherit;color:inherit;cursor:pointer;min-width:0;}
+.vh-ptile:hover{background:var(--soft);}
+.vh-ptile b{display:block;font-size:13.5px;font-weight:800;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vh-ptile small{display:block;font-size:11.5px;color:var(--text-sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vh-ptile .pt-num{display:flex;align-items:baseline;justify-content:space-between;margin-top:8px;gap:6px;}
+.vh-ptile .pt-num em{font-style:normal;font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--text);}
+.vh-ptile .pt-num span{font-size:11px;color:var(--text-mute);white-space:nowrap;}
+.vh-ptile .pt-bar{height:5px;background:var(--soft);border-radius:4px;overflow:hidden;margin-top:6px;}
+.vh-ptile .pt-bar div{height:100%;background:var(--navy);border-radius:4px;}
+.vh-ptile.ask{box-shadow:inset 0 3px 0 var(--red);}
+.vh-ptile .rm-tag{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:4px;vertical-align:1px;background:var(--red-light);color:var(--red);}
+/* 매장 방 — 도움 요청이 오면 프로젝트 맨 위에 띠 */
+.rm-collab{display:flex;align-items:center;gap:10px;background:var(--red-light);border-radius:10px;padding:10px 12px;margin-bottom:10px;}
+.rm-collab .vh-main{flex:1;min-width:0;}
+.rm-collab .vh-main b{font-size:13.5px;display:block;}
+.rm-collab .vh-main small{display:block;color:var(--text-sub);font-size:12px;margin-top:2px;}
+.rm-collab .vh-btn{min-height:34px;padding:6px 11px;white-space:nowrap;}
 .vh-extra{order:7;display:flex;flex-direction:column;gap:10px;}.vh-extra:empty{display:none;}.vh-extra .hp-card{margin:0;}
 .vh-check{width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;}
 /* 관리자 현황·보고 — 오늘의 「지금 확인할 것 · 직원 오늘」 */
 .tg-wrap{padding:0 12px;}
 .tg-card{margin:0 auto 12px;max-width:1100px;}
+/* 관리자 첫 줄 — 돈 낼 이유 숫자 3개 (홈 요약칸과 같은 vh-metric 문법) */
+.tg-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:1100px;margin:0 auto 12px;}
+.tg-kpi .vh-metric b{font-size:24px;}
+.tg-kpi .vh-metric small{display:block;font-size:11px;color:var(--text-mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tg-kpi div.vh-metric{cursor:default;}
+.tg-kpi div.vh-metric:hover{background:var(--card);}
+@media(max-width:600px){.tg-kpi{gap:6px;}.tg-kpi .vh-metric b{font-size:19px;}.tg-kpi .vh-metric{padding:9px 7px;}}
 .tg-card .vh-item.link{cursor:pointer;}
 .tg-emp{display:flex;gap:6px;flex-wrap:wrap;}
 .tg-emp .rm-worker small.ok{color:var(--green);}.tg-emp .rm-worker small.danger{color:var(--red);}
@@ -777,6 +804,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   #screen-dashboard .header .vh-head-btns,#screen-admin .header .back-btn{display:none!important;}
   .vh-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
   .vh-metrics,.vh-priority,.vh-quick,.vh-quickrow,.vh-todo,.vh-links{order:0;}
+  .vh-proj{order:0;}
   .vh-priority .vh-item.vh-hide-m{display:flex;}
   .vh-more{display:none;}
   .vh-todo.folded .vh-todo-body{display:block;}
@@ -818,6 +846,8 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 @media(min-width:1024px){
   .dt-layout{display:grid;grid-template-columns:1fr 400px;gap:14px;align-items:start;}
   .dt-tiles{grid-template-columns:repeat(3,1fr);gap:12px;}
+  /* 상세가 안 열려 있으면 오른쪽 400px를 비워두지 않는다 */
+  .dt-layout:not(:has(.dt-detail.open)){grid-template-columns:1fr;}
   .dt-detail{position:sticky;top:12px;}
   .dt-detail-close{display:none;}
   .dt-detail{max-height:calc(100vh - 40px);overflow-y:auto;}
@@ -945,6 +975,24 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .mw-day.today small{color:var(--orange);}
 .mw-day.sun small{color:var(--red);}.mw-day.sat small{color:var(--blue,#2b5fa8);}
 .mw-day.off{opacity:.55;}
+/* 창고 행 — 버튼은 「오늘로」 하나 + 달력 아이콘. 제목이 길어도 줄이 안 깨진다 */
+.wh-list{display:flex;flex-direction:column;margin-top:8px;}
+.wh-row{display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);padding:9px 0;}
+.wh-row:first-child{border-top:none;}
+.wh-row .wh-t{flex:1;min-width:0;font-size:14px;line-height:1.4;color:var(--text);}
+.wh-row .wh-t small{display:block;font-size:11.5px;color:var(--text-mute);margin-top:2px;}
+.wh-row .vh-btn{min-height:32px;padding:5px 10px;font-size:12.5px;white-space:nowrap;}
+.wh-row .wh-cal{position:relative;min-width:32px;padding:5px 7px;}
+.wh-row .wh-cal .vf-ic{width:16px;height:16px;margin:0;}
+.wh-row .wh-cal input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.wh-row .todo-action-btn{padding:4px 4px;font-size:12.5px;}
+.wh-empty{padding:14px 0 6px;font-size:13px;color:var(--text-mute);}
+#screen-my-work.view-only #mw-wh{display:none;}
+@media(max-width:600px){.wh-row{flex-wrap:wrap;}.wh-row .wh-t{flex-basis:100%;}.wh-row .vh-btn:not(.wh-cal){flex:1;}}
+/* 홈 「창고 N」 — 오늘 할 일 머리 오른쪽 끝, 작게 */
+.vh-wh-btn{background:none;border:1px solid var(--border);border-radius:999px;color:var(--text-sub);font:inherit;font-size:11.5px;font-weight:700;padding:4px 9px;cursor:pointer;min-height:26px;line-height:1;}
+.vh-wh-btn:hover{background:var(--bg);color:var(--text);}
+.vh-sheet .wh-list{max-height:48vh;overflow-y:auto;}
 /* 프로젝트 행 — 접으면 제목·D+·진행률만 */
 .mp-row.folded > :not(.my-project-item):not(.project-progress-wrap){display:none!important;}
 .mw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
@@ -1574,7 +1622,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
     <!-- 이번 주 띠 — 지난 7일 · 오늘 · 앞 7일. 오늘은 홈에서 -->
     <div class="vh-card mw-card mw-week" id="mw-week">
-      <div class="vh-ct"><strong>날짜</strong><div style="display:flex;gap:8px;align-items:center;"><span class="vh-tiny mw-week-hint">오늘 것은 홈에서 · 지난 날은 기록 · 앞날은 미리 적기</span><button type="button" class="vh-btn" onclick="openMyDayoffModal()" style="min-height:34px;padding:6px 10px;">휴무 설정</button></div></div>
+      <div class="vh-ct"><strong>날짜</strong><div style="display:flex;gap:8px;align-items:center;"><span class="vh-tiny mw-week-hint">±7일</span><button type="button" class="vh-btn" onclick="openMyDayoffModal()" style="min-height:34px;padding:6px 10px;">휴무 설정</button></div></div>
       <div class="mw-strip" id="mw-strip" role="tablist" aria-label="날짜 선택"></div>
     </div>
 
@@ -1604,17 +1652,37 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       </section>
 
       <section class="mw-col">
+        <!-- 창고 — 날짜 없는 할 일 (시트의 「업무 쏟아내기」 자리). 본인만 -->
+        <div class="vh-card my-section mw-card" id="mw-wh">
+          <div class="vh-ct"><strong>창고</strong><span class="vh-tiny" id="mw-wh-cnt"></span></div>
+          <div class="my-input-row" style="margin-top:0;">
+            <input type="text" class="my-input" id="mw-wh-input" placeholder="날짜 없이 넣어둘 일 한 줄" aria-label="창고에 넣기" onkeydown="if(event.key==='Enter')addMyBacklog()">
+            <button type="button" class="vh-btn primary" onclick="addMyBacklog()">넣기</button>
+            <button type="button" class="vh-btn" onclick="toggleMyBacklogBulk()" title="여러 개를 한 번에 — 한 줄에 하나씩">여러 개</button>
+          </div>
+          <div class="mw-bulk">
+            <div id="mw-wh-bulk" style="display:none;margin-top:8px;">
+              <textarea id="mw-wh-ta" class="mw-ta" placeholder="한 줄에 하나씩&#10;예) 조명 견적 받기&#10;POP 초안"></textarea>
+              <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">
+                <button type="button" class="vh-btn" onclick="toggleMyBacklogBulk()">닫기</button>
+                <button type="button" class="vh-btn primary" onclick="addMyBacklogBulk()">한 번에 넣기</button>
+              </div>
+            </div>
+          </div>
+          <div class="wh-list" id="mw-wh-list"></div>
+        </div>
+      </section>
+
+      <section class="mw-col">
         <!-- 프로젝트 -->
         <div class="vh-card my-section mw-card" id="mw-proj">
-          <div class="vh-ct"><strong>프로젝트</strong><span class="vh-tiny">며칠 걸리는 일</span></div>
+          <div class="vh-ct"><strong>프로젝트</strong><span class="vh-tiny" id="mw-proj-cnt"></span></div>
           <div id="my-project-banner-wrap"><div id="my-project-banner"></div></div>
           <div class="proj-quick-add my-input-row" style="padding:0;">
             <input type="text" id="proj-quick-input" class="my-input" placeholder="새 프로젝트 한 줄" onkeydown="if(event.key==='Enter')addProjectQuick()">
             <button type="button" class="vh-btn" onclick="addProjectQuick()">추가</button>
           </div>
         </div>
-      </section>
-      <section class="mw-col">
         <!-- 히스토리 -->
         <div class="vh-card my-section mw-card" id="mw-hist">
           <div class="vh-ct"><strong>이번 달</strong><button type="button" class="vh-fold" onclick="toggleMyHistory()" id="my-history-toggle-btn">전체 히스토리</button></div>
@@ -1654,7 +1722,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
     <div><div class="header-title">관리자</div><div class="header-sub" id="dash-sub"></div></div>
     <button class="back-btn" onclick="exitAdmin()"><svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>홈</button>
   </div>
-  <div class="dash-wrap" id="dash-wrap" style="max-width:1100px;margin:0 auto;"></div>
+  <div class="dash-wrap" id="dash-wrap" style="max-width:1100px;margin:0 auto;width:100%;box-sizing:border-box;"></div>
   <div class="pb"></div>
 </div>
 
@@ -1683,7 +1751,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -2312,7 +2380,7 @@ function renderMyWorkScreen(){
   const isFuture=myDate>new Date(today.getFullYear(),today.getMonth(),today.getDate());
 
   document.getElementById('my-work-name').textContent=document.getElementById('screen-my-work').classList.contains('view-only')?`${myStaff} (조회 전용)`:`${myStaff}`;
-  document.getElementById('my-work-sub').textContent='지난 날짜 · 앞날 계획 · 프로젝트 · 히스토리';
+  document.getElementById('my-work-sub').textContent='지난 날짜 · 앞날 계획 · 창고 · 프로젝트';
 
   const dateLabel=document.getElementById('my-date-label');
   if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일${isToday?' (오늘)':''}`;
@@ -2339,6 +2407,7 @@ function renderMyWorkScreen(){
   }
 
   renderMyTodoList();
+  renderMyBacklog().catch(()=>{});
   loadMyStats();
   checkLastMonthCarry();
   checkPrevDayStoreIncomplete();
@@ -2504,6 +2573,7 @@ async function renderMyTodoList(){
               <div data-subhost></div>
             </div>
             <div class="todo-actions">
+              ${(!item.done&&/^[0-9a-f-]{36}$/i.test(String(item.id))&&window.__vflowProfile&&window.__vflowProfile.name===myStaff)?'<button class="todo-action-btn" data-act="wh" title="날짜를 떼고 창고에 둔다">창고로</button>':''}
               <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">세부</button>
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
@@ -2593,6 +2663,12 @@ async function renderMyTodoList(){
             render();
           });
 
+          // 창고로 — 날짜만 비운다 (행은 그대로)
+          row.querySelector('[data-act="wh"]')?.addEventListener('click',async()=>{
+            try{await unscheduleTodo(item.id);}catch(err){alert('창고로 못 보냈어요 — '+(err.message||'네트워크를 확인해주세요'));return;}
+            allItems.splice(allItems.indexOf(item),1);render();
+            renderMyBacklog().catch(()=>{});renderMyWeekStrip().catch(()=>{});
+          });
           // 일반 수정/삭제
           row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{editingId=item.id;render();});
           row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
@@ -2626,6 +2702,107 @@ async function renderMyTodoList(){
     };
     render();
   }catch(e){listEl.innerHTML='<div class="my-empty">불러오기 실패</div>';}
+}
+
+// ── 창고 — 날짜 없는 할 일. 본인 것만(남의 카드에서는 카드 자체를 숨긴다) ──
+// 줄마다 「오늘로」 하나와 달력 아이콘(다른 날 — 내일도 여기서). 글자 버튼이 하나라 제목이 길어도 안 깨진다.
+function backlogRow(it,opts){
+  opts=opts||{};
+  const row=document.createElement('div');row.className='wh-row';
+  const t=document.createElement('div');t.className='wh-t';
+  const st=it.storeId?STORES.find(s=>s.id===it.storeId):null;
+  const when=it.createdAt?(()=>{const d=new Date(it.createdAt);const k=dk(d.getFullYear(),d.getMonth(),d.getDate());return k===todayKey()?'오늘':`${d.getMonth()+1}/${d.getDate()}`;})():'';
+  t.innerHTML=`${_wrEsc(it.text)}<small>${when?when+' 넣음':''}${st?` · ${st.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:''}</small>`;
+  const todayBtn=document.createElement('button');todayBtn.type='button';todayBtn.className='vh-btn';todayBtn.textContent='오늘로';
+  const cal=document.createElement('button');cal.type='button';cal.className='vh-btn wh-cal';cal.title='다른 날로';cal.setAttribute('aria-label','다른 날로');
+  cal.innerHTML=VF_ICONS.cal;
+  const dInp=document.createElement('input');dInp.type='date';dInp.min=todayKey();dInp.setAttribute('aria-label','날짜 고르기');
+  cal.appendChild(dInp);
+  const del=document.createElement('button');del.type='button';del.className='todo-action-btn';del.textContent='삭제';
+  const go=async(key)=>{
+    todayBtn.disabled=true;cal.disabled=true;
+    try{await scheduleBacklog(it.id,key);}
+    catch(err){todayBtn.disabled=false;cal.disabled=false;alert('꺼내기 실패 — '+(err.message||'네트워크를 확인해주세요'));return;}
+    row.remove();if(opts.onMoved)opts.onMoved(key);
+  };
+  todayBtn.onclick=()=>go(todayKey());
+  dInp.onchange=()=>{const v=dInp.value;if(v&&v>=todayKey())go(v);};
+  cal.onclick=(e)=>{if(e.target===dInp)return;try{if(dInp.showPicker)dInp.showPicker();else dInp.click();}catch(err){dInp.click();}};
+  del.onclick=async()=>{
+    if(!confirm('창고에서 지울까요?'))return;
+    try{await deleteBacklog(it.id);}catch(err){alert('삭제 실패 — '+(err.message||'네트워크를 확인해주세요'));return;}
+    row.remove();if(opts.onDeleted)opts.onDeleted();
+  };
+  row.appendChild(t);row.appendChild(todayBtn);row.appendChild(cal);row.appendChild(del);
+  return row;
+}
+async function renderMyBacklog(){
+  const list=document.getElementById('mw-wh-list'),cnt=document.getElementById('mw-wh-cnt');
+  if(!list||!cnt)return;
+  const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;
+  if(!self){list.innerHTML='';cnt.textContent='';return;}
+  let items=[];
+  try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';cnt.textContent='';return;}
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row').length;cnt.textContent=n?`${n}건`:'';if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 날짜 없이 넣어둘 일을 위에 적어요</div>';};
+  list.innerHTML='';
+  if(!items.length){paintCnt();return;}
+  items.forEach(it=>list.appendChild(backlogRow(it,{onMoved:(key)=>{paintCnt();renderMyWeekStrip().catch(()=>{});const k=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());if(k===key)renderMyTodoList();},onDeleted:paintCnt})));
+  paintCnt();
+}
+window.addMyBacklog=async function(){
+  const inp=document.getElementById('mw-wh-input');const t=inp?inp.value.trim():'';
+  if(!t)return;
+  if(!myStore){alert('먼저 근무 매장을 선택해 주세요.');return;}
+  try{await addBacklog(t,myStore.id);}catch(err){alert('넣기 실패 — '+(err.message||'창고 SQL을 먼저 실행했는지 확인해주세요'));return;}
+  inp.value='';renderMyBacklog();
+};
+function addMyBacklog(){window.addMyBacklog();}
+window.toggleMyBacklogBulk=function(){const w=document.getElementById('mw-wh-bulk');if(!w)return;w.style.display=w.style.display==='none'?'':'none';if(w.style.display!=='none')setTimeout(()=>{const ta=document.getElementById('mw-wh-ta');if(ta)ta.focus();},0);};
+function toggleMyBacklogBulk(){window.toggleMyBacklogBulk();}
+window.addMyBacklogBulk=async function(){
+  const ta=document.getElementById('mw-wh-ta');const lines=(ta?ta.value:'').split('\n').map(x=>x.trim()).filter(Boolean);
+  if(!lines.length)return;
+  if(!myStore){alert('먼저 근무 매장을 선택해 주세요.');return;}
+  try{await addBacklog(lines,myStore.id);}catch(err){alert('넣기 실패 — '+(err.message||'창고 SQL을 먼저 실행했는지 확인해주세요'));return;}
+  ta.value='';window.toggleMyBacklogBulk();renderMyBacklog();
+};
+function addMyBacklogBulk(){window.addMyBacklogBulk();}
+
+// 홈 「창고 N」 → 시트. 넣기 한 줄 + 줄마다 「오늘로」·달력. 꺼내면 홈을 다시 그린다.
+function openBacklogSheet(entry,tKey){
+  const me=window.__vflowProfile?.name;if(!me)return;
+  const ov=document.createElement('div');ov.className='vh-sheet-bg';
+  const sh=document.createElement('div');sh.className='vh-sheet';
+  sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-wh-title');
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct" style="margin-bottom:8px;"><h3 id="vh-wh-title" style="margin:0;">창고</h3><span class="vh-tiny" data-cnt></span></div>
+    <div class="vh-add" style="margin-top:0;"><input type="text" placeholder="날짜 없이 넣어둘 일 한 줄" maxlength="200" aria-label="창고에 넣기"><button type="button" class="vh-btn primary" data-add>넣기</button></div>
+    <div class="wh-list" data-list><div class="wh-empty">불러오는 중…</div></div>
+    <div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">닫기</button></div>`;
+  const list=sh.querySelector('[data-list]'),cnt=sh.querySelector('[data-cnt]'),inp=sh.querySelector('input'),addBtn=sh.querySelector('[data-add]');
+  let moved=false;
+  const onKey=(e)=>{if(e.key==='Escape')close();};
+  const close=()=>{document.removeEventListener('keydown',onKey);ov.remove();if(moved){try{renderDashboardHome();}catch(e){}}};
+  document.addEventListener('keydown',onKey);
+  sh.querySelector('[data-cancel]').onclick=close;
+  ov.onclick=(e)=>{if(e.target===ov)close();};
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row').length;cnt.textContent=n?`${n}건`:'';if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 오늘 말고 나중에 할 일을 위에 적어요</div>';};
+  const load=async()=>{
+    let items=[];
+    try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';return;}
+    list.innerHTML='';
+    items.forEach(it=>list.appendChild(backlogRow(it,{onMoved:()=>{moved=true;paintCnt();},onDeleted:paintCnt})));
+    paintCnt();
+  };
+  const doAdd=async()=>{
+    const t=inp.value.trim();if(!t)return;
+    addBtn.disabled=true;
+    try{await addBacklog(t,entry?entry.id:undefined);inp.value='';await load();}
+    catch(err){alert('넣기 실패 — '+(err.message||'창고 SQL을 먼저 실행했는지 확인해주세요'));}
+    addBtn.disabled=false;
+  };
+  addBtn.onclick=doAdd;inp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
+  ov.appendChild(sh);document.body.appendChild(ov);
+  load();
 }
 
 async function renderMyHandoverList(){
@@ -3953,6 +4130,7 @@ async function renderMyProjectBanner(){
   try{
     const items=await loadProjects(myStaff);
     const ongoing=items.filter(i=>!i.done);
+    const _pc=document.getElementById('mw-proj-cnt');if(_pc)_pc.textContent=ongoing.length?`${ongoing.length}건 진행 중`:'';
     if(ongoing.length===0){banner.style.display='none';return;}
     banner.style.display='block';
     const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
@@ -5245,6 +5423,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const fold=el('button','vh-fold','펼치기');
   fold.onclick=()=>{todo.classList.toggle('folded');fold.textContent=todo.classList.contains('folded')?'펼치기':'접기';};
   if(mine.length>0)tRight.appendChild(fold);
+  // 창고 — 날짜 없이 넣어둔 일. 누르면 시트에서 보고 「오늘로」 꺼낸다 (홈에 줄은 안 늘린다)
+  const whBtn=el('button','vh-wh-btn','창고');whBtn.type='button';whBtn.title='날짜 없이 넣어둔 일';
+  whBtn.onclick=()=>openBacklogSheet(entry,tKey);
+  tRight.appendChild(whBtn);
+  listBacklog().then(items=>{if(items.length)whBtn.textContent=`창고 ${items.length}`;}).catch(()=>{});
   tHead.appendChild(tRight);
   todo.appendChild(tHead);
   const tBody=el('div','vh-todo-body');
@@ -5339,6 +5522,39 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     mTa.addEventListener('input',()=>{mStat.textContent='';clearTimeout(mTimer);mTimer=setTimeout(saveMemo,900);});
     mTa.addEventListener('blur',()=>{clearTimeout(mTimer);saveMemo();});
   }
+  // ── 2열: 프로젝트 타일 — 내가 하는 것 + 도움 요청 온 것. 없으면 카드 자체를 안 그린다 ──
+  if(featOn('collab')){
+    const pj=el('div','vh-card vh-proj');
+    const pHead=el('div','vh-ct',`<strong>프로젝트</strong><span class="vh-tiny"></span>`);
+    const tiles=el('div','vh-ptiles');
+    pj.appendChild(pHead);pj.appendChild(tiles);
+    col2.appendChild(pj);
+    (async()=>{
+      try{
+        const rows=await loadCollabListCached();
+        if(rows===null){pj.remove();return;}
+        const {me:meId}=await collabApi();
+        const list=rows.filter(r=>r.status!=='done'&&(r.employee_id===meId||(r.project_members||[]).some(m=>m.profile_id===meId)||(r.help_message&&(!r.store_id||!entry||r.store_id===entry.id))));
+        if(!list.length){pj.remove();return;}
+        const askFirst=(r)=>(r.help_message&&r.employee_id!==meId)?0:1;
+        list.sort((a,b)=>askFirst(a)-askFirst(b)||new Date(b.created_at)-new Date(a.created_at));
+        pHead.querySelector('.vh-tiny').textContent=`${list.length}건 진행 중`;
+        list.slice(0,6).forEach(r=>{
+          const pct=Math.max(0,Math.min(100,r.progress||0));
+          const ask=!!(r.help_message&&r.employee_id!==meId);
+          const owner=r.owner?.name||'';
+          const mem=(r.project_members||[]).filter(m=>m.profile_id!==r.employee_id).length;
+          const days=r.help_requested_at?Math.floor((Date.now()-new Date(r.help_requested_at).getTime())/86400000):0;
+          const logs=(r.project_logs||[]).length;
+          const t=el('button','vh-ptile'+(ask?' ask':''),`<b>${_wrEsc(r.title)}</b><small>${ask?`<span class="rm-tag">도움 요청</span>${_wrEsc(owner)} · ${days?days+'일째':'오늘'}`:`${_wrEsc(owner)}${mem?` 외 ${mem}명`:''}${r.store_id?' · '+shortStore((STORES.find(x=>x.id===r.store_id)||{}).name||''):''}`}</small><div class="pt-num"><em>${pct}%</em><span>일지 ${logs}건</span></div><div class="pt-bar"><div style="width:${pct}%"></div></div>`);
+          t.type='button';t.setAttribute('aria-label',`${r.title} ${pct}%${ask?' 도움 요청':''}`);
+          t.onclick=()=>openCollabDetail(r.id);
+          tiles.appendChild(t);
+        });
+      }catch(e){pj.remove();}
+    })();
+  }
+
   (async()=>{
     if(!entry)return;
     try{fixedRows=await loadStoreFixedTodos(entry.id,tKey);}catch(e){return;} // 표(SQL) 전이거나 권한 문제면 조용히 생략
@@ -5570,6 +5786,8 @@ function renderSideNav(active){
     };
     side.appendChild(b);
     if(it.badge==='board'){countNewBoardPosts().then(({n})=>{if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-board>${n}</span>`);}).catch(()=>{});}
+    // 매장 방 — 도움 요청이 와 있으면 숫자. 새 색 없이 게시판 새 글과 같은 배지
+    if(it.k==='room'&&entry&&featOn('collab')){helpAskedProjects(entry.id).then(list=>{const n=list.filter(r=>{try{return !sessionStorage.getItem(_collabLaterKey(r.id));}catch(e){return true;}}).length;if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-collab>${n}</span>`);}).catch(()=>{});}
     if(it.k==='admin'&&active==='admin'){
       // 관리자 안에서는 상단 탭줄 대신 여기서 고른다 — 폰과 같은 셋: 현황·보고 / 기록 / 설정. 기록은 눌렀을 때만 펼침
       const defs=adminTabDefs();
@@ -6811,10 +7029,25 @@ function openStoreRoom(store){
     const pList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');pj.appendChild(pList);
     (async()=>{
       try{
-        const rows=await loadCollabList();
+        const rows=await loadCollabListCached();
         pList.innerHTML='';
         if(rows===null){pList.appendChild(el('div','rm-empty','협업 기능이 아직 켜지지 않았어요'));return;}
         const mine=rows.filter(r=>r.store_id===store.id&&r.status!=='done');
+        // 도움 요청 띠 — 이 매장 것 + 회사 전체 것. 내 요청은 띠로 안 띄운다(내 업무에 있다)
+        try{
+          const {me:meId}=await collabApi();
+          const asked=rows.filter(r=>r.help_message&&r.status!=='done'&&r.employee_id!==meId&&(!r.store_id||r.store_id===store.id));
+          asked.forEach(r=>{
+            let later=false;try{later=!!sessionStorage.getItem(_collabLaterKey(r.id));}catch(e){}
+            if(later)return;
+            const days=r.help_requested_at?Math.floor((Date.now()-new Date(r.help_requested_at).getTime())/86400000):0;
+            const band=el('div','rm-collab',`<span class="vh-dot danger"></span><div class="vh-main"><b>${esc(r.title)}</b><small>도움 요청 · ${esc(r.owner?.name||'')} · ${days?days+'일째':'오늘'}${r.help_message?` · ${esc(r.help_message)}`:''}</small></div>`);
+            const join=el('button','vh-btn primary','참여');join.type='button';join.onclick=()=>{window.closeStoreRoom();joinCollab(r.id);};
+            const later_=el('button','vh-btn','나중에');later_.type='button';later_.onclick=()=>{try{sessionStorage.setItem(_collabLaterKey(r.id),'1');}catch(e){}band.remove();try{renderSideNav('room');}catch(e){}};
+            band.appendChild(join);band.appendChild(later_);
+            pList.appendChild(band);
+          });
+        }catch(e){}
         if(!mine.length){pList.appendChild(el('div','rm-empty','진행 중인 매장 프로젝트가 없어요'));return;}
         mine.forEach(r=>{
           const pct=Math.max(0,Math.min(100,r.progress||0));
@@ -6864,6 +7097,34 @@ async function loadCollabList(){
   if(error){console.warn('project load',error);return null;}
   return data||[];
 }
+let _collabCache={at:0,rows:null};
+async function loadCollabListCached(force){
+  if(!force&&_collabCache.rows&&Date.now()-_collabCache.at<30000)return _collabCache.rows;
+  const rows=await loadCollabList();
+  _collabCache={at:Date.now(),rows};
+  return rows;
+}
+// 도움 요청 온 것(내 것 말고, 아직 진행 중) — 매장 방 띠·사이드바 숫자의 기준
+async function helpAskedProjects(storeId){
+  try{
+    const rows=await loadCollabListCached();
+    if(!rows)return [];
+    const {me}=await collabApi();
+    return rows.filter(r=>r.help_message&&r.status!=='done'&&r.employee_id!==me&&(!storeId||!r.store_id||r.store_id===storeId));
+  }catch(e){return [];}
+}
+// 참여 — project_members에 나를 넣고 그 프로젝트를 연다 (이미 있으면 그냥 연다)
+window.joinCollab=async function(id){
+  try{
+    const {sb,T,me}=await collabApi();
+    const {error}=await sb.from('project_members').insert({project_id:id,profile_id:me,tenant_id:T});
+    if(error&&error.code!=='23505')throw error;
+    _collabCache.at=0;
+  }catch(err){alert('참여 처리 실패 — '+(err.message||'네트워크/권한을 확인해주세요'));return;}
+  openCollabDetail(id);
+};
+// 「나중에」 — 이 세션에서만 띠를 내린다 (목록의 도움 요청 표시는 그대로)
+const _collabLaterKey=(id)=>'vflow_collab_later_'+id;
 window.renderCollabProjects=async function(){
   const listEl=document.getElementById('dashboard-collab-list');
   if(!listEl)return;
@@ -8720,6 +8981,28 @@ async function renderTodayTab(content,opts={}){
   const cleanLabel=cleanEv?`대청소 ${cleanEv.sec}구역 (기본 ${CLEAN_BASE.length} + 구역 ${CSECTIONS[cleanEv.sec-1]?CSECTIONS[cleanEv.sec-1].items.length:0})`:`기본 청소 ${CLEAN_BASE.length}항목`;
 
   const dayLabel=isToday?'오늘':`${m+1}/${d}`;
+  // ── 첫 줄: 숫자 3개 — 청소 끝난 매장(실시간) · 이번 달 인수인계 확인률 · 이번 달 남은 기록 ──
+  let kpiCleanB=null,kpiCleanS=null;
+  if(!opts.noNav){
+    const kpi=document.createElement('div');kpi.className='tg-kpi';
+    const mk=(tag,label)=>{const e=document.createElement(tag);e.className='vh-metric';e.innerHTML=`<span>${label}</span><b>—</b><small></small>`;if(tag==='button')e.type='button';kpi.appendChild(e);return e;};
+    const k1=mk(featOn('cleaning')?'button':'div',`${dayLabel} 청소 끝난 매장`);
+    const k2=mk('div',`${mns[m]} 인수인계 확인`);
+    const k3=mk('div',`${mns[m]} 남은 기록`);
+    kpiCleanB=k1.querySelector('b');kpiCleanS=k1.querySelector('small');
+    if(!featOn('cleaning')){k1.style.display='none';kpi.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';}
+    k1.onclick=()=>{const t=content.querySelector('.dt-tiles');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});};
+    content.appendChild(kpi);
+    monthKpi(y,m).then(r=>{
+      const b2=k2.querySelector('b'),s2=k2.querySelector('small');
+      if(r.handovers){b2.textContent=`${Math.round(r.handoversConfirmed/r.handovers*100)}%`;s2.textContent=`${r.handoversConfirmed} / ${r.handovers}건`;}
+      else{b2.textContent='—';s2.textContent='남긴 것 없음';}
+      const total=r.cleanChecks+r.tasks+r.handovers;
+      k3.querySelector('b').textContent=`${total.toLocaleString('ko-KR')}건`;
+      k3.querySelector('small').textContent=`청소 ${r.cleanChecks.toLocaleString('ko-KR')} · 업무 ${r.tasks.toLocaleString('ko-KR')} · 인수인계 ${r.handovers.toLocaleString('ko-KR')}`;
+      if(!featOn('handover')){k2.style.display='none';kpi.style.gridTemplateColumns=featOn('cleaning')?'repeat(2,minmax(0,1fr))':'1fr';}
+    }).catch(()=>{k2.querySelector('small').textContent='불러오기 실패';k3.querySelector('small').textContent='불러오기 실패';});
+  }
   const dateEl=document.createElement('div');dateEl.className='dash-date';
   dateEl.textContent=cleanEv?`${dayLabel}은 대청소 ${cleanEv.sec}구역 날입니다`:`${dayLabel}은 기본 청소만 진행하는 날입니다`;
   if(!featOn('cleaning')||opts.noNav)dateEl.style.display='none';
@@ -8757,6 +9040,14 @@ async function renderTodayTab(content,opts={}){
   const tileIssue={}; // 매장별 문제 여부 — 첫 자동 선택용
   const tileState={}; // 점수 재료: clean(checks 문서) · cleanTotal · todoDone · hoUnconf
   STORES.forEach(st=>tileState[st.id]={clean:{},cleanTotal:0,todoDone:0,hoUnconf:0});
+  const paintKpiClean=()=>{
+    if(!kpiCleanB)return;
+    const okNames=[],seen=Object.keys(tileState).filter(id=>tileState[id].cleanTotal>0||Object.keys(tileState[id].clean).length);
+    STORES.forEach(st=>{const t=tileState[st.id];const dn=Object.values(t.clean||{}).filter(ckVal).length;if(t.cleanTotal>0&&dn>=t.cleanTotal)okNames.push(shortName(st.name));});
+    kpiCleanB.textContent=`${okNames.length} / ${STORES.length}`;
+    kpiCleanS.textContent=okNames.length?okNames.join(' · '):(seen.length?'아직 없음':'');
+    const host=kpiCleanB.parentElement;host.classList.toggle('ok',okNames.length===STORES.length&&STORES.length>0);
+  };
   function paintTile(store){
     const st=tileState[store.id];
     const sc=calcStoreScore({cleanData:st.clean,cleanTotal:st.cleanTotal,todoDone:st.todoDone,hoUnconfirmed:st.hoUnconf});
@@ -8871,6 +9162,7 @@ async function renderTodayTab(content,opts={}){
         else{badge.style.cssText='background:var(--red-light);color:var(--red)';badge.textContent='미완료';}
       }
       tileState[store.id].clean=data;tileState[store.id].cleanTotal=totalClean;
+      paintKpiClean();
       const stEl=document.getElementById(`dtst-${store.id}`);
       if(stEl)stEl.textContent=totalClean===0?'청소 없음':cleanOk?'청소 완료':done>0?'청소 진행중':'청소 미완료';
       paintTile(store);
