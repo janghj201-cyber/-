@@ -1004,6 +1004,37 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 @media(max-width:600px){.wh-row{flex-wrap:wrap;}.wh-row .wh-t{flex-basis:100%;}.wh-row .vh-btn:not(.wh-cal){flex:1;}}
 .hp-todo .hp-wh-back{background:none;border:none;color:var(--text-mute);font:inherit;font-size:11.5px;font-weight:700;padding:2px 4px;cursor:pointer;flex:0 0 auto;white-space:nowrap;}
 .hp-todo .hp-wh-back:hover{color:var(--text);}
+/* ── 움직임은 "무슨 일이 일어났는지"를 설명할 때만. 장식 모션 없음. 저감 모션이면 전부 꺼진다 ── */
+@keyframes vf-pop{0%{transform:scale(1)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes vf-roll{from{transform:translateY(55%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes vf-up{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes vf-fade{from{opacity:0}to{opacity:1}}
+@keyframes vf-flash{0%{background:var(--gold-light)}100%{background:transparent}}
+/* 1. 체크 튕김 + 취소선이 왼쪽에서 그어짐 */
+.vh-check:checked,.my-todo-item input[type=checkbox]:checked{animation:vf-pop .18s ease-out;}
+.hp-todo>span,.my-todo-text{background-image:linear-gradient(currentColor,currentColor);background-repeat:no-repeat;background-position:0 58%;background-size:0 1px;transition:background-size .25s ease,color .2s ease;}
+.hp-todo>span{flex:0 1 auto!important;margin-right:auto;max-width:100%;}
+.my-todo-text{display:inline-block;max-width:100%;}
+.hp-todo.done>span{text-decoration:none;background-size:100% 1px;}
+.my-todo-item.done .my-todo-text{text-decoration:none;background-size:100% 1px;}
+/* 2. 막대 차오르기 */
+.vh-ptile .pt-bar div,.rm-proj .rm-bar div,.project-progress-fill,.dt-bar .progress-fill{transition:width .3s ease;}
+/* 3. 숫자 굴러가기 */
+.vf-roll{display:inline-block;animation:vf-roll .28s cubic-bezier(.2,.8,.2,1);}
+.vh-metric b.vf-roll{display:block;}
+/* 4. 줄 빠져나가기 — 왼쪽으로 밀리며 접힘 */
+.vf-out{transition:transform .2s ease,opacity .2s ease,max-height .22s ease .06s,padding .22s ease .06s,margin .22s ease .06s,border-width .22s ease .06s;transform:translateX(-24px);opacity:0;max-height:0!important;padding-top:0!important;padding-bottom:0!important;margin-top:0!important;margin-bottom:0!important;border-top-width:0!important;border-bottom-width:0!important;overflow:hidden;pointer-events:none;}
+/* 5. 시트 올라오기 */
+.vh-sheet-bg{animation:vf-fade .24s ease;}
+.vh-sheet-bg .vh-sheet{animation:vf-up .24s cubic-bezier(.2,.8,.2,1);}
+.vh-sheet-bg.vf-closing{animation:vf-fade .2s ease reverse forwards;}
+.vh-sheet-bg.vf-closing .vh-sheet{animation:vf-up .2s ease reverse forwards;}
+/* 6. 방금 한 일이 어디 갔는지 — 한 번 켜졌다 꺼짐 (골드는 주요 행동의 결과에만) */
+.vf-flash{animation:vf-flash 1.1s ease-out;border-radius:8px;}
+@media(prefers-reduced-motion:reduce){
+  .vh-check:checked,.my-todo-item input[type=checkbox]:checked,.vf-roll,.vh-sheet-bg,.vh-sheet-bg .vh-sheet,.vh-sheet-bg.vf-closing,.vh-sheet-bg.vf-closing .vh-sheet,.vf-flash{animation:none!important;}
+  .hp-todo>span,.my-todo-text,.vf-out,.vh-ptile .pt-bar div,.rm-proj .rm-bar div,.hp-prog-fill{transition:none!important;}
+}
 /* 홈 「창고 N」 — 오늘 할 일 머리 오른쪽 끝, 작게 */
 .vh-wh-btn{background:none;border:1px solid var(--border);border-radius:999px;color:var(--text-sub);font:inherit;font-size:11.5px;font-weight:700;padding:4px 9px;cursor:pointer;min-height:26px;line-height:1;}
 .vh-wh-btn:hover{background:var(--bg);color:var(--text);}
@@ -2735,7 +2766,7 @@ function backlogRow(it,opts){
     todayBtn.disabled=true;cal.disabled=true;
     try{await scheduleBacklog(it.id,key);}
     catch(err){todayBtn.disabled=false;cal.disabled=false;alert('꺼내기 실패 — '+(err.message||'네트워크를 확인해주세요'));return;}
-    row.remove();if(opts.onMoved)opts.onMoved(key);
+    vfRowOut(row).then(()=>{if(opts.onMoved)opts.onMoved(key);});
   };
   todayBtn.onclick=()=>go(todayKey());
   dInp.onchange=()=>{const v=dInp.value;if(v&&v>=todayKey())go(v);};
@@ -2743,7 +2774,7 @@ function backlogRow(it,opts){
   del.onclick=async()=>{
     if(!confirm('업무 창고에서 지울까요?'))return;
     try{await deleteBacklog(it.id);}catch(err){alert('삭제 실패 — '+(err.message||'네트워크를 확인해주세요'));return;}
-    row.remove();if(opts.onDeleted)opts.onDeleted();
+    vfRowOut(row).then(()=>{if(opts.onDeleted)opts.onDeleted();});
   };
   row.appendChild(t);row.appendChild(todayBtn);row.appendChild(cal);row.appendChild(del);
   return row;
@@ -2755,7 +2786,7 @@ async function renderMyBacklog(){
   if(!self){list.innerHTML='';cnt.textContent='';return;}
   let items=[];
   try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';cnt.textContent='';return;}
-  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row').length;cnt.textContent=n?`${n}건`:'';if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 날짜 없이 넣어둘 일을 위에 적어요</div>';};
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 날짜 없이 넣어둘 일을 위에 적어요</div>';};
   list.innerHTML='';
   if(!items.length){paintCnt();return;}
   items.forEach(it=>list.appendChild(backlogRow(it,{onMoved:(key)=>{paintCnt();renderMyWeekStrip().catch(()=>{});const k=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());if(k===key)renderMyTodoList();},onDeleted:paintCnt})));
@@ -2793,11 +2824,11 @@ function openBacklogSheet(entry,tKey){
   const list=sh.querySelector('[data-list]'),cnt=sh.querySelector('[data-cnt]'),inp=sh.querySelector('input'),addBtn=sh.querySelector('[data-add]');
   let moved=false;
   const onKey=(e)=>{if(e.key==='Escape')close();};
-  const close=()=>{document.removeEventListener('keydown',onKey);ov.remove();if(moved){try{renderDashboardHome();}catch(e){}}};
+  const close=()=>{document.removeEventListener('keydown',onKey);vfSheetClose(ov);if(moved){try{renderDashboardHome();}catch(e){}}};
   document.addEventListener('keydown',onKey);
   sh.querySelector('[data-cancel]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
-  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row').length;cnt.textContent=n?`${n}건`:'';if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 오늘 말고 나중에 할 일을 위에 적어요</div>';};
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 오늘 말고 나중에 할 일을 위에 적어요</div>';};
   const load=async()=>{
     let items=[];
     try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';return;}
@@ -2808,7 +2839,7 @@ function openBacklogSheet(entry,tKey){
   const doAdd=async()=>{
     const t=inp.value.trim();if(!t)return;
     addBtn.disabled=true;
-    try{await addBacklog(t,entry?entry.id:undefined);inp.value='';await load();}
+    try{await addBacklog(t,entry?entry.id:undefined);inp.value='';await load();const rows=[...list.querySelectorAll('.wh-row')];const hit=rows.reverse().find(r=>(r.querySelector('.wh-t')?.firstChild?.textContent||'').trim()===t);if(hit)vfFlash(hit);}
     catch(err){alert('넣기 실패 — '+(err.message||'창고 SQL을 먼저 실행했는지 확인해주세요'));}
     addBtn.disabled=false;
   };
@@ -5312,6 +5343,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
   const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>{if(featOn('workreq')){const p=wrap.querySelector('.vh-priority');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}else enterMyWork(me);});
   met.appendChild(m4);
+  // 다시 그릴 때 값이 달라진 칸만 굴러간다 — "뭐가 바뀌었는지" 눈이 따라가게
+  try{
+    const prev=window.__vfPrevMet||{};const cur={};
+    [...met.children].forEach(c=>{const k=c.querySelector('span')?.textContent||'',v=c.querySelector('b')?.textContent||'';cur[k]=v;if(k in prev&&prev[k]!==v){const bb=c.querySelector('b');bb.classList.add('vf-roll');bb.addEventListener('animationend',()=>bb.classList.remove('vf-roll'),{once:true});}});
+    window.__vfPrevMet=cur;
+  }catch(e){}
   col1.appendChild(met);
 
   // ── 1열: 우선 확인 ──
@@ -5340,11 +5377,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   pri.appendChild(priList);
   const MOBILE_MAX=2;
   const refreshPri=()=>{
-    const rows=[...priList.querySelectorAll('.vh-item')];
+    // 비어 있을 때 넣은 안내 줄은 진짜 줄이 생기면 치운다 (요청·제안은 나중에 도착한다)
+    const ph=priList.querySelector('.vh-empty-row');
+    if(ph&&priList.querySelectorAll('.vh-item:not(.vh-empty-row)').length)ph.remove();
+    const rows=[...priList.querySelectorAll('.vh-item:not(.vf-out):not(.vh-empty-row)')];
     rows.forEach((r,i)=>r.classList.toggle('vh-hide-m',i>=MOBILE_MAX));
     const more=pri.querySelector('.vh-more');
     if(more){const hid=rows.length-MOBILE_MAX;more.style.display=hid>0?'':'none';more.textContent=`${hid}건 더 보기`;}
-    if(rows.length===0){priList.innerHTML='<div class="vh-item"><span class="vh-dot"></span><div class="vh-main">지금 확인할 게 없어요<small>다음 행동: 오늘 할 일 이어서</small></div></div>';}
+    if(rows.length===0&&!priList.querySelector('.vf-out')&&!ph){priList.innerHTML='<div class="vh-item vh-empty-row"><span class="vh-dot"></span><div class="vh-main">지금 확인할 게 없어요<small>다음 행동: 오늘 할 일 이어서</small></div></div>';}
   };
   items.forEach(o=>{
     const row=el('div','vh-item',`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>`);
@@ -5389,15 +5429,15 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     try{
       if(featOn('workreq')){
         const rows=await loadMyPendingRequests(me);
-        m4.querySelector('b').textContent=rows.length;
+        vfRoll(m4.querySelector('b'),rows.length);
         m4.classList.toggle('danger',rows.length>0);m4.classList.toggle('ok',rows.length===0);
         rows.forEach(r=>{
           const st=STORES.find(x=>x.id===r.store_id);
           const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.content)}<small>${_wrEsc(r.requester?.name||'익명')} · ${r.recipient?.name===me?'나에게':'공용'} 요청${st?' · '+shortStore(st.name):''}</small></div>`);
           const b=el('button','vh-btn','수락');
-          b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await wrRespond(r,true)){row.remove();refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);m4.querySelector('b').textContent=n;m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else b.disabled=false;};
+          b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await wrRespond(r,true)){await vfRowOut(row);refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);vfRoll(m4.querySelector('b'),n);m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else b.disabled=false;};
           const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
-          no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await wrRespond(r,false)){row.remove();refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);m4.querySelector('b').textContent=n;m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else no.disabled=false;};
+          no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await wrRespond(r,false)){await vfRowOut(row);refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);vfRoll(m4.querySelector('b'),n);m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);}else no.disabled=false;};
           row.appendChild(b);row.appendChild(no);
           // 인수인계 다음, 청소·미등록 앞에 끼운다
           const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
@@ -5411,13 +5451,13 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
             const days=wrDaysAgo(r.created_at);
             const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.title)}<small>${_wrEsc(r.owner?.name||'')} · 나에게 · 프로젝트 제안${r.due_date?' · ~'+r.due_date.slice(5).replace('-','/'):''}${days?' · '+days+'일째':''}</small></div>`);
             const b=el('button','vh-btn primary','수락');
-            b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await projectRespond(r,true)){row.remove();refreshPri();try{await renderDashboardHome();}catch(e2){}}else b.disabled=false;};
+            b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await projectRespond(r,true)){await vfRowOut(row);refreshPri();try{await renderDashboardHome();}catch(e2){}}else b.disabled=false;};
             const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
-            no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await projectRespond(r,false)){row.remove();refreshPri();}else no.disabled=false;};
+            no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await projectRespond(r,false)){await vfRowOut(row);refreshPri();}else no.disabled=false;};
             row.appendChild(b);row.appendChild(no);
             const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
             if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
-            const n=parseInt(m4.querySelector('b').textContent||'0',10)||0;m4.querySelector('b').textContent=n+1;m4.classList.add('danger');m4.classList.remove('ok');
+            const n=parseInt(m4.querySelector('b').textContent||'0',10)||0;vfRoll(m4.querySelector('b'),n+1);m4.classList.add('danger');m4.classList.remove('ok');
           });
           if(props.length)refreshPri();
         }catch(e){}
@@ -5437,7 +5477,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       const cat=latest&&latest.cat==='notice'?'공지':latest&&latest.cat==='suggest'?'건의':latest&&latest.cat==='history'?'히스토리':'업무공유';
       const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">게시판 새 글 ${n}건<small>${latest?`${cat} · ${_wrEsc((latest.title||latest.text||'').slice(0,40))}`:'누르면 게시판'}</small></div>`);
       const b=el('button','vh-btn','보기');
-      const go=(e)=>{if(e)e.stopPropagation();openBoardOverlay();row.remove();refreshPri();};
+      const go=(e)=>{if(e)e.stopPropagation();openBoardOverlay();vfRowOut(row).then(refreshPri);};
       b.onclick=go;row.onclick=()=>go();row.appendChild(b);
       const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
       if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
@@ -5484,8 +5524,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const dn=mine.filter(i=>i.done).length;
     const left=(mine.length-dn)+fl;
     const any=mine.length>0||fixedRows.length>0;
-    tLeftLbl.textContent=any?(left?`${left}개 남음`:'모두 완료'):'없음';
-    const m3=met.children[2];if(m3){m3.querySelector('b').textContent=any?left:'—';m3.classList.toggle('ok',any&&left===0);m3.classList.toggle('danger',!any);}
+    vfRoll(tLeftLbl,any?(left?`${left}개 남음`:'모두 완료'):'없음');
+    const m3=met.children[2];if(m3){vfRoll(m3.querySelector('b'),any?left:'—');m3.classList.toggle('ok',any&&left===0);m3.classList.toggle('danger',!any);}
   };
   if(mine.length===0){
     tBody.appendChild(el('div','hp-empty','오늘 할 일이 아직 없어요 — 아래에 한 줄 적고 엔터'));
@@ -5494,6 +5534,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     tBody.appendChild(prog);
     mine.forEach(it=>{
       const row=el('div','hp-todo'+(it.done?' done':''));
+      if(window.__vfFlashText&&it.text===window.__vfFlashText){window.__vfFlashText=null;setTimeout(()=>vfFlash(row),0);}
       const cb=document.createElement('input');cb.type='checkbox';cb.className='vh-check';cb.checked=!!it.done;
       const sp=el('span','',it.text);sp.style.flex='1';
       cb.onchange=async()=>{
@@ -5513,12 +5554,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
         wb.onclick=async()=>{
           wb.disabled=true;
           try{await unscheduleTodo(it.id);}catch(e){wb.disabled=false;alert('창고로 못 보냈어요 — '+(e.message||'네트워크를 확인해주세요'));return;}
-          row.remove();const i=mine.indexOf(it);if(i>=0)mine.splice(i,1);
+          await vfRowOut(row);const i=mine.indexOf(it);if(i>=0)mine.splice(i,1);
           refreshTodoCounts();
           const dn=mine.filter(x=>x.done).length;
           if(mine.length){prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;}
           else prog.remove();
-          listBacklog().then(items=>{whBtn.textContent=items.length?`업무 창고 ${items.length}`:'업무 창고';}).catch(()=>{});
+          listBacklog().then(items=>{vfRoll(whBtn,items.length?`업무 창고 ${items.length}`:'업무 창고');}).catch(()=>{});
         };
         row.appendChild(wb);
       }
@@ -5544,7 +5585,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const doAdd=async()=>{
     const t=addInp.value.trim();if(!t||!entry)return;
     addBtn.disabled=true;addBtn.textContent='저장중';
-    try{await addTodoItem(entry.id,tKey,t,me);addInp.value='';try{await renderDashboardHome();}catch(e2){}}
+    try{await addTodoItem(entry.id,tKey,t,me);addInp.value='';window.__vfFlashText=t;try{await renderDashboardHome();}catch(e2){}}
     catch(e){addBtn.disabled=false;addBtn.textContent='추가';saveFailNotice(e,'할 일');}
   };
   addBtn.onclick=doAdd;addInp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
@@ -5576,7 +5617,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const saveMemo=async()=>{
       const t=mTa.value;if(t===mLoaded)return;
       mStat.textContent='저장 중…';
-      try{await setDoc(mRef,{text:t,updatedAt:Date.now()});mLoaded=t;mStat.textContent='저장됨';setTimeout(()=>{if(mStat.textContent==='저장됨')mStat.textContent='';},1500);paintPeek();}
+      try{await setDoc(mRef,{text:t,updatedAt:Date.now()});mLoaded=t;mStat.textContent='저장됨';vfFlash(mTa);setTimeout(()=>{if(mStat.textContent==='저장됨')mStat.textContent='';},1500);paintPeek();}
       catch(e){mStat.textContent='저장 실패 — 적은 글은 남아 있어요';}
     };
     mTa.addEventListener('input',()=>{mStat.textContent='';clearTimeout(mTimer);mTimer=setTimeout(saveMemo,900);});
@@ -5783,7 +5824,7 @@ function openLeaveSheet(entry,tKey,preset){
   };
   const opener=document.activeElement;
   const onKey=(e)=>{if(e.key==='Escape')close();};
-  const close=()=>{wantListening=false;try{if(rec)rec.abort();}catch(e){}document.removeEventListener('keydown',onKey);ov.remove();if(opener&&opener.focus)try{opener.focus();}catch(e){}};
+  const close=()=>{wantListening=false;try{if(rec)rec.abort();}catch(e){}document.removeEventListener('keydown',onKey);vfSheetClose(ov);if(opener&&opener.focus)try{opener.focus();}catch(e){}};
   document.addEventListener('keydown',onKey);
   sh.querySelector('[data-cancel]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
@@ -6579,6 +6620,32 @@ async function wrRespond(reqRow,accept){
   return true;
 }
 function wrDaysAgo(ts){return Math.floor((Date.now()-new Date(ts).getTime())/86400000);}
+
+// ── 움직임 도우미 — 설명하는 움직임만 ──
+const vfReduced=()=>{try{return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}};
+// 줄이 목록에서 빠져나감 — 어디로 갔는지 눈이 따라가게. 끝나면 지운다
+function vfRowOut(row){
+  return new Promise(res=>{
+    if(!row||!row.parentNode){res();return;}
+    if(vfReduced()){row.remove();res();return;}
+    row.style.maxHeight=row.offsetHeight+'px';
+    row.classList.add('vf-out');
+    setTimeout(()=>{try{row.remove();}catch(e){}res();},300);
+  });
+}
+// 숫자가 바뀌면 굴러 올라오며 바뀐다 (같으면 가만히)
+function vfRoll(el,text){
+  if(!el)return;const t=String(text);
+  if(el.textContent===t)return;
+  el.textContent=t;
+  if(vfReduced())return;
+  el.classList.remove('vf-roll');void el.offsetWidth;el.classList.add('vf-roll');
+  el.addEventListener('animationend',()=>el.classList.remove('vf-roll'),{once:true});
+}
+// 방금 한 일이 어디 갔는지 — 한 번 켜졌다 꺼짐
+function vfFlash(el){if(!el||vfReduced())return;el.classList.remove('vf-flash');void el.offsetWidth;el.classList.add('vf-flash');el.addEventListener('animationend',()=>el.classList.remove('vf-flash'),{once:true});}
+// 시트가 내려가며 닫힘
+function vfSheetClose(ov){if(!ov)return;if(vfReduced()){ov.remove();return;}ov.classList.add('vf-closing');ov.style.pointerEvents='none';setTimeout(()=>{try{ov.remove();}catch(e){}},210);}
 
 // ── 프로젝트 제안 — 보내기 → 수락이면 둘이 참여자인 프로젝트 (projects.proposed_to · accepted_at) ──
 // 새 표 없음. 제안 = proposed_to 있고 accepted_at 없음. 수락 = 받는 사람을 참여자에 넣고 accepted_at 기록. 거절 = 행 삭제.
