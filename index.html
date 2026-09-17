@@ -753,6 +753,12 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-kinds{display:flex;gap:6px;margin-bottom:10px;}
 .vh-kind{flex:1;border:1.5px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:var(--radius-ctl);padding:10px 6px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;min-height:44px;}
 .vh-kind.on{border-color:var(--navy);background:var(--navy);color:#fff;}
+.vh-reqkind .vh-kind{padding:9px 8px;}
+.ad-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.ad-tbl th{font-size:11px;color:var(--text-sub);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:700;white-space:nowrap;}
+.ad-tbl td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.ad-tbl td.n{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+.vh-reqkind .vh-kind small{display:block;font-size:10.5px;font-weight:600;margin-top:2px;opacity:.85;line-height:1.3;}
 .vh-sheet textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:11px 12px;font-size:14px;font-family:inherit;min-height:96px;resize:vertical;outline:none;line-height:1.5;color:var(--text);}
 .vh-sheet textarea:focus{border-color:var(--gold);}
 .vh-sheet select{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:9px 10px;font-size:13px;font-family:inherit;margin-top:8px;background:var(--card);color:var(--text);}
@@ -804,6 +810,8 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
   .vh-head h1{font-size:24px;}
   .vh-head{margin-bottom:16px;}
   .vh-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:start;}
+  .vh-grid.flip{grid-template-columns:1fr 1.1fr;}
+  .vh-grid.flip>.vh-col:first-child{order:2;}
   .vh-links,.vh-priority .vh-item.vh-hide-d{display:none!important;}
   /* 데스크탑은 왼쪽 메뉴가 있으니 머리의 가이드·내 계정·관리자 버튼과 관리자 화면의 홈 버튼은 중복 — 숨김 (인라인 style 위라 !important) */
   #screen-dashboard .header .vh-head-btns,#screen-admin .header .back-btn{display:none!important;}
@@ -1641,7 +1649,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
           <div class="mw-store"><span class="mw-lbl">매장</span><div class="my-store-select" id="my-store-select"></div></div>
           <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
           <div class="my-input-row">
-            <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄" onkeydown="if(event.key==='Enter')addMyTodo()">
+            <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄 · 여러 줄은 「여러 개」" onkeydown="if(event.key==='Enter')addMyTodo()">
             <button type="button" class="vh-btn primary" onclick="addMyTodo()">추가</button>
             <button type="button" class="vh-btn" onclick="toggleMyBulk()" title="여러 개를 한 번에 — 한 줄에 하나씩">여러 개</button>
           </div>
@@ -1661,7 +1669,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <section class="mw-col">
         <!-- 창고 — 날짜 없는 할 일 (시트의 「업무 쏟아내기」 자리). 본인만 -->
         <div class="vh-card my-section mw-card" id="mw-wh">
-          <div class="vh-ct"><strong>창고</strong><span class="vh-tiny" id="mw-wh-cnt"></span></div>
+          <div class="vh-ct"><strong>업무 창고</strong><span class="vh-tiny" id="mw-wh-cnt"></span></div>
           <div class="my-input-row" style="margin-top:0;">
             <input type="text" class="my-input" id="mw-wh-input" placeholder="날짜 없이 넣어둘 일 한 줄" aria-label="창고에 넣기" onkeydown="if(event.key==='Enter')addMyBacklog()">
             <button type="button" class="vh-btn primary" onclick="addMyBacklog()">넣기</button>
@@ -2384,7 +2392,7 @@ function renderMyWorkScreen(){
   const isFuture=myDate>new Date(today.getFullYear(),today.getMonth(),today.getDate());
 
   document.getElementById('my-work-name').textContent=document.getElementById('screen-my-work').classList.contains('view-only')?`${myStaff} (조회 전용)`:`${myStaff}`;
-  document.getElementById('my-work-sub').textContent='지난 날짜 · 앞날 계획 · 창고 · 프로젝트';
+  document.getElementById('my-work-sub').textContent='지난 날짜 · 앞날 계획 · 업무 창고 · 프로젝트';
 
   const dateLabel=document.getElementById('my-date-label');
   if(dateLabel)dateLabel.textContent=`${mns[tm]} ${td}일${isToday?' (오늘)':''}`;
@@ -2733,7 +2741,7 @@ function backlogRow(it,opts){
   dInp.onchange=()=>{const v=dInp.value;if(v&&v>=todayKey())go(v);};
   cal.onclick=(e)=>{if(e.target===dInp)return;try{if(dInp.showPicker)dInp.showPicker();else dInp.click();}catch(err){dInp.click();}};
   del.onclick=async()=>{
-    if(!confirm('창고에서 지울까요?'))return;
+    if(!confirm('업무 창고에서 지울까요?'))return;
     try{await deleteBacklog(it.id);}catch(err){alert('삭제 실패 — '+(err.message||'네트워크를 확인해주세요'));return;}
     row.remove();if(opts.onDeleted)opts.onDeleted();
   };
@@ -2778,7 +2786,7 @@ function openBacklogSheet(entry,tKey){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-wh-title');
-  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct" style="margin-bottom:8px;"><h3 id="vh-wh-title" style="margin:0;">창고</h3><span class="vh-tiny" data-cnt></span></div>
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct" style="margin-bottom:8px;"><h3 id="vh-wh-title" style="margin:0;">업무 창고</h3><span class="vh-tiny" data-cnt></span></div>
     <div class="vh-add" style="margin-top:0;"><input type="text" placeholder="날짜 없이 넣어둘 일 한 줄" maxlength="200" aria-label="창고에 넣기"><button type="button" class="vh-btn primary" data-add>넣기</button></div>
     <div class="wh-list" data-list><div class="wh-empty">불러오는 중…</div></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">닫기</button></div>`;
@@ -3046,7 +3054,7 @@ async function autoPostDayoffNotice(){
     localStorage.setItem(noticeId,'done');
   }catch(e){}
 }
-const GUIDE_VERSION = 'v5.6';
+const GUIDE_VERSION = 'v5.7';
 const BUILD_DATE = '2026-08-25'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3137,7 +3145,18 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v5.6 — 첫 화면이 새 옷을 입었어요',
+    title: '🆕 v5.7 — 업무 창고 · 요청이 프로젝트로',
+    items: [
+      '📦 「업무 창고」 — 날짜 없이 일단 적어두는 곳. 내 업무 가운데 열, 홈 오늘 할 일 머리의 「업무 창고 N」. 줄마다 「오늘로」 또는 달력으로 꺼내고, 할 일 줄의 「창고로」로 되돌려요',
+      '🤝 홈 「요청 보내기」에 종류가 둘 — 「할 일로」는 받는 사람 오늘 할 일에, 「프로젝트로」는 받는 사람이 수락하면 둘이 참여하는 프로젝트가 열려요. 진행은 그 프로젝트 일지에 한 줄씩',
+      '👤 요청은 사람 대 사람이라 매장 방에는 안 떠요. 매장 방 「매장 요청」에는 근무자 누구나에게 남긴 것만',
+      '📊 홈 프로젝트 타일에 마지막 일지가 언제인지 — 3일 넘게 조용하면 표시돼요. 관리자 → 기록 → 프로젝트 맨 위에 이달의 요청 표',
+      '⇄ 내 계정 → 「홈 좌우 바꾸기」 — 오늘 할 일을 왼쪽에 두고 싶으면 (컴퓨터 화면, 이 기기에만)',
+      '🖱️ 컴퓨터 왼쪽 메뉴에 커서를 대면 살짝 반응해요',
+    ]
+  },
+  {
+    title: 'v5.6 — 첫 화면이 새 옷을 입었어요',
     items: [
       '🎨 색·글자·여백을 차분하게 정리했어요. 골드는 꼭 눌러야 할 버튼에만 씁니다',
       '📊 맨 위 네 칸(확인할 것 · 내 청소 · 할 일 · 근무)만 보면 오늘 상태가 보여요',
@@ -4996,6 +5015,9 @@ window.openAppMenu=function(){
   mk('📲','앱으로 설치','바탕화면·홈 화면에 추가해서 앱처럼 쓰기',()=>{try{openInstallModal();}catch(e){}});
   mk('👥','직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
   mk('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
+  // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
+  let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
+  mk('⇄','홈 좌우 바꾸기',_flip?'지금: 오늘 할 일이 왼쪽 · 누르면 원래대로':'지금: 확인할 것이 왼쪽 · 누르면 오늘 할 일을 왼쪽으로',()=>{try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
   mk('📄','내 동의 관리','약관·개인정보 동의 내역 확인 및 변경',()=>{try{openMyConsents();}catch(e){}});
   mk('📖','앱 가이드','새 기능 안내 · 사용법',()=>{try{openGuideModal();}catch(e){}});
   mk('🔑','비밀번호 변경','',()=>{try{doChangePw();}catch(e){}});
@@ -5274,6 +5296,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   window.__briefCtx={tKey,todosByName,hoByStore}; // 사이드바의 「오늘의 브리핑」이 쓴다
 
   const grid=el('div','vh-grid');
+  try{if(localStorage.getItem('vflow_home_flip')==='1')grid.classList.add('flip');}catch(e){} // 좌우 반전 — 내 계정에서 고른다
   const col1=el('section','vh-col'),col2=el('section','vh-col');
   grid.appendChild(col1);grid.appendChild(col2);
   wrap.appendChild(grid);
@@ -5381,6 +5404,23 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
         });
         if(rows.length)refreshPri();
+        // 프로젝트 제안 — 수락하면 둘이 참여하는 프로젝트가 열린다
+        try{
+          const props=featOn('collab')?await loadMyProposals():[];
+          props.forEach(r=>{
+            const days=wrDaysAgo(r.created_at);
+            const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.title)}<small>${_wrEsc(r.owner?.name||'')} · 나에게 · 프로젝트 제안${r.due_date?' · ~'+r.due_date.slice(5).replace('-','/'):''}${days?' · '+days+'일째':''}</small></div>`);
+            const b=el('button','vh-btn primary','수락');
+            b.onclick=async(e)=>{e.stopPropagation();b.disabled=true;if(await projectRespond(r,true)){row.remove();refreshPri();try{await renderDashboardHome();}catch(e2){}}else b.disabled=false;};
+            const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
+            no.onclick=async(e)=>{e.stopPropagation();no.disabled=true;if(await projectRespond(r,false)){row.remove();refreshPri();}else no.disabled=false;};
+            row.appendChild(b);row.appendChild(no);
+            const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
+            if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
+            const n=parseInt(m4.querySelector('b').textContent||'0',10)||0;m4.querySelector('b').textContent=n+1;m4.classList.add('danger');m4.classList.remove('ok');
+          });
+          if(props.length)refreshPri();
+        }catch(e){}
       } else {
         const ps=await loadProjects(me);
         const n=ps.filter(x=>!x.done).length;
@@ -5428,10 +5468,10 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   fold.onclick=()=>{todo.classList.toggle('folded');fold.textContent=todo.classList.contains('folded')?'펼치기':'접기';};
   if(mine.length>0)tRight.appendChild(fold);
   // 창고 — 날짜 없이 넣어둔 일. 누르면 시트에서 보고 「오늘로」 꺼낸다 (홈에 줄은 안 늘린다)
-  const whBtn=el('button','vh-wh-btn','창고');whBtn.type='button';whBtn.title='날짜 없이 넣어둔 일';
+  const whBtn=el('button','vh-wh-btn','업무 창고');whBtn.type='button';whBtn.title='날짜 없이 넣어둔 일';
   whBtn.onclick=()=>openBacklogSheet(entry,tKey);
   tRight.appendChild(whBtn);
-  listBacklog().then(items=>{if(items.length)whBtn.textContent=`창고 ${items.length}`;}).catch(()=>{});
+  listBacklog().then(items=>{if(items.length)whBtn.textContent=`업무 창고 ${items.length}`;}).catch(()=>{});
   tHead.appendChild(tRight);
   todo.appendChild(tHead);
   const tBody=el('div','vh-todo-body');
@@ -5478,7 +5518,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           const dn=mine.filter(x=>x.done).length;
           if(mine.length){prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;}
           else prog.remove();
-          listBacklog().then(items=>{whBtn.textContent=items.length?`창고 ${items.length}`:'창고';}).catch(()=>{});
+          listBacklog().then(items=>{whBtn.textContent=items.length?`업무 창고 ${items.length}`:'업무 창고';}).catch(()=>{});
         };
         row.appendChild(wb);
       }
@@ -5486,7 +5526,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     });
   }
   // 바로 적는 입력줄 — 시트를 열고 종류를 고르는 두 번의 클릭을 없앤다 (내 업무 화면의 「할 일 한 줄」과 같은 저장)
-  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button><button type="button" class="vh-btn vh-bulk-btn" title="여러 개를 한 번에 — 한 줄에 하나씩" aria-label="여러 개 한 번에 입력">여러 개</button>`);
+  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터 · 여러 줄은 「여러 개」" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button><button type="button" class="vh-btn vh-bulk-btn" title="여러 개를 한 번에 — 한 줄에 하나씩" aria-label="여러 개 한 번에 입력">여러 개</button>`);
   const addInp=addRow.querySelector('input'),addBtn=addRow.querySelector('.vh-btn.primary'),bulkBtn=addRow.querySelector('.vh-bulk-btn');
   // 여러 개 한 번에 — 한 줄에 하나씩. 내 업무 화면의 「여러 개 한번에 입력」과 같은 저장(addTodoItems)
   const bulk=el('div','vh-bulk',`<textarea placeholder="한 줄에 하나씩&#10;예) 재고 확인&#10;쇼케이스 정리" aria-label="여러 개 한 번에 입력"></textarea><div class="vh-row"><button type="button" class="vh-btn" data-bulk-cancel>닫기</button><button type="button" class="vh-btn primary" data-bulk-save>한 번에 추가</button></div>`);
@@ -5554,7 +5594,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
         const rows=await loadCollabListCached();
         if(rows===null){pj.remove();return;}
         const {me:meId}=await collabApi();
-        const list=rows.filter(r=>r.status!=='done'&&(r.employee_id===meId||(r.project_members||[]).some(m=>m.profile_id===meId)||(r.help_message&&(!r.store_id||!entry||r.store_id===entry.id))));
+        const list=rows.filter(r=>r.status!=='done'&&(r.employee_id===meId||(r.project_members||[]).some(m=>m.profile_id===meId)||(r.help_message&&(!r.store_id||!entry||r.store_id===entry.id)))&&!(projIsProposal(r)&&r.proposed_to===meId));
         if(!list.length){pj.remove();return;}
         const askFirst=(r)=>(r.help_message&&r.employee_id!==meId)?0:1;
         list.sort((a,b)=>askFirst(a)-askFirst(b)||new Date(b.created_at)-new Date(a.created_at));
@@ -5566,7 +5606,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           const mem=(r.project_members||[]).filter(m=>m.profile_id!==r.employee_id).length;
           const days=r.help_requested_at?Math.floor((Date.now()-new Date(r.help_requested_at).getTime())/86400000):0;
           const logs=(r.project_logs||[]).length;
-          const t=el('button','vh-ptile'+(ask?' ask':''),`<b>${_wrEsc(r.title)}</b><small>${ask?`<span class="rm-tag">도움 요청</span>${_wrEsc(owner)} · ${days?days+'일째':'오늘'}`:`${_wrEsc(owner)}${mem?` 외 ${mem}명`:''}${r.store_id?' · '+shortStore((STORES.find(x=>x.id===r.store_id)||{}).name||''):''}`}</small><div class="pt-num"><em>${pct}%</em><span>일지 ${logs}건</span></div><div class="pt-bar"><div style="width:${pct}%"></div></div>`);
+          // 마지막 일지가 언제인지 — 통화에서 말한 "3~4일 피드백 없음"이 묻지 않아도 보이게
+          const lastLog=(r.project_logs||[]).reduce((a,l)=>(!a||l.created_at>a)?l.created_at:a,null);
+          const quiet=Math.floor((Date.now()-new Date(lastLog||r.created_at).getTime())/86400000);
+          const proposal=projIsProposal(r);
+          const partner=proposal?(r.project_members||[]).map(m=>m.profiles?.name).filter(n=>n&&n!==owner)[0]||'':'';
+          const quietTag=proposal?`<span class="rm-tag" style="background:var(--soft);color:var(--text-sub)">제안 중${quiet?' '+quiet+'일째':''}</span>`:(quiet>=3&&!ask?`<span class="rm-tag">${quiet}일째 조용</span>`:'');
+          const meta=ask?`<span class="rm-tag">도움 요청</span>${_wrEsc(owner)} · ${days?days+'일째':'오늘'}`:`${quietTag}${_wrEsc(owner)}${mem?` 외 ${mem}명`:''}${r.due_date?' · ~'+r.due_date.slice(5).replace('-','/'):''}${!proposal&&lastLog?' · 일지 '+(quiet===0?'오늘':quiet===1?'어제':quiet+'일 전'):''}`;
+          const t=el('button','vh-ptile'+(ask||(quiet>=3&&!proposal)?' ask':''),`<b>${_wrEsc(r.title)}</b><small>${meta}</small><div class="pt-num"><em>${pct}%</em><span>일지 ${logs}건</span></div><div class="pt-bar"><div style="width:${pct}%"></div></div>`);
           t.type='button';t.setAttribute('aria-label',`${r.title} ${pct}%${ask?' 도움 요청':''}`);
           t.onclick=()=>openCollabDetail(r.id);
           tiles.appendChild(t);
@@ -5630,15 +5677,17 @@ function openLeaveSheet(entry,tKey,preset){
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
     <div class="vh-kinds"><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}</div>
+    <div class="vh-kinds vh-reqkind" data-reqkind-wrap style="display:none;"><button class="vh-kind on" data-rk="todo">할 일로<small>오늘·내일 할 한 가지</small></button><button class="vh-kind" data-rk="project">프로젝트로<small>며칠 걸리는 일 · 수락하면 방이 열림</small></button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
+    <div class="vh-until" data-due-wrap style="display:none;"><label>기한 <input type="date" data-due min="${tKey}" style="margin-left:6px;"></label></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
   let kind=preset||'handover';
   if(kind==='todo'||kind==='memo')kind='handover'; // 오늘 할 일·내 메모는 홈 카드에서 바로 적는다 — 시트에서는 뺐다
   if(kind==='request'&&!featOn('workreq'))kind='handover';
-  const kinds=sh.querySelectorAll('.vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
+  const kinds=sh.querySelectorAll('.vh-kinds:not(.vh-reqkind) .vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
   const recipDefault=recip.querySelector('option');
   const KIND_LABEL={todo:'오늘 할 일',handover:'인수인계',request:'요청',memo:'내 메모'};
   // 임시 저장 — 저장에 실패하거나 실수로 닫아도 적던 글이 남는다 (성공하면 지운다)
@@ -5649,15 +5698,24 @@ function openLeaveSheet(entry,tKey,preset){
   const clearDraft=()=>{try{localStorage.removeItem(DRAFT_KEY);}catch(e){}};
   ta.addEventListener('input',saveDraft);
   const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
+  // 요청 종류 — 할 일로(지금 방식) / 프로젝트로(받는 사람이 수락하면 둘만의 프로젝트가 열린다)
+  const reqKindWrap=sh.querySelector('[data-reqkind-wrap]'), dueWrap=sh.querySelector('[data-due-wrap]'), dueInp=sh.querySelector('[data-due]');
+  let reqKind='todo';
+  const setReqKind=(k)=>{reqKind=k;reqKindWrap.querySelectorAll('.vh-kind').forEach(b=>b.classList.toggle('on',b.dataset.rk===k));dueWrap.style.display=(kind==='request'&&k==='project')?'':'none';ta.placeholder=k==='project'?'무슨 일인지 한 줄 — 수락하면 둘이 참여하는 프로젝트가 열려요':'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요';};
+  reqKindWrap.querySelectorAll('.vh-kind').forEach(b=>b.onclick=()=>setReqKind(b.dataset.rk));
   longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
   const setKind=(k)=>{
     if(k==='todo'||k==='memo')k='handover';
     if(k==='request'&&!featOn('workreq'))k='handover';
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
     recip.style.display=(k==='handover'||k==='request')?'':'none';
-    if(recipDefault)recipDefault.textContent=k==='request'?'받는 사람: 공용 — 누구나 수락':'받는 사람: 다음 근무자 누구나';
+    // 요청은 사람 대 사람 — 받는 사람 필수 (근무자 누구나는 매장 방 인수인계로)
+    if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람을 고르세요':'받는 사람: 다음 근무자 누구나';recipDefault.disabled=(k==='request');}
+    if(k!=='request'&&recip.value&&recipDefault&&recip.selectedIndex===0)recip.value='';
     untilWrap.style.display=k==='handover'?'':'none';
-    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':k==='request'?'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요':'나만 볼 메모';
+    reqKindWrap.style.display=k==='request'?'':'none';
+    dueWrap.style.display=(k==='request'&&reqKind==='project')?'':'none';
+    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것':k==='request'?(reqKind==='project'?'무슨 일인지 한 줄 — 수락하면 둘이 참여하는 프로젝트가 열려요':'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요'):'나만 볼 메모';
     const sb=sh.querySelector('[data-save]');if(sb&&!sb.disabled)sb.textContent=k==='request'?'보내기':'저장';
   };
   kinds.forEach(b=>b.onclick=()=>{setKind(b.dataset.k);saveDraft();});
@@ -5741,8 +5799,10 @@ function openLeaveSheet(entry,tKey,preset){
         await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null);
       }
       else if(kind==='request'){
-        // 업무 요청 — 「내 업무」의 요청 보내기와 같은 저장(work_requests). 받는 사람이 수락하면 그 사람 오늘 업무로.
-        await wrCreate(entry.id,text,recip.value||'');
+        // 요청은 사람 대 사람 — 매장에 묶지 않는다(store_id 없음). 매장 방에는 안 뜨고 받는 사람 홈에만.
+        if(!recip.value){showErr('받는 사람을 골라주세요');btn.disabled=false;btn.textContent='보내기';return;}
+        if(reqKind==='project')await projectPropose(text,recip.value,dueInp.value||null);
+        else await wrCreate(null,text,recip.value);
       }
       else{
         const ref=doc(db,`staff_memo/${me}`);
@@ -6520,6 +6580,49 @@ async function wrRespond(reqRow,accept){
 }
 function wrDaysAgo(ts){return Math.floor((Date.now()-new Date(ts).getTime())/86400000);}
 
+// ── 프로젝트 제안 — 보내기 → 수락이면 둘이 참여자인 프로젝트 (projects.proposed_to · accepted_at) ──
+// 새 표 없음. 제안 = proposed_to 있고 accepted_at 없음. 수락 = 받는 사람을 참여자에 넣고 accepted_at 기록. 거절 = 행 삭제.
+async function projectPropose(title,recipientName,dueDate){
+  const {sb,ctx}=await wrApi();
+  const {data}=await sb.from('profiles').select('id').eq('tenant_id',ctx.tenantId).eq('name',recipientName).limit(1);
+  const rid=data?.[0]?.id;if(!rid)throw new Error('받는 사람을 찾지 못했어요');
+  const row={tenant_id:ctx.tenantId,title,progress:0,status:'ongoing',employee_id:ctx.profileId,store_id:null,proposed_to:rid};
+  if(dueDate)row.due_date=dueDate;
+  const {data:proj,error}=await sb.from('projects').insert(row).select('id').single();
+  if(error)throw error;
+  const {error:e2}=await sb.from('project_members').insert({project_id:proj.id,profile_id:ctx.profileId,tenant_id:ctx.tenantId});
+  if(e2)throw e2;
+}
+// 나에게 온 제안 — 아직 수락 안 한 것
+async function loadMyProposals(){
+  const {sb,ctx}=await wrApi();
+  const {data,error}=await sb.from('projects').select('id,title,created_at,due_date,proposed_to,accepted_at,owner:profiles!employee_id(name)')
+    .eq('tenant_id',ctx.tenantId).eq('proposed_to',ctx.profileId).is('accepted_at',null).neq('status','done').order('created_at',{ascending:true}).limit(20);
+  if(error)return [];
+  return data||[];
+}
+async function projectRespond(row,accept){
+  const {sb,ctx}=await wrApi();
+  if(accept){
+    if(!confirm(`이 프로젝트를 수락할까요?\n"${row.title}"\n→ ${row.owner?.name||'보낸 사람'}과 둘이 참여하는 프로젝트가 열립니다.`))return false;
+    const {error}=await sb.from('project_members').insert({project_id:row.id,profile_id:ctx.profileId,tenant_id:ctx.tenantId});
+    if(error&&error.code!=='23505'){alert('수락 실패 — '+(error.message||'권한/네트워크를 확인해주세요'));return false;}
+    await sb.from('projects').update({accepted_at:new Date().toISOString()}).eq('id',row.id); // 막혀도 참여자 행이 곧 수락
+    _collabCache.at=0;
+    return true;
+  }
+  const r=prompt('거절 사유를 적어주세요 (보낸 사람에게 표시됩니다)');
+  if(r===null)return false;
+  const reason=(r||'').trim();if(!reason){alert('거절할 때는 사유가 필요해요.');return false;}
+  const {error,count}=await sb.from('projects').delete({count:'exact'}).eq('id',row.id).eq('proposed_to',ctx.profileId).is('accepted_at',null);
+  if(error||count===0){alert('거절 처리 실패 — 보낸 사람에게 직접 말해주세요');return false;}
+  try{await sb.from('work_requests').insert({tenant_id:ctx.tenantId,store_id:null,requester_id:ctx.profileId,recipient_id:null,content:`[프로젝트 거절] ${row.title} — ${reason}`,status:'declined',decline_reason:reason,responded_by:ctx.profileId,responded_at:new Date().toISOString()});}catch(e){}
+  _collabCache.at=0;
+  return true;
+}
+// 제안이 아직 수락 안 됐는지 (목록 행 기준)
+const projIsProposal=(r)=>!!(r&&r.proposed_to&&!r.accepted_at&&!(r.project_members||[]).some(m=>m.profile_id===r.proposed_to));
+
 // 매장 방의 업무 요청 섹션
 async function buildRequestSection(store){
   const wrap=document.createElement('div');
@@ -6983,20 +7086,20 @@ function openStoreRoom(store){
 
   // ── 업무 요청 (이 매장) ──
   if(featOn('workreq')){
+    // 사람에게 보내는 요청은 홈 「요청 보내기」로 갔다(매장에 안 묶임). 여기는 이 매장 근무자 누구나에게 남긴 것만, 비면 카드도 없다.
     const wrCard=el('div','vh-card rm-wr');
-    const wrHead=el('div','vh-ct',`<strong>업무 요청</strong>`);
-    const wrBtn=el('button','vh-btn','요청 보내기');wrBtn.type='button';wrBtn.onclick=()=>openLeaveSheet(store,tKey,'request');
-    wrHead.appendChild(wrBtn);wrCard.appendChild(wrHead);
+    const wrHead=el('div','vh-ct',`<strong>매장 요청</strong><span class="vh-tiny">근무자 누구나</span>`);
+    wrCard.appendChild(wrHead);
     const wrList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');wrCard.appendChild(wrList);
     const paintWr=async()=>{
       try{
         const {sb}=await wrApi();
         const {data}=await sb.from('work_requests')
           .select('id,store_id,content,status,decline_reason,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)')
-          .eq('store_id',store.id).order('created_at',{ascending:false}).limit(20);
+          .eq('store_id',store.id).is('recipient_id',null).order('created_at',{ascending:false}).limit(20);
         const rows=data||[];
         wrList.innerHTML='';
-        if(!rows.length){wrList.appendChild(el('div','rm-empty','들어온 요청이 없어요 — 「요청 보내기」로 이 매장 근무자에게 부탁할 수 있어요'));return;}
+        if(!rows.length){wrCard.remove();return;}
         rows.forEach(r=>{
           const days=wrDaysAgo(r.created_at);
           const st=r.status==='accepted'?`<span class="rm-tag" style="background:var(--green-light);color:var(--green)">${esc(r.responder?.name||'')} 수락</span>`:r.status==='declined'?`<span class="rm-tag" style="background:var(--red-light);color:var(--red)">거절 — ${esc(r.decline_reason||'')}</span>`:days>=3?`<span class="rm-tag" style="background:var(--red-light);color:var(--red)">${days}일째 응답 없음</span>`:`<span class="rm-tag">대기중</span>`;
@@ -7112,7 +7215,7 @@ async function loadCollabList(){
   // 여럿이 하는 일이 된다 — 테이블을 옮기지 않는다.
   const {sb,T}=await collabApi();
   const {data,error}=await sb.from('projects')
-    .select('id,title,progress,status,done_date,created_at,employee_id,store_id,help_message,help_requested_at,owner:profiles!employee_id(name),project_members(profile_id,profiles(name)),project_logs(id,content,author_id,created_at,profiles(name))')
+    .select('id,title,progress,status,done_date,created_at,employee_id,store_id,help_message,help_requested_at,proposed_to,accepted_at,due_date,owner:profiles!employee_id(name),project_members(profile_id,profiles(name)),project_logs(id,content,author_id,created_at,profiles(name))')
     .eq('tenant_id',T).order('created_at',{ascending:false});
   if(error){console.warn('project load',error);return null;}
   return data||[];
@@ -7234,6 +7337,11 @@ window.renderCollabProjects=async function(){
     // 현황에 담당자별로 이미 나오므로 여기 또 넣으면 같은 것이 두 번 보인다.
     if(members.length===0)return;
     if(isDone&&(!r.done_date||new Date(r.done_date).getTime()<sevenAgo))return;
+    if(projIsProposal(r)){
+      const pd=days(r.created_at);
+      items.push({kind:'collab',grp:pd>=3?'stuck':'prog',names,ts:r.created_at,who:`${esc(r.owner?.name||'')}<span class="arr">→</span>제안`,what:esc(r.title),meta:`<span class="cf-st" style="background:${pd>=3?'var(--red-light)':'var(--orange-light)'};color:${pd>=3?'var(--red)':'var(--orange)'};">수락 대기 ${pd}일</span>`,click:()=>openCollabDetail(r.id)});
+      return;
+    }
     items.push({kind:r.store_id?'store':'collab',grp:isDone?'done':'prog',names,ts:r.created_at,
       who:r.store_id?`${esc(st_?st_.name:'')} <span style="color:var(--text-mute);font-weight:600;">· 근무자 이어서 진행</span>`:(members.length?`${esc(members[0])}${members.length>1?` 외 ${members.length-1}명`:''}`:'참여자 없음'),
       what:esc(r.title),
@@ -9274,6 +9382,33 @@ async function renderProjectsTab(content){
 
   let hasAny=false;
   const wrap=document.createElement('div');wrap.style.padding='0 12px 12px';
+  // ── 이달의 요청 — 누가 누구에게 얼마나 시켰고 일지가 오갔나 (work_requests · projects · project_logs 집계) ──
+  try{
+    const {sb,ctx}=await wrApi();
+    const y=today.getFullYear(),m=today.getMonth();
+    const from=`${y}-${String(m+1).padStart(2,'0')}-01`,to=m===11?`${y+1}-01-01`:`${y}-${String(m+2).padStart(2,'0')}-01`;
+    const [wr,pj]=await Promise.all([
+      sb.from('work_requests').select('id,status,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),store_id').eq('tenant_id',ctx.tenantId).gte('created_at',from).lt('created_at',to).limit(500),
+      sb.from('projects').select('id,title,created_at,employee_id,proposed_to,accepted_at,status,owner:profiles!employee_id(name),to:profiles!proposed_to(name),project_logs(created_at)').eq('tenant_id',ctx.tenantId).not('proposed_to','is',null).gte('created_at',from).lt('created_at',to).limit(200),
+    ]);
+    const agg=new Map();
+    const key=(a,b)=>a+'→'+b;
+    const get=(a,b)=>{const k=key(a,b);if(!agg.has(k))agg.set(k,{from:a,to:b,todo:0,todoDone:0,todoWait:0,proj:0,projWait:0,logs:0,last:null});return agg.get(k);};
+    (wr.data||[]).forEach(r=>{if(String(r.status||'').startsWith('declined')&&!r.requester)return;const a=r.requester?.name||'?',bb=r.recipient?.name||(r.store_id?'누구나('+((STORES.find(x=>x.id===r.store_id)||{}).name||'').replace('인천 ','').replace('부천 ','').replace('구월 ','')+')':'누구나');const g=get(a,bb);g.todo++;if(r.status==='accepted')g.todoDone++;if(r.status==='pending')g.todoWait++;});
+    (pj.data||[]).forEach(r=>{const g=get(r.owner?.name||'?',r.to?.name||'?');g.proj++;if(!r.accepted_at)g.projWait++;const ls=r.project_logs||[];g.logs+=ls.length;const last=ls.reduce((x,l)=>(!x||l.created_at>x)?l.created_at:x,null);if(last&&(!g.last||last>g.last))g.last=last;});
+    const rows=[...agg.values()].sort((a,b)=>(b.todo+b.proj)-(a.todo+a.proj));
+    if(rows.length){
+      const mns=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+      const tot=rows.reduce((a,r)=>{a.t+=r.todo;a.p+=r.proj;a.l+=r.logs;return a;},{t:0,p:0,l:0});
+      const card=document.createElement('div');card.className='vh-card';card.style.marginBottom='14px';
+      const dl=(ts)=>{if(!ts)return '<span style="color:var(--text-mute)">—</span>';const d=Math.floor((Date.now()-new Date(ts).getTime())/86400000);return d===0?'오늘':d===1?'어제':d>=4?`<span style="color:var(--red);font-weight:700">${d}일째 조용</span>`:`${d}일 전`;};
+      card.innerHTML=`<div class="vh-ct"><strong>${mns[m]} 요청</strong><span class="vh-tiny">할 일 ${tot.t} · 프로젝트 ${tot.p} · 일지 ${tot.l}</span></div>
+        <div style="overflow-x:auto"><table class="ad-tbl"><tr><th>보낸 사람</th><th>받은 사람</th><th style="text-align:right">할 일</th><th style="text-align:right">프로젝트</th><th style="text-align:right">일지</th><th>마지막</th></tr>
+        ${rows.map(r=>`<tr><td>${_wrEsc(r.from)}</td><td>${_wrEsc(r.to)}</td><td class="n">${r.todo||'—'}${r.todoWait?`<small style="color:var(--orange);font-weight:700"> 대기 ${r.todoWait}</small>`:''}</td><td class="n">${r.proj||'—'}${r.projWait?`<small style="color:var(--orange);font-weight:700"> 대기 ${r.projWait}</small>`:''}</td><td class="n">${r.proj?r.logs:'—'}</td><td>${r.proj?dl(r.last):'<span style="color:var(--text-mute)">—</span>'}</td></tr>`).join('')}
+        </table></div>`;
+      wrap.appendChild(card);
+    }
+  }catch(e){}
 
   // 요약 카드
   const summary=document.createElement('div');
