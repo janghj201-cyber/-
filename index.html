@@ -737,7 +737,7 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .rm-body .rm-tag.long{background:var(--soft);color:var(--text-sub);}
 .rm-acts{display:flex;gap:4px;flex:0 0 auto;}
 .rm-acts .vh-btn{min-height:34px;padding:6px 9px;font-size:11.5px;}
-.rm-acts .vh-btn.quiet{color:var(--text-sub);}
+.vh-btn.quiet{color:var(--text-sub);}
 .rm-more{margin-top:6px;background:none;border:1px dashed var(--border);border-radius:var(--radius-ctl);width:100%;padding:9px;font-size:12px;color:var(--text-sub);font-weight:700;cursor:pointer;font-family:inherit;}
 .rm-info textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:120px;resize:vertical;outline:none;line-height:1.55;color:var(--text);}
 .rm-info textarea:focus{border-color:var(--gold);}
@@ -3143,6 +3143,7 @@ const GUIDE_SECTIONS = [
       '🔔 인수인계·요청·답·프로젝트 제안·도움 요청·공지가 생기면 바로 폰으로 — 내 계정 → 「알림」에서 켜고 끕니다. 밤 10시~아침 8시엔 안 보냅니다',
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
       '🗣️ 관리자 → 설정 → 「우리 회사 말」 — 매장·근무자·청소·인수인계를 우리 회사 식으로. 비워두면 지금 그대로',
+      '🕘 출근·퇴근 — 그날 앱을 처음 열면(순환 직원은 매장을 고르면) 출근 시각이 남고, 홈 오른쪽 위 「근무 마감」이 퇴근. 매장 컴퓨터는 켜면 V-Flow가 먼저 뜨게 설정할 수 있어요(설치 파일)',
       '🏪 대표·매니저 홈 맨 위에 「매장 확인할 것」 — 어느 매장 · 무엇 · 누구, 누르면 그 매장 방. 현황·보고까지 안 가도 첫 줄이 판단입니다. 직원 홈은 그대로',
     ]
   },
@@ -5237,9 +5238,25 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
 
   // ── 머리: 인사 + 오늘 매장 + 남기기 ──
   const head=el('div','vh-head');
-  const hl=el('div','',`<h1>안녕하세요, ${me}님</h1><div class="vh-sub">오늘 ${entry?shortStore(entry.name):'매장'}에서 놓치면 안 될 것만 모았어요.</div>`);
+  const _dows=['일','월','화','수','목','금','토'];
+  const hl=el('div','',`<h1>안녕하세요, ${me}님</h1><div class="vh-sub">${entry?shortStore(entry.name)+' · ':''}${today.getMonth()+1}/${today.getDate()} (${_dows[today.getDay()]})</div>`);
   head.appendChild(hl);
   const acts=el('div','vh-actions');
+  // 출근·퇴근 — 오늘 매장이 정해진 사람만(모니터링 계정 제외). 출근은 자동, 퇴근은 버튼
+  if(entry&&!_vp.monitorOnly){
+    const sub=hl.querySelector('.vh-sub');
+    const outBtn=el('button','vh-btn','근무 마감');outBtn.type='button';outBtn.title='퇴근 시각을 남깁니다 · 다시 누르면 지금 시각으로';
+    const paintClock=(c)=>{
+      if(!c||!c.started_at)return;
+      sub.textContent=`출근 ${_hm(c.started_at)} · ${shortStore(entry.name)}${c.ended_at?` · 퇴근 ${_hm(c.ended_at)}`:''}`;
+      outBtn.textContent=c.ended_at?`퇴근 ${_hm(c.ended_at)}`:'근무 마감';outBtn.classList.toggle('quiet',!!c.ended_at);
+    };
+    outBtn.onclick=async()=>{outBtn.disabled=true;const c=await vfClock('out',entry.id);outBtn.disabled=false;if(c){paintClock(c);vfUse('clock_out');}else alert('저장에 실패했습니다. 네트워크를 확인하세요.');};
+    acts.appendChild(outBtn);
+    const _ck='vflow_clockin_'+tKey;
+    if(window.__vfClock&&window.__vfClock.started_at)paintClock(window.__vfClock);
+    vfClock('in',entry.id).then(c=>{if(c){paintClock(c);try{if(!localStorage.getItem(_ck)){localStorage.setItem(_ck,'1');vfUse('clock_in');}}catch(e){}}else outBtn.remove();});
+  }
   if(_isFixed||!entry){
     acts.appendChild(el('span','vh-btn',`${entry?shortStore(entry.name):'-'}${_vp.overrideActive?' · 예외출근':''}`));
   } else {
@@ -6338,6 +6355,17 @@ function needTodayStorePick(){
   if(localStorage.getItem('vflow_todayoff_'+todayKey()))return false;
   return true;
 }
+// 출근·퇴근 시계 — work_clock(kind, day, store). 출근은 그날 첫 시각만 남고(여러 기기 무관), 퇴근은 누를 때마다 지금 시각
+window.__vfClock=null;
+async function vfClock(kind,storeId){
+  try{
+    const mod=await import('./adapter/supabase-client.js');
+    const {data,error}=await mod.supabase.rpc('work_clock',{kind,day:todayKey(),target_store:storeId||null});
+    if(error){window.__wsLastError=error;return null;}
+    window.__vfClock=data||null;return window.__vfClock;
+  }catch(e){window.__wsLastError=e;return null;}
+}
+const _hm=(iso)=>{if(!iso)return '';const d=new Date(iso);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
 async function _recordWorkday(storeId){
   for(let i=0;i<2;i++){
     try{
@@ -6400,8 +6428,8 @@ async function showTodayStorePick(onDone){
   ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(20,28,42,0.62);display:flex;align-items:center;justify-content:center;padding:18px;';
   const card=document.createElement('div');
   card.style.cssText='background:var(--card);border-radius:18px;max-width:420px;width:100%;padding:18px 16px;box-shadow:0 18px 60px rgba(0,0,0,0.35);';
-  card.innerHTML=`<div style="font-size:16px;font-weight:800;">오늘 어느 매장에서 근무하세요?</div>
-    <div style="font-size:11.5px;color:var(--text-sub);margin-top:3px;">선택한 매장으로 오늘 업무·인수인계가 기록됩니다 (그날 하루 기억)</div>`;
+  card.innerHTML=`<div style="font-size:16px;font-weight:800;">오늘 근무 매장</div>
+    <div style="font-size:11.5px;color:var(--text-sub);margin-top:3px;">누르는 시각이 출근 · 오늘 업무·인수인계가 이 매장으로</div>`;
   const grid=document.createElement('div');
   grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px;';
   STORES.forEach(s=>{
@@ -6725,7 +6753,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기'};
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
