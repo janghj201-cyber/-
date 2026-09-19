@@ -598,6 +598,15 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-item.vh-done .vh-main small{display:inline-block;width:100%;text-decoration:none;} /* 취소선이 작은 글씨까지 번지지 않게 */
 .vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
 .vh-ct>strong{margin-right:auto;}
+/* 직원 이력 */
+.st-kv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;}
+.st-kv .vh-metric{cursor:default;}
+.st-kv .vh-metric small{display:block;font-size:10.5px;color:var(--text-mute);margin-top:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-spark{display:flex;align-items:flex-end;gap:3px;height:38px;margin-top:6px;}
+.st-spark i{flex:1;background:var(--navy);opacity:.75;border-radius:2px 2px 0 0;min-height:2px;position:relative;}
+.st-spark i::after{content:attr(data-m);position:absolute;top:100%;left:0;right:0;text-align:center;font-size:9px;color:var(--text-mute);font-style:normal;margin-top:2px;}
+.st-spark{margin-bottom:16px;}
+@media(max-width:600px){.st-kv{grid-template-columns:repeat(2,1fr);}}
 /* 매장 연혁 */
 .sh-tbl td small,.sh-tbl th small{display:block;font-size:10.5px;color:var(--text-mute);font-weight:600;margin-top:1px;}
 .sh-tbl tr.sh-row{cursor:pointer;}
@@ -1846,7 +1855,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi, storeHistory, getCleanThumbUrl } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi, storeHistory, getCleanThumbUrl, staffHistory } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -3160,6 +3169,7 @@ const GUIDE_SECTIONS = [
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
       '🗣️ 관리자 → 설정 → 「우리 회사 말」 — 매장·근무자·청소·인수인계를 우리 회사 식으로. 비워두면 지금 그대로',
       '🕘 출근·퇴근 — 그날 앱을 처음 열면(순환 직원은 매장을 고르면) 출근 시각이 남고, 홈 오른쪽 위 「근무 마감」이 퇴근. 매장 컴퓨터는 켜면 V-Flow가 먼저 뜨게 설정할 수 있어요(설치 파일)',
+      '👤 관리자 → 기록 → 직원 활동 → 「이력」 — 사람마다 근무 일수·평균 출근·거친 매장·완료 업무·인수인계·프로젝트 한 장. 「인쇄」로 근무 확인서',
       '📚 관리자 → 기록 → 「매장 연혁」 — 매장마다 월별 한 줄(근무자·청소·인수인계·사건·프로젝트·사진), 숫자 아래는 작년 같은 달. 줄을 누르면 그달 사건과 사진. 「인쇄」로 한 장',
       '🏷️ 인수인계 남길 때 「고장·클레임·재고·기타」 태그(선택) — 붙이면 매장 연혁의 「사건」으로 쌓여요',
       '🖼️ 청소 사진은 원본만 보관 기간 뒤 지워지고 축소본은 계속 남아요',
@@ -9930,7 +9940,7 @@ function buildRuleForm(rule){
 }
 // ── 탭: 설정 (기능 On/Off + 컬러테마 — 커스터마이징 묶음) ──
 // ── 직원 활동 모아보기 (관리자 전용): 점수 없이 원문을 주 단위로 정리 ──
-let _actWeekOff=0,_actStaffId=null;
+let _actWeekOff=0,_actStaffId=null,_actView='week';
 async function renderActivityTab(content){
   document.getElementById('dash-sub').textContent='직원별 주간 활동 원문';
   const sb=(await import('./adapter/supabase-client.js')).supabase;
@@ -9962,8 +9972,15 @@ async function renderActivityTab(content){
   const srow=document.createElement('div');srow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;';
   staff.forEach(p=>srow.appendChild(mkChip(p.name,p.id===_actStaffId,()=>{_actStaffId=p.id;renderDashboard();})));
   ctl.appendChild(srow);
+  // 보기: 주간 원문(지금) · 이력(사람 하나의 기록 한 장)
+  const vrow=document.createElement('div');vrow.style.cssText='display:flex;gap:6px;';
+  vrow.appendChild(mkChip('주간 원문',_actView==='week',()=>{_actView='week';renderDashboard();}));
+  vrow.appendChild(mkChip('이력',_actView==='history',()=>{_actView='history';renderDashboard();}));
+  ctl.insertBefore(vrow,ctl.firstChild);
+  if(_actView==='history')wrow.style.display='none';
   content.appendChild(ctl);
   if(!sel){content.innerHTML+='<div class="dash-date">직원이 없습니다</div>';return;}
+  if(_actView==='history'){await renderStaffHistory(content,sel);return;}
 
   const box=document.createElement('div');
   box.innerHTML='<div class="dash-date">불러오는 중...</div>';
@@ -11028,6 +11045,48 @@ async function renderUsageCard(content){
   tb.appendChild(body);card.appendChild(tb);
   if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일간 미사용: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
   content.appendChild(card);
+}
+// 직원 이력 — 근무 일수·평균 출근·거친 매장·완료 업무·인수인계·프로젝트를 한 장으로. 회사엔 평가 근거, 직원에겐 근무 확인서
+async function renderStaffHistory(content,sel){
+  document.getElementById('dash-sub').textContent='사람 하나의 기록 한 장';
+  const card=document.createElement('div');card.className='dash-card';card.style.margin='0 12px 12px';
+  card.innerHTML=`<div class="vh-ct"><strong>${_wrEsc(sel.name)}</strong><span class="vh-tiny">불러오는 중</span><button type="button" class="vh-btn" data-print>인쇄</button></div>`;
+  card.querySelector('[data-print]').onclick=()=>window.print();
+  content.appendChild(card);
+  let h;try{h=await staffHistory(sel.id);}catch(e){card.querySelector('.vh-tiny').textContent='불러오기 실패';return;}
+  const role=sel.role==='owner'?'대표':sel.role==='manager'?'매니저':'직원';
+  const since=h.firstDay?fmtD(h.firstDay,false).replace('/','.'):'';
+  const months=h.firstDay?(()=>{const d=new Date(h.firstDay);return Math.max(0,(today.getFullYear()-d.getFullYear())*12+(today.getMonth()-d.getMonth()));})():0;
+  card.querySelector('.vh-tiny').textContent=`${role}${h.firstDay?` · ${h.firstDay.slice(0,7).replace('-','.')} 부터 · ${Math.floor(months/12)?Math.floor(months/12)+'년 ':''}${months%12}개월`:''}`;
+  const hm=(m)=>m==null?'—':`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  const pct=(a,b)=>b?`${Math.round(a/b*100)}%`:'—';
+  const kv=document.createElement('div');kv.className='st-kv';
+  kv.innerHTML=`<div class="vh-metric"><span>근무</span><b>${h.days}일</b><small>평균 출근 ${hm(h.avgStart)}</small></div>
+    <div class="vh-metric"><span>완료 업무</span><b>${h.tasksDone.toLocaleString('ko-KR')}</b><small>등록 ${h.tasks.toLocaleString('ko-KR')} · ${pct(h.tasksDone,h.tasks)}</small></div>
+    <div class="vh-metric"><span>${T('handover')}</span><b>${h.handovers}</b><small>남김 · 확인 ${pct(h.handoversOk,h.handovers)}</small></div>
+    <div class="vh-metric"><span>프로젝트</span><b>${h.projects}</b><small>완료 ${h.projectsDone} · 진행 ${h.projects-h.projectsDone}</small></div>`;
+  card.appendChild(kv);
+  // 거친 매장
+  const stEntries=Object.entries(h.stores).sort((a,b)=>b[1]-a[1]);
+  const sh=document.createElement('div');sh.className='vh-fixed-head';sh.innerHTML=`<span>거친 ${T('store')}</span><span class="vh-tiny">일수</span>`;card.appendChild(sh);
+  const sw=document.createElement('div');sw.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;';
+  if(!stEntries.length)sw.innerHTML='<span class="vh-tiny">기록 없음</span>';
+  stEntries.forEach(([id,n])=>{const c=document.createElement('span');c.className='rm-worker';c.innerHTML=`${_wrEsc(storeShort(id)||'?')}<small>${n}</small>`;sw.appendChild(c);});
+  card.appendChild(sw);
+  // 월별 완료 업무 — 최근 12개월
+  const mh=document.createElement('div');mh.className='vh-fixed-head';mh.style.marginTop='12px';mh.innerHTML=`<span>월별 완료 업무</span><span class="vh-tiny">최근 12개월</span>`;card.appendChild(mh);
+  const keys=[];for(let i=11;i>=0;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);}
+  const vals=keys.map(k=>h.byMonth[k]||0);const mx=Math.max(1,...vals);
+  const sp=document.createElement('div');sp.className='st-spark';
+  keys.forEach((k,i)=>{const bar=document.createElement('i');bar.style.height=`${Math.max(2,Math.round(vals[i]/mx*38))}px`;bar.title=`${k.replace('-','.')} · ${vals[i]}건`;bar.setAttribute('data-m',String(Number(k.slice(5))));sp.appendChild(bar);});
+  card.appendChild(sp);
+  // 청소
+  const ch=document.createElement('div');ch.className='vh-tiny';ch.style.marginTop='4px';ch.textContent=`${T('clean')} 체크 ${h.cleanChecks.toLocaleString('ko-KR')}건`;card.appendChild(ch);
+  // 프로젝트
+  if(h.projectList.length){
+    const ph=document.createElement('div');ph.className='vh-fixed-head';ph.style.marginTop='12px';ph.innerHTML=`<span>프로젝트</span><span class="vh-tiny">최근 ${h.projectList.length}건</span>`;card.appendChild(ph);
+    h.projectList.forEach(p=>{const d=document.createElement('div');d.className='sh-ev';d.innerHTML=`<span class="d">${String(p.created_at||'').slice(0,7).replace('-','.')}</span><div class="t">${_wrEsc(p.title)}<small>${p.status==='done'?`완료${p.done_date?' · '+fmtD(p.done_date,false):''}`:'진행 중'}${p.employee_id===sel.id?' · 만든 사람':''}</small></div>`;card.appendChild(d);});
+  }
 }
 // 매장 연혁 — 한 매장의 월별 한 줄. 숫자 아래 작은 글씨는 작년 같은 달. 줄을 누르면 그달 사건·사진
 let _histStore=null,_histOpen=null;

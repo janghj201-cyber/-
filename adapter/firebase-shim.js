@@ -1239,6 +1239,41 @@ export async function getCleanThumbUrl(path, seconds = 3600) {
   return getCleanPhotoUrl(path, seconds)
 }
 
+// ── 직원 이력 — 사람 하나의 기록을 한 장으로. 있는 표(근무 기록·업무·인수인계·프로젝트·청소 기록)만 집계. 관리자만 부른다 ──
+export async function staffHistory(profileId) {
+  const ctx = await getContext()
+  const T = ctx.tenantId
+  const [ws, dt, ho, pm, cl] = await Promise.all([
+    supabase.from('work_sessions').select('work_date, store_id, started_at, ended_at').eq('profile_id', profileId).limit(20000),
+    supabase.from('daily_tasks').select('task_date, status').eq('employee_id', profileId).limit(50000),
+    supabase.from('handovers').select('handover_date, confirmed, closed').eq('tenant_id', T).eq('from_employee', profileId).is('deleted_at', null).limit(20000),
+    supabase.from('project_members').select('project:projects(id, title, status, created_at, done_date, employee_id)').eq('profile_id', profileId).limit(500),
+    supabase.from('cleaning_daily_logs').select('log_date').eq('tenant_id', T).eq('completed_by', profileId).eq('done', true).limit(50000),
+  ])
+  for (const r of [ws, dt, ho, pm, cl]) if (r.error) throw r.error
+  const mk = (d) => String(d || '').slice(0, 7)
+  const stores = {}, days = new Set(); let firstDay = null, lastDay = null, startSum = 0, startN = 0
+  for (const r of ws.data ?? []) {
+    if (!r.work_date) continue
+    days.add(r.work_date); if (!firstDay || r.work_date < firstDay) firstDay = r.work_date; if (!lastDay || r.work_date > lastDay) lastDay = r.work_date
+    if (r.store_id) stores[r.store_id] = (stores[r.store_id] || 0) + 1
+    if (r.started_at) { const d = new Date(r.started_at); startSum += d.getHours() * 60 + d.getMinutes(); startN++ }
+  }
+  const byMonth = {}
+  let tasks = 0, tasksDone = 0, firstTask = null
+  for (const r of dt.data ?? []) { tasks++; if (r.status === 'done') { tasksDone++; const k = mk(r.task_date); if (k) byMonth[k] = (byMonth[k] || 0) + 1 }; if (r.task_date && (!firstTask || r.task_date < firstTask)) firstTask = r.task_date }
+  if (firstTask && (!firstDay || firstTask < firstDay)) firstDay = firstTask // 근무 기록이 생기기 전(v5.4 이전) 업무 기록으로 시작일을 잡는다
+  let hos = 0, hosOk = 0
+  for (const r of ho.data ?? []) { hos++; if (r.confirmed || r.closed) hosOk++ }
+  const projects = (pm.data ?? []).map((m) => m.project).filter(Boolean).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+  return {
+    days: days.size, firstDay, lastDay, stores, avgStart: startN ? Math.round(startSum / startN) : null,
+    tasks, tasksDone, handovers: hos, handoversOk: hosOk, cleanChecks: (cl.data ?? []).length,
+    projects: projects.length, projectsDone: projects.filter((p) => p.status === 'done').length, projectList: projects.slice(0, 8),
+    byMonth,
+  }
+}
+
 // ── 매장 연혁 — 월별 한 줄. 있는 표 넷을 그대로 집계한다(근무 기록·청소 기록·인수인계·프로젝트). 관리자만 부른다 ──
 export async function storeHistory(storeId) {
   const ctx = await getContext()
