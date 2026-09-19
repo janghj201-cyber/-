@@ -2372,6 +2372,7 @@ function initMyMetrics(){
   document.querySelectorAll('.mw-metrics [data-go]').forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.go);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});});
 }
 function enterMyWork(name){
+  vfUse('mywork_open');
   try{initMyMetrics();}catch(e){}
   // 순환직원이 오늘 매장을 안 정하고 본인 업무에 들어가면 먼저 선택
   const _gSelf=window.__vflowProfile;
@@ -2845,6 +2846,7 @@ function addMyBacklogBulk(){window.addMyBacklogBulk();}
 // 홈 「창고 N」 → 시트. 넣기 한 줄 + 줄마다 「오늘로」·달력. 꺼내면 홈을 다시 그린다.
 function openBacklogSheet(entry,tKey){
   const me=window.__vflowProfile?.name;if(!me)return;
+  vfUse('backlog_open');
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-wh-title');
@@ -3216,6 +3218,7 @@ const GUIDE_SECTIONS = [
       '✏️ 비어 있으면 「~ 적기 →」 한 줄 — 누르면 바로 입력칸 (내 업무·인수인계·게시판)',
       '⎋ 내 계정 메뉴와 협업 만들기도 Esc로 닫혀요',
       '🔔 인수인계·요청·답·프로젝트 제안·도움 요청·공지가 생기면 바로 폰으로 — 내 계정 → 「알림」에서 켜고 꺼요. 밤 10시~아침 8시엔 안 보내요',
+      '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
     ]
   },
   {
@@ -5096,8 +5099,8 @@ window.openAppMenu=function(){
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
   let _big=false;try{_big=localStorage.getItem('vflow_big')==='1';}catch(e){}
-  mk('Aa','글자 크게',_big?'지금: 크게 · 누르면 보통으로':'모든 글자를 한 단계 크게 (이 기기만)',()=>{try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
-  mk('⇄','홈 좌우 바꾸기',_flip?'지금: 오늘 할 일이 왼쪽 · 누르면 원래대로':'지금: 확인할 것이 왼쪽 · 누르면 오늘 할 일을 왼쪽으로',()=>{try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
+  mk('Aa','글자 크게',_big?'지금: 크게 · 누르면 보통으로':'모든 글자를 한 단계 크게 (이 기기만)',()=>{vfUse('font_big');try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
+  mk('⇄','홈 좌우 바꾸기',_flip?'지금: 오늘 할 일이 왼쪽 · 누르면 원래대로':'지금: 확인할 것이 왼쪽 · 누르면 오늘 할 일을 왼쪽으로',()=>{vfUse('home_flip');try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
   // 알림 — 켜고 끄는 문은 여기 항상. 끄기는 이 기기 구독만 지운다
   try{
     if('PushManager' in window&&'Notification' in window){
@@ -6063,6 +6066,7 @@ function markBoardSeen(){try{localStorage.setItem(boardSeenKey(),String(Date.now
 // 게시판 — 옛 홈 안에만 있던 것을 제자리(#screen-dashboard .board-section)에 둔 채 오버레이로 끌어와 보여준다.
 // 게시판 코드가 id로 요소를 찾으므로 DOM 노드를 옮겼다가 닫을 때 되돌린다.
 function openBoardOverlay(){
+  vfUse('board_open');
   const sec=document.querySelector('#screen-dashboard .board-section');
   if(!sec)return;
   if(document.getElementById('board-overlay'))return;
@@ -6086,6 +6090,7 @@ function openBoardOverlay(){
 window.openBoardOverlay=openBoardOverlay;
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
 function openBriefingNow(){
+  vfUse('brief_open');
   const c=window.__briefCtx;
   const go=async()=>{
     const ctx=window.__briefCtx;if(!ctx)return;
@@ -6103,6 +6108,7 @@ window.openBriefingNow=openBriefingNow;
 
 // 원터치 청소 체크 — 첫 화면 버튼에서 오늘 이 매장 체크리스트 바로 열기
 function openQuickClean(store,opts){
+  vfUse('clean_open');
   curStore=store;
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
   const ce=getEvs(ty,tm,td).find(e=>e.t==='clean');
@@ -6410,6 +6416,7 @@ async function enablePush(silent){
       p256dh:j.keys.p256dh,auth:j.keys.auth,last_seen_at:new Date().toISOString()
     },{onConflict:'endpoint'});
     if(error)throw error;
+    if(!silent)vfUse('push_on');
     if(!silent)alert('알림이 켜졌어요.\n인수인계·요청·답이 오면 이 기기로 알려요. 밤 10시~아침 8시엔 보내지 않아요.');
     return true;
   }catch(e){
@@ -6684,7 +6691,7 @@ async function wrCreate(storeId,content,recipientName){
   }
   const {error}=await sb.from('work_requests').insert({tenant_id:ctx.tenantId,store_id:storeId,requester_id:ctx.profileId,recipient_id:recipientId,content});
   if(error)throw error;
-  vfPush(recipientId?{profile_ids:[recipientId]}:(storeId?{store_id:storeId}:{}),`${window.__vflowProfile?.name||'동료'}의 요청`,content);
+  vfUse('request_send');vfPush(recipientId?{profile_ids:[recipientId]}:(storeId?{store_id:storeId}:{}),`${window.__vflowProfile?.name||'동료'}의 요청`,content);
 }
 async function wrRespond(reqRow,accept){
   const {sb,ctx}=await wrApi();
@@ -6707,7 +6714,7 @@ async function wrRespond(reqRow,accept){
     if(tErr){alert('요청은 수락됐지만 업무 등록에 실패했어요 — 내 업무에서 직접 추가해주세요.');}
   }
   const meName=window.__vflowProfile?.name||'동료';const toReq=reqRow.requester_id?{profile_ids:[reqRow.requester_id]}:{names:[reqRow.requester?.name].filter(Boolean)};
-  vfPush(toReq,accept?`${meName}이 수락했어요`:`${meName}이 거절했어요`,accept?String(reqRow.content):`거절 — ${reason}`);
+  vfUse(accept?'request_accept':'request_decline');vfPush(toReq,accept?`${meName}이 수락했어요`:`${meName}이 거절했어요`,accept?String(reqRow.content):`거절 — ${reason}`);
   return true;
 }
 function wrDaysAgo(ts){return Math.floor((Date.now()-new Date(ts).getTime())/86400000);}
@@ -6813,10 +6820,27 @@ const vfNet={
     this.paint();this.flush();
   }
 };
+// ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기'};
+const vfUse=(()=>{
+  let buf=[],last={},timer=null,flushing=false;
+  const flush=async()=>{
+    if(flushing||!buf.length||!navigator.onLine)return;
+    const rows=buf;buf=[];flushing=true;
+    try{const {sb,ctx}=await wrApi();if(!ctx?.profileId){flushing=false;return;}
+      const {error}=await sb.from('usage_events').insert(rows.map(r=>({tenant_id:ctx.tenantId,profile_id:ctx.profileId,feature:r.f,at:new Date(r.at).toISOString()})));
+      if(error&&!/relation|does not exist|42P01/i.test(String(error.message||'')))buf=rows.concat(buf); // 표가 아직 없으면 조용히 버린다
+    }catch(e){buf=rows.concat(buf);}
+    flushing=false;
+  };
+  const start=()=>{if(timer)return;timer=setInterval(flush,15000);document.addEventListener('visibilitychange',()=>{if(document.hidden)flush();});window.addEventListener('pagehide',flush);};
+  return (f)=>{try{const now=Date.now();if(last[f]&&now-last[f]<3000)return;last[f]=now;buf.push({f,at:now});if(buf.length>200)buf.shift();start();}catch(e){}};
+})();
 // 저장 시도 — 연결 문제면 큐에 넣고 'queued', 아니면 그대로 던진다
 async function vfTry(kind,args,fn,dedupe){
+  vfUse({todo_toggle:'todo_check',fixed_toggle:'store_todo_check',todo_add:'todo_add',backlog_add:'backlog_add',backlog_schedule:'backlog_schedule',backlog_unschedule:'backlog_unschedule',ho_confirm:'handover_confirm'}[kind]||kind);
   try{await fn();return 'ok';}
-  catch(e){if(vfNet.isOff(e)){vfNet.push(kind,args,dedupe);return 'queued';}throw e;}
+  catch(e){if(vfNet.isOff(e)){vfNet.push(kind,args,dedupe);vfUse('offline_queued');return 'queued';}throw e;}
 }
 setTimeout(()=>{try{vfNet.start();}catch(e){}},1500);
 // ③ 줄 아무 데나 눌러도 체크 — 버튼·링크·입력은 제외, 글자를 긁는 중이면 제외
@@ -6826,7 +6850,7 @@ document.addEventListener('click',(e)=>{
   const row=t.closest('.hp-todo,.my-todo-item');if(!row)return;
   const cb=row.querySelector('input[type=checkbox]');if(!cb||cb.disabled)return;
   try{if(String(window.getSelection&&window.getSelection()).length)return;}catch(err){}
-  cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}));
+  vfUse('row_tap');cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}));
 });
 // ⑤ 글자 크게 — 저장된 선택을 처음에 적용
 try{if(localStorage.getItem('vflow_big')==='1')document.body.classList.add('vf-big');}catch(e){}
@@ -6840,6 +6864,7 @@ document.addEventListener('keydown',(e)=>{
   const cur=rows.findIndex(r=>r.classList.contains('kb-on'));
   const pick=(i)=>{rows.forEach(r=>r.classList.remove('kb-on'));if(rows[i]){rows[i].classList.add('kb-on');rows[i].scrollIntoView({block:'nearest'});}};
   const k=e.key;
+  if('jJkKnN/?'.includes(k)||k==='Enter')vfUse('kb_shortcut');
   if(k==='j'||k==='J'){if(!rows.length)return;pick(Math.min(rows.length-1,cur+1));e.preventDefault();}
   else if(k==='k'||k==='K'){if(!rows.length)return;pick(Math.max(0,cur<0?0:cur-1));e.preventDefault();}
   else if(k==='Enter'){const r=rows[cur];if(!r)return;const b=r.querySelector('.vh-btn:not([disabled])');if(b)b.click();else r.click();e.preventDefault();}
@@ -6859,7 +6884,7 @@ function vfLater(btn,row,commit,after){
   const dot=row.querySelector('.vh-dot');const dotCls=dot?dot.className:'';
   const sib=[...row.querySelectorAll('button')].filter(x=>x!==btn);sib.forEach(x=>x.hidden=true);
   const oldTxt=btn.textContent,orig=btn.onclick;let done=false,t=null;
-  const restore=()=>{if(done)return;done=true;_vfLaterQ.delete(fire);clearTimeout(t);row.classList.remove('vf-later');if(dot)dot.className=dotCls;btn.textContent=oldTxt;btn.disabled=false;btn.onclick=orig;sib.forEach(x=>x.hidden=false);};
+  const restore=()=>{if(done)return;vfUse('accept_undo');done=true;_vfLaterQ.delete(fire);clearTimeout(t);row.classList.remove('vf-later');if(dot)dot.className=dotCls;btn.textContent=oldTxt;btn.disabled=false;btn.onclick=orig;sib.forEach(x=>x.hidden=false);};
   const fire=async()=>{
     if(done)return;done=true;_vfLaterQ.delete(fire);clearTimeout(t);btn.disabled=true;
     let ok=false;try{ok=await commit();}catch(e){ok=false;}
@@ -6893,7 +6918,7 @@ async function projectPropose(title,recipientName,dueDate){
   if(error)throw error;
   const {error:e2}=await sb.from('project_members').insert({project_id:proj.id,profile_id:ctx.profileId,tenant_id:ctx.tenantId});
   if(e2)throw e2;
-  vfPush({profile_ids:[rid]},`프로젝트 제안 — ${title}`,`${window.__vflowProfile?.name||'동료'} · 수락하면 둘이 시작해요`);
+  vfUse('project_propose');vfPush({profile_ids:[rid]},`프로젝트 제안 — ${title}`,`${window.__vflowProfile?.name||'동료'} · 수락하면 둘이 시작해요`);
 }
 // 나에게 온 제안 — 아직 수락 안 한 것
 async function loadMyProposals(){
@@ -6910,7 +6935,7 @@ async function projectRespond(row,accept){
     if(error&&error.code!=='23505'){alert('수락 실패 — '+(error.message||'권한/네트워크를 확인해주세요'));return false;}
     await sb.from('projects').update({accepted_at:new Date().toISOString()}).eq('id',row.id); // 막혀도 참여자 행이 곧 수락
     _collabCache.at=0;
-    vfPush(row.employee_id?{profile_ids:[row.employee_id]}:{names:[row.owner?.name].filter(Boolean)},`${window.__vflowProfile?.name||'동료'}이 프로젝트를 수락했어요`,String(row.title));
+    vfPush(row.employee_id?{profile_ids:[row.employee_id]}:{names:[row.owner?.name].filter(Boolean)},`${window.__vflowProfile?.name||'동료'}이 프로젝트를 수락했어요`,String(row.title));vfUse('project_accept');
     return true;
   }
   const r=prompt('거절 사유를 적어주세요 (보낸 사람에게 표시됩니다)');
@@ -6920,7 +6945,7 @@ async function projectRespond(row,accept){
   if(error||count===0){alert('거절 처리 실패 — 보낸 사람에게 직접 말해주세요');return false;}
   try{await sb.from('work_requests').insert({tenant_id:ctx.tenantId,store_id:null,requester_id:ctx.profileId,recipient_id:null,content:`[프로젝트 거절] ${row.title} — ${reason}`,status:'declined',decline_reason:reason,responded_by:ctx.profileId,responded_at:new Date().toISOString()});}catch(e){}
   _collabCache.at=0;
-  vfPush(row.employee_id?{profile_ids:[row.employee_id]}:{names:[row.owner?.name].filter(Boolean)},`${window.__vflowProfile?.name||'동료'}이 프로젝트를 거절했어요`,`${row.title} — ${reason}`);
+  vfPush(row.employee_id?{profile_ids:[row.employee_id]}:{names:[row.owner?.name].filter(Boolean)},`${window.__vflowProfile?.name||'동료'}이 프로젝트를 거절했어요`,`${row.title} — ${reason}`);vfUse('project_decline');
   return true;
 }
 // 제안이 아직 수락 안 됐는지 (목록 행 기준)
@@ -7256,6 +7281,7 @@ window.closeStoreRoom=function(){
   try{renderDashboardHome().catch(()=>{});}catch(e){} // 홈 배지·버튼 상태 즉시 갱신
 };
 function openStoreRoom(store){
+  vfUse('room_open');
   // 매장 = 방. 홈이 "나의 오늘"이라면 방은 "이 매장의 오늘과 기록" — 근무자·청소·매장 할 일·인수인계·요청·고정 정보·프로젝트.
   // 데이터 함수는 그대로 쓰고(handover/·storeinfo/·work_requests·projects) 배치만 홈 문법으로.
   curStore=store;
@@ -7815,7 +7841,7 @@ window.collabHelpRequest=async function(){
   const {sb,me}=await collabApi();
   const {error,count}=await sb.from('projects').update({help_message:t,help_requested_by:me,help_requested_at:new Date().toISOString()},{count:'exact'}).eq('id',_collabCur);
   if(error||count===0){alert('요청 실패 — 네트워크/권한을 확인해주세요');return;}
-  try{const pt=document.getElementById('collab-detail-title')?.textContent||'프로젝트';vfPush({project_id:_collabCur,managers:true},`도움 요청 — ${pt}`,t);}catch(e){}
+  try{const pt=document.getElementById('collab-detail-title')?.textContent||'프로젝트';vfPush({project_id:_collabCur,managers:true},`도움 요청 — ${pt}`,t);vfUse('project_help');}catch(e){}
   await openCollabDetail(_collabCur); renderCollabProjects();
 };
 window.collabHelpResolve=async function(){
@@ -8068,7 +8094,7 @@ window.submitBoardPost=async function(){
   const items=snap.exists()?(snap.data().items||[]):[];
   items.push({id:Date.now()+'',cat:boardWriteCat,title,body,author,date,ts:now.getTime(),...extra});
   await setDoc(ref,{items});
-  if(boardWriteCat==='notice')vfPush({all:true},`공지 — ${title}`,body);
+  vfUse('board_post');if(boardWriteCat==='notice')vfPush({all:true},`공지 — ${title}`,body);
   closeBoardWrite();
   loadBoard();
 };
@@ -8768,7 +8794,7 @@ async function addHandoverItem(storeId,dateKey,text,author,recipient,until){
   const items=snap.exists()?(snap.data().items||[]):[];
   items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false,until:until||null});
   await setDoc(ref,{items});
-  vfPush(recipient?{names:[recipient]}:{store_id:storeId},`${_vfStoreShort(storeId)||'매장'} 인수인계`,`${author||'익명'} · ${text}`);
+  vfUse('handover_leave');vfPush(recipient?{names:[recipient]}:{store_id:storeId},`${_vfStoreShort(storeId)||'매장'} 인수인계`,`${author||'익명'} · ${text}`);
 }
 // 확인 없이 종료(마감) — 못 받아서 영영 미확인으로 쌓이는 것 방지
 async function closeHandoverItem(storeId,dateKey,itemId){
@@ -9349,7 +9375,7 @@ async function renderDashboard(){
   else if(dashTab==='settings')await renderSettingsTab(content);
   else if(dashTab==='activity')await renderActivityTab(content);
   else if(dashTab==='report')await renderReportTab(content);
-  else await renderMonthlyTab(content);
+  else {await renderMonthlyTab(content);try{await renderUsageCard(content);}catch(e){}}
 
   if(dashTab!=='monthly'){
     const refreshBtn=document.createElement('button');
@@ -11111,6 +11137,29 @@ function renderCleanEditor(content){
   content.appendChild(card);
 }
 
+// 무엇이 쓰이는지 — 최근 30일, 기능별 횟수·쓴 사람·마지막. 안 쓰인 기능은 맨 아래 한 줄
+async function renderUsageCard(content){
+  const {sb,ctx}=await wrApi();
+  try{await sb.rpc('usage_events_prune');}catch(e){}
+  const since=new Date(Date.now()-30*86400000).toISOString();
+  const {data,error}=await sb.from('usage_events').select('feature,profile_id,at').eq('tenant_id',ctx.tenantId).gte('at',since).order('at',{ascending:false}).limit(5000);
+  if(error)return; // 표가 아직 없으면 카드도 없다
+  const agg=new Map();
+  (data||[]).forEach(r=>{const a=agg.get(r.feature)||{n:0,who:new Set(),last:null};a.n++;a.who.add(r.profile_id);if(!a.last||r.at>a.last)a.last=r.at;agg.set(r.feature,a);});
+  const rows=[...agg.entries()].sort((a,b)=>b[1].n-a[1].n);
+  const unused=Object.keys(VF_USE_LABELS).filter(k=>!agg.has(k));
+  const card=document.createElement('div');card.className='dash-card';card.style.margin='12px';
+  const people=new Set((data||[]).map(r=>r.profile_id)).size;
+  card.innerHTML=`<div class="dash-store-name">무엇이 쓰이는지 <span style="font-size:11px;font-weight:600;color:var(--text-sub);">최근 30일 · ${people}명 · ${(data||[]).length}번</span></div>`;
+  if(!rows.length){card.innerHTML+='<div style="font-size:12px;color:var(--text-mute);margin-top:6px;">아직 세기 시작한 지 얼마 안 됐어요 — 며칠 뒤에 보세요</div>';content.appendChild(card);return;}
+  const tb=document.createElement('table');tb.className='ad-tbl';tb.style.marginTop='8px';
+  tb.innerHTML='<thead><tr><th style="width:100%">기능</th><th style="text-align:right">횟수</th><th style="text-align:right">쓴 사람</th><th>마지막</th></tr></thead>';
+  const body=document.createElement('tbody');
+  rows.forEach(([k,a])=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${_wrEsc(VF_USE_LABELS[k]||k)}</td><td class="n">${a.n}</td><td class="n">${a.who.size}</td><td style="color:var(--text-sub)">${fmtD(a.last)}</td>`;body.appendChild(tr);});
+  tb.appendChild(body);card.appendChild(tb);
+  if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일 동안 한 번도 안 쓰인 것: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
+  content.appendChild(card);
+}
 async function renderMonthlyTab(content){
   document.getElementById('dash-sub').textContent='이번 달 지점별 누적 통계';
   const y=today.getFullYear(),m=today.getMonth();
