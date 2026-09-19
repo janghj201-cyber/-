@@ -3219,6 +3219,7 @@ const GUIDE_SECTIONS = [
       '⎋ 내 계정 메뉴와 협업 만들기도 Esc로 닫혀요',
       '🔔 인수인계·요청·답·프로젝트 제안·도움 요청·공지가 생기면 바로 폰으로 — 내 계정 → 「알림」에서 켜고 꺼요. 밤 10시~아침 8시엔 안 보내요',
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
+      '🏪 대표·매니저 홈 맨 위에 「매장 확인할 것」 — 어느 매장 · 무엇 · 누구, 누르면 그 매장 방. 현황·보고까지 안 가도 첫 줄이 판단이에요. 직원 홈은 그대로',
     ]
   },
   {
@@ -5123,17 +5124,16 @@ window.openAppMenu=function(){
 // 오늘 현황 — 관리자 전용: 누락 먼저 → 매장 신호등 → 직원 오늘 → 바로가기
 // 지금 확인할 것 · 직원 오늘 — 옛 「오늘 현황」 화면의 알맹이. 관리자 현황·보고가 오늘 날짜일 때 타일 위에 얹는다.
 // (매장 타일과 관리자 링크는 같은 화면에 이미 있어서 뺐다)
-async function renderTodayGaps(body){
-  const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!=null)x.innerHTML=html;return x;};
-  const wrap=el('div','tg-wrap');body.appendChild(wrap);
-  try{
+// 매장 누락 목록 — 대표·매니저 홈과 현황·보고가 같은 함수를 쓴다(문구·순서가 어긋나지 않게). pre 에 이미 읽은 데이터가 있으면 다시 읽지 않는다
+async function loadTodayGaps(pre){
+    pre=pre||{};
     const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
     const tKey=todayKey();
     const totalCl=getCleanItemCount(ty,tm,td);
     const [cleanSnaps,hoSnaps,todosByName,dayoffSnap]=await Promise.all([
-      Promise.all(STORES.map(s=>getDoc(doc(db,`checks/${s.id}/${tKey}/clean`)).catch(()=>null))),
-      Promise.all(STORES.map(s=>getDoc(doc(db,`handover/${s.id}_${tKey}`)).catch(()=>null))),
-      Promise.all(staffList.map(async name=>{try{return [name,await loadStaffTodos(name,tKey)];}catch(e){return [name,[]];}})),
+      pre.cleanByStore?STORES.map(s=>pre.cleanByStore.get(s.id)||null):Promise.all(STORES.map(s=>getDoc(doc(db,`checks/${s.id}/${tKey}/clean`)).catch(()=>null))),
+      pre.hoByStore?STORES.map(s=>pre.hoByStore.get(s.id)||null):Promise.all(STORES.map(s=>getDoc(doc(db,`handover/${s.id}_${tKey}`)).catch(()=>null))),
+      pre.todosByName?pre.todosByName:Promise.all(staffList.map(async name=>{try{return [name,await loadStaffTodos(name,tKey)];}catch(e){return [name,[]];}})),
       getDoc(doc(db,'config/dayoff')).catch(()=>null),
     ]);
     const dayoffData=(dayoffSnap&&dayoffSnap.exists&&dayoffSnap.exists())?(dayoffSnap.data()||{}):{};
@@ -5167,7 +5167,14 @@ async function renderTodayGaps(body){
     if(noTask.length)items.push({dot:'warn',text:`오늘 업무 미등록 ${noTask.length}명`,sub:noTask.map(esc).join(' · ')+' — 휴무 아님',fn:()=>{if(noTask[0])enterMyWork(noTask[0]);}});
     const carrySum=rows.reduce((a,r)=>a+r.carried,0);
     if(carrySum)items.push({dot:'warn',text:`미완료 이월 ${carrySum}건`,sub:rows.filter(r=>r.carried).map(r=>`${shortN(r.s.name)} ${r.carried}건`).join(' · '),fn:null});
-
+    return {items,todosByName,offToday};
+}
+async function renderTodayGaps(body){
+  const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!=null)x.innerHTML=html;return x;};
+  const wrap=el('div','tg-wrap');body.appendChild(wrap);
+  try{
+    const {items,todosByName,offToday}=await loadTodayGaps();
+    const esc=_wrEsc;
     const card=el('div','vh-card tg-card');
     card.appendChild(el('div','vh-ct',`<strong>지금 확인할 것</strong><span class="vh-tiny">${items.length?`${items.length}건`:''}</span>`));
     const list=el('div','vh-list');
@@ -5401,7 +5408,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const met=el('div','vh-metrics');
   const mk=(lb,val,cls,fn)=>{const m=el('button','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.type='button';m.setAttribute('aria-label',`${lb} ${val}`);m.onclick=fn;return m;};
   met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
-  met.appendChild(mk('내 청소',totalCl>0?`${dnCl}/${totalCl}`:'—',totalCl>0&&leftCl===0?'ok':(dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
+  const _ownerOnly=(window.__vflowProfile?.role==='owner');
+  met.appendChild(mk('내 청소',(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
   const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>{if(featOn('workreq')){const p=wrap.querySelector('.vh-priority');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}else enterMyWork(me);});
   met.appendChild(m4);
@@ -5412,6 +5420,24 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     window.__vfPrevMet=cur;
   }catch(e){}
   col1.appendChild(met);
+
+  // ── 1열(대표·매니저만): 매장 확인할 것 — 현황·보고의 「지금 확인할 것」과 같은 목록. 직원 홈엔 없다 ──
+  if(isAdmin){
+    const sc=el('div','vh-card vh-priority vh-storegaps');
+    sc.appendChild(el('div','vh-ct',`<strong>매장 확인할 것</strong><span class="vh-tiny"></span>`));
+    const sl=el('div','vh-list');sc.appendChild(sl);
+    sl.appendChild(el('div','vh-item vh-empty-row',`<span class="vh-dot"></span><div class="vh-main">매장 보는 중<small></small></div>`));
+    const smore=el('button','vh-more','');smore.type='button';smore.style.display='none';sc.appendChild(smore);
+    col1.appendChild(sc);
+    loadTodayGaps({cleanByStore:window.__dashClean,hoByStore,todosByName}).then(({items})=>{
+      sl.innerHTML='';sc.querySelector('.vh-tiny').textContent=items.length?`${items.length}건${items.length>1?' · 중요도순':''}`:'';
+      if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>청소 · 인수인계 · 업무 등록 · 이월 모두 정상</small></div>`));return;}
+      const MAX_M=2;
+      items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
+      const hid=items.length-MAX_M;
+      if(hid>0){smore.style.display='';smore.textContent=`${hid}건 더 보기`;smore.onclick=()=>{sl.querySelectorAll('.vh-item').forEach(r=>r.classList.remove('vh-hide-m'));smore.style.display='none';};}
+    }).catch(e=>{console.warn('[home] storegaps',e);sc.remove();});
+  }
 
   // ── 1열: 우선 확인 ──
   const pri=el('div','vh-card vh-priority');
