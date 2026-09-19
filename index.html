@@ -1035,6 +1035,19 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
   .vh-check:checked,.my-todo-item input[type=checkbox]:checked,.vf-roll,.vh-sheet-bg,.vh-sheet-bg .vh-sheet,.vh-sheet-bg.vf-closing,.vh-sheet-bg.vf-closing .vh-sheet,.vf-flash{animation:none!important;}
   .hp-todo>span,.my-todo-text,.vf-out,.vh-ptile .pt-bar div,.rm-proj .rm-bar div,.hp-prog-fill{transition:none!important;}
 }
+/* ③ 줄 아무 데나 눌러도 체크 — 폰에서 엄지가 화면을 가로지르지 않게. 보이는 건 그대로 */
+.hp-todo:has(.vh-check:not(:disabled)),.my-todo-item:has(input[type=checkbox]:not(:disabled)){cursor:pointer;}
+/* ② 비어 있을 때 한 줄 행동 — 누르면 입력창으로 */
+.vf-empty-act{display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:6px 0;font:inherit;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;}
+.vf-empty-act .vf-ic{width:15px;height:15px;}
+.vf-empty-act:hover{text-decoration:underline;}
+/* ⑤ 글자 크게 — 내 계정에서 고름, 이 기기만 */
+body.vf-big{zoom:1.1;}
+/* ④ 키보드로 훑기 — J/K로 고른 줄 */
+.vh-item.kb-on{box-shadow:inset 3px 0 0 var(--gold);background:var(--bg);border-radius:8px;}
+.kb-help{position:fixed;right:16px;bottom:16px;z-index:960;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-card);font-size:12.5px;line-height:1.7;color:var(--text);min-width:220px;}
+.kb-help b{display:inline-block;min-width:44px;font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--navy);}
+.kb-help .vh-tiny{display:block;margin-bottom:4px;}
 /* 홈 「창고 N」 — 오늘 할 일 머리 오른쪽 끝, 작게 */
 .vh-wh-btn{background:none;border:1px solid var(--border);border-radius:999px;color:var(--text-sub);font:inherit;font-size:11.5px;font-weight:700;padding:4px 9px;cursor:pointer;min-height:26px;line-height:1;}
 .vh-wh-btn:hover{background:var(--bg);color:var(--text);}
@@ -2786,7 +2799,7 @@ async function renderMyBacklog(){
   if(!self){list.innerHTML='';cnt.textContent='';return;}
   let items=[];
   try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';cnt.textContent='';return;}
-  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 날짜 없이 넣어둘 일을 위에 적어요</div>';};
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty')){list.innerHTML='<div class="wh-empty"><button type="button" class="vf-empty-act">첫 줄 넣기 →</button></div>';list.querySelector('.vf-empty-act').onclick=()=>{const i=document.getElementById('mw-wh-input');if(i)i.focus();};}};
   list.innerHTML='';
   if(!items.length){paintCnt();return;}
   items.forEach(it=>list.appendChild(backlogRow(it,{onMoved:(key)=>{paintCnt();renderMyWeekStrip().catch(()=>{});const k=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());if(k===key)renderMyTodoList();},onDeleted:paintCnt})));
@@ -2828,7 +2841,7 @@ function openBacklogSheet(entry,tKey){
   document.addEventListener('keydown',onKey);
   sh.querySelector('[data-cancel]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
-  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty'))list.innerHTML='<div class="wh-empty">비어 있어요 — 오늘 말고 나중에 할 일을 위에 적어요</div>';};
+  const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty')){list.innerHTML='<div class="wh-empty"><button type="button" class="vf-empty-act">오늘 말고 나중에 할 일 넣기 →</button></div>';list.querySelector('.vf-empty-act').onclick=()=>inp.focus();}};
   const load=async()=>{
     let items=[];
     try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';return;}
@@ -3184,6 +3197,9 @@ const GUIDE_SECTIONS = [
       '📊 홈 프로젝트 타일에 마지막 일지가 언제인지 — 3일 넘게 조용하면 표시돼요. 관리자 → 기록 → 프로젝트 맨 위에 이달의 요청 표',
       '⇄ 내 계정 → 「홈 좌우 바꾸기」 — 오늘 할 일을 왼쪽에 두고 싶으면 (컴퓨터 화면, 이 기기에만)',
       '🖱️ 컴퓨터 왼쪽 메뉴에 커서를 대면 살짝 반응해요',
+      '👆 할 일 줄은 아무 데나 눌러도 체크돼요 — 폰에서 한 손으로',
+      '⌨️ 컴퓨터 홈에서 J/K·Enter·N·/ 키로 훑어요 — ? 를 누르면 안내',
+      'Aa 내 계정 → 「글자 크게」 (이 기기만)',
     ]
   },
   {
@@ -5048,6 +5064,8 @@ window.openAppMenu=function(){
   mk('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
+  let _big=false;try{_big=localStorage.getItem('vflow_big')==='1';}catch(e){}
+  mk('Aa','글자 크게',_big?'지금: 크게 · 누르면 보통으로':'모든 글자를 한 단계 크게 (이 기기만)',()=>{try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
   mk('⇄','홈 좌우 바꾸기',_flip?'지금: 오늘 할 일이 왼쪽 · 누르면 원래대로':'지금: 확인할 것이 왼쪽 · 누르면 오늘 할 일을 왼쪽으로',()=>{try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
   mk('📄','내 동의 관리','약관·개인정보 동의 내역 확인 및 변경',()=>{try{openMyConsents();}catch(e){}});
   mk('📖','앱 가이드','새 기능 안내 · 사용법',()=>{try{openGuideModal();}catch(e){}});
@@ -5528,7 +5546,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const m3=met.children[2];if(m3){vfRoll(m3.querySelector('b'),any?left:'—');m3.classList.toggle('ok',any&&left===0);m3.classList.toggle('danger',!any);}
   };
   if(mine.length===0){
-    tBody.appendChild(el('div','hp-empty','오늘 할 일이 아직 없어요 — 아래에 한 줄 적고 엔터'));
+    // 비어 있으면 "없어요" 대신 첫 행동 하나 — 누르면 입력창에 커서
+    const emp=el('div','hp-empty');
+    const act=el('button','vf-empty-act',`${VF_ICONS.task}첫 할 일 적기 →`);act.type='button';
+    act.onclick=()=>{const inp=todo.querySelector('.vh-add input');if(inp){inp.focus();inp.scrollIntoView({block:'nearest'});}};
+    emp.appendChild(act);tBody.appendChild(emp);
   } else {
     const prog=el('div','hp-prog',`<div class="hp-prog-bar"><div class="hp-prog-fill" style="width:${Math.round(todoDone/mine.length*100)}%"></div></div><span class="hp-prog-num">${todoDone}/${mine.length}</span>`);
     tBody.appendChild(prog);
@@ -5670,7 +5692,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     fixedWrap.hidden=false;
     fixedWrap.appendChild(el('div','vh-fixed-head',`<span>매장 할 일</span><span class="vh-tiny">근무자 누구나 체크</span>`));
     fixedRows.forEach(it=>fixedWrap.appendChild(fixedTodoRow(it,{canCheck:true,me,onChange:refreshTodoCounts})));
-    const emp=tBody.querySelector('.hp-empty');if(emp)emp.textContent='내 할 일은 아직 없어요 — 아래에 한 줄 적고 엔터';
+    const emp=tBody.querySelector('.hp-empty .vf-empty-act');if(emp)emp.innerHTML=`${VF_ICONS.task}내 할 일 적기 →`;
     if(mine.length>0)tBody.insertBefore(el('div','vh-fixed-head','<span>내 할 일</span>'),fixedWrap.nextSibling);
     refreshTodoCounts();
     // 우선 확인에도 한 줄 — 폰에서 카드가 접혀 있어도 놓치지 않게
@@ -6644,6 +6666,40 @@ function vfRoll(el,text){
 }
 // 방금 한 일이 어디 갔는지 — 한 번 켜졌다 꺼짐
 function vfFlash(el){if(!el||vfReduced())return;el.classList.remove('vf-flash');void el.offsetWidth;el.classList.add('vf-flash');el.addEventListener('animationend',()=>el.classList.remove('vf-flash'),{once:true});}
+// ③ 줄 아무 데나 눌러도 체크 — 버튼·링크·입력은 제외, 글자를 긁는 중이면 제외
+document.addEventListener('click',(e)=>{
+  const t=e.target;if(!(t instanceof Element))return;
+  if(t.closest('button,a,input,textarea,select,label,[contenteditable]'))return;
+  const row=t.closest('.hp-todo,.my-todo-item');if(!row)return;
+  const cb=row.querySelector('input[type=checkbox]');if(!cb||cb.disabled)return;
+  try{if(String(window.getSelection&&window.getSelection()).length)return;}catch(err){}
+  cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}));
+});
+// ⑤ 글자 크게 — 저장된 선택을 처음에 적용
+try{if(localStorage.getItem('vflow_big')==='1')document.body.classList.add('vf-big');}catch(e){}
+// ④ 키보드로 훑기 (컴퓨터 · 홈) — J/K 우선 확인 줄, Enter 그 줄의 첫 버튼, N 남기기, / 할 일 입력, ? 도움말
+document.addEventListener('keydown',(e)=>{
+  if(window.innerWidth<1024||e.ctrlKey||e.metaKey||e.altKey)return;
+  const a=document.activeElement;if(a&&a.closest&&a.closest('input,textarea,select,[contenteditable]'))return;
+  const home=document.getElementById('screen-dashboard');if(!home||!home.classList.contains('active'))return;
+  if(document.querySelector('.vh-sheet-bg,.update-modal-bg.open'))return;
+  const rows=[...document.querySelectorAll('#home-personal .vh-priority .vh-item:not(.vh-empty-row):not(.vf-out)')];
+  const cur=rows.findIndex(r=>r.classList.contains('kb-on'));
+  const pick=(i)=>{rows.forEach(r=>r.classList.remove('kb-on'));if(rows[i]){rows[i].classList.add('kb-on');rows[i].scrollIntoView({block:'nearest'});}};
+  const k=e.key;
+  if(k==='j'||k==='J'){if(!rows.length)return;pick(Math.min(rows.length-1,cur+1));e.preventDefault();}
+  else if(k==='k'||k==='K'){if(!rows.length)return;pick(Math.max(0,cur<0?0:cur-1));e.preventDefault();}
+  else if(k==='Enter'){const r=rows[cur];if(!r)return;const b=r.querySelector('.vh-btn:not([disabled])');if(b)b.click();else r.click();e.preventDefault();}
+  else if(k==='n'||k==='N'){const q=document.querySelector('#home-personal .vh-quick');if(q){q.click();e.preventDefault();}}
+  else if(k==='/'){const i=document.querySelector('#home-personal .vh-add input');if(i){i.focus();e.preventDefault();}}
+  else if(k==='?'){
+    const old=document.querySelector('.kb-help');if(old){old.remove();return;}
+    const h=document.createElement('div');h.className='kb-help';
+    h.innerHTML='<span class="vh-tiny">키보드 (홈 · 컴퓨터)</span><b>J / K</b> 우선 확인 위·아래<br><b>Enter</b> 그 줄의 첫 버튼<br><b>N</b> 남기기<br><b>/</b> 할 일 입력<br><b>?</b> 이 안내 닫기';
+    document.body.appendChild(h);setTimeout(()=>{try{h.remove();}catch(err){}},6000);e.preventDefault();
+  }
+  else if(k==='Escape'){rows.forEach(r=>r.classList.remove('kb-on'));const old=document.querySelector('.kb-help');if(old)old.remove();}
+});
 // 시트가 내려가며 닫힘
 function vfSheetClose(ov){if(!ov)return;if(vfReduced()){ov.remove();return;}ov.classList.add('vf-closing');ov.style.pointerEvents='none';setTimeout(()=>{try{ov.remove();}catch(e){}},210);}
 
