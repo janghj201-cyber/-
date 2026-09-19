@@ -1269,19 +1269,25 @@ export async function cancelInvitation(id) {
 // ── config/settings (기능 On/Off + 컬러테마: V-Flow 신규 tenant_settings 테이블) ──
 // {features:{cleaning:bool,...}, theme:'default'|...} 통짜 저장 — 테넌트당 1행 upsert.
 // 읽기는 전 직원(적용 대상이니까), 쓰기는 RLS가 owner/manager만 허용.
+// features·theme 말고 나머지(점수 규칙·사진 보관 일수·인수인계 부재 일수·우리 회사 말)는 extra(jsonb) 한 칸에 통째로.
+// 예전엔 features·theme 만 저장돼서 나머지 설정이 새로고침하면 사라졌다. extra 열이 아직 없으면(SQL 전) 예전처럼 동작한다.
+let _settingsHasExtra = true
 async function readSettingsConfig(ctx) {
-  const { data, error } = await supabase.from('tenant_settings').select('features, theme').eq('tenant_id', ctx.tenantId).maybeSingle()
+  let q = await supabase.from('tenant_settings').select('features, theme, extra').eq('tenant_id', ctx.tenantId).maybeSingle()
+  if (q.error && /extra/.test(String(q.error.message || ''))) { _settingsHasExtra = false; q = await supabase.from('tenant_settings').select('features, theme').eq('tenant_id', ctx.tenantId).maybeSingle() }
+  const { data, error } = q
   if (error) throw error
-  return data ? { features: data.features ?? {}, theme: data.theme ?? 'default' } : null
+  if (!data) return null
+  const extra = data.extra && typeof data.extra === 'object' ? data.extra : {}
+  return { ...extra, features: data.features ?? {}, theme: data.theme ?? 'default' }
 }
 
 async function writeSettingsConfig(ctx, dataObj) {
-  const { error } = await supabase
-    .from('tenant_settings')
-    .upsert(
-      { tenant_id: ctx.tenantId, features: dataObj?.features ?? {}, theme: dataObj?.theme ?? 'default', updated_at: new Date().toISOString() },
-      { onConflict: 'tenant_id' },
-    )
+  const { features, theme, ...extra } = dataObj || {}
+  const row = { tenant_id: ctx.tenantId, features: features ?? {}, theme: theme ?? 'default', updated_at: new Date().toISOString() }
+  if (_settingsHasExtra) row.extra = extra
+  let { error } = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' })
+  if (error && /extra/.test(String(error.message || ''))) { _settingsHasExtra = false; delete row.extra; ({ error } = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' })) }
   if (error) throw error
 }
 

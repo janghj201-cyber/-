@@ -1707,8 +1707,8 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
         <!-- 그날 할 일 -->
         <div class="vh-card my-section mw-card" id="mw-todo">
           <div class="vh-ct"><strong><span id="my-task-date-label">그날</span>의 할 일</strong><span class="vh-tiny" id="mw-todo-sub"></span></div>
-          <div class="mw-store"><span class="mw-lbl">매장</span><div class="my-store-select" id="my-store-select"></div></div>
-          <div class="my-todo-list" id="my-todo-list"><div class="my-empty">매장을 선택하세요</div></div>
+          <div class="mw-store"><span class="mw-lbl" data-term="{store}">매장</span><div class="my-store-select" id="my-store-select"></div></div>
+          <div class="my-todo-list" id="my-todo-list"><div class="my-empty" data-term="{store}을 선택하세요">매장을 선택하세요</div></div>
           <div class="my-input-row">
             <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄 · 여러 줄은 「여러 개」" onkeydown="if(event.key==='Enter')addMyTodo()">
             <button type="button" class="vh-btn primary" onclick="addMyTodo()">추가</button>
@@ -1894,6 +1894,11 @@ function scoreChip(sc,extraCss=''){
   return `<span class="score-chip" style="background:${bg};color:${col};${extraCss}" title="청소 ${sc.base} + 업무 ${sc.bonus}${sc.penalty?` − 인수인계 ${sc.penalty}`:''}">${sc.score}점</span>`;
 }
 function featOn(key){return appSettings.features[key]!==false;} // 미설정=켜짐
+// 우리 회사 말 — 화면의 뼈대 말(메뉴·카드 제목·칸 이름·안내문)에만 쓴다. 직원이 적은 내용·안내 본문은 손대지 않는다
+const TERM_DEFAULT={store:'매장',worker:'근무자',clean:'청소',handover:'인수인계'};
+const TERM_LABEL={store:'매장 (일하는 곳 하나)',worker:'근무자 (그날 그곳에서 일하는 사람)',clean:'청소 (매일 체크하는 점검)',handover:'인수인계 (다음 사람에게 남기는 말)'};
+function T(k){const v=(appSettings.terms||{})[k];return (v&&String(v).trim())||TERM_DEFAULT[k]||k;}
+function applyTerms(){try{document.querySelectorAll('[data-term]').forEach(el=>{const tpl=el.getAttribute('data-term');el.textContent=tpl.replace(/\{(\w+)\}/g,(m,k)=>T(k));});}catch(e){}}
 function applySettings(){
   FEATURE_DEFS.forEach(f=>document.body.classList.toggle('feat-off-'+f.key,!featOn(f.key)));
   document.body.setAttribute('data-theme',appSettings.theme||'default');
@@ -1902,6 +1907,7 @@ async function loadSettings(){
   try{
     const snap=await getDoc(doc(db,'config/settings'));
     if(snap.exists())appSettings={features:{},theme:'default',...snap.data()};
+    applyTerms();
   }catch(e){}
   applySettings();
 }
@@ -2167,18 +2173,7 @@ function getTodayCleanSec(){
   return (i>=0&&DEEP_CLEAN_OCCURRENCES.includes(i+1))?i+1:-1;
 }
 
-// Firebase 체크 데이터 키
-function fbKey(storeId, dateKey, itemKey){
-  return `checks/${storeId}/${dateKey}/${itemKey}`;
-}
 
-// 전날 날짜키
-function prevDateKey(dateKey){
-  const [yy,mm,dd]=dateKey.split('-').map(Number);
-  const dt=new Date(yy,mm-1,dd);
-  dt.setDate(dt.getDate()-1);
-  return dk(dt.getFullYear(),dt.getMonth(),dt.getDate());
-}
 
 // 잠금 여부: 오늘=false, 어제=오늘 10시 이전이면 false / 이후면 true, 그 이전=항상 true
 function isDateLocked(dateKey){
@@ -2237,20 +2232,6 @@ const UPDATE_LOGS = [
   }
 ];
 
-function checkUpdateNotice(){
-  const seen=localStorage.getItem('wevape_seen_version');
-  if(seen===APP_VERSION)return;
-  const log=UPDATE_LOGS[0];
-  document.getElementById('update-version').textContent=log.version;
-  document.getElementById('update-date').textContent=log.date;
-  const content=document.getElementById('update-content');
-  content.innerHTML=log.sections.map(s=>`
-    <div class="update-section">
-      <div class="update-section-title">${s.title}</div>
-      ${s.items.map(i=>`<div class="update-item"><span style="color:var(--gold);flex-shrink:0;margin-right:4px;">•</span>${i}</div>`).join('')}
-    </div>`).join('');
-  document.getElementById('update-modal').classList.add('open');
-}
 window.closeUpdateModal=function(){
   document.getElementById('update-modal').classList.remove('open');
   localStorage.setItem('wevape_seen_version',APP_VERSION);
@@ -2275,9 +2256,6 @@ async function loadStaffList(){
     }
   }catch(e){staffList=[];}
 }
-async function saveStaffList(){
-  await setDoc(doc(db,'config/staff'),{list:staffList});
-}
 
 // ══════════════════════════════════════
 // 내 업무 페이지
@@ -2294,7 +2272,7 @@ function renderMyPage(){
     const defaultStoreId=STAFF_DEFAULT_STORE[name];
     const defaultStore=defaultStoreId?STORES.find(s=>s.id===defaultStoreId):null;
     const storeLabel=defaultStore
-      ?`<div style="font-size:10px;color:var(--text-sub);margin-top:4px;">${defaultStore.icon} ${defaultStore.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>`
+      ?`<div style="font-size:10px;color:var(--text-sub);margin-top:4px;">${defaultStore.icon} ${storeShort(defaultStore.name)}</div>`
       :`<div style="font-size:10px;color:var(--gold);margin-top:4px;">순환근무</div>`;
     block.innerHTML=`<div class="staff-avatar">${name[0]}</div><div class="staff-name">${name}</div>${storeLabel}`;
     block.onclick=()=>enterMyWork(name);
@@ -2319,16 +2297,6 @@ function renderMyPage(){
   }
 }
 
-// 개인 메모장 (staff_memo/{name}) — 인수인계와 별개로 본인만 보는 자유메모
-async function loadMyMemo(){
-  const ta=document.getElementById('my-memo-textarea');
-  if(!ta||!myStaff)return;
-  ta.value='';
-  try{
-    const snap=await getDoc(doc(db,`staff_memo/${myStaff}`));
-    if(snap.exists())ta.value=snap.data().text||'';
-  }catch(e){}
-}
 window.saveMyMemo=async function(){
   if(!myStaff)return;
   const ta=document.getElementById('my-memo-textarea');
@@ -2472,7 +2440,7 @@ function renderMyWorkScreen(){
       const isSelected=myStore&&myStore.id===s.id;
       const isDefault=s.id===defaultStoreId;
       chip.className='my-store-chip'+(isSelected?' active':'');
-      const short=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+      const short=storeShort(s.name);
       chip.textContent=`${short}${isDefault?' ★':''}`;
       chip.title=isDefault?'기본 매장':'';
       chip.onclick=()=>{myStore=s;renderMyWorkScreen();};
@@ -2496,32 +2464,6 @@ function renderMyWorkScreen(){
 
 // 내 업무 — 매장 할 일 블록. 오늘은 만들면서 보여주고, 지난 날은 있는 것만, 앞날은 규칙만 「예정」으로.
 let _mwFixedSeq=0;
-async function renderMyFixedTodos(){
-  const wrap=document.getElementById('mw-fixed-list');
-  if(!wrap||!myStore)return;
-  const seq=++_mwFixedSeq;
-  const key=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
-  const isToday=myDate.getTime()===t0, isFuture=myDate.getTime()>t0;
-  const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;
-  wrap.hidden=true;wrap.innerHTML='';
-  let rows=[];
-  if(isFuture){
-    rows=fixedRulesForKey(key).map(r=>({id:null,title:r.task,done:false,doneBy:null,preview:true}));
-  } else {
-    try{rows=await loadStoreFixedTodos(myStore.id,key,{ensure:isToday});}catch(e){return;}
-  }
-  if(seq!==_mwFixedSeq)return; // 그 사이 날짜·매장이 바뀜
-  if(!rows.length)return;
-  wrap.hidden=false;
-  const head=document.createElement('div');head.className='vh-fixed-head';
-  head.innerHTML=`<span>매장 할 일</span><span class="vh-tiny">${isFuture?'예정 — 그날 근무자가 체크':'근무자 누구나 체크'}</span>`;
-  wrap.appendChild(head);
-  rows.forEach(it=>wrap.appendChild(fixedTodoRow(it,{canCheck:!it.preview&&self&&!isFuture,me:myStaff,onChange:updateMyMetrics})));
-  const mine=document.createElement('div');mine.className='vh-fixed-head';mine.style.marginTop='6px';mine.innerHTML='<span>내 할 일</span>';
-  wrap.appendChild(mine);
-  updateMyMetrics();
-}
 
 // 관리자 — 직원 추가/삭제
 // 5-4 신원통합: 직원 목록은 실제 계정(profiles)이 원천 — 이름 타이핑 추가/삭제는 폐기.
@@ -2624,9 +2566,9 @@ async function renderMyTodoList(){
             }
           }
           if(isDiffStore&&store){
-            tags+=`<span class="carry-old-store">${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`;
+            tags+=`<span class="carry-old-store">${storeShort(store.name)}</span>`;
           } else if(store&&!isDiffStore){
-            tags+=`<span style="font-size:10px;background:var(--soft);color:var(--text-sub);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`;
+            tags+=`<span style="font-size:10px;background:var(--soft);color:var(--text-sub);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${storeShort(store.name)}</span>`;
           }
 
           // 3일 이상 이월 액션 버튼
@@ -2787,7 +2729,7 @@ function backlogRow(it,opts){
   const t=document.createElement('div');t.className='wh-t';
   const st=it.storeId?STORES.find(s=>s.id===it.storeId):null;
   const when=it.createdAt?(()=>{const d=new Date(it.createdAt);const k=dk(d.getFullYear(),d.getMonth(),d.getDate());return k===todayKey()?'오늘':`${d.getMonth()+1}/${d.getDate()}`;})():'';
-  t.innerHTML=`${_wrEsc(it.text)}<small>${when?when+' 넣음':''}${st?` · ${st.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:''}</small>`;
+  t.innerHTML=`${_wrEsc(it.text)}<small>${when?when+' 넣음':''}${st?` · ${storeShort(st.name)}`:''}</small>`;
   const todayBtn=document.createElement('button');todayBtn.type='button';todayBtn.className='vh-btn';todayBtn.textContent='오늘로';
   const cal=document.createElement('button');cal.type='button';cal.className='vh-btn wh-cal';cal.title='다른 날로';cal.setAttribute('aria-label','다른 날로');
   cal.innerHTML=VF_ICONS.cal;
@@ -3097,28 +3039,6 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-// 휴무 설정 안내 공지 자동 등록
-async function autoPostDayoffNotice(){
-  const noticeId='notice_dayoff_202507';
-  if(localStorage.getItem(noticeId))return;
-  try{
-    const ref=doc(db,'board/posts');
-    const snap=await getDoc(ref);
-    const items=snap.exists()?(snap.data().items||[]):[];
-    if(items.find(i=>i.id===noticeId))return;
-    const now=new Date();
-    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const newPost={
-      id:noticeId, cat:'notice', ts:now.getTime(),
-      title:'[필독] 이번 달 휴무 설정 해주세요',
-      body:`안녕하세요 😊\n\n앱에 휴무 설정 기능이 추가되었습니다.\n본인의 이번 달 휴무일을 직접 등록해주세요!\n\n━━━━━━━━━━━━━━━━\n설정 방법\n━━━━━━━━━━━━━━━━\n\n1. 하단 내 업무 탭 클릭\n2. 본인 이름 블록 선택\n3. 상단 휴무 설정 버튼 클릭\n4. 달력에서 휴무인 날짜 클릭 (노란색으로 표시)\n5. 다시 클릭하면 해제\n\n━━━━━━━━━━━━━━━━\n왜 필요한가요?\n━━━━━━━━━━━━━━━━\n\n휴무 설정을 하지 않으면 쉬는 날도 "앱 미사용"으로 기록됩니다.\n설정해두면 보고서에 휴무로 정확하게 구분되어 표시됩니다.\n\n이번 달 안에 꼭 설정 부탁드립니다!\n\n궁금한 점은 업무공유 게시판에 남겨주세요 🙏`,
-      author:'관리자', date:dateStr
-    };
-    items.unshift(newPost);
-    await setDoc(ref,{items});
-    localStorage.setItem(noticeId,'done');
-  }catch(e){}
-}
 const GUIDE_VERSION = 'v5.8';
 const BUILD_DATE = '2026-09-19'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
@@ -3219,6 +3139,7 @@ const GUIDE_SECTIONS = [
       '⎋ 내 계정 메뉴와 협업 만들기도 Esc로 닫혀요',
       '🔔 인수인계·요청·답·프로젝트 제안·도움 요청·공지가 생기면 바로 폰으로 — 내 계정 → 「알림」에서 켜고 꺼요. 밤 10시~아침 8시엔 안 보내요',
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
+      '🗣️ 관리자 → 설정 → 「우리 회사 말」 — 매장·근무자·청소·인수인계를 우리 회사 식으로. 비워두면 지금 그대로',
       '🏪 대표·매니저 홈 맨 위에 「매장 확인할 것」 — 어느 매장 · 무엇 · 누구, 누르면 그 매장 방. 현황·보고까지 안 가도 첫 줄이 판단이에요. 직원 홈은 그대로',
     ]
   },
@@ -3796,7 +3717,7 @@ async function renderStaffCal(){
           const sb=document.createElement('div');
           sb.className='badge';
           sb.style.cssText='background:var(--navy);color:#fff;font-size:9px;';
-          sb.textContent=s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+          sb.textContent=storeShort(s.name);
           bd.appendChild(sb);
         });
         const wb=document.createElement('div');
@@ -3844,7 +3765,7 @@ async function showStaffDayDetail(y,m,d,name){
       const store=STORES.find(s=>s.id===item.storeId);
       const row=document.createElement('div');row.className='todo-item'+(item.done?' done':'');
       const carry=item.fromDate&&item.fromDate!==dateKey?`<span class="todo-carry">${item.fromDate.slice(5)} 이월</span>`:'';
-      const storeTag=store?`<span style="font-size:10px;background:var(--soft);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
+      const storeTag=store?`<span style="font-size:10px;background:var(--soft);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${storeShort(store.name)}</span>`:'';
       row.innerHTML=`<input type="checkbox" ${item.done?'checked':''} disabled>
         <div class="todo-text-wrap"><span class="todo-text">${item.text}${storeTag}</span>${carry}</div>`;
       list.appendChild(row);
@@ -4028,54 +3949,6 @@ window.toggleProjectBanner=function(){
 };
 function toggleProjectBanner(){window.toggleProjectBanner();}
 
-// 인수인계 미확인 알림 (내가 쓴 인수인계가 아직 미확인인 경우)
-async function checkHandoverUnread(){
-  const banner=document.getElementById('handover-unread-banner');
-  if(!banner||!myStaff||!myStore)return;
-  banner.style.display='none';
-  banner.innerHTML='';
-
-  try{
-    const dateKey=dk(myDate.getFullYear(),myDate.getMonth(),myDate.getDate());
-    // 오늘 + 최근 3일치 확인
-    const checkDates=[];
-    for(let i=0;i<4;i++){
-      const d=new Date(myDate);d.setDate(d.getDate()-i);
-      checkDates.push(dk(d.getFullYear(),d.getMonth(),d.getDate()));
-    }
-
-    const unread=[];
-    for(const storeObj of STORES){
-      for(const dKey of checkDates){
-        const snap=await getDoc(doc(db,`handover/${storeObj.id}_${dKey}`));
-        if(!snap.exists())continue;
-        const items=snap.data().items||[];
-        const mine=items.filter(i=>i.author===myStaff&&!i.confirmed);
-        mine.forEach(i=>unread.push({
-          ...i,
-          storeName:storeObj.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''),
-          storeIcon:storeObj.icon,
-          dateKey:dKey
-        }));
-      }
-    }
-
-    if(unread.length===0)return;
-
-    banner.style.display='block';
-    banner.innerHTML=`
-      <div style="margin:8px 16px 0;background:#fff3e0;border:1.5px solid var(--orange);border-radius:10px;padding:10px 14px;">
-        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">내가 쓴 인수인계 ${unread.length}건이 아직 미확인이에요</div>
-        ${unread.slice(0,3).map(i=>`
-          <div style="font-size:11px;color:var(--text);display:flex;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(251,146,60,0.2);">
-            <span style="color:var(--text-mute);flex-shrink:0;">${i.storeIcon} ${i.storeName} · ${i.dateKey.slice(5)}</span>
-            <span style="flex:1;">${i.text}</span>
-            <span style="font-size:10px;color:var(--orange);font-weight:600;">미확인</span>
-          </div>`).join('')}
-        ${unread.length>3?`<div style="font-size:10px;color:var(--text-mute);margin-top:4px;">외 ${unread.length-3}건 더</div>`:''}
-      </div>`;
-  }catch(e){}
-}
 
 // 업무 타입 선택
 window.setTaskType=function(type){  myTaskType=type;
@@ -4560,7 +4433,7 @@ async function loadMyHistory(){
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <input type="checkbox" ${item.done?'checked':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
           <div style="flex:1;">
-            <div class="my-history-store">${item.storeIcon} ${item.storeName.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</div>
+            <div class="my-history-store">${item.storeIcon} ${storeShort(item.storeName)}</div>
             <div class="my-history-text">${item.text}${carryTag}</div>
           </div>
           <div style="display:flex;gap:2px;flex-shrink:0;margin-top:2px;">
@@ -4807,11 +4680,6 @@ window.closeStoreSelect = function(){
 }
 function closeStoreSelect(){window.closeStoreSelect();}
 
-window.goHome=function(){
-  clearDashUnsubs();
-  switchTab('dashboard');
-};
-
 window.exitAdmin = function(){
   clearDashUnsubs();
   isAdmin=false;
@@ -4869,11 +4737,6 @@ async function renderStoreGrid(){
   }
 }
 
-function enterStore(store){
-  curStore=store;
-  cy=today.getFullYear();cm=today.getMonth();sel=null;
-  switchTab('monthly');
-}
 
 // ══════════════════════════════════════
 // 대시보드 홈 화면 렌더링
@@ -4967,7 +4830,7 @@ async function renderDashboardHome(){
     const statusClass=cleanOk?'status-done':cleanPending?'status-pending':'status-none';
     block.className=`dashboard-store-block ${statusClass}`;
 
-    const shortName=store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+    const shortName=storeShort(store.name);
     const cleanBadge=cleanOk
       ?`<span class="dsb-clean-badge" style="background:var(--green-light);color:var(--green);">완료</span>`
       :cleanPending
@@ -5139,7 +5002,7 @@ async function loadTodayGaps(pre){
     const dayoffData=(dayoffSnap&&dayoffSnap.exists&&dayoffSnap.exists())?(dayoffSnap.data()||{}):{};
     const offToday=(name)=>{const d=dayoffData[name]||{};return !!d[tKey];};
     const esc=_wrEsc;
-    const shortN=(n)=>n.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+    const shortN=(n)=>storeShort(n);
     const rows=STORES.map((s,i)=>{
       const cs=cleanSnaps[i];
       const cleanDone=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;
@@ -5159,10 +5022,10 @@ async function loadTodayGaps(pre){
     // 청소 미체크 — 매장마다 한 줄이면 아침엔 전 매장이 줄줄이 뜬다. 근무자가 있는 매장(진짜 누락)과 없는 매장(아직 출근 전)을 나눠 한 줄씩
     const noClean=rows.filter(r=>totalCl>0&&r.cleanDone===0);
     const ncW=noClean.filter(r=>r.workers.length),ncN=noClean.filter(r=>!r.workers.length);
-    if(ncW.length)items.push({dot:'danger',text:`청소 미체크 ${ncW.length}곳 — 근무자 있음`,sub:ncW.map(r=>`${esc(shortN(r.s.name))}(${r.workers.map(esc).join('·')})`).join(' · '),fn:()=>goStore(ncW[0].s)});
-    if(ncN.length)items.push({dot:'warn',text:`청소 미체크 ${ncN.length}곳 — 아직 근무자 없음`,sub:ncN.map(r=>esc(shortN(r.s.name))).join(' · '),fn:()=>goStore(ncN[0].s)});
+    if(ncW.length)items.push({dot:'danger',text:`${T('clean')} 미체크 ${ncW.length}곳 — ${T('worker')} 있음`,sub:ncW.map(r=>`${esc(shortN(r.s.name))}(${r.workers.map(esc).join('·')})`).join(' · '),fn:()=>goStore(ncW[0].s)});
+    if(ncN.length)items.push({dot:'warn',text:`${T('clean')} 미체크 ${ncN.length}곳 — 아직 ${T('worker')} 없음`,sub:ncN.map(r=>esc(shortN(r.s.name))).join(' · '),fn:()=>goStore(ncN[0].s)});
     const staleAll=rows.flatMap(r=>r.stale);
-    if(staleAll.length)items.push({dot:'danger',text:`3일 이상 미확인 인수인계 ${staleAll.length}건`,sub:staleAll.slice(0,2).map(x=>`${shortN(x.store.name)} · ${esc(x.it.text).slice(0,20)}${x.it.recipient?` · ${esc(x.it.recipient)}에게`:''}`).join(' / ')+(staleAll.length>2?` 외 ${staleAll.length-2}건`:''),fn:()=>goStore(staleAll[0].store)});
+    if(staleAll.length)items.push({dot:'danger',text:`3일 이상 미확인 ${T('handover')} ${staleAll.length}건`,sub:staleAll.slice(0,2).map(x=>`${shortN(x.store.name)} · ${esc(x.it.text).slice(0,20)}${x.it.recipient?` · ${esc(x.it.recipient)}에게`:''}`).join(' / ')+(staleAll.length>2?` 외 ${staleAll.length-2}건`:''),fn:()=>goStore(staleAll[0].store)});
     const noTask=staffList.filter(n=>{const p=todosByName.find(x=>x&&x[0]===n);return (!p||p[1].length===0)&&!offToday(n);});
     if(noTask.length)items.push({dot:'warn',text:`오늘 업무 미등록 ${noTask.length}명`,sub:noTask.map(esc).join(' · ')+' — 휴무 아님',fn:()=>{if(noTask[0])enterMyWork(noTask[0]);}});
     const carrySum=rows.reduce((a,r)=>a+r.carried,0);
@@ -5178,7 +5041,7 @@ async function renderTodayGaps(body){
     const card=el('div','vh-card tg-card');
     card.appendChild(el('div','vh-ct',`<strong>지금 확인할 것</strong><span class="vh-tiny">${items.length?`${items.length}건`:''}</span>`));
     const list=el('div','vh-list');
-    if(!items.length)list.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>청소 · 인수인계 · 업무 등록 · 이월 모두 정상</small></div>`));
+    if(!items.length)list.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월 모두 정상</small></div>`));
     items.forEach(o=>{const r=el('div','vh-item'+(o.fn?' link':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;list.appendChild(r);});
     card.appendChild(list);
     // 직원 오늘 — 칩, 누르면 그 직원 업무
@@ -5199,7 +5062,6 @@ async function renderTodayGaps(body){
     wrap.appendChild(card);
   }catch(e){console.warn('[gaps]',e);wrap.innerHTML='';}
 }
-window.renderTodayStatus=function(){openPwModal();}; // 옛 진입점 호환
 
 // ── 주간 1:1 상담 자동 배정 (팀장 2명 고정 · 화상 · 매주 직원 1명 순번) ──
 function wmWeekStart(d){const x=new Date(d||new Date());const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return dk(x.getFullYear(),x.getMonth(),x.getDate());}
@@ -5333,7 +5195,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const _savedId=_isFixed?null:localStorage.getItem(_lsKey);
   const entry=STORES.find(s=>s.id===(_vp.storeId||_savedId||STAFF_DEFAULT_STORE[me]||''))||curStore||STORES[0];
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
-  const shortStore=(n)=>(n||'').replace('인천 ','').replace('부천 ','');
+  const shortStore=(n)=>storeShort((n||''));
   const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
 
   // ── 데이터 계산 ──
@@ -5409,7 +5271,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const mk=(lb,val,cls,fn)=>{const m=el('button','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.type='button';m.setAttribute('aria-label',`${lb} ${val}`);m.onclick=fn;return m;};
   met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
   const _ownerOnly=(window.__vflowProfile?.role==='owner');
-  met.appendChild(mk('내 청소',(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
+  met.appendChild(mk(`내 ${T('clean')}`,(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
   const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>{if(featOn('workreq')){const p=wrap.querySelector('.vh-priority');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}else enterMyWork(me);});
   met.appendChild(m4);
@@ -5424,14 +5286,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열(대표·매니저만): 매장 확인할 것 — 현황·보고의 「지금 확인할 것」과 같은 목록. 직원 홈엔 없다 ──
   if(isAdmin){
     const sc=el('div','vh-card vh-priority vh-storegaps');
-    sc.appendChild(el('div','vh-ct',`<strong>매장 확인할 것</strong><span class="vh-tiny"></span>`));
+    sc.appendChild(el('div','vh-ct',`<strong>${T('store')} 확인할 것</strong><span class="vh-tiny"></span>`));
     const sl=el('div','vh-list');sc.appendChild(sl);
     sl.appendChild(el('div','vh-item vh-empty-row',`<span class="vh-dot"></span><div class="vh-main">매장 보는 중<small></small></div>`));
     const smore=el('button','vh-more','');smore.type='button';smore.style.display='none';sc.appendChild(smore);
     col1.appendChild(sc);
     loadTodayGaps({cleanByStore:window.__dashClean,hoByStore,todosByName}).then(({items})=>{
       sl.innerHTML='';sc.querySelector('.vh-tiny').textContent=items.length?`${items.length}건${items.length>1?' · 중요도순':''}`:'';
-      if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>청소 · 인수인계 · 업무 등록 · 이월 모두 정상</small></div>`));return;}
+      if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월 모두 정상</small></div>`));return;}
       const MAX_M=2;
       items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
       const hid=items.length-MAX_M;
@@ -5442,7 +5304,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열: 우선 확인 ──
   const pri=el('div','vh-card vh-priority');
   const items=[];
-  hoRows.forEach(({store,it,toMe,fallback})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':fallback?`${it.recipient} ${hoAgeDays(it,tKey)}일째 부재 → 누구나`:shortStore(store.name)} · 인수인계`,btn:'확인',ho:{store,it},
+  hoRows.forEach(({store,it,toMe,fallback})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':fallback?`${it.recipient} ${hoAgeDays(it,tKey)}일째 부재 → 누구나`:shortStore(store.name)} · ${T('handover')}`,btn:'확인',ho:{store,it},
     act:async(btn,row)=>{
       btn.disabled=true;btn.textContent='저장중';
       try{
@@ -5457,7 +5319,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     },
     open:()=>{if(entry)openStoreRoom(entry);}}));
   // 청소로 가는 문은 「내 청소」 칸과 「청소 사진」 칩이 이미 있다 — 여기선 상태만, 누르면 열림
-  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} 청소 ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전 — 누르면 체크리스트':`${dnCl}/${totalCl} 진행중 — 누르면 체크리스트`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
+  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} ${T('clean')} ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전 — 누르면 체크리스트':`${dnCl}/${totalCl} 진행중 — 누르면 체크리스트`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
   longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${it.author||'익명'} · 알아둘 것 ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
   items.sort((a,b)=>a.lv-b.lv);
   const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);
@@ -5576,14 +5438,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   })();
 
   // ── 1열: 남기기 ──
-  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">${featOn('workreq')?'다음 근무자에게 인수인계 · 동료에게 요청':'다음 근무자에게 인수인계'}</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
+  const quick=el('button','vh-card vh-quick',`<div class="vh-mic"><svg class="vf-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div style="flex:1;min-width:0;"><h3>남기기</h3><span class="vh-tiny">${featOn('workreq')?`다음 ${T('worker')}에게 ${T('handover')} · 동료에게 요청`:`다음 ${T('worker')}에게 ${T('handover')}`}</span></div><span class="vh-arrow" aria-hidden="true">›</span>`);
   quick.type='button';quick.setAttribute('aria-label','남기기: 인수인계 또는 요청 작성');
   quick.onclick=()=>openLeaveSheet(entry,tKey,'handover');
   col1.appendChild(quick);
   // 즉시 실행 — 한 번 눌러 바로 하는 것만 (승인: 청소 사진 · 요청 보내기). 휴무·예외출근은 월간 스케줄에 그대로.
   const qrow=el('div','vh-quickrow');
   const mkQa=(ic,lb,fn,aria)=>{const b=el('button','vh-qa',`${ic}<span>${lb}</span>`);b.type='button';b.setAttribute('aria-label',aria||lb);b.onclick=fn;return b;};
-  qrow.appendChild(mkQa(VF_ICONS.camera,'청소 사진',()=>{if(entry)openQuickClean(entry,{photo:true});},'청소 사진: 오늘 체크리스트를 열고 첫 미완료 항목의 사진 버튼으로'));
+  qrow.appendChild(mkQa(VF_ICONS.camera,`${T('clean')} 사진`,()=>{if(entry)openQuickClean(entry,{photo:true});},'청소 사진: 오늘 체크리스트를 열고 첫 미완료 항목의 사진 버튼으로'));
   if(featOn('workreq'))qrow.appendChild(mkQa(VF_ICONS.send,'요청 보내기',()=>openLeaveSheet(entry,tKey,'request'),'요청 보내기: 다른 직원에게 업무 요청'));
   col1.appendChild(qrow);
 
@@ -5825,11 +5687,11 @@ function openLeaveSheet(entry,tKey,preset){
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
-    <div class="vh-kinds"><button class="vh-kind" data-k="handover">인수인계</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}</div>
+    <div class="vh-kinds"><button class="vh-kind" data-k="handover">${T('handover')}</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}</div>
     <div class="vh-kinds vh-reqkind" data-reqkind-wrap style="display:none;"><button class="vh-kind on" data-rk="todo">할 일로<small>오늘·내일 할 한 가지</small></button><button class="vh-kind" data-rk="project">프로젝트로<small>며칠 걸리는 일 · 수락하면 방이 열림</small></button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
-    <select data-recip style="display:none;"><option value="">받는 사람: 다음 근무자 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+    <select data-recip style="display:none;"><option value="">받는 사람: 다음 ${T('worker')} 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-until" data-due-wrap style="display:none;"><label>기한 <input type="date" data-due min="${tKey}" style="margin-left:6px;"></label></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
@@ -5838,7 +5700,7 @@ function openLeaveSheet(entry,tKey,preset){
   if(kind==='request'&&!featOn('workreq'))kind='handover';
   const kinds=sh.querySelectorAll('.vh-kinds:not(.vh-reqkind) .vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
   const recipDefault=recip.querySelector('option');
-  const KIND_LABEL={todo:'오늘 할 일',handover:'인수인계',request:'요청',memo:'내 메모'};
+  const KIND_LABEL={todo:'오늘 할 일',handover:T('handover'),request:'요청',memo:'내 메모'};
   // 임시 저장 — 저장에 실패하거나 실수로 닫아도 적던 글이 남는다 (성공하면 지운다)
   const DRAFT_KEY='vflow_leave_draft_'+(window.__vflowProfile?.id||me);
   const errEl=sh.querySelector('[data-err]');
@@ -5859,7 +5721,7 @@ function openLeaveSheet(entry,tKey,preset){
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
     recip.style.display=(k==='handover'||k==='request')?'':'none';
     // 요청은 사람 대 사람 — 받는 사람 필수 (근무자 누구나는 매장 방 인수인계로)
-    if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람을 고르세요':'받는 사람: 다음 근무자 누구나';recipDefault.disabled=(k==='request');}
+    if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람을 고르세요':`받는 사람: 다음 ${T('worker')} 누구나`;recipDefault.disabled=(k==='request');}
     if(k!=='request'&&recip.value&&recipDefault&&recip.selectedIndex===0)recip.value='';
     untilWrap.style.display=k==='handover'?'':'none';
     reqKindWrap.style.display=k==='request'?'':'none';
@@ -5999,7 +5861,7 @@ function renderSideNav(active){
   const items=[
     {k:'dashboard',lb:'홈',ic:IC.home,fn:()=>switchTab('dashboard')},
     {k:'my',lb:'내 업무',ic:IC.task,fn:()=>enterMyWork(me)},
-    {k:'room',lb:entry?`${entry.name.replace('인천 ','').replace('부천 ','')} 방`:'매장 방',ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
+    {k:'room',lb:entry?`${storeShort(entry.name)} 방`:`${T('store')} 방`,ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
   ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
@@ -6296,7 +6158,7 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
     hoRows.slice(0,5).forEach(({store,it,toMe})=>{
       const row=document.createElement('div');
       row.className='hp-ho-item';
-      const short=store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','');
+      const short=storeShort(store.name);
       row.innerHTML=`<span class="hp-tag ${toMe?'hp-tag-me':'hp-tag-pub'}">${toMe?'나에게':short}</span>
         <div style="flex:1;">${it.text}<div class="hp-meta">${it.author||'익명'} · ${short}</div></div>`;
       const btn=document.createElement('button');
@@ -6409,8 +6271,19 @@ function renderHomeAdmin(todosByName){
   });
 }
 
+// 매장 이름 줄이기 — 매장 id 나 이름을 받아, 두 매장 이상이 같이 쓰는 앞 단어(지역명)를 뗀다. 회사·업종에 상관없이 동작하고, 겹치는 말이 없으면 그대로
+let _storeShortCache=null;
+function storeShort(v){
+  const st=(typeof STORES!=='undefined'&&Array.isArray(STORES))?STORES:[];
+  const hit=st.find(x=>x&&x.id===v);const name=hit?String(hit.name||''):(v==null?'':String(v));
+  if(!name)return '';
+  const sig=st.map(x=>x&&x.name).join('|');
+  if(!_storeShortCache||_storeShortCache.sig!==sig){const cnt={};st.forEach(x=>String(x&&x.name||'').trim().split(/\s+/).slice(0,-1).forEach(w=>{cnt[w]=(cnt[w]||0)+1;}));_storeShortCache={sig,drop:new Set(Object.keys(cnt).filter(w=>cnt[w]>=2))};}
+  const parts=name.trim().split(/\s+/);let i=0;while(i<parts.length-1&&_storeShortCache.drop.has(parts[i]))i++;
+  return parts.slice(i).join(' ');
+}
+const _vfStoreShort=storeShort;
 // ── 알림 보내기 — 한 일 하나에 알림 하나. 서버(api/push-send)가 받는 사람을 같은 회사 안에서 고른다. 실패해도 저장은 됐으니 조용히 ──
-const _vfStoreShort=(id)=>{const st=(typeof STORES!=='undefined'?STORES:[]).find(x=>x.id===id);return st?String(st.name).replace('인천 ','').replace('부천 ','').replace('구월 ',''):'';};
 function vfPush(to,title,body,url){
   try{
     (async()=>{
@@ -6529,7 +6402,7 @@ async function showTodayStorePick(onDone){
   STORES.forEach(s=>{
     const btn=document.createElement('button');
     btn.style.cssText='background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 6px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:4px;';
-    btn.innerHTML=`<span style="font-size:19px;">${s.icon}</span>${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
+    btn.innerHTML=`<span style="font-size:19px;">${s.icon}</span>${storeShort(s.name)}`;
     btn.onclick=()=>{
       localStorage.setItem('vflow_todaystore_'+todayKey(),s.id);
       // 서버에도 남긴다 — 이게 있어야 "이 사람이 언제 어디 있었나"를 나중에 볼 수 있다.
@@ -6977,80 +6850,6 @@ async function projectRespond(row,accept){
 // 제안이 아직 수락 안 됐는지 (목록 행 기준)
 const projIsProposal=(r)=>!!(r&&r.proposed_to&&!r.accepted_at&&!(r.project_members||[]).some(m=>m.profile_id===r.proposed_to));
 
-// 매장 방의 업무 요청 섹션
-async function buildRequestSection(store){
-  const wrap=document.createElement('div');
-  wrap.className='handover-section feat-workreq';
-  wrap.innerHTML='<div class="handover-sub" style="margin:12px 0 8px;">업무 요청</div><div id="wr-list" class="todo-list"><div class="todo-empty">불러오는 중...</div></div>';
-  const listEl=wrap.querySelector('#wr-list');
-  const {sb,ctx}=await wrApi();
-  const me=window.__vflowProfile?.name;
-  const paint=async()=>{
-    try{
-      const {data}=await sb.from('work_requests')
-        .select('id,store_id,content,status,decline_reason,created_at,requester:profiles!requester_id(name),recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)')
-        .eq('store_id',store.id).order('created_at',{ascending:false}).limit(20);
-      const rows=data||[];
-      listEl.innerHTML='';
-      if(rows.length===0){listEl.innerHTML='<div class="todo-empty">'+EMPTY('📨','들어온 업무 요청이 없어요','아래 입력칸으로 이 매장 근무자에게 업무를 부탁할 수 있어요')+'</div>';}
-      rows.forEach(r=>{
-        const row=document.createElement('div');
-        row.className='todo-item';
-        const days=wrDaysAgo(r.created_at);
-        let badge='';
-        if(r.status==='accepted')badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--green-light);color:var(--green);">${_wrEsc(r.responder?.name||'')} 수락</span>`;
-        else if(r.status==='declined')badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--red-light);color:var(--red);">거절 — ${_wrEsc(r.decline_reason||'')}</span>`;
-        else if(days>=3)badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--red-light);color:var(--red);">${days}일째 응답 없음</span>`;
-        else badge=`<span style="font-size:10px;font-weight:800;border-radius:10px;padding:2px 7px;background:var(--orange-light);color:var(--orange);">대기중</span>`;
-        const toTag=r.recipient?.name?`→ ${_wrEsc(r.recipient.name)}`:'→ 근무자 누구나';
-        row.innerHTML=`<div class="todo-text-wrap"><span class="todo-text">${_wrEsc(r.content)}</span> ${badge}<div class="todo-author">${_wrEsc(r.requester?.name||'익명')} ${toTag} · ${fmtD(r.created_at)}</div></div>`;
-        if(r.status==='pending'&&me&&(!r.recipient?.name||r.recipient.name===me)){
-          const act=document.createElement('div');act.className='todo-actions';
-          const ok=document.createElement('button');ok.className='todo-action-btn';ok.textContent='수락';ok.title='수락 — 내 업무로 등록';
-          ok.onclick=()=>vfLater(ok,row,()=>wrRespond(r,true),paint);
-          const no=document.createElement('button');no.className='todo-action-btn';no.textContent='거절';no.title='거절 (사유 필수)';
-          no.onclick=async()=>{if(await wrRespond(r,false))paint();};
-          act.appendChild(ok);act.appendChild(no);row.appendChild(act);
-        } else if(r.status==='pending'&&r.requester?.name===me){
-          const act=document.createElement('div');act.className='todo-actions';
-          const del=document.createElement('button');del.className='todo-action-btn';del.textContent='취소';del.title='요청 취소';
-          del.onclick=async()=>{
-            if(!confirm('이 요청을 취소할까요?'))return;
-            const {error,count}=await sb.from('work_requests').delete({count:'exact'}).eq('id',r.id);
-            if(error||count===0){alert('취소 실패');return;}
-            paint();
-          };
-          act.appendChild(del);row.appendChild(act);
-        }
-        listEl.appendChild(row);
-      });
-    }catch(e){listEl.innerHTML='<div class="todo-empty">'+EMPTY('⚙️','업무 요청 기능이 아직 켜지지 않았어요','회사 관리자에게 문의하시거나, 설정 → 1:1 상담으로 알려주세요')+'</div>';}
-  };
-  paint();
-
-  // 요청 만들기
-  const form=document.createElement('div');
-  form.style.cssText='display:flex;flex-direction:column;gap:6px;margin-top:8px;';
-  const selRow=document.createElement('select');
-  selRow.style.cssText='border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;background:#fff;';
-  selRow.innerHTML='<option value="">받는 사람: 이 매장 근무자 누구나</option>'+staffList.filter(n=>n!==me).map(n=>`<option value="${_wrEsc(n)}">받는 사람: ${_wrEsc(n)}</option>`).join('');
-  const inRow=document.createElement('div');inRow.className='todo-input-row';
-  inRow.innerHTML='<input type="text" class="todo-input" placeholder="이 매장에 요청할 업무를 입력하세요" id="wr-input"><button class="todo-add-btn" id="wr-add">요청</button>';
-  form.appendChild(selRow);form.appendChild(inRow);
-  wrap.appendChild(form);
-  const doReq=async()=>{
-    const inp=inRow.querySelector('#wr-input');
-    const t=(inp.value||'').trim();
-    if(!t)return;
-    const btn=inRow.querySelector('#wr-add');btn.disabled=true;
-    try{await wrCreate(store.id,t,selRow.value||null);inp.value='';paint();}
-    catch(e){alert('요청 실패 — 네트워크/권한을 확인해주세요');}
-    btn.disabled=false;
-  };
-  inRow.querySelector('#wr-add').onclick=doReq;
-  inRow.querySelector('#wr-input').addEventListener('keydown',e=>{if(e.key==='Enter')doReq();});
-  return wrap;
-}
 
 // 매장 방: 인수인계 기록 — 날짜 무관 전체 이력 (작성/확인/피드백/종료/삭제, 누가·언제까지)
 function buildHandoverHistorySection(store){
@@ -7116,41 +6915,6 @@ function buildHandoverHistorySection(store){
   return wrap;
 }
 
-// 매장 방: 이 매장 프로젝트
-async function buildStoreProjectSection(store){
-  try{
-    const rows=await loadCollabList();
-    if(rows===null)return null;
-    const mine=rows.filter(r=>r.store_id===store.id&&r.status!=='done');
-    const wrap=document.createElement('div');
-    wrap.className='handover-section';
-    wrap.innerHTML='<div class="handover-sub" style="margin:12px 0 8px;">이 매장 프로젝트</div>';
-    if(mine.length===0){
-      const em=document.createElement('div');em.className='todo-empty';em.textContent='진행중인 매장 프로젝트가 없습니다';wrap.appendChild(em);
-    }
-    mine.forEach(r=>{
-      const pct=Math.max(0,Math.min(100,r.progress||0));
-      const c=document.createElement('div');
-      c.className='todo-item';
-      c.style.cursor='pointer';
-      c.innerHTML=`<div class="todo-text-wrap" style="width:100%;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span class="todo-text" style="font-weight:700;">${r.title}${r.help_message?' <span style="font-size:10px;background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:1px 6px;">🚨</span>':''}</span>
-          <span style="font-weight:800;color:var(--purple);font-size:12px;flex-shrink:0;">${pct}%</span>
-        </div>
-        <div style="height:6px;background:#efece4;border-radius:4px;overflow:hidden;margin-top:6px;"><div style="height:100%;width:${pct}%;background:var(--purple);border-radius:4px;"></div></div>
-      </div>`;
-      c.onclick=()=>{window.closeStoreRoom();openCollabDetail(r.id);};
-      wrap.appendChild(c);
-    });
-    const add=document.createElement('button');
-    add.style.cssText='display:block;width:100%;margin-top:8px;background:var(--purple-light);color:var(--purple);border:1.5px dashed var(--purple);border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;';
-    add.textContent='+ 이 매장에 프로젝트 만들기';
-    add.onclick=()=>{window.closeStoreRoom();openCollabCreate(store.id);};
-    wrap.appendChild(add);
-    return wrap;
-  }catch(e){return null;}
-}
 
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
 // 나에게 온 대기 중 요청 — 나에게 지정된 것 + 오늘 매장의 공용 요청 (내가 낸 것 제외)
@@ -7186,7 +6950,7 @@ async function renderHomeRequests(wrap){
       row.className='hp-ho-item';
       const st=STORES.find(s=>s.id===r.store_id);
       row.innerHTML=`<span class="hp-tag ${r.recipient?.name===me?'hp-tag-me':'hp-tag-pub'}">${r.recipient?.name===me?'나에게':'공용'}</span>
-        <div style="flex:1;">${_wrEsc(r.content)}<div class="hp-meta">${_wrEsc(r.requester?.name||'익명')} · ${st?st.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):''}</div></div>`;
+        <div style="flex:1;">${_wrEsc(r.content)}<div class="hp-meta">${_wrEsc(r.requester?.name||'익명')} · ${st?storeShort(st.name):''}</div></div>`;
       const ok=document.createElement('button');ok.className='hp-confirm';ok.textContent='수락';
       ok.onclick=async()=>{if(await wrRespond(r,true)){row.remove();const left=card.querySelectorAll('.hp-ho-item').length;if(left===0)card.remove();}};
       const no=document.createElement('button');no.className='hp-confirm';no.style.background='var(--red)';no.textContent='거절';
@@ -7265,7 +7029,7 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
   if(hoRows.length>0){
     sec(`<div style="margin-top:13px;background:#fffdf4;border:1px solid #f2e6a8;border-left:4px solid var(--gold);border-radius:10px;padding:9px 11px;">
       <div style="font-size:12.5px;font-weight:800;">확인할 인수인계 <span style="color:var(--red);">${hoRows.length}건</span></div>
-      ${hoRows.slice(0,3).map(({store,it,toMe})=>`<div style="font-size:12px;margin-top:5px;line-height:1.4;">${toMe?'<b style="color:var(--orange);">[나에게]</b> ':''}${it.text} <span style="color:var(--text-mute);font-size:10.5px;">· ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span></div>`).join('')}
+      ${hoRows.slice(0,3).map(({store,it,toMe})=>`<div style="font-size:12px;margin-top:5px;line-height:1.4;">${toMe?'<b style="color:var(--orange);">[나에게]</b> ':''}${it.text} <span style="color:var(--text-mute);font-size:10.5px;">· ${storeShort(store.name)}</span></div>`).join('')}
       ${hoRows.length>3?`<div style="font-size:10.5px;color:var(--text-mute);margin-top:4px;">외 ${hoRows.length-3}건</div>`:''}
     </div>`);
   }
@@ -7317,7 +7081,7 @@ function openStoreRoom(store){
   const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();
   const tKey=todayKey();
   const me=window.__vflowProfile?.name||getUsername()||'';
-  const shortStore=(n)=>(n||'').replace('인천 ','').replace('부천 ','');
+  const shortStore=(n)=>storeShort((n||''));
   const el=(tag,cls,html)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(html!=null)x.innerHTML=html;return x;};
   const esc=_wrEsc;
   document.getElementById('room-title').textContent=store.name;
@@ -7331,7 +7095,7 @@ function openStoreRoom(store){
 
   // ── 오늘 이 매장 ──
   const todayCard=el('div','vh-card rm-today');
-  todayCard.appendChild(el('div','vh-ct',`<strong>오늘 이 매장</strong><span class="vh-tiny">${tm+1}/${td}</span>`));
+  todayCard.appendChild(el('div','vh-ct',`<strong>오늘 이 ${T('store')}</strong><span class="vh-tiny">${tm+1}/${td}</span>`));
   const chips=el('div','rm-chips');
   try{
     getEvs(ty,tm,td).forEach(ev=>{
@@ -7360,7 +7124,7 @@ function openStoreRoom(store){
     }catch(e){}
   })();
   // 근무자 — 누르면 그 사람 업무(조회)
-  const wRow=el('div','rm-row',`<div class="rm-main">근무자<small>${workers.length?'누르면 그 사람 오늘 업무':'오늘 이 매장에 업무를 등록한 사람이 아직 없어요'}</small></div>`);
+  const wRow=el('div','rm-row',`<div class="rm-main">${T('worker')}<small>${workers.length?'누르면 그 사람 오늘 업무':'오늘 이 매장에 업무를 등록한 사람이 아직 없어요'}</small></div>`);
   if(workers.length){
     const ws=el('div','rm-workers');
     workers.forEach(n=>{const st=workerStat[n]||{done:0,all:0};const b=el('button','rm-worker',`<span class="rm-av">${esc(n[0]||'')}</span>${esc(n)}<small>${st.done}/${st.all}</small>`);b.type='button';b.onclick=()=>{window.closeStoreRoom();enterMyWork(n);};ws.appendChild(b);});
@@ -7372,7 +7136,7 @@ function openStoreRoom(store){
 
   // ── 인수인계 (이 매장 · 오늘 문서 = 미확인 이월분 포함) ──
   const hoCard=el('div','vh-card rm-ho');
-  const hoHead=el('div','vh-ct',`<strong>인수인계</strong>`);
+  const hoHead=el('div','vh-ct',`<strong>${T('handover')}</strong>`);
   const hoRight=el('div','');hoRight.style.cssText='display:flex;gap:8px;align-items:center;';
   const hoCnt=el('span','vh-tiny','');hoRight.appendChild(hoCnt);
   const hoAdd=el('button','vh-btn gold','남기기');hoAdd.type='button';
@@ -7443,7 +7207,7 @@ function openStoreRoom(store){
   if(featOn('workreq')){
     // 사람에게 보내는 요청은 홈 「요청 보내기」로 갔다(매장에 안 묶임). 여기는 이 매장 근무자 누구나에게 남긴 것만, 비면 카드도 없다.
     const wrCard=el('div','vh-card rm-wr');
-    const wrHead=el('div','vh-ct',`<strong>매장 요청</strong><span class="vh-tiny">근무자 누구나</span>`);
+    const wrHead=el('div','vh-ct',`<strong>${T('store')} 요청</strong><span class="vh-tiny">${T('worker')} 누구나</span>`);
     wrCard.appendChild(wrHead);
     const wrList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');wrCard.appendChild(wrList);
     const paintWr=async()=>{
@@ -7481,7 +7245,7 @@ function openStoreRoom(store){
   // ── 매장 고정 정보 (접힘 · 자동 저장) ──
   if(featOn('storeinfo')){
     const info=el('div','vh-card rm-info folded');
-    const iHead=el('div','vh-ct',`<strong>매장 고정 정보</strong>`);
+    const iHead=el('div','vh-ct',`<strong>${T('store')} 고정 정보</strong>`);
     const iRight=el('div','');iRight.style.cssText='display:flex;gap:8px;align-items:center;';
     const iStat=el('span','vh-tiny','');const iFold=el('button','vh-fold','펼치기');iFold.type='button';
     iRight.appendChild(iStat);iRight.appendChild(iFold);iHead.appendChild(iRight);info.appendChild(iHead);
@@ -7501,7 +7265,7 @@ function openStoreRoom(store){
   // ── 이 매장 프로젝트 ──
   if(featOn('collab')){
     const pj=el('div','vh-card rm-proj');
-    const pHead=el('div','vh-ct',`<strong>이 매장 프로젝트</strong>`);
+    const pHead=el('div','vh-ct',`<strong>이 ${T('store')} 프로젝트</strong>`);
     const pAdd=el('button','vh-btn','＋ 만들기');pAdd.type='button';pAdd.onclick=()=>{window.closeStoreRoom();openCollabCreate(store.id);};
     pHead.appendChild(pAdd);pj.appendChild(pHead);
     const pList=el('div','vh-list','<div class="rm-empty">불러오는 중…</div>');pj.appendChild(pList);
@@ -7651,7 +7415,7 @@ window.renderCollabProjects=async function(){
     wrRows=_wr||[];
   }catch(e){}
   const me=window.__vflowProfile?.name||'';
-  const sname=(id)=>{const s=STORES.find(x=>x.id===id);return s?s.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):'';};
+  const sname=(id)=>{const s=STORES.find(x=>x.id===id);return s?storeShort(s.name):'';};
   const days=(ts)=>Math.floor((Date.now()-new Date(ts).getTime())/86400000);
   const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const kindTag={req:['요청','var(--blue-light)','var(--blue)'],store:['매장','var(--purple-light)','var(--purple)'],help:['🆘 도움','var(--orange-light)','var(--orange)'],collab:['회사 전체','var(--green-light)','var(--green)']};
@@ -7801,7 +7565,7 @@ window.openCollabDetail=async function(id){
   const r=(rows||[]).find(x=>x.id===id);
   if(!r){alert('불러오지 못했어요.');return;}
   const _dst=r.store_id?(STORES.find(s=>s.id===r.store_id)||null):null;
-  document.getElementById('collab-detail-title').textContent=(_dst?`[${_dst.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}] `:'')+r.title;
+  document.getElementById('collab-detail-title').textContent=(_dst?`[${storeShort(_dst.name)}] `:'')+r.title;
   const {me}=await collabApi();
   const members=(r.project_members||[]).map(m=>m.profiles?.name).filter(Boolean);
   const pct=Math.max(0,Math.min(100,r.progress||0));
@@ -7921,7 +7685,7 @@ async function renderDashboardProjects(){
       const body=document.createElement('div');body.className='project-group-body';body.style.display='none';
       projs.forEach(p=>{
         const store=STORES.find(s=>s.id===p.storeId);
-        const storeLabel=store?`${store.icon} ${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`:'매장 미지정';
+        const storeLabel=store?`${store.icon} ${storeShort(store.name)}`:'매장 미지정';
         const row=document.createElement('div');row.className='project-overview-row';row.style.cursor='pointer';
         const sortedLogs=[...(p.logs||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
         row.innerHTML=`
@@ -8055,7 +7819,7 @@ window.openBoardWrite=function(){  boardWriteCat=isAdmin?'notice':'share';
     STORES.forEach(s=>{
       const chip=document.createElement('button');
       chip.className='history-store-chip';
-      chip.textContent=`${s.icon} ${s.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}`;
+      chip.textContent=`${s.icon} ${storeShort(s.name)}`;
       chip.dataset.store=s.id;
       chip.onclick=()=>{
         const allChip=chips.querySelector('[data-store="all"]');
@@ -8820,7 +8584,7 @@ async function addHandoverItem(storeId,dateKey,text,author,recipient,until){
   const items=snap.exists()?(snap.data().items||[]):[];
   items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false,until:until||null});
   await setDoc(ref,{items});
-  vfUse('handover_leave');vfPush(recipient?{names:[recipient]}:{store_id:storeId},`${_vfStoreShort(storeId)||'매장'} 인수인계`,`${author||'익명'} · ${text}`);
+  vfUse('handover_leave');vfPush(recipient?{names:[recipient]}:{store_id:storeId},`${_vfStoreShort(storeId)||T('store')} ${T('handover')}`,`${author||'익명'} · ${text}`);
 }
 // 확인 없이 종료(마감) — 못 받아서 영영 미확인으로 쌓이는 것 방지
 async function closeHandoverItem(storeId,dateKey,itemId){
@@ -8939,7 +8703,7 @@ function buildHandoverSection(y,m,d){
 
   if(!locked){
     const inputRow=document.createElement('div');inputRow.className='todo-input-row';
-    inputRow.innerHTML=`<input type="text" class="todo-input" placeholder="인수인계 내용을 입력하세요" id="handover-input-box">
+    inputRow.innerHTML=`<input type="text" class="todo-input" placeholder="${T('handover')} 한 줄" id="handover-input-box">
       <button class="todo-add-btn" id="handover-add-box">+ 추가</button>`;
     wrap.appendChild(inputRow);
   }
@@ -9342,10 +9106,10 @@ function buildAS(y,m){
 function adminTabDefs(){
   const IC=VF_ICONS;
   return [
-    {id:'today',label:'현황·보고',group:'main',ic:IC.status,desc:'오늘 매장 타일 · 지난 날짜'},
+    {id:'today',label:'현황·보고',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
     {id:'report',label:'주간 리포트',group:'records',ic:IC.brief,desc:'매주 월요일 자동 생성 — 지난주 요약'},
     {id:'activity',label:'직원 활동',group:'records',ic:IC.activity,desc:'직원별 주간 활동 원문'},
-    {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:'이번 달 매장별 누적'},
+    {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:`이번 달 ${T('store')}별 누적`},
     {id:'projects',label:'프로젝트',group:'records',ic:IC.flag,desc:'진행 중 · 협업 프로젝트 현황'},
     {id:'dayoff',label:'휴무',group:'records',ic:IC.off,desc:'직원 휴무 신청 · 승인'},
     {id:'settings',label:'설정',group:'settings',ic:IC.admin,desc:'일하는 방식 · 매장 · 사람 · 화면 · 내 계정'},
@@ -9472,8 +9236,8 @@ async function renderTodayTab(content,opts={}){
   if(!opts.noNav){
     const kpi=document.createElement('div');kpi.className='tg-kpi';
     const mk=(tag,label)=>{const e=document.createElement(tag);e.className='vh-metric';e.innerHTML=`<span>${label}</span><b>—</b><small></small>`;if(tag==='button')e.type='button';kpi.appendChild(e);return e;};
-    const k1=mk(featOn('cleaning')?'button':'div',`${dayLabel} 청소 끝난 매장`);
-    const k2=mk('div',`${mns[m]} 인수인계 확인`);
+    const k1=mk(featOn('cleaning')?'button':'div',`${dayLabel} ${T('clean')} 끝난 ${T('store')}`);
+    const k2=mk('div',`${mns[m]} ${T('handover')} 확인`);
     const k3=mk('div',`${mns[m]} 남은 기록`);
     kpiCleanB=k1.querySelector('b');kpiCleanS=k1.querySelector('small');
     if(!featOn('cleaning')){k1.style.display='none';kpi.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';}
@@ -9510,7 +9274,7 @@ async function renderTodayTab(content,opts={}){
   const detailBody=detailPane.querySelector('.dt-detail-body');
   layout.appendChild(tiles);layout.appendChild(detailPane);
   content.appendChild(layout);
-  const shortName=(n)=>n.replace('인천 ','').replace('부천 ','');
+  const shortName=(n)=>storeShort(n);
   const selectStore=(store)=>{
     tiles.querySelectorAll('.dt-tile').forEach(t=>t.classList.toggle('on',t.dataset.store===store.id));
     detailBody.querySelectorAll('.dt-store-detail').forEach(d=>d.style.display=d.dataset.store===store.id?'':'none');
@@ -9752,7 +9516,7 @@ async function renderProjectsTab(content){
     const agg=new Map();
     const key=(a,b)=>a+'→'+b;
     const get=(a,b)=>{const k=key(a,b);if(!agg.has(k))agg.set(k,{from:a,to:b,todo:0,todoDone:0,todoWait:0,proj:0,projWait:0,logs:0,last:null});return agg.get(k);};
-    (wr.data||[]).forEach(r=>{if(String(r.status||'').startsWith('declined')&&!r.requester)return;const a=r.requester?.name||'?',bb=r.recipient?.name||(r.store_id?'누구나('+((STORES.find(x=>x.id===r.store_id)||{}).name||'').replace('인천 ','').replace('부천 ','').replace('구월 ','')+')':'누구나');const g=get(a,bb);g.todo++;if(r.status==='accepted')g.todoDone++;if(r.status==='pending')g.todoWait++;});
+    (wr.data||[]).forEach(r=>{if(String(r.status||'').startsWith('declined')&&!r.requester)return;const a=r.requester?.name||'?',bb=r.recipient?.name||(r.store_id?'누구나('+storeShort(r.store_id)+')':'누구나');const g=get(a,bb);g.todo++;if(r.status==='accepted')g.todoDone++;if(r.status==='pending')g.todoWait++;});
     (pj.data||[]).forEach(r=>{const g=get(r.owner?.name||'?',r.to?.name||'?');g.proj++;if(!r.accepted_at)g.projWait++;const ls=r.project_logs||[];g.logs+=ls.length;const last=ls.reduce((x,l)=>(!x||l.created_at>x)?l.created_at:x,null);if(last&&(!g.last||last>g.last))g.last=last;});
     const rows=[...agg.values()].sort((a,b)=>(b.todo+b.proj)-(a.todo+a.proj));
     if(rows.length){
@@ -9793,7 +9557,7 @@ async function renderProjectsTab(content){
         :ongoing.map(item=>{
           const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
           const store=STORES.find(s=>s.id===item.storeId);
-          const storeTag=store?`<span style="font-size:10px;color:var(--text-sub);background:var(--soft);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${store.name.replace('인천 ','').replace('부천 ','').replace('구월 ','')}</span>`:'';
+          const storeTag=store?`<span style="font-size:10px;color:var(--text-sub);background:var(--soft);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${storeShort(store.name)}</span>`:'';
 
           // 일지 최근 3개
           const logs=(item.logs||[]).slice(-3);
@@ -10158,7 +9922,7 @@ async function renderActivityTab(content){
     const doneN=tasks.filter(t=>t.status==='done').length;
     const carryN=tasks.filter(t=>t.status==='carried_over').length;
     const dows=['일','월','화','수','목','금','토'];
-    const shortStore=(id)=>{const s=STORES.find(x=>x.id===id);return s?s.name.replace('인천 ','').replace('부천 ','').replace('구월 ',''):'';};
+    const shortStore=(id)=>{const s=STORES.find(x=>x.id===id);return s?storeShort(s.name):'';};
     const hourTxt=(a,b)=>{const h=(new Date(b)-new Date(a))/3600000;if(h<0)return '';return h<1?`${Math.round(h*60)}분`:`${Math.round(h*10)/10}시간`;};
 
     let html=`<div class="dash-card"><div class="dash-store-name">${esc(sel.name)} — 이번 주 업무 원문 <span style="font-size:11px;font-weight:600;color:var(--text-sub);">등록 ${tasks.length}건 · 완료 ${doneN}${carryN?` · 이월 ${carryN}`:''}</span></div>`;
@@ -10319,6 +10083,27 @@ async function renderSettingsTab(content){
     secF.appendChild(row);
   });
   content.appendChild(secF);
+
+  // ── 우리 회사 말 — 비워두면 기본 말 ──
+  {
+    const secT=document.createElement('div');secT.className='dash-card';secT.style.marginBottom='12px';
+    secT.innerHTML='<div class="dash-store-name">우리 회사 말</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">메뉴·카드 제목·칸 이름에 쓰는 말을 우리 회사 식으로. 비워두면 기본 말. 직원이 적은 내용은 바뀌지 않아요. 저장하면 새로고침한 화면부터 반영돼요.</div>';
+    const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;';
+    Object.keys(TERM_DEFAULT).forEach(k=>{
+      const w=document.createElement('label');w.style.cssText='display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--text-sub);font-weight:700;';
+      w.innerHTML=`${TERM_LABEL[k]}<input type="text" maxlength="12" placeholder="${TERM_DEFAULT[k]}" value="${_wrEsc((appSettings.terms||{})[k]||'').replace(/"/g,'&quot;')}" style="border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;color:var(--text);">`;
+      w.querySelector('input').onchange=async(e)=>{
+        const v=e.target.value.trim();const prev={...(appSettings.terms||{})};
+        const next={...prev};if(v&&v!==TERM_DEFAULT[k])next[k]=v;else delete next[k];
+        appSettings.terms=next;savedEl.textContent='저장 중...';
+        try{await saveSettings();applyTerms();savedEl.textContent='✓ 저장됨';setTimeout(()=>savedEl.textContent='',1500);}
+        catch(err){appSettings.terms=prev;e.target.value=prev[k]||'';savedEl.textContent='저장 실패 (권한/네트워크 확인)';}
+      };
+      grid.appendChild(w);
+    });
+    secT.appendChild(grid);
+    content.appendChild(secT);
+  }
 
   // ── 매장 점수 규칙 ──
   {
@@ -11260,10 +11045,6 @@ window.openPwModal=function(){
     alert('관리자 권한이 없습니다.\n(관리자 화면은 owner/manager 계정만 볼 수 있어요)');
   }
 };
-window.closePwModal=function(){
-  const el=document.getElementById('pw-modal');if(el)el.style.display='none';
-};
-window.checkPw=function(){window.openPwModal();};
 document.getElementById('name-input').addEventListener('keydown',e=>{
   if(e.key==='Enter')window.confirmName();
 });
@@ -11504,59 +11285,7 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   applyTenantBranding();
 });
 
-// 앱 업데이트 공지 자동 등록 (한 번만)
-async function autoPostNotice(){
-  const noticeId='notice_v1_4_0703';
-  const seen=localStorage.getItem(noticeId);
-  if(seen)return;
-  try{
-    const ref=doc(db,'board/posts');
-    const snap=await getDoc(ref);
-    const items=snap.exists()?(snap.data().items||[]):[];
-    // 이미 등록된 공지면 스킵
-    if(items.find(i=>i.id===noticeId))return;
-    const now=new Date();
-    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const newPost={
-      id:noticeId,
-      cat:'notice',
-      ts:now.getTime(),
-      title:'앱 업데이트 안내 (7월 3일)',
-      body:`안녕하세요! 여러분의 피드백을 반영해 앱을 업데이트했습니다.\n\n수정된 사항\n\n[버그 수정]\n• 전날 미완료 업무가 다음날로 이월되지 않던 문제 수정\n  → 이제 미완료 업무가 다음날 자동으로 이월됩니다\n\n[인수인계]\n• 확인자 이름 표시 추가 (누가 확인했는지 바로 확인)\n• 완료된 인수인계 자동 숨김 + 보관함 기능\n• 매장 고정 정보 펼치기/접기 방식으로 개선\n\n[게시판]\n• 본인 작성 글 수정 기능 추가\n• 히스토리 카테고리 추가\n\n[대시보드]\n• 매장 블록에 상세 현황 표시\n  (청소 완료 / 업무 완료율 / 오늘 근무자 / 미확인 인수인계)\n\n[내 업무]\n• 오늘 업무 / 진행중 프로젝트 타입 구분 추가\n\n궁금한 점은 업무공유 게시판에 남겨주세요 😊`,
-      author:'관리자',
-      date:dateStr
-    };
-    items.unshift(newPost);
-    await setDoc(ref,{items});
-    localStorage.setItem(noticeId,'done');
-  }catch(e){}
-}
 
-async function autoPostMemoNotice(){
-  const noticeId='notice_memo_0709';
-  const seen=localStorage.getItem(noticeId);
-  if(seen)return;
-  try{
-    const ref=doc(db,'board/posts');
-    const snap=await getDoc(ref);
-    const items=snap.exists()?(snap.data().items||[]):[];
-    if(items.find(i=>i.id===noticeId))return;
-    const now=new Date();
-    const dateStr=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const newPost={
-      id:noticeId,
-      cat:'notice',
-      ts:now.getTime(),
-      title:'개인 메모장 기능 추가',
-      body:`내 업무 화면에 "개인 메모" 섹션이 새로 생겼습니다.\n\n무엇인가요\n• 나만 보는 자유 메모장이에요 (다른 직원·관리자에게 안 보입니다)\n• 이번 주 주문 필요사항처럼 개인적으로 기억해두고 싶은 걸 자유롭게 적어두는 용도\n• 자유 텍스트 1개, 계속 고쳐쓰고 저장하는 방식\n\n위치\n내 업무 → 진행중 프로젝트 아래, 인수인계 메모 위\n\n참고\n인수인계는 다음 근무자에게 전달할 내용을 남기는 공유용 공간이에요. 개인적으로 기억할 것들은 이제 개인 메모에 적어주시면 인수인계가 더 깔끔해집니다 🙂`,
-      author:'관리자',
-      date:dateStr
-    };
-    items.unshift(newPost);
-    await setDoc(ref,{items});
-    localStorage.setItem(noticeId,'done');
-  }catch(e){}
-}
 
 </script>
 </body>
