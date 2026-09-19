@@ -283,6 +283,7 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
           recipient_id: recipientId,
           closed: item.closed ?? false,
           until_date: item.until || null,
+          tag: item.tag || null,
         })
         .select('id')
         .single()
@@ -319,7 +320,7 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
   if (!storeId) return []
   const { data, error } = await supabase
     .from('handovers')
-    .select('id, content, handover_date, until_date, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
+    .select('id, content, handover_date, until_date, tag, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
     .eq('store_id', storeId)
     .is('deleted_at', null)
     .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
@@ -353,6 +354,7 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     fromDate: h.handover_date !== dateKey ? h.handover_date : null,
     since: h.handover_date, // 처음 남긴 날 — 부재 판단·장기 표시용
     until: h.until_date ?? null, // 장기 인수인계: 이 날짜까지 매일 보인다 (확인 대상 아님)
+    tag: h.tag ?? null, // 사건 태그(고장·클레임·재고·기타) — 매장 연혁에 쌓인다. 선택
     recipient: h.recip?.name ?? null,
     closed: h.closed ?? false,
     closedBy: h.closer?.name ?? null,
@@ -1175,15 +1177,21 @@ export async function monthKpi(y, m) {
 // ── 청소 사진 (Supabase Storage 'clean-photos', 비공개) ──
 // 경로: {tenant_id}/{store_id}/{dateKey}/{item_key}_{ts}.jpg — 첫 폴더가 테넌트라 storage RLS가
 // 같은 회사만 읽고 쓰게 막는다. 사진의 소재는 cleaning_*_logs.photo_path 에 남긴다.
-export async function uploadCleanPhoto(originalStoreId, dateKey, itemKey, blob) {
+// 원본은 keepDays 뒤 지워지고, 축소본(같은 이름 + _t.jpg, 수십 KB)은 영구 — "그날 청소했다"의 증거는 축소본으로 충분하다
+export async function uploadCleanPhoto(originalStoreId, dateKey, itemKey, blob, thumbBlob) {
   const ctx = await getContext()
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) throw new Error('매장을 알 수 없어요')
   const path = `${ctx.tenantId}/${storeId}/${dateKey}/${itemKey}_${Date.now()}.jpg`
   const { error } = await supabase.storage.from('clean-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false })
   if (error) throw error
+  if (thumbBlob) {
+    const { error: e2 } = await supabase.storage.from('clean-photos').upload(thumbPath(path), thumbBlob, { contentType: 'image/jpeg', upsert: false })
+    if (e2) console.warn('[사진] 축소본 저장 실패', e2) // 축소본이 없어도 원본은 남는다
+  }
   return path
 }
+export const thumbPath = (path) => String(path || '').replace(/\.jpg$/i, '_t.jpg')
 // 오래된 청소 사진 정리 — keepDays 보다 오래된 날짜 폴더의 파일을 지우고, 기록의 photo_path 도 비운다.
 // 관리자(owner/manager)만. storage RLS의 delete 정책이 같은 조건을 다시 확인한다.
 export async function deleteOldCleanPhotos(keepDays) {
@@ -1201,23 +1209,59 @@ export async function deleteOldCleanPhotos(keepDays) {
       if (d.id || !/^\d{4}-\d{2}-\d{2}$/.test(d.name) || d.name >= cutoffKey) continue
       const prefix = `${ctx.tenantId}/${st.name}/${d.name}`
       const objs = await list(prefix)
-      const paths = objs.filter((o) => o.id).map((o) => `${prefix}/${o.name}`)
+      const paths = objs.filter((o) => o.id && !/_t\.jpg$/i.test(o.name)).map((o) => `${prefix}/${o.name}`) // 축소본(_t)은 남긴다
       for (let i = 0; i < paths.length; i += 100) {
         const { error } = await bucket.remove(paths.slice(i, i + 100)); if (error) throw error
       }
       files += paths.length; folders++
     }
   }
-  // 기록 쪽 소재도 비운다 (사진이 없는데 '사진 보기'가 남지 않게)
-  const { error: e1 } = await supabase.from('cleaning_daily_logs').update({ photo_path: null }).eq('tenant_id', ctx.tenantId).lt('log_date', cutoffKey).not('photo_path', 'is', null)
-  if (e1) throw e1
+  // photo_path 는 그대로 둔다 — 원본이 없으면 보기에서 축소본(_t.jpg)으로 넘어간다
   return { files, folders, cutoffKey }
 }
 export async function getCleanPhotoUrl(path, seconds = 3600) {
   if (!path) return null
   const { data, error } = await supabase.storage.from('clean-photos').createSignedUrl(path, seconds)
+  if (!error && data?.signedUrl) return data.signedUrl
+  // 원본이 정리됐으면 축소본
+  const t = thumbPath(path)
+  if (t !== path) {
+    const r2 = await supabase.storage.from('clean-photos').createSignedUrl(t, seconds)
+    if (!r2.error && r2.data?.signedUrl) return r2.data.signedUrl
+  }
   if (error) throw error
-  return data?.signedUrl ?? null
+  return null
+}
+export async function getCleanThumbUrl(path, seconds = 3600) {
+  if (!path) return null
+  const r = await supabase.storage.from('clean-photos').createSignedUrl(thumbPath(path), seconds)
+  if (!r.error && r.data?.signedUrl) return r.data.signedUrl
+  return getCleanPhotoUrl(path, seconds)
+}
+
+// ── 매장 연혁 — 월별 한 줄. 있는 표 넷을 그대로 집계한다(근무 기록·청소 기록·인수인계·프로젝트). 관리자만 부른다 ──
+export async function storeHistory(storeId) {
+  const ctx = await getContext()
+  const T = ctx.tenantId
+  const [ws, cl, ho, pj] = await Promise.all([
+    supabase.from('work_sessions').select('profile_id, work_date').eq('store_id', storeId).limit(20000),
+    supabase.from('cleaning_daily_logs').select('log_date, done, photo_path').eq('tenant_id', T).eq('store_id', storeId).limit(50000),
+    supabase.from('handovers').select('id, handover_date, confirmed, closed, tag, content, created_at, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name)').eq('tenant_id', T).eq('store_id', storeId).is('deleted_at', null).order('handover_date', { ascending: false }).limit(20000),
+    supabase.from('projects').select('id, title, status, created_at, done_date').eq('tenant_id', T).eq('store_id', storeId).limit(2000),
+  ])
+  for (const r of [ws, cl, ho, pj]) if (r.error) throw r.error
+  const months = new Map()
+  const M = (key) => { let m = months.get(key); if (!m) { m = { key, workers: new Set(), days: 0, clTotal: 0, clDone: 0, photos: [], hoTotal: 0, hoOk: 0, tags: {}, events: [], projects: 0 }; months.set(key, m) } return m }
+  const mk = (d) => String(d || '').slice(0, 7)
+  const seenDay = new Set()
+  for (const r of ws.data ?? []) { const k = mk(r.work_date); if (!k) continue; const m = M(k); m.workers.add(r.profile_id); const dk = r.profile_id + '|' + r.work_date; if (!seenDay.has(dk)) { seenDay.add(dk); m.days++ } }
+  for (const r of cl.data ?? []) { const k = mk(r.log_date); if (!k) continue; const m = M(k); m.clTotal++; if (r.done) m.clDone++; if (r.photo_path) m.photos.push({ date: r.log_date, path: r.photo_path }) }
+  for (const r of ho.data ?? []) {
+    const k = mk(r.handover_date); if (!k) continue; const m = M(k); m.hoTotal++; if (r.confirmed || r.closed) m.hoOk++
+    if (r.tag) { m.tags[r.tag] = (m.tags[r.tag] || 0) + 1; m.events.push({ date: r.handover_date, tag: r.tag, text: r.content, author: r.author?.name ?? '', confirmer: r.confirmer?.name ?? '', confirmed: !!r.confirmed }) }
+  }
+  for (const r of pj.data ?? []) { const k = mk(r.created_at); if (!k) continue; M(k).projects++ }
+  return [...months.values()].sort((a, b) => (a.key < b.key ? 1 : -1)).map((m) => ({ ...m, workers: m.workers.size, photos: m.photos.sort((a, b) => (a.date < b.date ? 1 : -1)) }))
 }
 
 // ── config/staff (5-1 신원통합: 가짜 이름 16명 → 실제 테넌트 프로필) ──

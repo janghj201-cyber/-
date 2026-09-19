@@ -597,7 +597,23 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-item.vh-done .vh-main{color:var(--text-mute);text-decoration:line-through;}
 .vh-item.vh-done .vh-main small{display:inline-block;width:100%;text-decoration:none;} /* 취소선이 작은 글씨까지 번지지 않게 */
 .vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
-.vh-ct>strong{margin-right:auto;} /* 머리 오른쪽에 건수·「자세히」가 나란히 */
+.vh-ct>strong{margin-right:auto;}
+/* 매장 연혁 */
+.sh-tbl td small,.sh-tbl th small{display:block;font-size:10.5px;color:var(--text-mute);font-weight:600;margin-top:1px;}
+.sh-tbl tr.sh-row{cursor:pointer;}
+.sh-tbl tr.sh-row:hover td{background:var(--bg);}
+.sh-tbl tr.sel td{background:var(--bg);}
+.sh-ev{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--border);font-size:13px;}
+.sh-ev .d{flex:0 0 46px;color:var(--text-mute);font-variant-numeric:tabular-nums;font-size:12px;padding-top:1px;}
+.sh-ev .t{flex:1;min-width:0;}
+.sh-ev .t small{display:block;color:var(--text-sub);font-size:11.5px;margin-top:2px;}
+.sh-ph{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.sh-ph img,.sh-ph span{width:54px;height:54px;border-radius:8px;object-fit:cover;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-mute);cursor:pointer;}
+.sh-stores{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.vh-tagpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.vh-tagpick button{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;}
+.vh-tagpick button.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+@media print{#vf-side,.tab-bar,.header,.dash-nav,.dash-datenav,.sh-stores,.vh-btn{display:none!important;}#screen-admin{display:block!important;}} /* 머리 오른쪽에 건수·「자세히」가 나란히 */
 .vh-more-link{background:none;border:none;padding:0 0 0 8px;font:inherit;font-size:11px;font-weight:700;color:var(--text-mute);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
 .vh-more-link:hover{color:var(--navy);}
 /* 수락은 바로 — 5초 동안 「되돌리기」, 지나면 저장. 확인 대화 없음 */
@@ -1830,7 +1846,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi, storeHistory, getCleanThumbUrl } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // Firebase 설정
@@ -3144,6 +3160,9 @@ const GUIDE_SECTIONS = [
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
       '🗣️ 관리자 → 설정 → 「우리 회사 말」 — 매장·근무자·청소·인수인계를 우리 회사 식으로. 비워두면 지금 그대로',
       '🕘 출근·퇴근 — 그날 앱을 처음 열면(순환 직원은 매장을 고르면) 출근 시각이 남고, 홈 오른쪽 위 「근무 마감」이 퇴근. 매장 컴퓨터는 켜면 V-Flow가 먼저 뜨게 설정할 수 있어요(설치 파일)',
+      '📚 관리자 → 기록 → 「매장 연혁」 — 매장마다 월별 한 줄(근무자·청소·인수인계·사건·프로젝트·사진), 숫자 아래는 작년 같은 달. 줄을 누르면 그달 사건과 사진. 「인쇄」로 한 장',
+      '🏷️ 인수인계 남길 때 「고장·클레임·재고·기타」 태그(선택) — 붙이면 매장 연혁의 「사건」으로 쌓여요',
+      '🖼️ 청소 사진은 원본만 보관 기간 뒤 지워지고 축소본은 계속 남아요',
       '🏪 대표·매니저 홈 맨 위에 「매장 확인할 것」 — 어느 매장 · 무엇 · 누구, 누르면 그 매장 방. 현황·보고까지 안 가도 첫 줄이 판단입니다. 직원 홈은 그대로',
     ]
   },
@@ -5714,6 +5733,7 @@ function openLeaveSheet(entry,tKey,preset){
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 ${T('worker')} 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+    <div class="vh-tagpick" data-tag-wrap style="display:none;">${['고장','클레임','재고','기타'].map(t=>`<button type="button" data-tag="${t}">${t}</button>`).join('')}</div>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
     <div class="vh-until" data-due-wrap style="display:none;"><label>기한 <input type="date" data-due min="${tKey}" style="margin-left:6px;"></label></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel>취소</button><button class="vh-btn primary" data-save>저장</button></div>`;
@@ -5731,6 +5751,8 @@ function openLeaveSheet(entry,tKey,preset){
   const clearDraft=()=>{try{localStorage.removeItem(DRAFT_KEY);}catch(e){}};
   ta.addEventListener('input',saveDraft);
   const untilWrap=sh.querySelector('[data-until-wrap]'), longCb=sh.querySelector('[data-long]'), untilInp=sh.querySelector('[data-until]');
+  const tagWrap=sh.querySelector('[data-tag-wrap]');let hoTag=null;
+  tagWrap.querySelectorAll('button').forEach(b=>{b.onclick=()=>{hoTag=(hoTag===b.dataset.tag)?null:b.dataset.tag;tagWrap.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.tag===hoTag));};});
   // 요청 종류 — 할 일로(지금 방식) / 프로젝트로(받는 사람이 수락하면 둘만의 프로젝트가 열린다)
   const reqKindWrap=sh.querySelector('[data-reqkind-wrap]'), dueWrap=sh.querySelector('[data-due-wrap]'), dueInp=sh.querySelector('[data-due]');
   let reqKind='todo';
@@ -5745,7 +5767,7 @@ function openLeaveSheet(entry,tKey,preset){
     // 요청은 사람 대 사람 — 받는 사람 필수 (근무자 누구나는 매장 방 인수인계로)
     if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람':`받는 사람: 다음 ${T('worker')} 누구나`;recipDefault.disabled=(k==='request');}
     if(k!=='request'&&recip.value&&recipDefault&&recip.selectedIndex===0)recip.value='';
-    untilWrap.style.display=k==='handover'?'':'none';
+    untilWrap.style.display=k==='handover'?'':'none';tagWrap.style.display=k==='handover'?'':'none';
     reqKindWrap.style.display=k==='request'?'':'none';
     dueWrap.style.display=(k==='request'&&reqKind==='project')?'':'none';
     ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'프로젝트 한 줄':'부탁할 일 한 줄'):'나만 볼 메모';
@@ -5829,7 +5851,7 @@ function openLeaveSheet(entry,tKey,preset){
       if(kind==='todo')await addTodoItem(entry.id,tKey,text,me);
       else if(kind==='handover'){
         if(longCb.checked&&(!untilInp.value||untilInp.value<tKey)){alert('표시 마감 날짜를 선택하세요.');btn.disabled=false;btn.textContent='저장';return;}
-        await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null);
+        await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null,hoTag);
       }
       else if(kind==='request'){
         // 요청은 사람 대 사람 — 매장에 묶지 않는다(store_id 없음). 매장 방에는 안 뜨고 받는 사람 홈에만.
@@ -7192,7 +7214,7 @@ function openStoreRoom(store){
       const cb=document.createElement('input');cb.type='checkbox';cb.className='vh-check';cb.checked=!!it.confirmed;
       cb.disabled=hoIsLong(it)&&!it.confirmed; // 장기 항목은 확인이 아니라 알아둘 것 — 종료로 끝낸다
       cb.setAttribute('aria-label','확인');
-      const tags=(hoIsLong(it)?`<span class="rm-tag long">알아둘 것 ${hoUntilLabel(it)}</span>`:'')+(it.recipient?`<span class="rm-tag">${esc(it.recipient)}에게</span>`:'')+((it.fromDate&&it.fromDate!==tKey)?`<span class="rm-tag long">${fmtD(it.fromDate)}부터</span>`:'');
+      const tags=(it.tag?`<span class="rm-tag">${esc(it.tag)}</span>`:'')+(hoIsLong(it)?`<span class="rm-tag long">알아둘 것 ${hoUntilLabel(it)}</span>`:'')+(it.recipient?`<span class="rm-tag">${esc(it.recipient)}에게</span>`:'')+((it.fromDate&&it.fromDate!==tKey)?`<span class="rm-tag long">${fmtD(it.fromDate)}부터</span>`:'');
       const cts=it.confirmedAt?(d=>`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)(new Date(it.confirmedAt)):'';
       const main=el('div','vh-main',`${esc(it.text)}${tags}<small>${esc(it.author||'익명')}${it.confirmed?` · ${esc(it.confirmedBy||'')} 확인 ${cts}`:it.closed?' · 종료':''}</small>`);
       const fbs=it.feedbacks||[];
@@ -8611,11 +8633,11 @@ const _hoExpired=new Set();
 function hoAutoCloseExpired(storeId,tKey,items){
   (items||[]).forEach(it=>{if(hoIsLong(it)&&!it.closed&&it.until<tKey&&!_hoExpired.has(it.id)){_hoExpired.add(it.id);closeHandoverItem(storeId,tKey,it.id).catch(()=>{});}});
 }
-async function addHandoverItem(storeId,dateKey,text,author,recipient,until){
+async function addHandoverItem(storeId,dateKey,text,author,recipient,until,tag){
   const ref=doc(db,`handover/${storeId}_${dateKey}`);
   const snap=await getDoc(ref);
   const items=snap.exists()?(snap.data().items||[]):[];
-  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false,until:until||null});
+  items.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,7),text,author,confirmed:false,fromDate:null,recipient:recipient||null,closed:false,until:until||null,tag:tag||null});
   await setDoc(ref,{items});
   vfUse('handover_leave');vfPush(recipient?{names:[recipient]}:{store_id:storeId},`${_vfStoreShort(storeId)||T('store')} ${T('handover')}`,`${author||'익명'} · ${text}`);
 }
@@ -8959,7 +8981,8 @@ function buildCL(mode,secIdx,dateKey){
           pbtn.disabled=true;pbtn.classList.remove('fail');pbtn.textContent='올리는 중';pmsg.hidden=true;syncEl.textContent='사진 저장 중...';
           try{
             if(!navigator.onLine)throw new Error('오프라인');
-            const path=await uploadCleanPhoto(curStore.id,dateKey,key,blob);
+            let thumb=null;try{thumb=await shrinkPhoto(blob,360,0.7);}catch(e){}
+            const path=await uploadCleanPhoto(curStore.id,dateKey,key,blob,thumb);
             const snap=await getDoc(docRef);
             const cur=snap.exists()?snap.data():{};
             cur[key]={v:true,t:Date.now(),photo:path};
@@ -9145,6 +9168,7 @@ function adminTabDefs(){
     {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:`이번 달 ${T('store')}별 누적`},
     {id:'projects',label:'프로젝트',group:'records',ic:IC.flag,desc:'진행 중 · 협업 프로젝트 현황'},
     {id:'dayoff',label:'휴무',group:'records',ic:IC.off,desc:'직원 휴무 신청 · 승인'},
+    {id:'history',label:`${T('store')} 연혁`,group:'records',ic:IC.archive,desc:'월별 한 줄 · 작년 같은 달 · 사건 · 사진'},
     {id:'settings',label:'설정',group:'settings',ic:IC.admin,desc:'일하는 방식 · 매장 · 사람 · 화면 · 내 계정'},
   ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
 }
@@ -9198,6 +9222,7 @@ async function renderDashboard(){
   else if(dashTab==='settings')await renderSettingsTab(content);
   else if(dashTab==='activity')await renderActivityTab(content);
   else if(dashTab==='report')await renderReportTab(content);
+  else if(dashTab==='history')await renderHistoryTab(content);
   else {await renderMonthlyTab(content);try{await renderUsageCard(content);}catch(e){}}
 
   if(dashTab!=='monthly'){
@@ -11003,6 +11028,59 @@ async function renderUsageCard(content){
   tb.appendChild(body);card.appendChild(tb);
   if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일간 미사용: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
   content.appendChild(card);
+}
+// 매장 연혁 — 한 매장의 월별 한 줄. 숫자 아래 작은 글씨는 작년 같은 달. 줄을 누르면 그달 사건·사진
+let _histStore=null,_histOpen=null;
+async function renderHistoryTab(content){
+  document.getElementById('dash-sub').textContent='월별 한 줄 · 작년 같은 달';
+  const wrap=document.createElement('div');wrap.style.padding='0 12px 12px';content.appendChild(wrap);
+  if(!_histStore)_histStore=STORES[0]?STORES[0].id:null;
+  const pick=document.createElement('div');pick.className='sh-stores';
+  STORES.forEach(st=>{const b=document.createElement('button');b.type='button';b.className='rm-worker'+(st.id===_histStore?' on':'');b.style.cssText=st.id===_histStore?'background:var(--navy);color:#fff;border-color:var(--navy);':'';b.textContent=storeShort(st.name);b.onclick=()=>{_histStore=st.id;_histOpen=null;renderDashboard();};pick.appendChild(b);});
+  wrap.appendChild(pick);
+  const st=STORES.find(x=>x.id===_histStore);if(!st){wrap.appendChild(Object.assign(document.createElement('div'),{className:'monthly-loading',textContent:'매장 없음'}));return;}
+  const card=document.createElement('div');card.className='dash-card';
+  card.innerHTML=`<div class="vh-ct"><strong>${_wrEsc(st.name)} 연혁</strong><span class="vh-tiny">불러오는 중</span><button type="button" class="vh-btn" data-print>인쇄</button></div>`;
+  card.querySelector('[data-print]').onclick=()=>window.print();
+  wrap.appendChild(card);
+  let rows;try{rows=await storeHistory(st.id);}catch(e){card.querySelector('.vh-tiny').textContent='불러오기 실패';return;}
+  const byKey=new Map(rows.map(r=>[r.key,r]));
+  const first=rows.length?rows[rows.length-1].key:null;
+  const months=first?(()=>{const [y,m]=first.split('-').map(Number);const n=(today.getFullYear()-y)*12+(today.getMonth()+1-m)+1;return n;})():0;
+  card.querySelector('.vh-tiny').textContent=first?`${first.replace('-','.')} 부터 · ${months}개월`:'';
+  if(!rows.length){card.appendChild(Object.assign(document.createElement('div'),{className:'vh-tiny',textContent:'기록 없음'}));return;}
+  const tb=document.createElement('table');tb.className='ad-tbl sh-tbl';tb.style.marginTop='8px';
+  tb.innerHTML=`<thead><tr><th style="width:100%">월</th><th style="text-align:right">${T('worker')}<small>명 · 일</small></th><th style="text-align:right">${T('clean')}<small>완료율</small></th><th style="text-align:right">${T('handover')}<small>건 · 확인</small></th><th>사건</th><th style="text-align:right">프로젝트</th><th style="text-align:right">사진</th></tr></thead>`;
+  const body=document.createElement('tbody');tb.appendChild(body);card.appendChild(tb);
+  const pct=(a,b)=>b?`${Math.round(a/b*100)}%`:'—';
+  const prevKey=(k)=>{const [y,m]=k.split('-');return `${Number(y)-1}-${m}`;};
+  const cur=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const detail=document.createElement('div');
+  const paintDetail=(r)=>{
+    detail.innerHTML='';if(!r)return;
+    const h=document.createElement('div');h.className='vh-fixed-head';h.style.marginTop='14px';h.innerHTML=`<span>${r.key.replace('-','.')} 사건</span><span class="vh-tiny">태그 붙은 ${T('handover')} · ${r.events.length}건</span>`;detail.appendChild(h);
+    if(!r.events.length)detail.appendChild(Object.assign(document.createElement('div'),{className:'vh-tiny',textContent:'없음',style:'padding:8px 0'}));
+    r.events.forEach(ev=>{const d=document.createElement('div');d.className='sh-ev';d.innerHTML=`<span class="d">${fmtD(ev.date,false)}</span><div class="t">${_wrEsc(ev.text)}<small>${_wrEsc(ev.author)}${ev.confirmed&&ev.confirmer?` · ${_wrEsc(ev.confirmer)} 확인`:''}</small></div><span class="vh-tag" style="margin:0 0 0 6px;align-self:flex-start;">${_wrEsc(ev.tag)}</span>`;detail.appendChild(d);});
+    const h2=document.createElement('div');h2.className='vh-fixed-head';h2.style.marginTop='14px';h2.innerHTML=`<span>${r.key.replace('-','.')} ${T('clean')} 사진</span><span class="vh-tiny">${r.photos.length}장 · 축소본 영구 · 원본 ${photoKeepDays()}일</span>`;detail.appendChild(h2);
+    const ph=document.createElement('div');ph.className='sh-ph';detail.appendChild(ph);
+    const show=(list)=>{list.forEach(p=>{const im=document.createElement('img');im.alt=p.date;im.title=p.date;im.loading='lazy';im.onclick=()=>window.openCleanPhoto(p.path);ph.appendChild(im);getCleanThumbUrl(p.path).then(u=>{if(u)im.src=u;else im.remove();}).catch(()=>im.remove());});};
+    show(r.photos.slice(0,12));
+    if(r.photos.length>12){const more=document.createElement('span');more.textContent=`+${r.photos.length-12}`;more.onclick=()=>{more.remove();show(r.photos.slice(12));};ph.appendChild(more);}
+  };
+  rows.forEach(r=>{
+    const pv=byKey.get(prevKey(r.key));
+    const tagHtml=Object.entries(r.tags).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="vh-tag">${_wrEsc(t)} ${n}</span>`).join('')||'<span style="color:var(--text-mute)">—</span>';
+    const tr=document.createElement('tr');tr.className='sh-row'+(r.key===_histOpen?' sel':'');
+    tr.innerHTML=`<td>${r.key.replace(/-0?/,' · ')}${r.key===cur?'<small>진행 중</small>':''}</td>
+      <td class="n">${r.workers} · ${r.days}${pv?`<small>작년 ${pv.workers} · ${pv.days}</small>`:''}</td>
+      <td class="n">${pct(r.clDone,r.clTotal)}${pv?`<small>작년 ${pct(pv.clDone,pv.clTotal)}</small>`:''}</td>
+      <td class="n">${r.hoTotal} · ${pct(r.hoOk,r.hoTotal)}${pv?`<small>작년 ${pv.hoTotal} · ${pct(pv.hoOk,pv.hoTotal)}</small>`:''}</td>
+      <td>${tagHtml}</td><td class="n">${r.projects}</td><td class="n">${r.photos.length}</td>`;
+    tr.onclick=()=>{_histOpen=(_histOpen===r.key)?null:r.key;body.querySelectorAll('tr').forEach(x=>x.classList.toggle('sel',x===tr&&_histOpen===r.key));paintDetail(_histOpen?r:null);};
+    body.appendChild(tr);
+  });
+  card.appendChild(detail);
+  if(_histOpen&&byKey.get(_histOpen))paintDetail(byKey.get(_histOpen));else if(rows[0]){_histOpen=rows[0].key;body.querySelector('tr').classList.add('sel');paintDetail(rows[0]);}
 }
 async function renderMonthlyTab(content){
   document.getElementById('dash-sub').textContent='이번 달 지점별 누적 통계';
