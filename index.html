@@ -597,6 +597,9 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-item.vh-done .vh-main{color:var(--text-mute);text-decoration:line-through;}
 .vh-item.vh-done .vh-main small{display:inline-block;width:100%;text-decoration:none;} /* 취소선이 작은 글씨까지 번지지 않게 */
 .vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
+.vh-ct>strong{margin-right:auto;} /* 머리 오른쪽에 건수·「자세히」가 나란히 */
+.vh-more-link{background:none;border:none;padding:0 0 0 8px;font:inherit;font-size:11px;font-weight:700;color:var(--text-mute);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+.vh-more-link:hover{color:var(--navy);}
 /* 수락은 바로 — 5초 동안 「되돌리기」, 지나면 저장. 확인 대화 없음 */
 .vf-later .vh-main,.vf-later .todo-text{color:var(--text-mute);text-decoration:line-through;}
 .vf-later .vh-main small,.vf-later .todo-author{display:inline-block;width:100%;text-decoration:none;}
@@ -1708,11 +1711,11 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
         <div class="vh-card my-section mw-card" id="mw-todo">
           <div class="vh-ct"><strong><span id="my-task-date-label">그날</span>의 할 일</strong><span class="vh-tiny" id="mw-todo-sub"></span></div>
           <div class="mw-store"><span class="mw-lbl" data-term="{store}">매장</span><div class="my-store-select" id="my-store-select"></div></div>
-          <div class="my-todo-list" id="my-todo-list"><div class="my-empty" data-term="{store}을 선택하세요">매장을 선택하세요</div></div>
+          <div class="my-todo-list" id="my-todo-list"><div class="my-empty" data-term="{store} 선택">매장 선택</div></div>
           <div class="my-input-row">
             <input type="text" class="my-input" id="my-todo-input" placeholder="할 일 한 줄 · 여러 줄은 「여러 개」" onkeydown="if(event.key==='Enter')addMyTodo()">
             <button type="button" class="vh-btn primary" onclick="addMyTodo()">추가</button>
-            <button type="button" class="vh-btn" onclick="toggleMyBulk()" title="여러 개를 한 번에 — 한 줄에 하나씩">여러 개</button>
+            <button type="button" class="vh-btn" onclick="toggleMyBulk()" title="한 줄에 하나씩">여러 개</button>
           </div>
           <div class="mw-bulk">
             <div id="my-bulk-wrap" style="display:none;margin-top:8px;">
@@ -1730,11 +1733,11 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
       <section class="mw-col">
         <!-- 창고 — 날짜 없는 할 일 (시트의 「업무 쏟아내기」 자리). 본인만 -->
         <div class="vh-card my-section mw-card" id="mw-wh">
-          <div class="vh-ct"><strong>업무 창고</strong><span class="vh-tiny" id="mw-wh-cnt"></span></div>
+          <div class="vh-ct"><strong>업무 창고</strong><span class="vh-tiny" id="mw-wh-cnt"></span><button type="button" class="vh-more-link" onclick="openGuideModal('업무 창고')">자세히</button></div>
           <div class="my-input-row" style="margin-top:0;">
             <input type="text" class="my-input" id="mw-wh-input" placeholder="날짜 없이 넣어둘 일 한 줄" aria-label="창고에 넣기" onkeydown="if(event.key==='Enter')addMyBacklog()">
             <button type="button" class="vh-btn primary" onclick="addMyBacklog()">넣기</button>
-            <button type="button" class="vh-btn" onclick="toggleMyBacklogBulk()" title="여러 개를 한 번에 — 한 줄에 하나씩">여러 개</button>
+            <button type="button" class="vh-btn" onclick="toggleMyBacklogBulk()" title="한 줄에 하나씩">여러 개</button>
           </div>
           <div class="mw-bulk">
             <div id="mw-wh-bulk" style="display:none;margin-top:8px;">
@@ -2589,7 +2592,7 @@ async function renderMyTodoList(){
               <div data-subhost></div>
             </div>
             <div class="todo-actions">
-              ${(!item.done&&/^[0-9a-f-]{36}$/i.test(String(item.id))&&window.__vflowProfile&&window.__vflowProfile.name===myStaff)?'<button class="todo-action-btn" data-act="wh" title="날짜를 떼고 창고에 둔다">창고로</button>':''}
+              ${(!item.done&&/^[0-9a-f-]{36}$/i.test(String(item.id))&&window.__vflowProfile&&window.__vflowProfile.name===myStaff)?'<button class="todo-action-btn" data-act="wh" title="창고로">창고로</button>':''}
               <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">세부</button>
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
@@ -2624,12 +2627,12 @@ async function renderMyTodoList(){
                 const del=document.createElement('button');del.textContent='✕';del.style.cssText='background:none;border:none;color:var(--text-mute);cursor:pointer;font-size:11px;padding:2px 4px;font-family:inherit;';
                 c.onchange=async()=>{
                   su.done=c.checked;
-                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){su.done=!c.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
+                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){su.done=!c.checked;alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
                   paint(false);updateBadge();
                 };
                 del.onclick=async()=>{
                   const removed=subs.splice(subs.indexOf(su),1);
-                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.push(removed[0]);alert('저장 실패 — 네트워크를 확인해주세요');}
+                  try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.push(removed[0]);alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
                   paint(false);updateBadge();
                 };
                 r.appendChild(c);r.appendChild(sp);r.appendChild(del);box.appendChild(r);
@@ -2643,7 +2646,7 @@ async function renderMyTodoList(){
                 const t=inp.value.trim();if(!t)return;
                 subs.push({id:Date.now()+'_'+Math.random().toString(36).slice(2,5),text:t,done:false});
                 inp.value='';
-                try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.pop();alert('저장 실패 — 네트워크를 확인해주세요');}
+                try{await updateSubItems(myStaff,dateKey,item.id,subs);}catch(err){subs.pop();alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
                 paint(true);updateBadge();
               };
               ab.onclick=doAdd;
@@ -2657,7 +2660,7 @@ async function renderMyTodoList(){
 
           row.querySelector('input').onchange=async(e)=>{
             try{const r=await vfTry('todo_toggle',{name:myStaff,dateKey,id:item.id,done:e.target.checked},()=>toggleTodoItem(myStaff,dateKey,item.id,e.target.checked),'todo_toggle:'+item.id);row.classList.toggle('vf-pending',r==='queued');}
-            catch(err){e.target.checked=!e.target.checked;alert('저장 실패 — '+(err&&err.message||'권한을 확인해주세요'));return;}
+            catch(err){e.target.checked=!e.target.checked;alert('저장에 실패했습니다. '+(err&&err.message||'권한이 없습니다.'));return;}
             item.done=e.target.checked;
             row.className='my-todo-item'+(item.done?' done':'');
             row.style.borderLeft='';row.style.opacity='1';
@@ -2759,7 +2762,7 @@ async function renderMyBacklog(){
   const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;
   if(!self){list.innerHTML='';cnt.textContent='';return;}
   let items=[];
-  try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';cnt.textContent='';return;}
+  try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패</div>';cnt.textContent='';return;}
   const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty')){list.innerHTML='<div class="wh-empty"><button type="button" class="vf-empty-act">첫 줄 넣기 →</button></div>';list.querySelector('.vf-empty-act').onclick=()=>{const i=document.getElementById('mw-wh-input');if(i)i.focus();};}};
   list.innerHTML='';
   if(!items.length){paintCnt();return;}
@@ -2792,7 +2795,7 @@ function openBacklogSheet(entry,tKey){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-wh-title');
-  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct" style="margin-bottom:8px;"><h3 id="vh-wh-title" style="margin:0;">업무 창고</h3><span class="vh-tiny" data-cnt></span></div>
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct" style="margin-bottom:8px;"><h3 id="vh-wh-title" style="margin:0;">업무 창고 <button type="button" class="vh-more-link" onclick="openGuideModal('업무 창고')">자세히</button></h3><span class="vh-tiny" data-cnt></span></div>
     <div class="vh-add" style="margin-top:0;"><input type="text" placeholder="날짜 없이 넣어둘 일 한 줄" maxlength="200" aria-label="창고에 넣기"><button type="button" class="vh-btn primary" data-add>넣기</button></div>
     <div class="wh-list" data-list><div class="wh-empty">불러오는 중…</div></div>
     <div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">닫기</button></div>`;
@@ -2806,7 +2809,7 @@ function openBacklogSheet(entry,tKey){
   const paintCnt=()=>{const n=list.querySelectorAll('.wh-row:not(.vf-out)').length;vfRoll(cnt,n?`${n}건`:'');if(!n&&!list.querySelector('.wh-empty')){list.innerHTML='<div class="wh-empty"><button type="button" class="vf-empty-act">오늘 말고 나중에 할 일 넣기 →</button></div>';list.querySelector('.vf-empty-act').onclick=()=>inp.focus();}};
   const load=async()=>{
     let items=[];
-    try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패 — 창고 SQL을 먼저 실행했는지 확인해주세요</div>';return;}
+    try{items=await listBacklog();}catch(e){list.innerHTML='<div class="wh-empty">불러오기 실패</div>';return;}
     list.innerHTML='';
     items.forEach(it=>list.appendChild(backlogRow(it,{onMoved:()=>{moved=true;paintCnt();},onDeleted:paintCnt})));
     paintCnt();
@@ -2836,7 +2839,7 @@ async function renderMyHandoverList(){
   try{
     const items=await loadHandoverItems(myStore.id,dateKey);
     if(items.length===0){
-      listEl.innerHTML='<div class="my-empty">'+EMPTY('🤝','아직 남긴 인수인계가 없어요','다음 근무자가 알아야 할 것을 한 줄 남겨보세요')+'</div>';return;
+      listEl.innerHTML='<div class="my-empty">'+EMPTY('🤝','인수인계 없음','')+'</div>';return;
     }
     listEl.innerHTML='';
     const isAdminUser=(window.__vflowProfile?.role==='owner'||window.__vflowProfile?.role==='manager');
@@ -3001,7 +3004,7 @@ window.addMyTodo=async function(){
 // 저장 실패 안내 — 입력은 지우지 않는다. 오프라인이면 그렇게 말해준다.
 function saveFailNotice(e,what){
   const off=vfNet.isOff(e);
-  if(off){const b=vfNet.bar();b.className='vf-net on';b.querySelector('.vf-net-t').textContent=`연결이 끊겨 ${what}을(를) 저장하지 못했어요 — 적은 글은 그대로예요`;setTimeout(()=>vfNet.paint(),4000);return;}
+  if(off){const b=vfNet.bar();b.className='vf-net on';b.querySelector('.vf-net-t').textContent=`오프라인 · ${what} 저장 안 됨 · 적은 글은 그대로`;setTimeout(()=>vfNet.paint(),4000);return;}
   alert(`${what} 저장 실패 — ${e&&e.message||'권한을 확인해주세요'}`);
 }
 function addMyTodo(){window.addMyTodo();}
@@ -3778,12 +3781,12 @@ async function showStaffDayDetail(y,m,d,name){
   det.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-window.openGuideModal=function(){
+window.openGuideModal=function(query){
   const body=document.getElementById('guide-modal-body');
   if(!body){document.getElementById('guide-modal').classList.add('open');return;}
   const vp=window.__vflowProfile||{};
   let role=vp.role==='owner'?'owner':vp.role==='manager'?'manager':'staff';
-  let tab='start', q='';
+  let tab='start', q=(typeof query==='string')?query:'';
 
   const ITEM=(t)=>`<div class="update-item"><span style="color:var(--gold);flex-shrink:0;margin-right:6px;">•</span><span>${t}</span></div>`;
   const SEC=(title,items)=>`<div class="update-section"><div class="update-section-title">${title}</div>${items.map(ITEM).join('')}</div>`;
@@ -3831,7 +3834,9 @@ window.openGuideModal=function(){
   render();
   document.getElementById('guide-modal').classList.add('open');
 };
-function openGuideModal(){window.openGuideModal();}
+function openGuideModal(q){window.openGuideModal(q);}
+// 「자세히」 — 화면엔 명사만, 설명은 가이드에. 카드 머리 오른쪽 끝에 작게
+function vfMore(term){const b=document.createElement('button');b.type='button';b.className='vh-more-link';b.textContent='자세히';b.title=term;b.onclick=(e)=>{e.stopPropagation();openGuideModal(term);};return b;}
 window.closeGuideModal=function(){
   document.getElementById('guide-modal').classList.remove('open');
 };
@@ -4963,13 +4968,13 @@ window.openAppMenu=function(){
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
   let _big=false;try{_big=localStorage.getItem('vflow_big')==='1';}catch(e){}
-  mk('Aa','글자 크게',_big?'지금: 크게 · 누르면 보통으로':'모든 글자를 한 단계 크게 (이 기기만)',()=>{vfUse('font_big');try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
-  mk('⇄','홈 좌우 바꾸기',_flip?'지금: 오늘 할 일이 왼쪽 · 누르면 원래대로':'지금: 확인할 것이 왼쪽 · 누르면 오늘 할 일을 왼쪽으로',()=>{vfUse('home_flip');try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
+  mk('Aa','글자 크게',_big?'크게 · 이 기기':'보통 · 이 기기',()=>{vfUse('font_big');try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
+  mk('⇄','홈 좌우 바꾸기',_flip?'오늘 할 일이 왼쪽':'확인할 것이 왼쪽',()=>{vfUse('home_flip');try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
   // 알림 — 켜고 끄는 문은 여기 항상. 끄기는 이 기기 구독만 지운다
   try{
     if('PushManager' in window&&'Notification' in window){
       const on=Notification.permission==='granted'&&localStorage.getItem('vflow_push_off')!=='1';
-      mk('🔔','알림',on?'지금: 켜짐 · 이 기기 · 누르면 끄기':(Notification.permission==='denied'?'브라우저에서 막혀 있어요 — 주소창 자물쇠에서 허용':'지금: 꺼짐 · 누르면 켜기 — 인수인계·요청·답이 폰으로'),async()=>{
+      mk('🔔','알림',on?'켜짐 · 이 기기':(Notification.permission==='denied'?'브라우저에서 차단됨 · 주소창 자물쇠에서 허용':'꺼짐 · 인수인계·요청·답'),async()=>{
         if(on){try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub){const {sb}=await wrApi();await sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}localStorage.setItem('vflow_push_off','1');}catch(e){}}
         else{localStorage.removeItem('vflow_push_off');await enablePush(false);}
       });
@@ -5041,7 +5046,7 @@ async function renderTodayGaps(body){
     const card=el('div','vh-card tg-card');
     card.appendChild(el('div','vh-ct',`<strong>지금 확인할 것</strong><span class="vh-tiny">${items.length?`${items.length}건`:''}</span>`));
     const list=el('div','vh-list');
-    if(!items.length)list.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월 모두 정상</small></div>`));
+    if(!items.length)list.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">누락 없음<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월</small></div>`));
     items.forEach(o=>{const r=el('div','vh-item'+(o.fn?' link':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;list.appendChild(r);});
     card.appendChild(list);
     // 직원 오늘 — 칩, 누르면 그 직원 업무
@@ -5249,7 +5254,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     try{
       const _cs0=window.__dashClean?window.__dashClean.get(entry.id):null;
       const _sc0=calcStoreScore({cleanData:(_cs0&&_cs0.exists())?_cs0.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?(sn.data().items||[]).filter(hoNeedsConfirm).length:0;})()});
-      const chip=el('span','',scoreChip(_sc0));chip.title='오늘 이 매장 점수 — 청소·업무·인수인계';
+      const chip=el('span','',scoreChip(_sc0));chip.title='오늘 점수 · 청소·업무·인수인계';
       acts.appendChild(chip);
     }catch(e){}
   }
@@ -5286,14 +5291,14 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열(대표·매니저만): 매장 확인할 것 — 현황·보고의 「지금 확인할 것」과 같은 목록. 직원 홈엔 없다 ──
   if(isAdmin){
     const sc=el('div','vh-card vh-priority vh-storegaps');
-    sc.appendChild(el('div','vh-ct',`<strong>${T('store')} 확인할 것</strong><span class="vh-tiny"></span>`));
+    const scHead=el('div','vh-ct',`<strong>${T('store')} 확인할 것</strong><span class="vh-tiny"></span>`);scHead.querySelector('.vh-tiny').after(vfMore(`${T('store')} 확인할 것`));sc.appendChild(scHead);
     const sl=el('div','vh-list');sc.appendChild(sl);
-    sl.appendChild(el('div','vh-item vh-empty-row',`<span class="vh-dot"></span><div class="vh-main">매장 보는 중<small></small></div>`));
+    sl.appendChild(el('div','vh-item vh-empty-row',`<span class="vh-dot"></span><div class="vh-main">확인 중<small></small></div>`));
     const smore=el('button','vh-more','');smore.type='button';smore.style.display='none';sc.appendChild(smore);
     col1.appendChild(sc);
     loadTodayGaps({cleanByStore:window.__dashClean,hoByStore,todosByName}).then(({items})=>{
       sl.innerHTML='';sc.querySelector('.vh-tiny').textContent=items.length?`${items.length}건${items.length>1?' · 중요도순':''}`:'';
-      if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">오늘은 누락이 없어요<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월 모두 정상</small></div>`));return;}
+      if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">누락 없음<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월</small></div>`));return;}
       const MAX_M=2;
       items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
       const hid=items.length-MAX_M;
@@ -5313,16 +5318,16 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
         // 바로 지우지 않는다 — 실수로 눌렀을 때 되돌릴 수 있게 「확인됨 · 되돌리기」로 남긴다
         row.classList.add('vh-done');row.querySelector('.vh-dot').className='vh-dot';
         btn.textContent='되돌리기';btn.disabled=false;
-        btn.onclick=async(e)=>{e.stopPropagation();btn.disabled=true;try{await toggleHandoverItem(store.id,tKey,it.id,false,me);row.classList.remove('vh-done');row.querySelector('.vh-dot').className='vh-dot danger';btn.textContent='확인';btn.disabled=false;btn.onclick=(e2)=>{e2.stopPropagation();items.find(o=>o.ho&&o.ho.it.id===it.id).act(btn,row);};refreshPri();}catch(e2){btn.disabled=false;alert('저장 실패 — 네트워크를 확인해주세요');}};
+        btn.onclick=async(e)=>{e.stopPropagation();btn.disabled=true;try{await toggleHandoverItem(store.id,tKey,it.id,false,me);row.classList.remove('vh-done');row.querySelector('.vh-dot').className='vh-dot danger';btn.textContent='확인';btn.disabled=false;btn.onclick=(e2)=>{e2.stopPropagation();items.find(o=>o.ho&&o.ho.it.id===it.id).act(btn,row);};refreshPri();}catch(e2){btn.disabled=false;alert('저장에 실패했습니다. 네트워크를 확인하세요.');}};
         refreshPri();
-      }catch(e){btn.disabled=false;btn.textContent='확인';alert('저장 실패 — '+(e&&e.message||'권한을 확인해주세요'));}
+      }catch(e){btn.disabled=false;btn.textContent='확인';alert('저장에 실패했습니다. '+(e&&e.message||'권한이 없습니다.'));}
     },
     open:()=>{if(entry)openStoreRoom(entry);}}));
   // 청소로 가는 문은 「내 청소」 칸과 「청소 사진」 칩이 이미 있다 — 여기선 상태만, 누르면 열림
-  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} ${T('clean')} ${leftCl}건 남음`,sub:dnCl===0?'아직 시작 전 — 누르면 체크리스트':`${dnCl}/${totalCl} 진행중 — 누르면 체크리스트`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
+  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} ${T('clean')} ${leftCl}건 남음`,sub:dnCl===0?'시작 전':`${dnCl}/${totalCl}`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
   longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${it.author||'익명'} · 알아둘 것 ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
   items.sort((a,b)=>a.lv-b.lv);
-  const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);
+  const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);priHead.querySelector('.vh-tiny').after(vfMore('우선 확인'));
   pri.appendChild(priHead);
   const priList=el('div','vh-list');
   pri.appendChild(priList);
@@ -5335,7 +5340,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     rows.forEach((r,i)=>r.classList.toggle('vh-hide-m',i>=MOBILE_MAX));
     const more=pri.querySelector('.vh-more');
     if(more){const hid=rows.length-MOBILE_MAX;more.style.display=hid>0?'':'none';more.textContent=`${hid}건 더 보기`;}
-    if(rows.length===0&&!priList.querySelector('.vf-out')&&!ph){priList.innerHTML='<div class="vh-item vh-empty-row"><span class="vh-dot"></span><div class="vh-main">지금 확인할 게 없어요<small>다음 행동: 오늘 할 일 이어서</small></div></div>';}
+    if(rows.length===0&&!priList.querySelector('.vf-out')&&!ph){priList.innerHTML='<div class="vh-item vh-empty-row"><span class="vh-dot"></span><div class="vh-main">확인할 것 없음<small></small></div></div>';}
   };
   items.forEach(o=>{
     const row=el('div','vh-item',`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>`);
@@ -5361,7 +5366,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           let list=main.querySelector('.vh-fbs');if(!list){list=el('small','vh-fbs','');main.insertBefore(list,fbWrap);}
           list.innerHTML+=(list.innerHTML?'<br>':'')+`<b>${me}</b> ${text.replace(/</g,'&lt;')}`;
           inp.value='';fbWrap.style.display='none';
-        }catch(e){alert('저장 실패 — 네트워크를 확인해주세요');}
+        }catch(e){alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
       };
       fbWrap.querySelector('button').onclick=submit;
       fbWrap.querySelector('input').onkeydown=(e)=>{if(e.key==='Enter')submit();};
@@ -5501,12 +5506,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;
           prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;
           refreshTodoCounts();
-        }catch(e){cb.checked=!cb.checked;alert('저장 실패 — '+(e&&e.message||'권한을 확인해주세요'));}
+        }catch(e){cb.checked=!cb.checked;alert('저장에 실패했습니다. '+(e&&e.message||'권한이 없습니다.'));}
       };
       row.appendChild(cb);row.appendChild(sp);
       // 창고로 — 오늘 말고 나중에. 아직 안 한 것만, 실제 저장된 행만 (날짜만 비운다)
       if(!it.done&&/^[0-9a-f-]{36}$/i.test(String(it.id))){
-        const wb=el('button','hp-wh-back','창고로');wb.type='button';wb.title='날짜를 떼고 창고에 둔다';
+        const wb=el('button','hp-wh-back','창고로');wb.type='button';wb.title='창고로';
         wb.onclick=async()=>{
           wb.disabled=true;
           try{await vfTry('backlog_unschedule',{id:it.id},()=>unscheduleTodo(it.id),'backlog:'+it.id);}catch(e){wb.disabled=false;alert('창고로 못 보냈어요 — '+(e.message||'권한을 확인해주세요'));return;}
@@ -5523,7 +5528,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     });
   }
   // 바로 적는 입력줄 — 시트를 열고 종류를 고르는 두 번의 클릭을 없앤다 (내 업무 화면의 「할 일 한 줄」과 같은 저장)
-  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터 · 여러 줄은 「여러 개」" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button><button type="button" class="vh-btn vh-bulk-btn" title="여러 개를 한 번에 — 한 줄에 하나씩" aria-label="여러 개 한 번에 입력">여러 개</button>`);
+  const addRow=el('div','vh-add',`<input type="text" placeholder="할 일 한 줄 적고 엔터 · 여러 줄은 「여러 개」" maxlength="200" aria-label="오늘 할 일 추가"><button type="button" class="vh-btn primary">추가</button><button type="button" class="vh-btn vh-bulk-btn" title="한 줄에 하나씩" aria-label="여러 개 한 번에 입력">여러 개</button>`);
   const addInp=addRow.querySelector('input'),addBtn=addRow.querySelector('.vh-btn.primary'),bulkBtn=addRow.querySelector('.vh-bulk-btn');
   // 여러 개 한 번에 — 한 줄에 하나씩. 내 업무 화면의 「여러 개 한번에 입력」과 같은 저장(addTodoItems)
   const bulk=el('div','vh-bulk',`<textarea placeholder="한 줄에 하나씩&#10;예) 재고 확인&#10;쇼케이스 정리" aria-label="여러 개 한 번에 입력"></textarea><div class="vh-row"><button type="button" class="vh-btn" data-bulk-cancel>닫기</button><button type="button" class="vh-btn primary" data-bulk-save>한 번에 추가</button></div>`);
@@ -5573,22 +5578,22 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const mFold=el('button','vh-fold','펼치기');mFold.type='button';
     mFold.onclick=()=>{memo.classList.toggle('folded');mFold.textContent=memo.classList.contains('folded')?'펼치기':'접기';if(!memo.classList.contains('folded'))setTimeout(()=>mTa.focus(),0);};
     mRight.appendChild(mFold);mHead.appendChild(mRight);memo.appendChild(mHead);
-    const peek=el('div','vh-memo-peek empty','나만 보는 메모 — 누르면 적을 수 있어요');
+    const peek=el('div','vh-memo-peek empty','나만 보는 메모');
     peek.onclick=()=>mFold.onclick();
     memo.appendChild(peek);
     const mBody=el('div','vh-memo-body');
-    const mTa=document.createElement('textarea');mTa.placeholder='나만 보는 메모 — 자동으로 저장돼요';mTa.setAttribute('aria-label','내 메모');
+    const mTa=document.createElement('textarea');mTa.placeholder='나만 보는 메모';mTa.setAttribute('aria-label','내 메모');
     mBody.appendChild(mTa);memo.appendChild(mBody);
     col2.appendChild(memo);
     const mRef=doc(db,`staff_memo/${me}`);
     let mLoaded='',mTimer=null;
-    const paintPeek=()=>{const t=mTa.value.trim();peek.textContent=t||'나만 보는 메모 — 누르면 적을 수 있어요';peek.classList.toggle('empty',!t);};
+    const paintPeek=()=>{const t=mTa.value.trim();peek.textContent=t||'나만 보는 메모';peek.classList.toggle('empty',!t);};
     (async()=>{try{const sn=await getDoc(mRef);if(sn.exists())mTa.value=sn.data().text||'';mLoaded=mTa.value;paintPeek();}catch(e){mStat.textContent='불러오기 실패';}})();
     const saveMemo=async()=>{
       const t=mTa.value;if(t===mLoaded)return;
       mStat.textContent='저장 중…';
       try{await setDoc(mRef,{text:t,updatedAt:Date.now()});mLoaded=t;mStat.textContent='저장됨';vfFlash(mTa);setTimeout(()=>{if(mStat.textContent==='저장됨')mStat.textContent='';},1500);paintPeek();}
-      catch(e){mStat.textContent='저장 실패 — 적은 글은 남아 있어요';}
+      catch(e){mStat.textContent='저장 실패 · 적은 글은 그대로';}
     };
     mTa.addEventListener('input',()=>{mStat.textContent='';clearTimeout(mTimer);mTimer=setTimeout(saveMemo,900);});
     mTa.addEventListener('blur',()=>{clearTimeout(mTimer);saveMemo();});
@@ -5596,7 +5601,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 2열: 프로젝트 타일 — 내가 하는 것 + 도움 요청 온 것. 없으면 카드 자체를 안 그린다 ──
   if(featOn('collab')){
     const pj=el('div','vh-card vh-proj');
-    const pHead=el('div','vh-ct',`<strong>프로젝트</strong><span class="vh-tiny"></span>`);
+    const pHead=el('div','vh-ct',`<strong>프로젝트</strong><span class="vh-tiny"></span>`);pHead.querySelector('.vh-tiny').after(vfMore('조용'));
     const tiles=el('div','vh-ptiles');
     pj.appendChild(pHead);pj.appendChild(tiles);
     col2.appendChild(pj);
@@ -5682,7 +5687,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
 function openLeaveSheet(entry,tKey,preset){
   const me=window.__vflowProfile?.name;
   if(!me)return;
-  if(!entry){alert('오늘 근무 매장을 먼저 골라주세요');return;}
+  if(!entry){alert('오늘 근무 매장을 먼저 선택하세요.');return;}
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
@@ -5712,7 +5717,7 @@ function openLeaveSheet(entry,tKey,preset){
   // 요청 종류 — 할 일로(지금 방식) / 프로젝트로(받는 사람이 수락하면 둘만의 프로젝트가 열린다)
   const reqKindWrap=sh.querySelector('[data-reqkind-wrap]'), dueWrap=sh.querySelector('[data-due-wrap]'), dueInp=sh.querySelector('[data-due]');
   let reqKind='todo';
-  const setReqKind=(k)=>{reqKind=k;reqKindWrap.querySelectorAll('.vh-kind').forEach(b=>b.classList.toggle('on',b.dataset.rk===k));dueWrap.style.display=(kind==='request'&&k==='project')?'':'none';ta.placeholder=k==='project'?'무슨 일인지 한 줄 — 수락하면 둘이 참여하는 프로젝트가 열려요':'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요';};
+  const setReqKind=(k)=>{reqKind=k;reqKindWrap.querySelectorAll('.vh-kind').forEach(b=>b.classList.toggle('on',b.dataset.rk===k));dueWrap.style.display=(kind==='request'&&k==='project')?'':'none';ta.placeholder=k==='project'?'프로젝트 한 줄':'부탁할 일 한 줄';};
   reqKindWrap.querySelectorAll('.vh-kind').forEach(b=>b.onclick=()=>setReqKind(b.dataset.rk));
   longCb.onchange=()=>{untilInp.style.display=longCb.checked?'':'none';if(longCb.checked&&!untilInp.value){const d=new Date(today);d.setDate(d.getDate()+7);untilInp.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}};
   const setKind=(k)=>{
@@ -5721,19 +5726,19 @@ function openLeaveSheet(entry,tKey,preset){
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
     recip.style.display=(k==='handover'||k==='request')?'':'none';
     // 요청은 사람 대 사람 — 받는 사람 필수 (근무자 누구나는 매장 방 인수인계로)
-    if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람을 고르세요':`받는 사람: 다음 ${T('worker')} 누구나`;recipDefault.disabled=(k==='request');}
+    if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람':`받는 사람: 다음 ${T('worker')} 누구나`;recipDefault.disabled=(k==='request');}
     if(k!=='request'&&recip.value&&recipDefault&&recip.selectedIndex===0)recip.value='';
     untilWrap.style.display=k==='handover'?'':'none';
     reqKindWrap.style.display=k==='request'?'':'none';
     dueWrap.style.display=(k==='request'&&reqKind==='project')?'':'none';
-    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'무슨 일인지 한 줄 — 수락하면 둘이 참여하는 프로젝트가 열려요':'무엇을 부탁할지 한 줄 — 받는 사람이 수락하면 그 사람 할 일이 돼요'):'나만 볼 메모';
+    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'프로젝트 한 줄':'부탁할 일 한 줄'):'나만 볼 메모';
     const sb=sh.querySelector('[data-save]');if(sb&&!sb.disabled)sb.textContent=k==='request'?'보내기':'저장';
   };
   kinds.forEach(b=>b.onclick=()=>{setKind(b.dataset.k);saveDraft();});
   setKind(kind);
   try{
     const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
-    if(d&&d.text&&Date.now()-(d.at||0)<3*86400000){ta.value=d.text;if(d.kind)setKind(d.kind);if(d.recip)recip.value=d.recip;showErr('저장되지 않았던 글을 되살렸어요 — 이어서 쓰거나 지우세요');}
+    if(d&&d.text&&Date.now()-(d.at||0)<3*86400000){ta.value=d.text;if(d.kind)setKind(d.kind);if(d.recip)recip.value=d.recip;showErr('저장 안 됐던 글');}
   }catch(e){}
   // 음성 → 글 (테스트 단계). 브라우저 내장 인식(Web Speech API) — 우리 서버에는 음성이 안 가고 저장도 안 한다.
   // 다만 크롬·사파리는 인식을 구글·애플 서비스에서 처리한다. 손님 목소리가 아니라 직원 본인이 누르고 말하는 것.
@@ -5811,7 +5816,7 @@ function openLeaveSheet(entry,tKey,preset){
       }
       else if(kind==='request'){
         // 요청은 사람 대 사람 — 매장에 묶지 않는다(store_id 없음). 매장 방에는 안 뜨고 받는 사람 홈에만.
-        if(!recip.value){showErr('받는 사람을 골라주세요');btn.disabled=false;btn.textContent='보내기';return;}
+        if(!recip.value){showErr('받는 사람 선택');btn.disabled=false;btn.textContent='보내기';return;}
         if(reqKind==='project')await projectPropose(text,recip.value,dueInp.value||null);
         else await wrCreate(null,text,recip.value);
       }
@@ -5927,7 +5932,7 @@ function fixedTodoRow(it,opts){
   cb.onchange=async()=>{
     cb.disabled=true;
     try{const r=await vfTry('fixed_toggle',{id:it.id,done:cb.checked},()=>setStoreFixedTodoDone(it.id,cb.checked),'fixed_toggle:'+it.id);row.classList.toggle('vf-pending',r==='queued');it.done=cb.checked;it.doneBy=cb.checked?(opts.me||null):null;paint();if(opts.onChange)opts.onChange(it);}
-    catch(e){cb.checked=!cb.checked;alert('저장 실패 — '+(e&&e.message||'권한을 확인해주세요'));}
+    catch(e){cb.checked=!cb.checked;alert('저장에 실패했습니다. '+(e&&e.message||'권한이 없습니다.'));}
     cb.disabled=false;
   };
   row.appendChild(cb);row.appendChild(sp);row.appendChild(by);
@@ -6171,7 +6176,7 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
           const left=card.querySelectorAll('.hp-ho-item').length;
           const bd=card.querySelector('.hp-badge');
           if(left===0)card.remove();else if(bd)bd.textContent=`${left}건`;
-        }catch(e){btn.disabled=false;btn.textContent='✓ 확인';alert('저장 실패 — 네트워크를 확인해주세요');}
+        }catch(e){btn.disabled=false;btn.textContent='✓ 확인';alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
       };
       row.appendChild(btn);
       card.appendChild(row);
@@ -6211,7 +6216,7 @@ function renderHomePersonal(tKey,todosByName,hoByStore){
           const dn=mine.filter(i=>i.done).length;
           prog.querySelector('.hp-prog-fill').style.width=`${Math.round(dn/mine.length*100)}%`;
           prog.querySelector('.hp-prog-num').textContent=`${dn}/${mine.length}`;
-        }catch(e){cb.checked=!cb.checked;alert('저장 실패 — 네트워크를 확인해주세요');}
+        }catch(e){cb.checked=!cb.checked;alert('저장에 실패했습니다. 네트워크를 확인하세요.');}
       };
       row.appendChild(cb);row.appendChild(sp);card2.appendChild(row);
     });
@@ -6316,7 +6321,7 @@ async function enablePush(silent){
     },{onConflict:'endpoint'});
     if(error)throw error;
     if(!silent)vfUse('push_on');
-    if(!silent)alert('알림이 켜졌어요.\n인수인계·요청·답이 오면 이 기기로 알려요. 밤 10시~아침 8시엔 보내지 않아요.');
+    if(!silent)alert('알림이 켜졌습니다. (밤 10시~아침 8시 제외)');
     return true;
   }catch(e){
     if(!silent)alert('알림 설정 실패 — 잠시 후 다시 시도해주세요');
@@ -6562,7 +6567,7 @@ function renderHomePushCard(wrap){
     const card=document.createElement('div');
     card.className='hp-card';
     card.style.cssText+='display:flex;align-items:center;gap:10px;';
-    card.innerHTML='<span class="vf-ic" style="width:20px;height:20px;color:var(--navy);display:inline-flex;">'+(VF_ICONS.bell||'')+'</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;">폰으로 받기</div><div style="font-size:11px;color:var(--text-sub);">인수인계·요청·답이 오면 알려요 · 아이폰은 홈 화면에 추가한 앱에서만</div></div>';
+    card.innerHTML='<span class="vf-ic" style="width:20px;height:20px;color:var(--navy);display:inline-flex;">'+(VF_ICONS.bell||'')+'</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;">폰으로 받기</div><div style="font-size:11px;color:var(--text-sub);">인수인계·요청·답 · 아이폰은 홈 화면 앱에서만</div></div>';
     const on=document.createElement('button');
     on.className='hp-confirm';on.textContent='켜기';
     on.onclick=async()=>{if(await enablePush(false))card.remove();};
@@ -6668,16 +6673,16 @@ const vfNet={
   paint(){
     const b=this.bar(),t=b.querySelector('.vf-net-t');const n=this.load().length;
     b.querySelectorAll('.vh-btn').forEach(x=>x.remove());
-    if(!navigator.onLine){b.className='vf-net on';t.textContent=n?`연결이 끊겼어요 — 다시 되면 ${n}건 저장돼요`:'연결이 끊겼어요 — 다시 되면 저장돼요';}
-    else if(this.flushing){b.className='vf-net on sending';t.textContent=`보내는 중 · ${n}건`;}
-    else if(n){b.className='vf-net on';t.textContent=`저장 대기 ${n}건`;const r=document.createElement('button');r.className='vh-btn';r.type='button';r.textContent='지금 보내기';r.onclick=()=>this.flush();b.appendChild(r);}
-    else if(this.stale&&this.stale.length){b.className='vf-net on';t.textContent=`어제 저장 못 한 ${this.stale.length}건이 있어요`;const v=document.createElement('button');v.className='vh-btn';v.type='button';v.textContent='보기';v.onclick=()=>this.showStale();b.appendChild(v);const x=document.createElement('button');x.className='vh-btn';x.type='button';x.textContent='지우기';x.onclick=()=>{this.stale=null;this.paint();};b.appendChild(x);}
+    if(!navigator.onLine){b.className='vf-net on';t.textContent=n?`오프라인 · 저장 대기 ${n}건`:'오프라인';}
+    else if(this.flushing){b.className='vf-net on sending';t.textContent=`보내는 중 ${n}건`;}
+    else if(n){b.className='vf-net on';t.textContent=`저장 대기 ${n}건`;t.appendChild(vfMore('저장 대기'));const r=document.createElement('button');r.className='vh-btn';r.type='button';r.textContent='지금 보내기';r.onclick=()=>this.flush();b.appendChild(r);}
+    else if(this.stale&&this.stale.length){b.className='vf-net on';t.textContent=`어제 저장 안 된 ${this.stale.length}건`;const v=document.createElement('button');v.className='vh-btn';v.type='button';v.textContent='보기';v.onclick=()=>this.showStale();b.appendChild(v);const x=document.createElement('button');x.className='vh-btn';x.type='button';x.textContent='지우기';x.onclick=()=>{this.stale=null;this.paint();};b.appendChild(x);}
     else b.className='vf-net';
   },
   label(it){const a=it.args||{};switch(it.kind){case 'todo_toggle':return `체크 ${a.done?'완료':'해제'}`;case 'fixed_toggle':return `매장 할 일 ${a.done?'완료':'해제'}`;case 'todo_add':return `할 일: ${a.text}`;case 'backlog_add':return `업무 창고: ${[].concat(a.texts).join(', ')}`;case 'backlog_schedule':return '창고에서 꺼내기';case 'backlog_unschedule':return '창고로 보내기';case 'ho_confirm':return `인수인계 ${a.val?'확인':'확인 해제'}`;default:return it.kind;}},
   showStale(){
     const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
-    sh.innerHTML='<div class="vh-sheet-handle" aria-hidden="true"></div><h3>어제 저장 못 한 것</h3><span class="vh-tiny">하루가 지나 자동으로 보내지 않았어요 — 필요하면 직접 다시 해주세요</span><div class="vh-list"></div><div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">닫기</button></div>';
+    sh.innerHTML='<div class="vh-sheet-handle" aria-hidden="true"></div><h3>어제 저장 안 된 것</h3><span class="vh-tiny">하루가 지나 자동 전송 안 함 · 필요하면 직접 다시</span><div class="vh-list"></div><div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">닫기</button></div>';
     const l=sh.querySelector('.vh-list');(this.stale||[]).forEach(it=>{const d=document.createElement('div');d.className='vh-item';d.innerHTML=`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(this.label(it))}<small>${new Date(it.at).toLocaleString('ko-KR')}</small></div>`;l.appendChild(d);});
     sh.querySelector('[data-cancel]').onclick=()=>vfSheetClose(ov);ov.onclick=(e)=>{if(e.target===ov)vfSheetClose(ov);};ov.appendChild(sh);document.body.appendChild(ov);
   },
@@ -7124,7 +7129,7 @@ function openStoreRoom(store){
     }catch(e){}
   })();
   // 근무자 — 누르면 그 사람 업무(조회)
-  const wRow=el('div','rm-row',`<div class="rm-main">${T('worker')}<small>${workers.length?'누르면 그 사람 오늘 업무':'오늘 이 매장에 업무를 등록한 사람이 아직 없어요'}</small></div>`);
+  const wRow=el('div','rm-row',`<div class="rm-main">${T('worker')}<small>${workers.length?'':'오늘 근무자 없음'}</small></div>`);
   if(workers.length){
     const ws=el('div','rm-workers');
     workers.forEach(n=>{const st=workerStat[n]||{done:0,all:0};const b=el('button','rm-worker',`<span class="rm-av">${esc(n[0]||'')}</span>${esc(n)}<small>${st.done}/${st.all}</small>`);b.type='button';b.onclick=()=>{window.closeStoreRoom();enterMyWork(n);};ws.appendChild(b);});
@@ -7153,7 +7158,7 @@ function openStoreRoom(store){
     const done=hoItems.filter(i=>i.confirmed||i.closed);
     hoCnt.textContent=open.length?`${open.filter(hoNeedsConfirm).length}건 확인 필요`:'';
     const list=showDone?[...open,...done]:open;
-    if(!list.length){const em=el('div','rm-empty');if(done.length)em.textContent='남은 인수인계가 없어요';else{const a=el('button','vf-empty-act','다음 근무자에게 한 줄 남기기 →');a.type='button';a.onclick=()=>openLeaveSheet(store,tKey,'handover');em.appendChild(a);}hoList.appendChild(em);}
+    if(!list.length){const em=el('div','rm-empty');if(done.length)em.textContent='남은 것 없음';else{const a=el('button','vf-empty-act','다음 근무자에게 한 줄 남기기 →');a.type='button';a.onclick=()=>openLeaveSheet(store,tKey,'handover');em.appendChild(a);}hoList.appendChild(em);}
     list.forEach(it=>{
       const row=el('div','vh-item'+((it.confirmed||it.closed)?' done':''));
       const cb=document.createElement('input');cb.type='checkbox';cb.className='vh-check';cb.checked=!!it.confirmed;
@@ -7173,13 +7178,13 @@ function openStoreRoom(store){
           const its=snap.exists()?(snap.data().items||[]):[];const target=its.find(x=>x.id===it.id);
           if(target){if(!target.feedbacks)target.feedbacks=[];target.feedbacks.push({author:me||'익명',text:t,ts:Date.now()});await setDoc(ref,{items:its});}
           await loadHo();
-        }catch(e){alert('피드백 저장 실패 — 네트워크를 확인해주세요');}
+        }catch(e){alert('피드백 저장에 실패했습니다. 네트워크를 확인하세요.');}
       };
       fbWrap.querySelector('button').onclick=submitFb;fbWrap.querySelector('input').onkeydown=(e)=>{if(e.key==='Enter')submitFb();};
       cb.onchange=async()=>{
         cb.disabled=true;
         try{const r=await vfTry('ho_confirm',{storeId:store.id,dateKey:tKey,id:it.id,val:cb.checked,me},()=>toggleHandoverItem(store.id,tKey,it.id,cb.checked,me),'ho:'+it.id);if(r==='ok')await loadHo();else{cb.disabled=false;cb.closest('.vh-item')?.classList.add('vf-pending');}}
-        catch(e){cb.checked=!cb.checked;cb.disabled=false;alert('저장 실패 — '+(e&&e.message||'권한을 확인해주세요'));}
+        catch(e){cb.checked=!cb.checked;cb.disabled=false;alert('저장에 실패했습니다. '+(e&&e.message||'권한이 없습니다.'));}
       };
       const acts=el('div','rm-acts');
       if(featOn('hofeedback')){const fb=el('button','vh-btn quiet','피드백');fb.type='button';fb.onclick=()=>{const o=fbWrap.style.display!=='none';fbWrap.style.display=o?'none':'flex';if(!o)setTimeout(()=>fbWrap.querySelector('input').focus(),0);};acts.appendChild(fb);}
@@ -7236,7 +7241,7 @@ function openStoreRoom(store){
           if(acts.children.length)row.appendChild(acts);
           wrList.appendChild(row);
         });
-      }catch(e){wrList.innerHTML='<div class="rm-empty">업무 요청 기능이 아직 켜지지 않았어요 — 관리자에게 문의</div>';}
+      }catch(e){wrList.innerHTML='<div class="rm-empty">업무 요청 꺼짐</div>';}
     };
     paintWr();
     col3.appendChild(wrCard);
@@ -7273,7 +7278,7 @@ function openStoreRoom(store){
       try{
         const rows=await loadCollabListCached();
         pList.innerHTML='';
-        if(rows===null){pList.appendChild(el('div','rm-empty','협업 기능이 아직 켜지지 않았어요'));return;}
+        if(rows===null){pList.appendChild(el('div','rm-empty','협업 꺼짐'));return;}
         const mine=rows.filter(r=>r.store_id===store.id&&r.status!=='done');
         // 도움 요청 띠 — 이 매장 것 + 회사 전체 것. 내 요청은 띠로 안 띄운다(내 업무에 있다)
         try{
@@ -7290,7 +7295,7 @@ function openStoreRoom(store){
             pList.appendChild(band);
           });
         }catch(e){}
-        if(!mine.length){pList.appendChild(el('div','rm-empty','진행 중인 매장 프로젝트가 없어요'));return;}
+        if(!mine.length){pList.appendChild(el('div','rm-empty','진행 중 없음'));return;}
         mine.forEach(r=>{
           const pct=Math.max(0,Math.min(100,r.progress||0));
           const row=el('div','vh-item link',`<div class="vh-main"><b>${esc(r.title)}</b>${r.help_message?'<span class="rm-tag" style="background:var(--red-light);color:var(--red)">도움 요청</span>':''}<small>${esc(r.owner?.name||'')}${(r.project_members||[]).length?` 외 ${r.project_members.length}명`:''} · ${pct}%</small><div class="rm-bar"><div style="width:${pct}%"></div></div></div><span class="vh-arrow" aria-hidden="true">›</span>`);
@@ -8720,7 +8725,7 @@ function buildHandoverSection(y,m,d){
       const show=hideDone?active:allItems;
 
       if(show.length===0){
-        listEl.innerHTML=`<div class="todo-empty">${hideDone&&done.length>0?`완료 ${done.length}건 숨김 (기록에서 확인)`:EMPTY('🤝','아직 남긴 인수인계가 없어요','다음 근무자가 알아야 할 것을 한 줄 남겨보세요')}</div>`;
+        listEl.innerHTML=`<div class="todo-empty">${hideDone&&done.length>0?`완료 ${done.length}건 숨김 (기록에서 확인)`:EMPTY('🤝','인수인계 없음','')}</div>`;
       } else {
         listEl.innerHTML='';
         show.forEach(item=>renderHandoverRow(item));
@@ -9874,7 +9879,7 @@ function buildRuleForm(rule){
 // ── 직원 활동 모아보기 (관리자 전용): 점수 없이 원문을 주 단위로 정리 ──
 let _actWeekOff=0,_actStaffId=null;
 async function renderActivityTab(content){
-  document.getElementById('dash-sub').textContent='직원별 주간 활동 원문 — 점수 없이, 읽고 판단하세요';
+  document.getElementById('dash-sub').textContent='직원별 주간 활동 원문';
   const sb=(await import('./adapter/supabase-client.js')).supabase;
   const ctx=await (await import('./adapter/context.js')).getContext();
   const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -9976,7 +9981,7 @@ async function renderReportTab(content){
   const ctx=await (await import('./adapter/context.js')).getContext();
   const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const {data:reps,error}=await sb.from('weekly_reports').select('week_start,payload').eq('tenant_id',ctx.tenantId).order('week_start',{ascending:false}).limit(8);
-  if(error){content.innerHTML+='<div class="dash-date">리포트 테이블이 아직 준비되지 않았어요 (관리자: 테이블 생성 SQL 실행 필요)</div>';return;}
+  if(error){content.innerHTML+='<div class="dash-date">리포트 표 없음 · 테이블 생성 SQL 필요</div>';return;}
   if(!reps||!reps.length){content.innerHTML+='<div class="dash-date">아직 생성된 리포트가 없습니다.<br>다음 월요일 아침 07:30에 첫 리포트가 자동으로 만들어져요.</div>';return;}
   if(_repSel>=reps.length)_repSel=0;
   const mkChip=(label,on,fn)=>{
@@ -10962,13 +10967,13 @@ async function renderUsageCard(content){
   const card=document.createElement('div');card.className='dash-card';card.style.margin='12px';
   const people=new Set((data||[]).map(r=>r.profile_id)).size;
   card.innerHTML=`<div class="dash-store-name">무엇이 쓰이는지 <span style="font-size:11px;font-weight:600;color:var(--text-sub);">최근 30일 · ${people}명 · ${(data||[]).length}번</span></div>`;
-  if(!rows.length){card.innerHTML+='<div style="font-size:12px;color:var(--text-mute);margin-top:6px;">아직 세기 시작한 지 얼마 안 됐어요 — 며칠 뒤에 보세요</div>';content.appendChild(card);return;}
+  if(!rows.length){card.innerHTML+='<div style="font-size:12px;color:var(--text-mute);margin-top:6px;">아직 기록 없음</div>';content.appendChild(card);return;}
   const tb=document.createElement('table');tb.className='ad-tbl';tb.style.marginTop='8px';
   tb.innerHTML='<thead><tr><th style="width:100%">기능</th><th style="text-align:right">횟수</th><th style="text-align:right">쓴 사람</th><th>마지막</th></tr></thead>';
   const body=document.createElement('tbody');
   rows.forEach(([k,a])=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${_wrEsc(VF_USE_LABELS[k]||k)}</td><td class="n">${a.n}</td><td class="n">${a.who.size}</td><td style="color:var(--text-sub)">${fmtD(a.last)}</td>`;body.appendChild(tr);});
   tb.appendChild(body);card.appendChild(tb);
-  if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일 동안 한 번도 안 쓰인 것: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
+  if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일간 미사용: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
   content.appendChild(card);
 }
 async function renderMonthlyTab(content){
