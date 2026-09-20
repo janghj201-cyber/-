@@ -1,5 +1,6 @@
 {
-  "name": "V-Flow 매장 스케줄",
+  "id": "/index.html",
+  "name": "V-Flow",
   "short_name": "V-Flow",
   "description": "매장 업무·스케줄 관리 앱",
   "lang": "ko",
