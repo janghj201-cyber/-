@@ -6552,6 +6552,8 @@ function vfPcBat(kind){
     L.push('if errorlevel 1 ( echo [V-Flow] Failed to write the policy. & pause & exit /b 1 )');
     L.push(`echo [V-Flow] Done for ${edge?'Edge':'Chrome'}. Close the browser completely and open it again -`);
     L.push('echo          V-Flow installs as an app, starts at sign-in, and gets a desktop icon.');
+    // 전에 만든 바로가기 방식(시작 프로그램 V-Flow.lnk)이 남아 있으면 창이 둘 뜬다 — 같이 지운다
+    L.push('del "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\V-Flow.lnk" >nul 2>&1');
     L.push('set BR=');
     if(edge){
       L.push('if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" set "BR=%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe"');
