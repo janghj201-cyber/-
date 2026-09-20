@@ -618,7 +618,9 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vf-pcst span.ok{border-color:var(--navy);color:var(--navy);font-weight:700;}
 .vf-pcst button{font:inherit;font-size:11.5px;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:3px 9px;color:var(--text);cursor:pointer;}
 .vf-hours{display:grid;grid-template-columns:1fr auto auto;gap:6px 10px;align-items:center;font-size:13px;}
-.vf-hours input{border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;width:92px;}
+.vf-hours input{border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;width:124px;box-sizing:border-box;}
+.vf-hours .all{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--bg);border-radius:10px;margin-bottom:4px;font-size:12.5px;font-weight:700;}
+.vf-hours .all .vh-btn{padding:6px 12px;font-size:12px;}
 .vf-hours .h{font-size:11px;color:var(--text-mute);font-weight:700;}
 .vh-sub .vf-other{color:var(--navy);font-weight:700;margin-left:6px;cursor:pointer;text-decoration:none;}
 .vh-sub .vf-other:hover{text-decoration:underline;}
@@ -3184,7 +3186,7 @@ const GUIDE_SECTIONS = [
   {
     title: '🆕 v5.9 — 매장 컴퓨터 · 근무 마감 · 빨리 뜨기',
     items: [
-      '🖥️ 관리자 → 설정 → 「매장 컴퓨터」 — 설치 파일을 받아 매장 컴퓨터에서 실행하면 크롬·엣지가 V-Flow를 앱으로 설치하고 윈도우 로그인 때 스스로 켠다. 바탕 화면·작업 표시줄 아이콘까지. 해제 파일로 원래대로',
+      '🖥️ 내 계정 → 「매장 컴퓨터」(윈도우에서만 보임) — 설치 파일을 받아 매장 컴퓨터에서 실행하고 「예」를 누르면 크롬·엣지가 V-Flow를 앱으로 설치하고 윈도우 로그인 때 스스로 켠다. 바탕 화면·작업 표시줄 아이콘까지. 해제 파일로 원래대로',
       '🕘 출근·퇴근은 매장 컴퓨터에서만 — 폰에서는 시각을 보기만. 같은 컴퓨터를 여럿이 쓰면 인사 줄 옆 「다른 사람」으로 계정 바꾸기',
       '🧾 「근무 마감」을 누르면 남은 것 한 장 — 미완료 업무 · 안 한 청소 · 안 본 인수인계. 줄을 누르면 그 자리로, 다 봤으면 「그래도 마감」',
       '⏰ 관리자 → 설정 → 「운영 시간」 — 매장마다 여는·닫는 시각. 닫는 시각 30분 전에 매장 컴퓨터가 「남은 것 N」을 윈도우 알림으로',
@@ -5029,6 +5031,7 @@ window.openAppMenu=function(){
     list.appendChild(b);
   };
   mk('📲','앱으로 설치','바탕화면·홈 화면에 추가해서 앱처럼 쓰기',()=>{try{openInstallModal();}catch(e){}});
+  if(/Windows/.test(navigator.userAgent))mk('🖥️','매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 V-Flow 먼저':'컴퓨터 켜면 V-Flow 먼저 · 설치 파일',()=>{try{openPcSheet();}catch(e){}});
   mk('👥','직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
   mk('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
@@ -6526,6 +6529,85 @@ function vfBanner(title,body,onView){
   bar.querySelector('[data-x]').onclick=()=>bar.remove();
   bar.querySelector('[data-view]').onclick=()=>{bar.remove();try{onView?onView():switchTab('dashboard');}catch(e){}};
   host.insertAdjacentElement('afterend',bar);
+}
+// 매장 컴퓨터 — 설치 파일(관리자 권한으로 올라가 이 컴퓨터 전체에 정책: 앱 설치 + 로그인 시 실행 + 바탕 화면 아이콘) · 해제 파일 · 이 컴퓨터 상태
+function vfPcBat(kind){
+  const origin=location.origin.replace(/\/$/,'');const url=origin+'/';const id=origin+'/index.html';
+  const edge=/Edg\//.test(navigator.userAgent);
+  const K=edge?'Microsoft\\Edge':'Google\\Chrome';
+  const force='{\\"url\\":\\"'+url+'\\",\\"default_launch_container\\":\\"window\\",\\"create_desktop_shortcut\\":true}';
+  const st='[{\\"manifest_id\\":\\"'+id+'\\",\\"run_on_os_login\\":\\"run_windowed\\"}]';
+  const L=['@echo off','setlocal',
+    'rem V-Flow store PC: install as an app + run at Windows sign-in. Browser policy for this computer (all Windows accounts).',
+    'net session >nul 2>&1',
+    'if not "%errorlevel%"=="0" (',
+    '  echo [V-Flow] Administrator permission is needed. Click Yes on the next window.',
+    '  powershell -NoProfile -Command "Start-Process -FilePath \'%~f0\' -Verb RunAs"',
+    '  exit /b',
+    ')'];
+  if(kind==='install'){
+    L.push(`reg add "HKLM\\Software\\Policies\\${K}\\WebAppInstallForceList" /v 1 /t REG_SZ /d "${force}" /f >nul`);
+    L.push('if errorlevel 1 ( echo [V-Flow] Failed to write the policy. & pause & exit /b 1 )');
+    L.push(`reg add "HKLM\\Software\\Policies\\${K}" /v WebAppSettings /t REG_SZ /d "${st}" /f >nul`);
+    L.push('if errorlevel 1 ( echo [V-Flow] Failed to write the policy. & pause & exit /b 1 )');
+    L.push(`echo [V-Flow] Done for ${edge?'Edge':'Chrome'}. Close the browser completely and open it again -`);
+    L.push('echo          V-Flow installs as an app, starts at sign-in, and gets a desktop icon.');
+    L.push('set BR=');
+    if(edge){
+      L.push('if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" set "BR=%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe"');
+      L.push('if exist "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" set "BR=%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe"');
+    } else {
+      L.push('if exist "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"');
+      L.push('if exist "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"');
+      L.push('if exist "%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"');
+    }
+    L.push(`if not "%BR%"=="" start "" "%BR%" "${url}?pc=1"`);
+  } else {
+    for(const k of ['Microsoft\\Edge','Google\\Chrome']){
+      L.push(`reg delete "HKLM\\Software\\Policies\\${k}\\WebAppInstallForceList" /f >nul 2>&1`);
+      L.push(`reg delete "HKLM\\Software\\Policies\\${k}" /v WebAppSettings /f >nul 2>&1`);
+      L.push(`reg delete "HKCU\\Software\\Policies\\${k}\\WebAppInstallForceList" /f >nul 2>&1`);
+      L.push(`reg delete "HKCU\\Software\\Policies\\${k}" /v WebAppSettings /f >nul 2>&1`);
+    }
+    L.push('echo [V-Flow] Removed. Open the browser again - the app and auto-start are gone.');
+  }
+  L.push('pause');
+  const blob=new Blob([L.join('\r\n')+'\r\n'],{type:'application/octet-stream'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=kind==='install'?`vflow-pc-install-${edge?'edge':'chrome'}.bat`:'vflow-pc-remove.bat';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  if(kind==='install')vfUse('pc_install');
+}
+function openPcSheet(){
+  const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
+  const edge=/Edg\//.test(navigator.userAgent);
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>매장 컴퓨터</h3><span class="vh-tiny">컴퓨터를 켜면 V-Flow가 앱 창으로 먼저 뜨고, 바탕 화면·작업 표시줄에 아이콘. 출근·퇴근과 마감 전 알림은 매장 컴퓨터에서만</span>
+    <ol style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text);">
+      <li>설치 파일 받아 실행 → 「예」 <span class="vh-tiny">관리자 권한을 묻는다 · 컴퓨터마다 한 번</span></li>
+      <li>${edge?'엣지':'크롬'} 완전히 닫고 다시 열기 <span class="vh-tiny">앱으로 설치 · 로그인 시 자동 시작</span></li>
+      <li>「알림 켜기」 한 번 <span class="vh-tiny">요청·인수인계가 윈도우 알림으로</span></li>
+    </ol>
+    <div class="vh-sheet-btns" style="margin-top:10px;"><button type="button" class="vh-btn" data-rm style="flex:1;">해제 파일</button><button type="button" class="vh-btn primary" data-inst style="flex:1.4;">설치 파일 받기 · ${edge?'엣지':'크롬'}용</button></div>
+    <div class="vh-tiny" style="margin-top:6px;">지금 쓰는 브라우저용으로 만들어진다. 브라우저 구석에 「조직에서 관리」 표시가 생기는데 정책으로 설치했다는 뜻. 해제 파일이면 원래대로</div>
+    <div class="vh-fixed-head" style="margin-top:14px;"><span>이 컴퓨터</span><span class="vh-tiny">지금 보는 기기</span></div>
+    <div class="vf-pcst" data-st></div>
+    <div class="vh-sheet-btns" style="margin-top:12px;"><button type="button" class="vh-btn" data-cancel style="flex:1;">닫기</button></div>`;
+  const close=()=>vfSheetClose(ov);
+  sh.querySelector('[data-cancel]').onclick=close;ov.onclick=(e)=>{if(e.target===ov)close();};
+  sh.querySelector('[data-inst]').onclick=()=>vfPcBat('install');
+  sh.querySelector('[data-rm]').onclick=()=>vfPcBat('remove');
+  const paintSt=()=>{
+    const st=sh.querySelector('[data-st]');st.innerHTML='';
+    const chip=(t,ok)=>{const x=document.createElement('span');x.textContent=t;if(ok)x.className='ok';st.appendChild(x);};
+    const pc=vfIsStorePC();
+    chip(pc?'매장 PC':'매장 PC 아님',pc);
+    chip(vfIsApp()?'앱으로 열림':'브라우저 탭',vfIsApp());
+    const perm=('Notification' in window)?Notification.permission:'unsupported';
+    chip(perm==='granted'?'알림 켜짐':'알림 꺼짐',perm==='granted');
+    const tg=document.createElement('button');tg.type='button';tg.textContent=pc?'매장 PC 아님으로':'매장 PC로 표시';
+    tg.onclick=()=>{try{localStorage.setItem('vflow_pc',pc?'0':'1');}catch(e){}paintSt();};st.appendChild(tg);
+    if(perm!=='granted'&&perm!=='unsupported'){const nb=document.createElement('button');nb.type='button';nb.textContent='알림 켜기';nb.onclick=async()=>{if(await enablePush(false))paintSt();};st.appendChild(nb);}
+  };
+  paintSt();
+  ov.appendChild(sh);document.body.appendChild(ov);
 }
 // 새 버전 — 서비스워커가 뒤에서 새것을 받았을 때 구석에 하나. 다음에 켤 때는 자동으로 새것
 function vfNewVersion(){
@@ -10343,12 +10425,23 @@ async function renderSettingsTab(content){
     secH.innerHTML=`<div class="dash-store-name">운영 시간</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">${T('store')}마다 여는 시각·닫는 시각. 닫는 시각 30분 전에 매장 컴퓨터가 「남은 것」을 알린다. 비우면 10:00~22:00</div>`;
     const hs=document.createElement('div');hs.className='feedback-saved';hs.style.cssText='margin:8px 0 0;min-height:16px;';
     const g=document.createElement('div');g.className='vf-hours';
-    g.innerHTML='<span class="h"></span><span class="h">여는 시각</span><span class="h">닫는 시각</span>';
+    // 전 매장 같게 — 한 번에 넣고 「적용」. 매장 줄에서 따로 고치면 그 매장만 달라진다
+    const all=document.createElement('div');all.className='all';
+    all.innerHTML=`<span>전 ${T('store')} 같게</span><input type="time" data-o value="10:00"><span class="h">~</span><input type="time" data-c value="22:00"><button type="button" class="vh-btn primary" data-go>적용</button>`;
+    all.querySelector('[data-go]').onclick=async()=>{
+      const o=all.querySelector('[data-o]').value,c=all.querySelector('[data-c]').value;if(!o||!c)return;
+      const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));const next={};STORES.forEach(st=>{next[st.id]={open:o,close:c};});
+      appSettings.hours=next;hs.textContent='저장 중';
+      try{await saveSettings();hs.textContent='저장됨';setTimeout(()=>hs.textContent='',1500);g.querySelectorAll('[data-sid]').forEach(inp=>{inp.value=inp.dataset.k==='o'?o:c;});}
+      catch(err){appSettings.hours=prev;hs.textContent='저장 실패 · 권한/네트워크 확인';}
+    };
+    g.appendChild(all);
+    g.insertAdjacentHTML('beforeend','<span class="h"></span><span class="h">여는 시각</span><span class="h">닫는 시각</span>');
     STORES.forEach(st=>{
       const cur=((appSettings.hours||{})[st.id])||{};
       const nm=document.createElement('span');nm.textContent=st.name;nm.style.fontWeight='700';
-      const o=document.createElement('input');o.type='time';o.value=cur.open||'';o.placeholder='10:00';
-      const c=document.createElement('input');c.type='time';c.value=cur.close||'';c.placeholder='22:00';
+      const o=document.createElement('input');o.type='time';o.value=cur.open||'';o.placeholder='10:00';o.dataset.sid=st.id;o.dataset.k='o';
+      const c=document.createElement('input');c.type='time';c.value=cur.close||'';c.placeholder='22:00';c.dataset.sid=st.id;c.dataset.k='c';
       const save=async()=>{
         const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));
         const next={...(appSettings.hours||{})};const v={};if(o.value)v.open=o.value;if(c.value)v.close=c.value;
@@ -10364,68 +10457,6 @@ async function renderSettingsTab(content){
     content.appendChild(secH);
   }
 
-  // ── 매장 컴퓨터 — 설치 파일 하나로 앱 설치 · 로그인 시 자동 시작 · 바탕 화면 아이콘. 이 컴퓨터의 상태 ──
-  {
-    const secP=document.createElement('div');secP.className='dash-card';secP.style.marginBottom='12px';
-    const origin=location.origin.replace(/\/$/,'');
-    secP.innerHTML=`<div class="dash-store-name">매장 컴퓨터</div>
-      <div style="font-size:12px;color:var(--text-sub);margin:4px 0 6px;line-height:1.6;">컴퓨터를 켜면 V-Flow가 앱 창으로 먼저 뜨고, 작업 표시줄·바탕 화면에 아이콘이 생긴다. 출근·퇴근과 마감 전 알림은 매장 컴퓨터에서만.</div>
-      <ol style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text);">
-        <li>매장 컴퓨터에서 설치 파일 받아 실행 <span class="vh-tiny">윈도우 계정마다 한 번</span></li>
-        <li>크롬 또는 엣지 다시 켜기 <span class="vh-tiny">앱으로 설치 · 「로그인 시 자동 시작」</span></li>
-        <li>V-Flow에서 「알림 켜기」 한 번 <span class="vh-tiny">요청·인수인계가 윈도우 알림으로</span></li>
-      </ol>
-      <div class="vh-sheet-btns" style="margin-top:10px;"><button type="button" class="vh-btn" data-rm style="flex:1;">해제 파일</button><button type="button" class="vh-btn primary" data-inst style="flex:1;">설치 파일 받기</button></div>
-      <div class="vh-tiny" style="margin-top:6px;">브라우저 구석에 「조직에서 관리」 표시가 생긴다 — 정책으로 설치했다는 뜻. 해제 파일을 실행하면 원래대로</div>
-      <div class="vh-fixed-head" style="margin-top:14px;"><span>이 컴퓨터</span><span class="vh-tiny">지금 보는 기기</span></div>
-      <div class="vf-pcst" data-st></div>`;
-    const bat=(kind)=>{
-      const url=origin+'/';const id=origin+'/index.html';
-      const force='{\\"url\\":\\"'+url+'\\",\\"default_launch_container\\":\\"window\\",\\"create_desktop_shortcut\\":true}';
-      const st='[{\\"manifest_id\\":\\"'+id+'\\",\\"run_on_os_login\\":\\"run_windowed\\"}]';
-      const L=['@echo off','setlocal','rem V-Flow store PC: install as app + run at Windows sign-in (browser policy, current user only).'];
-      if(kind==='install'){
-        for(const k of ['Microsoft\\Edge','Google\\Chrome']){
-          L.push(`reg add "HKCU\\Software\\Policies\\${k}\\WebAppInstallForceList" /v 1 /t REG_SZ /d "${force}" /f >nul`);
-          L.push(`reg add "HKCU\\Software\\Policies\\${k}" /v WebAppSettings /t REG_SZ /d "${st}" /f >nul`);
-        }
-        L.push('echo [V-Flow] Done. Close and reopen Chrome or Edge - V-Flow installs as an app and starts at sign-in.');
-        L.push('set BR=');
-        L.push('if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" set "BR=%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe"');
-        L.push('if exist "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" set "BR=%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe"');
-        L.push('if "%BR%"=="" if exist "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"');
-        L.push('if "%BR%"=="" if exist "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"');
-        L.push('if "%BR%"=="" if exist "%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe" set "BR=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"');
-        L.push(`if not "%BR%"=="" start "" "%BR%" "${url}?pc=1"`);
-      } else {
-        for(const k of ['Microsoft\\Edge','Google\\Chrome']){
-          L.push(`reg delete "HKCU\\Software\\Policies\\${k}\\WebAppInstallForceList" /f >nul 2>&1`);
-          L.push(`reg delete "HKCU\\Software\\Policies\\${k}" /v WebAppSettings /f >nul 2>&1`);
-        }
-        L.push('echo [V-Flow] Removed. Reopen the browser - the app and auto-start are gone.');
-      }
-      L.push('pause');
-      const blob=new Blob([L.join('\r\n')+'\r\n'],{type:'application/octet-stream'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=kind==='install'?'vflow-pc-install.bat':'vflow-pc-remove.bat';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
-      if(kind==='install')vfUse('pc_install');
-    };
-    secP.querySelector('[data-inst]').onclick=()=>bat('install');
-    secP.querySelector('[data-rm]').onclick=()=>bat('remove');
-    const paintSt=()=>{
-      const st=secP.querySelector('[data-st]');st.innerHTML='';
-      const chip=(t,ok)=>{const x=document.createElement('span');x.textContent=t;if(ok)x.className='ok';st.appendChild(x);};
-      const pc=vfIsStorePC();
-      chip(pc?'매장 PC':'매장 PC 아님',pc);
-      chip(vfIsApp()?'앱으로 열림':'브라우저 탭',vfIsApp());
-      const perm=('Notification' in window)?Notification.permission:'unsupported';
-      chip(perm==='granted'?'알림 켜짐':'알림 꺼짐',perm==='granted');
-      const tg=document.createElement('button');tg.type='button';tg.textContent=pc?'매장 PC 아님으로':'매장 PC로 표시';
-      tg.onclick=()=>{try{localStorage.setItem('vflow_pc',pc?'0':'1');}catch(e){}paintSt();};st.appendChild(tg);
-      if(perm!=='granted'&&perm!=='unsupported'){const nb=document.createElement('button');nb.type='button';nb.textContent='알림 켜기';nb.onclick=async()=>{if(await enablePush(false))paintSt();};st.appendChild(nb);}
-    };
-    paintSt();
-    content.appendChild(secP);
-  }
 
   // ── 우리 회사 말 — 비워두면 기본 말 ──
   {
