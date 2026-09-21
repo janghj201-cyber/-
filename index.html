@@ -602,6 +602,46 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-item.vh-done .vh-main small{display:inline-block;width:100%;text-decoration:none;} /* 취소선이 작은 글씨까지 번지지 않게 */
 .vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
 .vh-ct>strong{margin-right:auto;}
+/* 대표 화면 — 회사 */
+.vc{padding:4px 12px 18px;max-width:560px;}
+.vc .vc-top{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-mute);font-weight:700;}
+.vc .vc-big{font-size:34px;font-weight:900;letter-spacing:-.5px;line-height:1.05;margin:2px 0 0;}
+.vc .vc-line{display:flex;gap:14px;align-items:baseline;margin:8px 0 14px;font-size:15px;font-weight:800;}
+.vc .vc-line .ok{color:var(--green,#2e7d4f);}
+.vc .vc-line .bad{color:var(--red);}
+.vc .vc-line .n{font-size:22px;}
+.vc-card{background:var(--card);border:1.5px solid var(--red);border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer;}
+.vc-card .st{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:16px;}
+.vc-card .st .tag{font-size:11px;color:var(--red);border:1px solid var(--red);border-radius:999px;padding:2px 8px;font-weight:800;}
+.vc-card .pr{font-size:14px;font-weight:800;margin-top:10px;}
+.vc-card .pr small{display:block;font-weight:600;color:var(--text-sub);font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vc-card .who{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12.5px;color:var(--text-sub);flex-wrap:wrap;}
+.vc-card .who b{color:var(--text);}
+.vc-card .who .miss{color:var(--red);font-weight:800;}
+.vc-card .who .go{margin-left:auto;color:var(--text-mute);font-size:16px;}
+.vc-okrow{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:11px 14px;font-size:13px;color:var(--text-sub);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.vc-okrow b{color:var(--text);}
+.vc-okrow .dots{display:flex;gap:5px;flex:0 0 auto;}
+.vc-okrow .dots i{width:8px;height:8px;border-radius:50%;background:var(--green,#2e7d4f);display:inline-block;opacity:.7;}
+.vc-q{display:flex;gap:8px;margin-top:10px;}
+.vc-q div{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--text-sub);}
+.vc-q div b{display:block;font-size:18px;color:var(--text);font-weight:900;}
+.vc-q div.z b{color:var(--text-mute);}
+.vc-det .kv{display:grid;grid-template-columns:70px 1fr;gap:8px 10px;font-size:13.5px;margin:12px 0;}
+.vc-det .kv .k{color:var(--text-mute);font-weight:700;font-size:12px;padding-top:2px;}
+.vc-det .kv .v b{font-weight:800;}
+.vc-det .kv .v .miss{color:var(--red);font-weight:800;}
+.vc-det .lad{display:flex;gap:4px;align-items:center;font-size:11px;font-weight:700;color:var(--text-mute);margin:8px 0 2px;flex-wrap:wrap;}
+.vc-det .lad b{padding:3px 8px;border-radius:999px;border:1px solid var(--border);}
+.vc-det .lad b.on{background:var(--red);color:#fff;border-color:var(--red);}
+.vc-det .lad b.done{border-color:var(--navy);color:var(--navy);}
+.vc-det .lad i{font-style:normal;opacity:.5;}
+.vc-det .iss{border-top:1px solid var(--border);padding-top:10px;margin-top:10px;}
+.vc-det .iss:first-of-type{border-top:0;padding-top:0;margin-top:0;}
+.vf-esc{width:100%;border-collapse:collapse;font-size:12.5px;}
+.vf-esc th{text-align:left;font-size:11px;color:var(--text-sub);padding:5px 6px;border-bottom:1px solid var(--border);}
+.vf-esc td{padding:7px 6px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;}
+.vf-esc td input{width:56px;border:1.5px solid var(--border);border-radius:7px;padding:4px 6px;font:inherit;font-size:12.5px;text-align:right;}
 /* 우선 확인 — 종류 표시 */
 .vh-kind{display:inline-block;font-size:9.5px;font-weight:800;border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-right:4px;color:var(--text-sub);line-height:14px;vertical-align:1px;white-space:nowrap;}
 .vh-kind.k-ho{border-color:var(--navy);color:var(--navy);}
@@ -3096,8 +3136,8 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v5.9';
-const BUILD_DATE = '2026-09-20'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v6.0';
+const BUILD_DATE = '2026-09-21'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
 (function(){
@@ -3187,7 +3227,18 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v5.9 — 매장 컴퓨터 · 근무 마감 · 빨리 뜨기',
+    title: '🆕 v6.0 — 대표 화면 「회사」',
+    items: [
+      '🏢 대표 → 관리자 → 「회사」 — N개 매장 / 정상 / 확인 필요. 확인 필요한 매장만 카드로, 정상은 한 줄. 누르면 무슨 문제 → 언제부터 → 담당 → 지금. 읽기 전용 대표 계정은 이게 첫 화면',
+      '📶 올라오는 것은 「밑에서 해결 안 되는 것」만 — 인수인계 며칠째 미확인, 출근 기록 없음, 지각 반복·큰 지각, 미완료 이월 연속, 클레임 태그 미확인. 청소 미체크 1건·업무 미등록은 팀장 화면(매장 확인할 것)에만',
+      '✅ 팀장·매니저 규칙 하나 — 본 것은 「확인」. 확인을 누르면 그 건은 대표 화면에서 내려가고 「처리 중」으로 센다. 안 누르고 기준 일수를 넘기면 올라간다',
+      '🔔 대표에게 푸시는 없다 — 열어서 본다. 대표가 할 수 있는 건 매장 방 열기와 「매니저에게 묻기」(알림 한 줄)뿐. 직원에게 직접 가는 버튼은 없다',
+      '⚙️ 관리자 → 설정 → 「올라오는 기준」 — 인수인계 일수·출근 유예·지각 기준·반복 횟수·큰 지각·이월 연속·클레임 시간. 코드에 숫자가 없고 여기서 바꾼다',
+      '🧾 우선 확인 줄마다 앞에 종류(인수인계·요청·제안·알아둘 것), 뒤에 날짜',
+    ]
+  },
+  {
+    title: 'v5.9 — 매장 컴퓨터 · 근무 마감 · 빨리 뜨기',
     items: [
       '🖥️ 내 계정 → 「매장 컴퓨터」(윈도우에서만 보임) — 설치 파일을 받아 매장 컴퓨터에서 실행하고 「예」를 누르면 크롬·엣지가 V-Flow를 앱으로 설치하고 윈도우 로그인 때 스스로 켠다. 바탕 화면·작업 표시줄 아이콘까지. 해제 파일로 원래대로',
       '🕘 출근·퇴근은 매장 컴퓨터에서만 — 폰에서는 시각을 보기만. 같은 컴퓨터를 여럿이 쓰면 인사 줄 옆 「다른 사람」으로 계정 바꾸기',
@@ -6496,6 +6547,70 @@ async function vfLeftovers(entry){
   const ho=items.filter(it=>hoNeedsConfirm(it)&&(it.recipient===me||hoOpenToAll(it,tKey)));
   return {tasks,clean,ho,total:tasks.length+clean.length+ho.length};
 }
+// ── 대표 화면 — 올라오는 기준. 코드에 숫자 없음: 설정 「올라오는 기준」이 원본, 여기는 없을 때 값 ──
+const VF_ESC_DEFAULT={hoDays:3,openGrace:30,lateGrace:10,repeatN:3,bigLate:60,carryDays:3,claimHours:24};
+const VF_ESC_LABEL={hoDays:['인수인계 미확인','','일째','→ 대표'],openGrace:['출근 없음','여는 시각 +','분','→ 대표'],lateGrace:['지각 기준','여는 시각 +','분','뒤 출근이면 지각'],repeatN:['지각 반복','30일 안','회','→ 반복'],bigLate:['큰 지각','','분','넘으면 횟수 무관'],carryDays:['미완료 이월','','일 연속','→ 대표'],claimHours:['클레임 태그','','시간','미확인 → 대표']};
+function vfEsc(){const e=(appSettings||{}).esc||{};const o={};for(const k in VF_ESC_DEFAULT){const v=Number(e[k]);o[k]=(Number.isFinite(v)&&v>0)?v:VF_ESC_DEFAULT[k];}return o;}
+const _hm2min=(hm)=>{const [h,m]=String(hm||'0:0').split(':').map(Number);return (h||0)*60+(m||0);};
+// 회사 상태 — 매장마다 「밑에서 해결 안 되는 것」만 센다. 있는 표만 읽는다(work_sessions · handover 문서 · daily_tasks · profiles)
+async function loadCompanyStatus(){
+  const esc=vfEsc();const tKey=todayKey();const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
+  const dAgo=(n)=>{const d=new Date(today);d.setDate(d.getDate()-n);return dk(d.getFullYear(),d.getMonth(),d.getDate());};
+  const d30=dAgo(30),d7=dAgo(7);
+  const {sb,ctx}=await wrApi();
+  const [pr,ws,hoSnaps,ct]=await Promise.all([
+    sb.from('profiles').select('id,name,role,store_id,status,monitor_only').then(r=>(r.data||[]).filter(p=>(p.status||'active')!=='inactive'&&!p.monitor_only)).catch(()=>[]),
+    sb.from('work_sessions').select('store_id,profile_id,work_date,started_at').gte('work_date',d30).then(r=>r.data||[]).catch(()=>[]),
+    Promise.all(STORES.map(s=>getDoc(doc(db,`handover/${s.id}_${tKey}`)).catch(()=>null))),
+    sb.from('daily_tasks').select('store_id,task_date').eq('status','carried_over').gte('task_date',d7).then(r=>r.data||[]).catch(()=>[]),
+  ]);
+  const byId={};pr.forEach(p=>byId[p.id]=p);
+  const stores=STORES.map((s,i)=>{
+    const {open}=vfHours(s.id);const openMin=_hm2min(open);
+    const mgr=pr.find(p=>p.role==='manager'&&p.store_id===s.id)||pr.find(p=>p.role==='owner'&&p.store_id===s.id)||null;
+    const issues=[],know={urgent:0,inprog:0,repeat:0};
+    // 출근 없음 — 여는 시각 + 유예가 지났는데 오늘 이 매장 근무 기록이 없다
+    const todayWs=ws.filter(r=>r.store_id===s.id&&r.work_date===tKey);
+    if(nowMin>openMin+esc.openGrace&&!todayWs.length){
+      issues.push({kind:'noopen',level:'urgent',text:'출근 기록 없음',detail:`여는 시각 ${open} + ${esc.openGrace}분 지남`,since:`${tKey}T${open}`,days:0,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});know.urgent++;
+    }
+    // 지각 — 30일 안 반복 · 큰 지각(7일 안)
+    const late={};
+    ws.filter(r=>r.store_id===s.id&&r.started_at).forEach(r=>{
+      const d=new Date(r.started_at);const m=d.getHours()*60+d.getMinutes()-openMin-esc.lateGrace;
+      if(m<=0)return;(late[r.profile_id]=late[r.profile_id]||{n:0,big:null}).n++;
+      if(m>=esc.bigLate&&r.work_date>=d7)late[r.profile_id].big={date:r.work_date,min:m+esc.lateGrace};
+    });
+    Object.entries(late).forEach(([pid,v])=>{
+      const nm=byId[pid]?.name||'?';
+      if(v.n>=esc.repeatN){issues.push({kind:'late',level:'repeat',text:`지각 반복 · ${nm} ${v.n}회`,detail:`30일 안 · 여는 시각 + ${esc.lateGrace}분 기준`,since:'',days:0,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'반복'});know.repeat++;}
+      if(v.big){issues.push({kind:'biglate',level:'urgent',text:`큰 지각 · ${nm} ${v.big.min}분`,detail:fmtD(v.big.date),since:v.big.date,days:0,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});know.urgent++;}
+    });
+    // 인수인계 — 오래 아무도 안 봄 · 클레임 태그는 시간으로
+    const hs=hoSnaps[i];const items=(hs&&hs.exists&&hs.exists())?(hs.data().items||[]):[];
+    items.forEach(it=>{
+      if(!hoNeedsConfirm(it))return;
+      const days=hoAgeDays(it,tKey);
+      const who=it.recipient?(pr.find(p=>p.name===it.recipient)||{name:it.recipient}):mgr;
+      if(it.tag==='클레임'){
+        const hrs=it.since?Math.round((Date.now()-new Date(it.since).getTime())/3600000):days*24;
+        if(hrs>=esc.claimHours){issues.push({kind:'claim',level:'urgent',text:'클레임 미확인',detail:it.text,since:it.since||it.fromDate||tKey,days,who,whoWhy:it.recipient?'받는 사람':(mgr?'매장 매니저':''),state:'미처리',it});know.urgent++;}
+        else know.inprog++;
+        return;
+      }
+      if(days>=esc.hoDays){issues.push({kind:'ho',level:'stale',text:`${T('handover')} 장기 미처리`,detail:it.text,since:it.fromDate||tKey,days,who,whoWhy:it.recipient?'받는 사람':(mgr?'매장 매니저':''),state:'미처리',tag:it.tag,it});}
+      else if(days>=1)know.inprog++; // 담당자 단계 — 팀장 몫, 대표는 알기만
+    });
+    // 미완료 이월 — 며칠 연속
+    const cdays=[...new Set(ct.filter(r=>r.store_id===s.id).map(r=>r.task_date))].sort();
+    let run=0,best=0;for(let k=0;k<cdays.length;k++){run=(k>0&&(new Date(cdays[k])-new Date(cdays[k-1]))===86400000)?run+1:1;best=Math.max(best,run);}
+    if(best>=esc.carryDays)issues.push({kind:'carry',level:'stale',text:`미완료 이월 ${best}일 연속`,detail:`${fmtD(cdays[0],false)}부터`,since:cdays[0],days:best,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});
+    const order={urgent:0,stale:1,repeat:2};issues.sort((a,b)=>order[a.level]-order[b.level]);
+    return {store:s,mgr,issues,know,ok:issues.length===0};
+  });
+  const know={urgent:0,inprog:0,repeat:0};stores.forEach(x=>{know.urgent+=x.know.urgent;know.inprog+=x.know.inprog;know.repeat+=x.know.repeat;});
+  return {stores,ok:stores.filter(x=>x.ok).length,bad:stores.filter(x=>!x.ok),know,esc,at:now};
+}
 // 우선 확인 줄의 종류 표시 — 뭔지 먼저, 언제인지 뒤에
 const vfKind=(k,cls)=>`<span class="vh-kind${cls?' '+cls:''}">${k}</span>`;
 // 근무 마감 한 장 — 남은 것을 세어 보이고, 줄을 누르면 그 자리로. 「그래도 마감」이 퇴근
@@ -7052,7 +7167,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
@@ -9439,6 +9554,7 @@ function buildAS(y,m){
 function adminTabDefs(){
   const IC=VF_ICONS;
   return [
+    ...(window.__vflowProfile?.role==='owner'?[{id:'company',label:'회사',group:'main',ic:IC.status,desc:`${STORES.length}개 ${T('store')} 중 확인 필요한 곳만`}]:[]),
     {id:'today',label:'현황·보고',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
     {id:'report',label:'주간 리포트',group:'records',ic:IC.brief,desc:'매주 월요일 자동 생성 — 지난주 요약'},
     {id:'activity',label:'직원 활동',group:'records',ic:IC.activity,desc:'직원별 주간 활동 원문'},
@@ -9482,6 +9598,7 @@ async function renderDashboard(){
   const cur=tabDefs.find(td=>td.id===dashTab);
   const nav=document.createElement('div');nav.className='dash-nav';
   const mkNav=(cls,html,on,fn,aria)=>{const b=document.createElement('button');b.type='button';b.className='dn-btn'+(cls?' '+cls:'')+(on?' on':'');b.innerHTML=html;b.onclick=fn;if(aria)b.setAttribute('aria-label',aria);if(on)b.setAttribute('aria-current','page');return b;};
+  if(window.__vflowProfile?.role==='owner')nav.appendChild(mkNav('',`${VF_ICONS.flag||VF_ICONS.status}<span>회사</span>`,dashTab==='company',()=>goDashTab('company')));
   nav.appendChild(mkNav('',`${VF_ICONS.status}<span>현황·보고</span>`,dashTab==='today',()=>goDashTab('today')));
   const inRec=cur&&cur.group==='records';
   nav.appendChild(mkNav('',`${VF_ICONS.archive}<span>${inRec?cur.label:'기록'}</span><span class="dn-caret" aria-hidden="true">▾</span>`,inRec,openRecordsSheet,inRec?`기록: ${cur.label} — 누르면 다른 기록 선택`:'기록 열기'));
@@ -9500,6 +9617,7 @@ async function renderDashboard(){
   else if(dashTab==='activity')await renderActivityTab(content);
   else if(dashTab==='report')await renderReportTab(content);
   else if(dashTab==='history')await renderHistoryTab(content);
+  else if(dashTab==='company')await renderCompanyTab(content);
   else {await renderMonthlyTab(content);try{await renderUsageCard(content);}catch(e){}}
 
   if(dashTab!=='monthly'){
@@ -10464,6 +10582,32 @@ async function renderSettingsTab(content){
     content.appendChild(secH);
   }
 
+  // ── 올라오는 기준 — 대표 화면에 무엇이 언제 올라오는지. 코드에 숫자 없음 ──
+  if(window.__vflowProfile?.role==='owner'){
+    const secE=document.createElement('div');secE.className='dash-card';secE.style.marginBottom='12px';
+    secE.innerHTML=`<div class="dash-store-name">올라오는 기준</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">한 번 안 한 것은 팀장·매니저 몫. 여기 숫자를 넘기면 대표 「회사」 화면에 올라온다. 한 달 돌려보고 다시 잡는다</div>`;
+    const es2=document.createElement('div');es2.className='feedback-saved';es2.style.cssText='margin:8px 0 0;min-height:16px;';
+    const t=document.createElement('table');t.className='vf-esc';
+    t.innerHTML='<tr><th>무엇</th><th>기준</th></tr>';
+    const cur=vfEsc();
+    Object.keys(VF_ESC_DEFAULT).forEach(k=>{
+      const [nm,before,unit,after]=VF_ESC_LABEL[k];const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${nm}</td><td></td>`;
+      const cell=tr.lastElementChild;
+      const inp=document.createElement('input');inp.type='number';inp.min='1';inp.value=cur[k];
+      if(before)cell.appendChild(document.createTextNode(before+' '));cell.appendChild(inp);cell.appendChild(document.createTextNode(unit+' '+after));
+      inp.onchange=async()=>{
+        const v=parseInt(inp.value,10);if(!Number.isFinite(v)||v<=0){inp.value=cur[k];return;}
+        const prev={...(appSettings.esc||{})};appSettings.esc={...prev,[k]:v};es2.textContent='저장 중';
+        try{await saveSettings();es2.textContent='저장됨';setTimeout(()=>es2.textContent='',1500);}
+        catch(err){appSettings.esc=prev;inp.value=cur[k];es2.textContent='저장 실패 · 권한/네트워크 확인';}
+      };
+      t.appendChild(tr);
+    });
+    secE.appendChild(t);secE.appendChild(es2);
+    content.appendChild(secE);
+  }
+
 
   // ── 우리 회사 말 — 비워두면 기본 말 ──
   {
@@ -11352,6 +11496,65 @@ async function renderUsageCard(content){
   if(unused.length){const u=document.createElement('div');u.style.cssText='font-size:11.5px;color:var(--text-mute);margin-top:10px;line-height:1.6;';u.textContent='30일간 미사용: '+unused.map(k=>VF_USE_LABELS[k]).join(' · ');card.appendChild(u);}
   content.appendChild(card);
 }
+// 대표 화면 「회사」 — 숫자 셋(매장 수·정상·확인 필요), 확인 필요 매장만 카드, 정상은 한 줄로 접힘. 청소 미체크·업무 미등록은 여기 없다(팀장 화면)
+async function renderCompanyTab(content){
+  document.getElementById('dash-sub').textContent='확인은 시스템이 · 관리는 담당자가 · 판단이 필요한 것만 여기';
+  const wrap=document.createElement('div');wrap.className='vc';content.appendChild(wrap);
+  wrap.innerHTML=`<div class="vc-top"><span>${_wrEsc((window.__vflowTenant||{}).name||'')}</span><span>불러오는 중</span></div><div class="vc-big">${STORES.length}개 ${T('store')}</div>`;
+  let C;try{C=await loadCompanyStatus();}catch(e){wrap.querySelector('.vc-top span:last-child').textContent='불러오기 실패';return;}
+  vfUse('company_open');
+  const _dows=['일','월','화','수','목','금','토'];
+  wrap.querySelector('.vc-top span:last-child').textContent=`${today.getMonth()+1}/${today.getDate()} (${_dows[today.getDay()]}) ${_hm(C.at.toISOString())} · 방금`;
+  const line=document.createElement('div');line.className='vc-line';
+  line.innerHTML=`<span class="ok"><span class="n">${C.ok}</span> 정상</span>${C.bad.length?`<span class="bad"><span class="n">${C.bad.length}</span> 확인 필요</span>`:''}`;
+  wrap.appendChild(line);
+  const es=_wrEsc;
+  C.bad.forEach(x=>{
+    const f=x.issues[0];const more=x.issues.length-1;
+    const card=document.createElement('div');card.className='vc-card';
+    card.innerHTML=`<div class="st"><span>${es(storeShort(x.store.name))}</span><span class="tag">${f.level==='urgent'?'긴급':'확인 필요'}</span></div>
+      <div class="pr">${es(f.text)}${more>0?` <span class="vh-tiny">외 ${more}건</span>`:''}${f.detail?`<small>${es(f.detail)}</small>`:''}</div>
+      <div class="who"><span>담당 <b>${es(f.who?.name||'없음')}</b></span>${f.days?`<span>·</span><span>${f.days}일 경과</span>`:''}<span>·</span><span class="miss">${es(f.state)}</span><span class="go">›</span></div>`;
+    card.onclick=()=>openCompanyDetail(x,C);
+    wrap.appendChild(card);
+  });
+  const okStores=C.stores.filter(x=>x.ok);
+  const okrow=document.createElement('div');okrow.className='vc-okrow';
+  okrow.innerHTML=okStores.length?`<span><b>정상 ${okStores.length}</b> · ${okStores.map(x=>es(storeShort(x.store.name))).join(' · ')}</span><span class="dots">${okStores.map(()=>'<i></i>').join('')}</span>`:`<span>정상인 ${T('store')} 없음</span>`;
+  wrap.appendChild(okrow);
+  const q=document.createElement('div');q.className='vc-q';
+  q.innerHTML=`<div class="${C.know.urgent?'':'z'}"><b>${C.know.urgent}</b>긴급 · 대표 즉시</div><div class="${C.know.inprog?'':'z'}"><b>${C.know.inprog}</b>처리 중 · 담당자가 잡음</div><div class="${C.know.repeat?'':'z'}"><b>${C.know.repeat}</b>반복 · 30일</div>`;
+  wrap.appendChild(q);
+  const ft=document.createElement('div');ft.className='vh-tiny';ft.style.marginTop='12px';
+  ft.innerHTML=`올라오는 기준: ${T('handover')} ${C.esc.hoDays}일 · 출근 없음 +${C.esc.openGrace}분 · 지각 30일 ${C.esc.repeatN}회 · 이월 ${C.esc.carryDays}일 연속 — 설정에서 바꿈`;
+  wrap.appendChild(ft);
+}
+// 누르면 — 무슨 문제 · 언제부터 · 담당 · 지금. 행동은 매장 방 열기 · 매니저에게 묻기 둘뿐(직원에게 직접 가지 않는다)
+function openCompanyDetail(x,C){
+  const es=_wrEsc;const tKey=todayKey();
+  const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet vc-det';
+  const lad=(lv)=>`<div class="lad"><b class="done">정상</b><i>›</i><b class="done">담당자 확인</b><i>›</i><b class="${lv==='repeat'?'on':'done'}">관리 필요</b><i>›</i><b class="${lv==='repeat'?'':'on'}">대표 확인</b></div>`;
+  const rows=x.issues.map(f=>{
+    const since=f.since?(String(f.since).length>10?`${fmtD(String(f.since).slice(0,10),false)} ${_hm(f.since)}`:fmtD(String(f.since),false)):'';
+    return `<div class="iss"><div style="font-weight:800;font-size:14px;">${es(f.text)}</div>
+      <div class="kv"><span class="k">무슨 문제</span><span class="v"><b>${es(f.detail||f.text)}</b>${f.tag?` <span class="vh-tiny">태그 ${es(f.tag)}</span>`:''}</span>
+      <span class="k">언제부터</span><span class="v">${since?`<b>${es(since)}</b>`:'—'}${f.days?` · ${f.days}일 경과`:''}</span>
+      <span class="k">담당</span><span class="v"><b>${es(f.who?.name||'없음')}</b>${f.whoWhy?` <span class="vh-tiny">${es(f.whoWhy)}</span>`:''}${x.mgr&&f.who&&x.mgr.name!==f.who.name?` · 매니저 <b>${es(x.mgr.name)}</b>`:''}</span>
+      <span class="k">지금</span><span class="v"><span class="miss">${es(f.state)}</span>${f.kind==='ho'||f.kind==='claim'?' · 아무도 확인 안 함':''}</span></div>${lad(f.level)}</div>`;
+  }).join('');
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>${es(storeShort(x.store.name))} · 확인 필요 ${x.issues.length}</h3><span class="vh-tiny">매니저 ${es(x.mgr?.name||'없음')}</span>${rows}
+    <div class="vh-sheet-btns" style="margin-top:12px;"><button type="button" class="vh-btn" data-room style="flex:1;">${T('store')} 방 열기</button>${x.mgr?`<button type="button" class="vh-btn primary" data-ask style="flex:1.2;">${es(x.mgr.name)}에게 묻기</button>`:''}</div>
+    <div class="vh-tiny" style="margin-top:6px;">「묻기」는 매니저에게 알림 한 줄 — 직원 → 매니저 → 대표 순서</div>`;
+  const close=()=>vfSheetClose(ov);ov.onclick=(e)=>{if(e.target===ov)close();};
+  sh.querySelector('[data-room]').onclick=()=>{close();try{openStoreRoom(x.store);}catch(e){}};
+  const ask=sh.querySelector('[data-ask]');
+  if(ask)ask.onclick=()=>{
+    const f=x.issues[0];const me=window.__vflowProfile?.name||'대표';
+    vfPush({profile_ids:[x.mgr.id]},`${me}이 물음 · ${storeShort(x.store.name)}`,`${f.text}${f.days?` · ${f.days}일째`:''} — 잡고 있는지 확인`);
+    vfUse('ask_manager');ask.textContent='보냄';ask.disabled=true;
+  };
+  ov.appendChild(sh);document.body.appendChild(ov);
+}
 // 직원 이력 — 근무 일수·평균 출근·거친 매장·완료 업무·인수인계·프로젝트를 한 장으로. 회사엔 평가 근거, 직원에겐 근무 확인서
 async function renderStaffHistory(content,sel){
   document.getElementById('dash-sub').textContent='사람 하나의 기록 한 장';
@@ -11737,9 +11940,9 @@ Promise.all([loadStores(), loadStaffList(), loadScheduleRules(), loadHolidays(),
   isAdmin=(_role==='owner'||_role==='manager');
   const _tsBtn=document.getElementById('tab-status');
   if(_tsBtn)_tsBtn.style.display=isAdmin?'':'none';
-  // Ⓜ️ 모니터링 전용(대표): 아이콘 누르면 바로 주간 리포트가 첫 화면
+  // Ⓜ️ 모니터링 전용(대표): 첫 화면은 「회사」 — N개 매장 중 확인 필요한 곳만
   if(window.__vflowProfile?.monitorOnly&&isAdmin){
-    dashTab='report';
+    dashTab=window.__vflowProfile?.role==='owner'?'company':'report';
     dashViewDate=null;
     document.getElementById('tab-bar').style.display='flex'; // Ⓜ️도 하단 탭으로 오늘 현황 접근
     showScreen('screen-admin');
