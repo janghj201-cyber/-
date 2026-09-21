@@ -3235,6 +3235,7 @@ const GUIDE_SECTIONS = [
       '🔔 대표에게 푸시는 없다 — 열어서 본다. 대표가 할 수 있는 건 매장 방 열기와 「매니저에게 묻기」(알림 한 줄)뿐. 직원에게 직접 가는 버튼은 없다',
       '⚙️ 관리자 → 설정 → 「올라오는 기준」 — 인수인계 일수·출근 유예·지각 기준·반복 횟수·큰 지각·이월 연속·클레임 시간. 코드에 숫자가 없고 여기서 바꾼다',
       '🧾 우선 확인 줄마다 앞에 종류(인수인계·요청·제안·알아둘 것), 뒤에 날짜',
+      '🏬 관리자 「남기기」에 「전 매장 할 일」 — 날짜 하나(기본 내일) · 매장 전체 또는 골라서 · 한 줄. 그날 그 매장의 매장 할 일로 떠서 그날 근무자가 체크. 휴무자는 안 보인다',
     ]
   },
   {
@@ -5853,7 +5854,8 @@ function openLeaveSheet(entry,tKey,preset){
   const sh=document.createElement('div');sh.className='vh-sheet';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vh-sheet-title');
   sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3 id="vh-sheet-title">남기기</h3><span class="vh-tiny">${entry.name} · ${me}</span><div class="vh-err" data-err hidden></div>
-    <div class="vh-kinds"><button class="vh-kind" data-k="handover">${T('handover')}</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}</div>
+    <div class="vh-kinds"><button class="vh-kind" data-k="handover">${T('handover')}</button>${featOn('workreq')?'<button class="vh-kind" data-k="request">요청</button>':''}${isAdmin?`<button class="vh-kind" data-k="stores">전 ${T('store')} 할 일</button>`:''}</div>
+    <div class="vh-until" data-stores-wrap style="display:none;"><label>날짜 <input type="date" data-sdate min="${tKey}" style="margin-left:6px;"></label><div class="vh-tagpick" data-spick style="margin-top:8px;"><button type="button" data-sid="all" class="on">전체</button>${STORES.map(st=>`<button type="button" data-sid="${st.id}">${_wrEsc(storeShort(st.name))}</button>`).join('')}</div><span class="vh-tiny">그날 그 ${T('store')}의 「${T('store')} 할 일」로 뜬다 · 그날 ${T('worker')}가 체크 · 휴무자는 안 보임</span></div>
     <div class="vh-kinds vh-reqkind" data-reqkind-wrap style="display:none;"><button class="vh-kind on" data-rk="todo">할 일로<small>오늘·내일 할 한 가지</small></button><button class="vh-kind" data-rk="project">프로젝트로<small>며칠 걸리는 일 · 수락하면 방이 열림</small></button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
     <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
@@ -5867,7 +5869,17 @@ function openLeaveSheet(entry,tKey,preset){
   if(kind==='request'&&!featOn('workreq'))kind='handover';
   const kinds=sh.querySelectorAll('.vh-kinds:not(.vh-reqkind) .vh-kind'), recip=sh.querySelector('[data-recip]'), ta=sh.querySelector('textarea');
   const recipDefault=recip.querySelector('option');
-  const KIND_LABEL={todo:'오늘 할 일',handover:T('handover'),request:'요청',memo:'내 메모'};
+  const KIND_LABEL={todo:'오늘 할 일',handover:T('handover'),request:'요청',memo:'내 메모',stores:`전 ${T('store')} 할 일`};
+  // 전 매장 할 일 — 날짜 기본 내일, 매장 기본 전체
+  const storesWrap=sh.querySelector('[data-stores-wrap]'), sdate=sh.querySelector('[data-sdate]'), spick=sh.querySelector('[data-spick]');
+  let pickAll=true;const picked=new Set();
+  if(sdate){const d=new Date(today);d.setDate(d.getDate()+1);sdate.value=dk(d.getFullYear(),d.getMonth(),d.getDate());}
+  if(spick)spick.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{
+    const id=bt.dataset.sid;
+    if(id==='all'){pickAll=true;picked.clear();}
+    else{pickAll=false;if(picked.has(id))picked.delete(id);else picked.add(id);if(!picked.size)pickAll=true;}
+    spick.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.sid==='all'?pickAll:(!pickAll&&picked.has(x.dataset.sid))));
+  });
   // 임시 저장 — 저장에 실패하거나 실수로 닫아도 적던 글이 남는다 (성공하면 지운다)
   const DRAFT_KEY='vflow_leave_draft_'+(window.__vflowProfile?.id||me);
   const errEl=sh.querySelector('[data-err]');
@@ -5887,7 +5899,9 @@ function openLeaveSheet(entry,tKey,preset){
   const setKind=(k)=>{
     if(k==='todo'||k==='memo')k='handover';
     if(k==='request'&&!featOn('workreq'))k='handover';
+    if(k==='stores'&&!isAdmin)k='handover';
     kind=k;kinds.forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+    if(storesWrap)storesWrap.style.display=k==='stores'?'':'none';
     recip.style.display=(k==='handover'||k==='request')?'':'none';
     // 요청은 사람 대 사람 — 받는 사람 필수 (근무자 누구나는 매장 방 인수인계로)
     if(recipDefault){recipDefault.textContent=k==='request'?'받는 사람':`받는 사람: 다음 ${T('worker')} 누구나`;recipDefault.disabled=(k==='request');}
@@ -5895,7 +5909,7 @@ function openLeaveSheet(entry,tKey,preset){
     untilWrap.style.display=k==='handover'?'':'none';tagWrap.style.display=k==='handover'?'':'none';
     reqKindWrap.style.display=k==='request'?'':'none';
     dueWrap.style.display=(k==='request'&&reqKind==='project')?'':'none';
-    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'프로젝트 한 줄':'부탁할 일 한 줄'):'나만 볼 메모';
+    ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'프로젝트 한 줄':'부탁할 일 한 줄'):k==='stores'?`그날 ${T('store')}마다 할 일 한 줄`:'나만 볼 메모';
     const sb=sh.querySelector('[data-save]');if(sb&&!sb.disabled)sb.textContent=k==='request'?'보내기':'저장';
   };
   kinds.forEach(b=>b.onclick=()=>{setKind(b.dataset.k);saveDraft();});
@@ -5977,6 +5991,15 @@ function openLeaveSheet(entry,tKey,preset){
       else if(kind==='handover'){
         if(longCb.checked&&(!untilInp.value||untilInp.value<tKey)){alert('표시 마감 날짜를 선택하세요.');btn.disabled=false;btn.textContent='저장';return;}
         await addHandoverItem(entry.id,tKey,text,me,recip.value||'',longCb.checked?untilInp.value:null,hoTag);
+      }
+      else if(kind==='stores'){
+        // 전 매장 할 일 — 매장마다 그날 「매장 할 일」 한 줄. 규칙이 아니라 한 번이라 rule_key 를 매번 새로
+        const dateKey=sdate.value||tKey;if(dateKey<tKey){showErr('지난 날짜');btn.disabled=false;btn.textContent='저장';return;}
+        const targets=pickAll?STORES:STORES.filter(st=>picked.has(st.id));
+        const ruleKey='adhoc_'+Date.now().toString(36);
+        await Promise.all(targets.map(st=>ensureStoreFixedTodos(st.id,dateKey,[{ruleKey,title:text}])));
+        vfUse('stores_todo');
+        alert(`${fmtD(dateKey)} · ${targets.length}개 ${T('store')}에 남김`);
       }
       else if(kind==='request'){
         // 요청은 사람 대 사람 — 매장에 묶지 않는다(store_id 없음). 매장 방에는 안 뜨고 받는 사람 홈에만.
@@ -7167,7 +7190,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
