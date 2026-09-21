@@ -1,11 +1,11 @@
-// V-Flow 휴무 자동 동기화 — 위베이프 스케줄(구글시트/Apps Script) → V-Flow dayoffs
-// Vercel Cron이 매일 호출. 스케줄의 "현재 활성 월"을 읽어 그 달 휴무를 덮어쓰기(diff-sync)한다.
+// V-Flow 휴무 가져오기 — 회사 스케줄 시트(CSV 주소) → dayoffs. Vercel Cron이 매일 호출.
+// 기본은 꺼짐: 휴무는 앱에서 직접 신청·승인한다. 설정 → 「휴무 가져오기」를 켜고 주소를 넣은 회사만 돈다
+// (tenant_settings.extra.dayoffSync = {on:true, url}). 코드에 회사 이름·주소를 박지 않는다.
+// 켜면 그 달 휴무는 시트가 원본 — 시트의 "현재 활성 월"을 읽어 그 달 휴무를 덮어쓴다(diff-sync).
 // 필요 환경변수(Vercel):
 //   SUPABASE_SERVICE_ROLE_KEY  (필수) — Supabase service_role 키 (RLS 우회, 서버 전용)
 //   CRON_SECRET                (권장) — 있으면 Vercel Cron 요청만 허용
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vbuhueykvizmnrfvkehq.supabase.co';
-const SCHEDULE_URL = process.env.SCHEDULE_URL || 'https://script.google.com/macros/s/AKfycbxTkORMjTnG904crrghKNmEA2laN4WcVUpDItmbNuwArjRWlkpaZZOoxcFkTyHfBC1f/exec';
-const TENANT_NAME  = process.env.TENANT_NAME || '위베이프 인천/경기 지사';
 
 module.exports = async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
   });
 
-  try {
+  const runOne = async (TID, SCHEDULE_URL) => {
     const csv = await fetch(SCHEDULE_URL).then((r) => r.text());
     const lines = csv.split(/\r?\n/).filter((l) => l.trim()).map((l) => l.split(','));
     if (!lines.length) throw new Error('빈 CSV');
@@ -50,10 +50,6 @@ module.exports = async function handler(req, res) {
     }
     const empCount = Object.keys(offByName).length;
     if (empCount < 10) throw new Error(`파싱 직원 ${empCount}명 — 데이터 이상으로 중단`);
-
-    const tenants = await sb(`tenants?select=id,name&name=eq.${encodeURIComponent(TENANT_NAME)}`).then((r) => r.json());
-    if (!tenants.length) throw new Error(`테넌트 없음: ${TENANT_NAME}`);
-    const TID = tenants[0].id;
 
     const profiles = await sb(`profiles?select=id,name&tenant_id=eq.${TID}`).then((r) => r.json());
     const idByName = new Map(profiles.map((p) => [p.name, p.id]));
@@ -84,7 +80,19 @@ module.exports = async function handler(req, res) {
       if (!r.ok) throw new Error('삽입 실패: ' + (await r.text()));
     }
 
-    res.status(200).json({ ok: true, month: ym, employees: empCount, desired_offs: desired.size, deleted: toDelete.length, inserted: toInsert.length, unmatched_names: unmatched });
+    return { tenant: TID, month: ym, employees: empCount, desired_offs: desired.size, deleted: toDelete.length, inserted: toInsert.length, unmatched_names: unmatched };
+  };
+
+  try {
+    // 켜 둔 회사만 — 설정이 원본
+    const rows = await sb(`tenant_settings?select=tenant_id,extra`).then((r) => r.json());
+    const targets = (Array.isArray(rows) ? rows : []).filter((r) => r.extra && r.extra.dayoffSync && r.extra.dayoffSync.on && /^https?:\/\//.test(String(r.extra.dayoffSync.url || '')));
+    const results = [];
+    for (const t of targets) {
+      try { results.push(await runOne(t.tenant_id, String(t.extra.dayoffSync.url))); }
+      catch (e) { results.push({ tenant: t.tenant_id, ok: false, error: String(e && e.message || e) }); }
+    }
+    res.status(200).json({ ok: true, tenants: targets.length, results });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e && e.message || e) });
   }

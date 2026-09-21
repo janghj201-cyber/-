@@ -660,7 +660,11 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vf-pcst span{font-size:11.5px;border:1px solid var(--border);border-radius:999px;padding:3px 9px;color:var(--text-sub);}
 .vf-pcst span.ok{border-color:var(--navy);color:var(--navy);font-weight:700;}
 .vf-pcst button{font:inherit;font-size:11.5px;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:3px 9px;color:var(--text);cursor:pointer;}
-.vf-hours{display:grid;grid-template-columns:1fr auto auto;gap:6px 10px;align-items:center;font-size:13px;}
+.vf-hours{display:grid;grid-template-columns:1fr auto auto auto;gap:6px 10px;align-items:center;font-size:13px;}
+.vf-off{display:flex;gap:2px;}
+.vf-off button{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--card);font:inherit;font-size:10.5px;font-weight:700;color:var(--text-mute);cursor:pointer;padding:0;}
+.vf-off button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+@media(max-width:600px){.vf-hours{grid-template-columns:1fr auto auto;}.vf-hours .vf-off,.vf-hours .h.off{grid-column:1/-1;}}
 .vf-hours input{border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;width:124px;box-sizing:border-box;}
 .vf-hours .all{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--bg);border-radius:10px;margin-bottom:4px;font-size:12.5px;font-weight:700;}
 .vf-hours .all .vh-btn{padding:6px 12px;font-size:12px;}
@@ -3235,6 +3239,7 @@ const GUIDE_SECTIONS = [
       '🔔 대표에게 푸시는 없다 — 열어서 본다. 대표가 할 수 있는 건 매장 방 열기와 「매니저에게 묻기」(알림 한 줄)뿐. 직원에게 직접 가는 버튼은 없다',
       '⚙️ 관리자 → 설정 → 「올라오는 기준」 — 인수인계 일수·출근 유예·지각 기준·반복 횟수·큰 지각·이월 연속·클레임 시간. 코드에 숫자가 없고 여기서 바꾼다',
       '🧾 우선 확인 줄마다 앞에 종류(인수인계·요청·제안·알아둘 것), 뒤에 날짜',
+      '📅 설정 → 「운영 시간」에 매장마다 정기 휴무 요일 — 그날은 출근 없음·청소 미체크·이월을 안 센다. 「휴무 가져오기」는 기본 꺼짐: 휴무는 앱에서 직접, 회사 시트가 있으면 켜고 주소',
       '🏬 관리자 「남기기」에 「전 매장 할 일」 — 날짜 하나(기본 내일) · 매장 전체 또는 골라서 · 한 줄. 그날 그 매장의 매장 할 일로 떠서 그날 근무자가 체크. 휴무자는 안 보인다',
     ]
   },
@@ -5149,7 +5154,7 @@ async function loadTodayGaps(pre){
     const goStore=(s)=>{try{openStoreRoom(s);}catch(e){}};
     const items=[];
     // 청소 미체크 — 매장마다 한 줄이면 아침엔 전 매장이 줄줄이 뜬다. 근무자가 있는 매장(진짜 누락)과 없는 매장(아직 출근 전)을 나눠 한 줄씩
-    const noClean=rows.filter(r=>totalCl>0&&r.cleanDone===0);
+    const noClean=rows.filter(r=>totalCl>0&&r.cleanDone===0&&!vfStoreClosed(r.s.id));
     const ncW=noClean.filter(r=>r.workers.length),ncN=noClean.filter(r=>!r.workers.length);
     if(ncW.length)items.push({dot:'danger',text:`${T('clean')} 미체크 ${ncW.length}곳 — ${T('worker')} 있음`,sub:ncW.map(r=>`${esc(shortN(r.s.name))}(${r.workers.map(esc).join('·')})`).join(' · '),fn:()=>goStore(ncW[0].s)});
     if(ncN.length)items.push({dot:'warn',text:`${T('clean')} 미체크 ${ncN.length}곳 — 아직 ${T('worker')} 없음`,sub:ncN.map(r=>esc(shortN(r.s.name))).join(' · '),fn:()=>goStore(ncN[0].s)});
@@ -6548,7 +6553,9 @@ function vfIsStorePC(){
 }
 function vfIsApp(){try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}catch(e){return false;}}
 // 운영 시간 — 설정 「운영 시간」. 없으면 10:00~22:00
-function vfHours(storeId){const h=((appSettings||{}).hours||{})[storeId]||{};return {open:h.open||'10:00',close:h.close||'22:00'};}
+function vfHours(storeId){const h=((appSettings||{}).hours||{})[storeId]||{};return {open:h.open||'10:00',close:h.close||'22:00',off:Array.isArray(h.off)?h.off:[]};}
+// 정기 휴무 — 그날은 출근 없음·청소 미체크·이월을 안 센다
+function vfStoreClosed(storeId,d){const {off}=vfHours(storeId);const dt=d?new Date(d):today;return off.includes(dt.getDay());}
 // 오늘 남은 것 — 내 미완료 업무 · 이 매장 안 한 청소 · 안 본 인수인계. 근무 마감 한 장과 마감 전 알림이 같이 쓴다
 async function vfLeftovers(entry){
   const tKey=todayKey(),me=window.__vflowProfile?.name||'';
@@ -6594,7 +6601,8 @@ async function loadCompanyStatus(){
     const issues=[],know={urgent:0,inprog:0,repeat:0};
     // 출근 없음 — 여는 시각 + 유예가 지났는데 오늘 이 매장 근무 기록이 없다
     const todayWs=ws.filter(r=>r.store_id===s.id&&r.work_date===tKey);
-    if(nowMin>openMin+esc.openGrace&&!todayWs.length){
+    const closedToday=vfStoreClosed(s.id);
+    if(!closedToday&&nowMin>openMin+esc.openGrace&&!todayWs.length){
       issues.push({kind:'noopen',level:'urgent',text:'출근 기록 없음',detail:`여는 시각 ${open} + ${esc.openGrace}분 지남`,since:`${tKey}T${open}`,days:0,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});know.urgent++;
     }
     // 지각 — 30일 안 반복 · 큰 지각(7일 안)
@@ -6627,7 +6635,7 @@ async function loadCompanyStatus(){
     // 미완료 이월 — 며칠 연속
     const cdays=[...new Set(ct.filter(r=>r.store_id===s.id).map(r=>r.task_date))].sort();
     let run=0,best=0;for(let k=0;k<cdays.length;k++){run=(k>0&&(new Date(cdays[k])-new Date(cdays[k-1]))===86400000)?run+1:1;best=Math.max(best,run);}
-    if(best>=esc.carryDays)issues.push({kind:'carry',level:'stale',text:`미완료 이월 ${best}일 연속`,detail:`${fmtD(cdays[0],false)}부터`,since:cdays[0],days:best,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});
+    if(!closedToday&&best>=esc.carryDays)issues.push({kind:'carry',level:'stale',text:`미완료 이월 ${best}일 연속`,detail:`${fmtD(cdays[0],false)}부터`,since:cdays[0],days:best,who:mgr,whoWhy:mgr?'매장 매니저':'',state:'미처리'});
     const order={urgent:0,stale:1,repeat:2};issues.sort((a,b)=>order[a.level]-order[b.level]);
     return {store:s,mgr,issues,know,ok:issues.length===0};
   });
@@ -10578,31 +10586,53 @@ async function renderSettingsTab(content){
     all.innerHTML=`<span>전 ${T('store')} 같게</span><input type="time" data-o value="10:00"><span class="h">~</span><input type="time" data-c value="22:00"><button type="button" class="vh-btn primary" data-go>적용</button>`;
     all.querySelector('[data-go]').onclick=async()=>{
       const o=all.querySelector('[data-o]').value,c=all.querySelector('[data-c]').value;if(!o||!c)return;
-      const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));const next={};STORES.forEach(st=>{next[st.id]={open:o,close:c};});
+      const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));const next={};STORES.forEach(st=>{const keep=(prev[st.id]||{}).off;next[st.id]={open:o,close:c,...(Array.isArray(keep)&&keep.length?{off:keep}:{})};});
       appSettings.hours=next;hs.textContent='저장 중';
       try{await saveSettings();hs.textContent='저장됨';setTimeout(()=>hs.textContent='',1500);g.querySelectorAll('[data-sid]').forEach(inp=>{inp.value=inp.dataset.k==='o'?o:c;});}
       catch(err){appSettings.hours=prev;hs.textContent='저장 실패 · 권한/네트워크 확인';}
     };
     g.appendChild(all);
-    g.insertAdjacentHTML('beforeend','<span class="h"></span><span class="h">여는 시각</span><span class="h">닫는 시각</span>');
+    g.insertAdjacentHTML('beforeend','<span class="h"></span><span class="h">여는 시각</span><span class="h">닫는 시각</span><span class="h off">정기 휴무</span>');
     STORES.forEach(st=>{
       const cur=((appSettings.hours||{})[st.id])||{};
       const nm=document.createElement('span');nm.textContent=st.name;nm.style.fontWeight='700';
       const o=document.createElement('input');o.type='time';o.value=cur.open||'';o.placeholder='10:00';o.dataset.sid=st.id;o.dataset.k='o';
       const c=document.createElement('input');c.type='time';c.value=cur.close||'';c.placeholder='22:00';c.dataset.sid=st.id;c.dataset.k='c';
+      const off=new Set(Array.isArray(cur.off)?cur.off:[]);
+      const ow=document.createElement('div');ow.className='vf-off';ow.title='정기 휴무 요일 — 그날은 출근 없음·청소·이월을 안 센다';
+      ['일','월','화','수','목','금','토'].forEach((nmD,i)=>{const bt=document.createElement('button');bt.type='button';bt.textContent=nmD;bt.classList.toggle('on',off.has(i));bt.onclick=()=>{if(off.has(i))off.delete(i);else off.add(i);bt.classList.toggle('on',off.has(i));save();};ow.appendChild(bt);});
       const save=async()=>{
         const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));
-        const next={...(appSettings.hours||{})};const v={};if(o.value)v.open=o.value;if(c.value)v.close=c.value;
+        const next={...(appSettings.hours||{})};const v={};if(o.value)v.open=o.value;if(c.value)v.close=c.value;if(off.size)v.off=[...off].sort();
         if(Object.keys(v).length)next[st.id]=v;else delete next[st.id];
         appSettings.hours=next;hs.textContent='저장 중';
         try{await saveSettings();hs.textContent='저장됨';setTimeout(()=>hs.textContent='',1500);}
         catch(err){appSettings.hours=prev;hs.textContent='저장 실패 · 권한/네트워크 확인';}
       };
       o.onchange=save;c.onchange=save;
-      g.appendChild(nm);g.appendChild(o);g.appendChild(c);
+      g.appendChild(nm);g.appendChild(o);g.appendChild(c);g.appendChild(ow);
     });
     secH.appendChild(g);secH.appendChild(hs);
     content.appendChild(secH);
+  }
+
+  // ── 휴무 가져오기 — 기본 꺼짐(앱에서 직접 신청·승인이 원본). 켜면 시트 주소에서 매일 새벽 그 달 휴무를 가져온다 ──
+  if(window.__vflowProfile?.role==='owner'){
+    const ds=(appSettings.dayoffSync||{});
+    const secD=document.createElement('div');secD.className='dash-card';secD.style.marginBottom='12px';
+    secD.innerHTML=`<div class="dash-store-name">휴무 가져오기</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">기본은 꺼짐 — 휴무는 앱에서 직접 신청하고 승인한다. 회사 스케줄 시트가 따로 있으면 켜고 주소를 넣는다. <b>켜면 그 달 휴무는 시트가 원본</b>이라 앱에서 고친 것은 시트에 맞춰 되돌아간다. 매일 새벽 한 번</div>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;"><span>시트에서 가져오기</span><input type="checkbox" data-on ${ds.on?'checked':''} style="accent-color:var(--gold);width:18px;height:18px;"></label>
+      <div data-urlwrap style="margin-top:10px;${ds.on?'':'display:none;'}"><input type="url" data-url value="${_wrEsc(ds.url||'').replace(/"/g,'&quot;')}" placeholder="시트 주소 (CSV로 나오는 주소)" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font:inherit;font-size:13px;"><div class="vh-tiny" style="margin-top:6px;">첫 줄에 「2026년 9월」처럼 달, 「성명」 줄 아래 사람마다 날짜 칸이 비어 있으면 휴무</div></div>
+      <div class="feedback-saved" data-fb style="margin:8px 0 0;min-height:16px;"></div>`;
+    const on=secD.querySelector('[data-on]'),url=secD.querySelector('[data-url]'),uw=secD.querySelector('[data-urlwrap]'),fb=secD.querySelector('[data-fb]');
+    const save=async()=>{
+      const prev={...(appSettings.dayoffSync||{})};
+      appSettings.dayoffSync={on:!!on.checked,url:(url.value||'').trim()};uw.style.display=on.checked?'':'none';fb.textContent='저장 중';
+      try{await saveSettings();fb.textContent='저장됨';setTimeout(()=>fb.textContent='',1500);}
+      catch(err){appSettings.dayoffSync=prev;on.checked=!!prev.on;url.value=prev.url||'';fb.textContent='저장 실패 · 권한/네트워크 확인';}
+    };
+    on.onchange=save;url.onchange=save;
+    content.appendChild(secD);
   }
 
   // ── 올라오는 기준 — 대표 화면에 무엇이 언제 올라오는지. 코드에 숫자 없음 ──
