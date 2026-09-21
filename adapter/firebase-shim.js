@@ -1260,8 +1260,14 @@ export async function staffHistory(profileId) {
     if (r.started_at) { const d = new Date(r.started_at); startSum += d.getHours() * 60 + d.getMinutes(); startN++ }
   }
   const byMonth = {}
+  // 최근 30일 — 날짜마다 [완료, 등록]. 이력의 완료율 곡선용(창고(task_date null)는 뺀다)
+  const byDay = {}
+  const d30 = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
   let tasks = 0, tasksDone = 0, firstTask = null
-  for (const r of dt.data ?? []) { tasks++; if (r.status === 'done') { tasksDone++; const k = mk(r.task_date); if (k) byMonth[k] = (byMonth[k] || 0) + 1 }; if (r.task_date && (!firstTask || r.task_date < firstTask)) firstTask = r.task_date }
+  for (const r of dt.data ?? []) {
+    tasks++; if (r.status === 'done') { tasksDone++; const k = mk(r.task_date); if (k) byMonth[k] = (byMonth[k] || 0) + 1 }; if (r.task_date && (!firstTask || r.task_date < firstTask)) firstTask = r.task_date
+    if (r.task_date && r.task_date >= d30 && r.status !== 'carried_over') { const e = (byDay[r.task_date] = byDay[r.task_date] || [0, 0]); e[1]++; if (r.status === 'done') e[0]++ }
+  }
   if (firstTask && (!firstDay || firstTask < firstDay)) firstDay = firstTask // 근무 기록이 생기기 전(v5.4 이전) 업무 기록으로 시작일을 잡는다
   let hos = 0, hosOk = 0
   for (const r of ho.data ?? []) { hos++; if (r.confirmed || r.closed) hosOk++ }
@@ -1270,7 +1276,7 @@ export async function staffHistory(profileId) {
     days: days.size, firstDay, lastDay, stores, avgStart: startN ? Math.round(startSum / startN) : null,
     tasks, tasksDone, handovers: hos, handoversOk: hosOk, cleanChecks: (cl.data ?? []).length,
     projects: projects.length, projectsDone: projects.filter((p) => p.status === 'done').length, projectList: projects.slice(0, 8),
-    byMonth,
+    byMonth, byDay,
   }
 }
 
@@ -1296,7 +1302,13 @@ export async function storeHistory(storeId) {
     if (r.tag) { m.tags[r.tag] = (m.tags[r.tag] || 0) + 1; m.events.push({ date: r.handover_date, tag: r.tag, text: r.content, author: r.author?.name ?? '', confirmer: r.confirmer?.name ?? '', confirmed: !!r.confirmed }) }
   }
   for (const r of pj.data ?? []) { const k = mk(r.created_at); if (!k) continue; M(k).projects++ }
-  return [...months.values()].sort((a, b) => (a.key < b.key ? 1 : -1)).map((m) => ({ ...m, workers: m.workers.size, photos: m.photos.sort((a, b) => (a.date < b.date ? 1 : -1)) }))
+  const out = [...months.values()].sort((a, b) => (a.key < b.key ? 1 : -1)).map((m) => ({ ...m, workers: m.workers.size, photos: m.photos.sort((a, b) => (a.date < b.date ? 1 : -1)) }))
+  // 최근 30일 — 날짜마다 [청소 완료, 청소 항목]. 연혁 맨 위 완료율 곡선용
+  const byDay = {}
+  const d30 = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
+  for (const r of cl.data ?? []) { if (!r.log_date || r.log_date < d30) continue; const e = (byDay[r.log_date] = byDay[r.log_date] || [0, 0]); e[1]++; if (r.done) e[0]++ }
+  out.byDay = byDay
+  return out
 }
 
 // ── config/staff (5-1 신원통합: 가짜 이름 16명 → 실제 테넌트 프로필) ──

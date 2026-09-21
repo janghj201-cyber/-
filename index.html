@@ -1128,7 +1128,27 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 /* 2. 막대 차오르기 */
 .vh-ptile .pt-bar div,.rm-proj .rm-bar div,.project-progress-fill,.dt-bar .progress-fill{transition:width .3s ease;}
 /* 3. 숫자 굴러가기 */
-.vf-roll{display:inline-block;animation:vf-roll .28s cubic-bezier(.2,.8,.2,1);}
+.vf-roll{display:inline-block;animation:vf-roll .28s cubic-bezier(.2,.8,.2,1),vf-rollc 1s ease-out;}
+@keyframes vf-rollc{0%{color:var(--green,#2e7d4f);}70%{color:var(--green,#2e7d4f);}100%{color:inherit;}}
+/* 매장 PC 대기 화면 — 3분 손대지 않으면. 큰 시계 · 매장 · 근무자 · 남은 것 */
+.vf-idle{position:fixed;inset:0;z-index:2000;background:var(--navy);color:#fff;padding:28px 32px 22px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;user-select:none;font-family:inherit;}
+.vf-idle .top{display:flex;justify-content:space-between;font-size:14px;opacity:.7;font-weight:700;}
+.vf-idle .who{position:absolute;right:32px;top:62px;font-size:14px;opacity:.7;font-weight:700;text-align:right;line-height:1.5;}
+.vf-idle .clock{font-size:min(18vw,140px);font-weight:900;letter-spacing:-3px;line-height:1;font-variant-numeric:tabular-nums;margin-top:auto;}
+.vf-idle .date{font-size:18px;opacity:.78;margin-top:10px;font-weight:700;}
+.vf-idle .row{display:flex;gap:14px;margin-top:30px;}
+.vf-idle .tile{flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px 18px;min-width:0;}
+.vf-idle .tile span{display:block;font-size:13px;opacity:.7;font-weight:700;}
+.vf-idle .tile b{display:block;font-size:40px;font-weight:900;margin-top:2px;line-height:1.1;}
+.vf-idle .tile b.warn{color:var(--gold);}
+.vf-idle .tile small{display:block;font-size:12.5px;opacity:.65;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vf-idle .done{margin-top:30px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:18px;font-size:18px;font-weight:800;text-align:center;}
+.vf-idle .close{margin-top:30px;background:var(--gold);color:var(--navy);border-radius:16px;padding:18px;font-size:18px;font-weight:900;text-align:center;}
+.vf-idle .hint{font-size:13px;opacity:.5;margin-top:22px;text-align:center;font-weight:700;}
+/* 완료율 곡선 */
+.vf-crv{width:100%;height:110px;display:block;}
+.vf-crv-wrap{margin:8px 0 4px;}
+.vf-crv-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mute);font-weight:700;}
 .vh-metric b.vf-roll{display:block;}
 /* 4. 줄 빠져나가기 — 왼쪽으로 밀리며 접힘 */
 .vf-out{transition:transform .2s ease,opacity .2s ease,max-height .22s ease .06s,padding .22s ease .06s,margin .22s ease .06s,border-width .22s ease .06s;transform:translateX(-24px);opacity:0;max-height:0!important;padding-top:0!important;padding-bottom:0!important;margin-top:0!important;margin-bottom:0!important;border-top-width:0!important;border-bottom-width:0!important;overflow:hidden;pointer-events:none;}
@@ -3140,7 +3160,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.0';
+const GUIDE_VERSION = 'v6.1';
 const BUILD_DATE = '2026-09-21'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3231,7 +3251,15 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.0 — 대표 화면 「회사」',
+    title: '🆕 v6.1 — 대기 화면 · 완료율 곡선',
+    items: [
+      '🕒 매장 컴퓨터를 3분 손대지 않으면 큰 시계와 오늘 남은 것(할 일 · 청소 · 안 본 인수인계)만 보이는 대기 화면. 누르면 홈. 닫는 시각이 지났는데 마감을 안 눌렀으면 「근무 마감 안 됨」이 대신 뜬다. 매장 PC에서만',
+      '📈 직원 이력·매장 연혁에 최근 30일 완료율 곡선 한 줄 — 그날 완료 ÷ 그날 등록. 시작과 끝 숫자만',
+      '✅ 체크하면 남은 수가 굴러 내려가며 초록 한 번',
+    ]
+  },
+  {
+    title: 'v6.0 — 대표 화면 「회사」',
     items: [
       '🏢 대표 → 관리자 → 「회사」 — N개 매장 / 정상 / 확인 필요. 확인 필요한 매장만 카드로, 정상은 한 줄. 누르면 무슨 문제 → 언제부터 → 담당 → 지금. 읽기 전용 대표 계정은 이게 첫 화면',
       '📶 올라오는 것은 「밑에서 해결 안 되는 것」만 — 인수인계 며칠째 미확인, 출근 기록 없음, 지각 반복·큰 지각, 미완료 이월 연속, 클레임 태그 미확인. 청소 미체크 1건·업무 미등록은 팀장 화면(매장 확인할 것)에만',
@@ -5390,6 +5418,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       acts.appendChild(outBtn);
       vfClock('in',entry.id).then(c=>{if(c){paintClock(c);try{if(!localStorage.getItem(_ck)){localStorage.setItem(_ck,'1');vfUse('clock_in');}}catch(e){}}else outBtn.remove();});
       vfCloseAlarm(entry);
+      vfIdleArm(entry);
       // 어제 마감을 안 눌렀으면 한 줄 — 고쳐 쓰는 칸은 없다
       (async()=>{try{
         const y=new Date(today);y.setDate(y.getDate()-1);const yKey=dk(y.getFullYear(),y.getMonth(),y.getDate());
@@ -6762,6 +6791,62 @@ function openPcSheet(){
   paintSt();
   ov.appendChild(sh);document.body.appendChild(ov);
 }
+// 완료율 곡선 — 최근 30일, 날짜마다 [완료, 등록]. 기록 없는 날은 건너뛴다. 숫자는 시작·끝 둘만
+function vfCurve(byDay,label){
+  const keys=Object.keys(byDay||{}).sort().filter(k=>byDay[k][1]>0);
+  const wrap=document.createElement('div');wrap.className='vf-crv-wrap';
+  if(keys.length<2){wrap.innerHTML=`<div class="vh-tiny">${label||'완료율'} · 기록 2일 이상이면 곡선</div>`;return wrap;}
+  const W=520,H=110,pts=keys.map(k=>Math.round(byDay[k][0]/byDay[k][1]*100));
+  const lo=Math.max(0,Math.min(...pts)-10),hi=100;
+  const xy=(i,v)=>[10+i*(W-20)/(pts.length-1),H-8-(v-lo)/(hi-lo)*(H-24)];
+  const d='M'+pts.map((v,i)=>xy(i,v).map(n=>n.toFixed(1)).join(',')).join(' L');
+  const [xe,ye]=xy(pts.length-1,pts[pts.length-1]);
+  wrap.innerHTML=`<div class="vh-fixed-head"><span>${label||'완료율'} · 최근 30일</span><span class="vh-tiny">${pts[0]}% → ${pts[pts.length-1]}%</span></div>
+    <svg class="vf-crv" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="${label||'완료율'} 곡선"><path d="${d} L${(W-10).toFixed(1)},${H-8} L10,${H-8} Z" fill="var(--navy)" opacity=".06"/><path d="${d}" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${xe.toFixed(1)}" cy="${ye.toFixed(1)}" r="3.5" fill="var(--navy)"/></svg>
+    <div class="vf-crv-foot"><span>${fmtD(keys[0],false)}</span><span>${fmtD(keys[keys.length-1],false)}</span></div>`;
+  return wrap;
+}
+// 매장 PC 대기 화면 — 3분 손대지 않으면 큰 시계와 남은 것. 누르면 홈. 닫는 시각 지나고 마감 안 눌렀으면 「근무 마감」이 대신
+let _vfIdleT=null,_vfIdleEl=null,_vfIdleTick=null,_vfIdleEntry=null;
+const VF_IDLE_MS=3*60*1000;
+function vfIdleArm(entry){
+  if(!vfIsStorePC()||!entry)return;
+  _vfIdleEntry=entry;
+  if(_vfIdleT)return; // 한 번만 건다
+  const bump=()=>{if(_vfIdleEl)return;clearTimeout(_vfIdleT);_vfIdleT=setTimeout(vfIdleShow,VF_IDLE_MS);};
+  ['mousemove','mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,bump,{passive:true}));
+  bump();
+}
+async function vfIdleShow(){
+  if(_vfIdleEl||!_vfIdleEntry||document.querySelector('.vh-sheet-bg'))return; // 시트가 열려 있으면 안 덮는다
+  const entry=_vfIdleEntry;const me=window.__vflowProfile?.name||'';
+  const el=document.createElement('div');el.className='vf-idle';el.setAttribute('role','button');el.setAttribute('aria-label','대기 화면 · 누르면 홈');
+  const _dows=['일','월','화','수','목','금','토'];
+  el.innerHTML=`<div class="top"><span>V-Flow · ${_wrEsc(storeShort(entry.name))}</span><span data-d></span></div><div class="who">근무 ${_wrEsc(me)}<br><span data-in></span></div>
+    <div><div class="clock" data-c></div><div class="date" data-sub>남은 것 세는 중</div></div><div data-body></div><div class="hint">화면을 누르면 돌아옵니다</div>`;
+  document.body.appendChild(el);_vfIdleEl=el;
+  const paint=()=>{const n=new Date();el.querySelector('[data-c]').textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;el.querySelector('[data-d]').textContent=`${n.getMonth()+1}/${n.getDate()} (${_dows[n.getDay()]})`;};
+  paint();_vfIdleTick=setInterval(paint,15000);
+  const c=window.__vfClock;el.querySelector('[data-in]').textContent=c&&c.started_at?`출근 ${_hm(c.started_at)}`:'';
+  const hide=()=>{clearInterval(_vfIdleTick);_vfIdleTick=null;el.remove();_vfIdleEl=null;clearTimeout(_vfIdleT);_vfIdleT=setTimeout(vfIdleShow,VF_IDLE_MS);};
+  el.addEventListener('mousedown',hide);el.addEventListener('touchstart',hide,{passive:true});el.addEventListener('keydown',hide);
+  vfUse('idle_show');
+  const fill=async()=>{
+    try{
+      const L=await vfLeftovers(entry);const body=el.querySelector('[data-body]');const sub=el.querySelector('[data-sub]');
+      const {close}=vfHours(entry.id);const n=new Date();const closed=(n.getHours()*60+n.getMinutes())>=_hm2min(close);
+      const notOut=!(window.__vfClock&&window.__vfClock.ended_at);
+      sub.textContent=L.total?`오늘 남은 것 ${L.total}`:'오늘 남은 것 없음';
+      if(closed&&notOut){body.innerHTML=`<div class="close">근무 마감 안 됨 · 누르면 마감</div>`;body.firstChild.onmousedown=(e)=>{e.stopPropagation();hide();vfCloseSheet(entry,()=>{try{switchTab('dashboard');}catch(err){}});};return;}
+      if(!L.total){body.innerHTML=`<div class="done">오늘 다 됨</div>`;return;}
+      const es=_wrEsc;
+      body.innerHTML=`<div class="row"><div class="tile"><span>오늘 할 일</span><b>${L.tasks.length}</b><small>${es(L.tasks.slice(0,2).map(i=>i.text).join(' · '))||'없음'}</small></div>
+        <div class="tile"><span>${T('clean')}</span><b>${L.clean.length?L.clean.length+' 남음':'끝'}</b><small>${es(L.clean.slice(0,2).map(i=>i.text).join(' · '))||''}</small></div>
+        <div class="tile"><span>안 본 ${T('handover')}</span><b class="${L.ho.length?'warn':''}">${L.ho.length}</b><small>${es(L.ho.slice(0,1).map(i=>`${i.author||''} · ${String(i.text||'').slice(0,18)}`).join(''))}</small></div></div>`;
+    }catch(e){}
+  };
+  fill();const rf=setInterval(()=>{if(!_vfIdleEl){clearInterval(rf);return;}fill();},5*60*1000);
+}
 // 새 버전 — 서비스워커가 뒤에서 새것을 받았을 때 구석에 하나. 다음에 켤 때는 자동으로 새것
 function vfNewVersion(){
   if(document.querySelector('.vf-newv'))return;
@@ -7198,7 +7283,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
@@ -11642,6 +11727,7 @@ async function renderStaffHistory(content,sel){
   const sp=document.createElement('div');sp.className='st-spark';
   keys.forEach((k,i)=>{const bar=document.createElement('i');bar.style.height=`${Math.max(2,Math.round(vals[i]/mx*38))}px`;bar.title=`${k.replace('-','.')} · ${vals[i]}건`;bar.setAttribute('data-m',String(Number(k.slice(5))));sp.appendChild(bar);});
   card.appendChild(sp);
+  try{card.appendChild(vfCurve(h.byDay,'업무 완료율'));}catch(e){}
   // 청소
   const ch=document.createElement('div');ch.className='vh-tiny';ch.style.marginTop='4px';ch.textContent=`${T('clean')} 체크 ${h.cleanChecks.toLocaleString('ko-KR')}건`;card.appendChild(ch);
   // 프로젝트
@@ -11670,6 +11756,7 @@ async function renderHistoryTab(content){
   const months=first?(()=>{const [y,m]=first.split('-').map(Number);const n=(today.getFullYear()-y)*12+(today.getMonth()+1-m)+1;return n;})():0;
   card.querySelector('.vh-tiny').textContent=first?`${first.replace('-','.')} 부터 · ${months}개월`:'';
   if(!rows.length){card.appendChild(Object.assign(document.createElement('div'),{className:'vh-tiny',textContent:'기록 없음'}));return;}
+  try{card.appendChild(vfCurve(rows.byDay,`${T('clean')} 완료율`));}catch(e){}
   const tb=document.createElement('table');tb.className='ad-tbl sh-tbl';tb.style.marginTop='8px';
   tb.innerHTML=`<thead><tr><th style="width:100%">월</th><th style="text-align:right">${T('worker')}<small>명 · 일</small></th><th style="text-align:right">${T('clean')}<small>완료율</small></th><th style="text-align:right">${T('handover')}<small>건 · 확인</small></th><th>사건</th><th style="text-align:right">프로젝트</th><th style="text-align:right">사진</th></tr></thead>`;
   const body=document.createElement('tbody');tb.appendChild(body);card.appendChild(tb);
