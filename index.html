@@ -602,6 +602,9 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vh-item.vh-done .vh-main small{display:inline-block;width:100%;text-decoration:none;} /* 취소선이 작은 글씨까지 번지지 않게 */
 .vh-item.vh-done .vh-main small::after{content:' · 확인됨';color:var(--green);font-weight:700;}
 .vh-ct>strong{margin-right:auto;}
+/* 우선 확인 — 종류 표시 */
+.vh-kind{display:inline-block;font-size:9.5px;font-weight:800;border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-right:4px;color:var(--text-sub);line-height:14px;vertical-align:1px;white-space:nowrap;}
+.vh-kind.k-ho{border-color:var(--navy);color:var(--navy);}
 /* 매장 컴퓨터 · 근무 마감 · 새 버전 */
 .vf-newv{position:fixed;right:12px;bottom:calc(72px + var(--safe-bot));z-index:1200;background:var(--navy);color:#fff;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-size:12px;font-weight:800;box-shadow:var(--shadow-card);cursor:pointer;}
 .vf-inbar{display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;margin:0 0 10px;}
@@ -5416,7 +5419,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열: 우선 확인 ──
   const pri=el('div','vh-card vh-priority');
   const items=[];
-  hoRows.forEach(({store,it,toMe,fallback})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${it.author||'익명'} · ${toMe?'나에게':fallback?`${it.recipient} ${hoAgeDays(it,tKey)}일째 부재 → 누구나`:shortStore(store.name)} · ${T('handover')}`,btn:'확인',ho:{store,it},
+  hoRows.forEach(({store,it,toMe,fallback})=>items.push({lv:0,dot:'danger',text:it.text,sub:`${vfKind(T('handover'),'k-ho')}${it.author||'익명'} · ${toMe?'나에게':fallback?`${it.recipient} ${hoAgeDays(it,tKey)}일째 부재 → 누구나`:shortStore(store.name)} · ${fmtD(it.fromDate||tKey)}`,btn:'확인',ho:{store,it},
     act:async(btn,row)=>{
       btn.disabled=true;btn.textContent='저장중';
       try{
@@ -5431,8 +5434,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     },
     open:()=>{if(entry)openStoreRoom(entry);}}));
   // 청소로 가는 문은 「내 청소」 칸과 「청소 사진」 칩이 이미 있다 — 여기선 상태만, 누르면 열림
-  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} ${T('clean')} ${leftCl}건 남음`,sub:dnCl===0?'시작 전':`${dnCl}/${totalCl}`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
-  longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${it.author||'익명'} · 알아둘 것 ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
+  if(totalCl>0&&leftCl>0)items.push({lv:1,dot:dnCl===0?'danger':'warn',text:`${shortStore(entry?entry.name:'')} ${T('clean')} ${leftCl}건 남음`,sub:`${vfKind(T('clean'))}${dnCl===0?'시작 전':`${dnCl}/${totalCl}`}`,btn:null,act:()=>{},open:()=>{if(entry)openQuickClean(entry);}});
+  longRows.forEach(({store,it})=>items.push({lv:2,dot:'',text:it.text,sub:`${vfKind('알아둘 것')}${it.author||'익명'} · ${hoUntilLabel(it)}${it.recipient?` · ${it.recipient} 담당`:''}`,btn:null,act:()=>{},open:()=>{if(entry)openStoreRoom(entry);}}));
   items.sort((a,b)=>a.lv-b.lv);
   const priHead=el('div','vh-ct',`<strong>우선 확인</strong><span class="vh-tiny">${items.length?'중요도순':''}</span>`);priHead.querySelector('.vh-tiny').after(vfMore('우선 확인'));
   pri.appendChild(priHead);
@@ -5496,7 +5499,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
         m4.classList.toggle('danger',rows.length>0);m4.classList.toggle('ok',rows.length===0);
         rows.forEach(r=>{
           const st=STORES.find(x=>x.id===r.store_id);
-          const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.content)}<small>${_wrEsc(r.requester?.name||'익명')} · ${r.recipient?.name===me?'나에게':'공용'} 요청${st?' · '+shortStore(st.name):''}</small></div>`);
+          const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.content)}<small>${vfKind('요청')}${_wrEsc(r.requester?.name||'익명')} · ${r.recipient?.name===me?'나에게':'공용'}${st?' · '+shortStore(st.name):''} · ${fmtD(String(r.created_at||'').slice(0,10))}</small></div>`);
           const b=el('button','vh-btn','수락');
           b.onclick=(e)=>{e.stopPropagation();vfLater(b,row,()=>wrRespond(r,true),()=>{refreshPri();const n=Math.max(0,parseInt(m4.querySelector('b').textContent||'0',10)-1);vfRoll(m4.querySelector('b'),n);m4.classList.toggle('danger',n>0);m4.classList.toggle('ok',n===0);});};
           const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
@@ -5512,7 +5515,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
           const props=featOn('collab')?await loadMyProposals():[];
           props.forEach(r=>{
             const days=wrDaysAgo(r.created_at);
-            const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.title)}<small>${_wrEsc(r.owner?.name||'')} · 나에게 · 프로젝트 제안${r.due_date?' · ~'+fmtD(r.due_date,false):''}${days?' · '+days+'일째':''}</small></div>`);
+            const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(r.title)}<small>${vfKind('제안')}${_wrEsc(r.owner?.name||'')} · 나에게${r.due_date?' · ~'+fmtD(r.due_date,false):''} · ${fmtD(String(r.created_at||'').slice(0,10))}</small></div>`);
             const b=el('button','vh-btn primary','수락');
             b.onclick=(e)=>{e.stopPropagation();vfLater(b,row,()=>projectRespond(r,true),async()=>{refreshPri();try{await renderDashboardHome();}catch(e2){}});};
             const no=el('button','vh-btn','거절');no.style.color='var(--text-sub)';
@@ -5538,7 +5541,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       const {n,latest}=await countNewBoardPosts();
       if(!n)return;
       const cat=latest&&latest.cat==='notice'?'공지':latest&&latest.cat==='suggest'?'건의':latest&&latest.cat==='history'?'히스토리':'업무공유';
-      const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">게시판 새 글 ${n}건<small>${latest?`${cat} · ${_wrEsc((latest.title||latest.text||'').slice(0,40))}`:'누르면 게시판'}</small></div>`);
+      const row=el('div','vh-item',`<span class="vh-dot warn"></span><div class="vh-main">게시판 새 글 ${n}건<small>${vfKind('게시판')}${latest?`${cat} · ${_wrEsc((latest.title||latest.text||'').slice(0,40))}`:'누르면 게시판'}</small></div>`);
       const b=el('button','vh-btn','보기');
       const go=(e)=>{if(e)e.stopPropagation();openBoardOverlay();vfRowOut(row).then(refreshPri);};
       b.onclick=go;row.onclick=()=>go();row.appendChild(b);
@@ -6493,6 +6496,8 @@ async function vfLeftovers(entry){
   const ho=items.filter(it=>hoNeedsConfirm(it)&&(it.recipient===me||hoOpenToAll(it,tKey)));
   return {tasks,clean,ho,total:tasks.length+clean.length+ho.length};
 }
+// 우선 확인 줄의 종류 표시 — 뭔지 먼저, 언제인지 뒤에
+const vfKind=(k,cls)=>`<span class="vh-kind${cls?' '+cls:''}">${k}</span>`;
 // 근무 마감 한 장 — 남은 것을 세어 보이고, 줄을 누르면 그 자리로. 「그래도 마감」이 퇴근
 function vfCloseSheet(entry,onClose){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
