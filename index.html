@@ -885,7 +885,9 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 #vf-side{display:none;}
 @media(min-width:1024px){
   .app-shell{flex-direction:row;}
-  #vf-side{display:flex;flex-direction:column;gap:4px;width:224px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto;}
+  #vf-side{display:flex;flex-direction:column;gap:4px;width:224px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:16px 12px;overflow:hidden;}
+  #vf-side .vs-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+  #vf-side .vs-foot{flex:0 0 auto;border-top:1px solid var(--border);padding-top:6px;margin-top:6px;display:flex;flex-direction:column;gap:4px;}
   #vf-side .vs-brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;color:var(--navy);padding:4px 8px 14px;}
   #vf-side .vs-mark{width:26px;height:26px;border:2px solid var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:12px;font-weight:800;}
   #vf-side .vs-prof{padding:8px 10px 14px;}
@@ -6094,6 +6096,8 @@ function renderSideNav(active){
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
   if(isAdm)items.push({k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()}); // 오늘 현황은 관리자 현황·보고에 흡수
   side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span>V-Flow</div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
+  // 위는 스크롤, 아래(설정·가이드·내 계정)는 항상 보이게 — 항목이 화면보다 길어도 문이 안 사라진다
+  const scroll=document.createElement('div');scroll.className='vs-scroll';side.appendChild(scroll);
   items.forEach(it=>{
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;
@@ -6102,7 +6106,7 @@ function renderSideNav(active){
       const bo=document.getElementById('board-overlay');if(bo&&it.k!=='board'){const cl=bo.querySelector('[data-close]');if(cl)cl.click();}
       it.fn();
     };
-    side.appendChild(b);
+    scroll.appendChild(b);
     if(it.badge==='board'){countNewBoardPosts().then(({n})=>{if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-board>${n}</span>`);}).catch(()=>{});}
     // 매장 방 — 도움 요청이 와 있으면 숫자. 새 색 없이 게시판 새 글과 같은 배지
     if(it.k==='room'&&entry&&featOn('collab')){helpAskedProjects(entry.id).then(list=>{const n=list.filter(r=>{try{return !sessionStorage.getItem(_collabLaterKey(r.id));}catch(e){return true;}}).length;if(n&&!b.querySelector('.vh-badge'))b.querySelector('span').insertAdjacentHTML('beforeend',`<span class="vh-badge" data-collab>${n}</span>`);}).catch(()=>{});}
@@ -6112,17 +6116,18 @@ function renderSideNav(active){
       const recs=defs.filter(t=>t.group==='records');
       const inRec=recs.some(t=>t.id===dashTab);
       const open=inRec||!!window.__sideRecOpen;
-      const mkSub=(lb,on,fn,cls)=>{const sb=document.createElement('button');sb.className='vs-item vs-sub'+(cls?' '+cls:'')+(on?' active':'');sb.innerHTML=`<span>${lb}</span>`;sb.onclick=fn;if(on)sb.setAttribute('aria-current','page');side.appendChild(sb);return sb;};
+      const mkSub=(lb,on,fn,cls)=>{const sb=document.createElement('button');sb.className='vs-item vs-sub'+(cls?' '+cls:'')+(on?' active':'');sb.innerHTML=`<span>${lb}</span>`;sb.onclick=fn;if(on)sb.setAttribute('aria-current','page');scroll.appendChild(sb);return sb;};
+      if(vp.role==='owner')mkSub('회사',dashTab==='company',()=>{window.__sideRecOpen=false;goDashTab('company');});
       mkSub('현황·보고',dashTab==='today',()=>{window.__sideRecOpen=false;goDashTab('today');});
       const rb=mkSub(`기록 <span class="vs-caret">${open?'▴':'▾'}</span>`,inRec&&!open,()=>{window.__sideRecOpen=!open;renderSideNav('admin');});
       rb.setAttribute('aria-expanded',open?'true':'false');
       if(open)recs.forEach(t=>mkSub(t.label,dashTab===t.id,()=>goDashTab(t.id),'vs-sub2'));
-      mkSub('설정',dashTab==='settings',()=>{window.__sideRecOpen=false;goDashTab('settings');});
     }
   });
-  const gap=document.createElement('div');gap.className='vs-gap';side.appendChild(gap);
+  const foot=document.createElement('div');foot.className='vs-foot';side.appendChild(foot);
+  if(isAdm&&active==='admin'){const sb=document.createElement('button');sb.className='vs-item vs-sub'+(dashTab==='settings'?' active':'');sb.innerHTML=`<span>${IC.admin}설정</span>`;sb.onclick=()=>{window.__sideRecOpen=false;goDashTab('settings');};foot.appendChild(sb);}
   [['가이드',IC.guide,()=>openGuideModal()],['내 계정',IC.user,()=>openAppMenu()]].forEach(([lb,ic,fn])=>{
-    const b=document.createElement('button');b.className='vs-item';b.innerHTML=`<span>${ic}${lb}</span>`;b.onclick=fn;side.appendChild(b);
+    const b=document.createElement('button');b.className='vs-item';b.innerHTML=`<span>${ic}${lb}</span>`;b.onclick=fn;foot.appendChild(b);
   });
 }
 
