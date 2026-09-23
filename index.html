@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Dutyvo</title>
 <meta name="description" content="1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱. 사장님은 빠진 것만 보시면 됩니다.">
-<link rel="canonical" href="https://www.vflow.kr/intro">
+<link rel="canonical" href="https://www.dutyvo.kr/intro">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/dutyvo-16.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
@@ -11641,7 +11641,7 @@ async function renderSettingsTab(content){
   // 운영사(V-Flow 본사) 테넌트의 대표만 — 가맹 대표도 role='owner'라 role만으로는 못 막는다
   if((window.__vflowProfile||{}).role==='owner' && (window.__vflowProfile||{}).isPlatform){
     const secC2=document.createElement('div');secC2.className='dash-card';secC2.style.marginTop='12px';
-    secC2.innerHTML='<div class="dash-store-name">가맹 초대 코드</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">다른 매장·가맹점이 Dutyvo를 시작하려면 이 코드가 필요해요. 코드를 만들어 전달하고, 누가 썼는지 여기서 확인합니다.<br>안내: <b>vflow.kr/onboarding.html</b> 접속 → 코드 입력 → 회사·매장 등록</div><div id="code-list">불러오는 중...</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><input id="code-label" type="text" placeholder="용도 메모 (예: 검단점 테스트)" style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><input id="code-days" type="number" value="90" min="1" style="width:72px;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:inherit;" title="유효 일수"><button id="code-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 코드 발급</button></div><div id="code-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
+    secC2.innerHTML='<div class="dash-store-name">가맹 초대 코드</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">다른 매장·가맹점이 Dutyvo를 시작하려면 이 코드가 필요해요. 코드를 만들어 전달하고, 누가 썼는지 여기서 확인합니다.<br>안내: <b>dutyvo.kr/onboarding.html</b> 접속 → 코드 입력 → 회사·매장 등록</div><div id="code-list">불러오는 중...</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><input id="code-label" type="text" placeholder="용도 메모 (예: 검단점 테스트)" style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><input id="code-days" type="number" value="90" min="1" style="width:72px;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:inherit;" title="유효 일수"><button id="code-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 코드 발급</button></div><div id="code-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
     content.appendChild(secC2);
     (async()=>{
       const box=secC2.querySelector('#code-list');

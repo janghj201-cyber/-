@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://www.vflow.kr/sitemap.xml
+Sitemap: https://www.dutyvo.kr/sitemap.xml
