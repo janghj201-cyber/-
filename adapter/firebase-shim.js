@@ -481,7 +481,27 @@ async function writeStaffTodos(ctx, dateKey, { items, deletedIds }) {
     const { error, count } = await supabase.from('daily_tasks').update(patch, { count: 'exact' }).eq('id', item.id)
     if (error) throw error
     assertAffected(count, '개인 업무')
+    if (patch.status && (patch.status === 'done' || current.status === 'done')) syncRequestDone(item.id, patch.status === 'done')
   }
+}
+
+// 요청으로 생긴 할 일을 끝내면 요청도 「완료」 — 요청 보낸 사람이 상대 할 일을 열지 않아도 안다.
+// 이월된 할 일은 carried_over_from을 거슬러 올라가 처음 할 일의 request_id를 찾는다(복사하지 않음).
+// 저장은 이미 끝났으므로 여기 실패는 조용히 — 칸이 아직 없으면(SQL 전) 한 번 보고 끈다.
+let _reqLink = true
+async function syncRequestDone(taskId, done) {
+  if (!_reqLink) return
+  try {
+    let id = taskId, rid = null
+    for (let hop = 0; hop < 10 && id && !rid; hop++) {
+      const { data, error } = await supabase.from('daily_tasks').select('request_id, carried_over_from').eq('id', id).maybeSingle()
+      if (error) { if (/request_id/.test(String(error.message || ''))) _reqLink = false; return }
+      rid = data?.request_id ?? null
+      id = data?.carried_over_from ?? null
+    }
+    if (!rid) return
+    await supabase.from('work_requests').update({ done_at: done ? new Date().toISOString() : null }).eq('id', rid)
+  } catch (e) { console.warn('[adapter] 요청 완료 표시 실패', e) }
 }
 
 // ── staff_projects/{staffName} (V-Flow 기존 projects/project_logs 테이블) ──
@@ -652,6 +672,7 @@ async function readCleanZonesConfig(ctx) {
 // 청소 항목 편집 저장(관리자) — 기본청소/대청소 구역을 diff-sync
 async function writeCleanDailyItemsConfig(ctx, { items }) {
   const list = (items ?? []).map(cleanItemOf).filter((x) => x.text)
+  forget('cleanids:')
   const { data: rows, error } = await supabase.from('cleaning_daily_items').select('id, label, note, sort_order, active').eq('tenant_id', ctx.tenantId)
   if (error) throw error
   const byLabel = new Map((rows ?? []).map((r) => [r.label, r]))
@@ -837,13 +858,35 @@ async function readCleanDeepRuleConfig(ctx) {
 async function writeCleanDeepRuleConfig(ctx, { weekday, occurrences }) {
   const recurrence = { type: 'monthly_weekday_occurrences', weekday: Number(weekday) || 0, occurrences: (occurrences ?? []).map(Number).filter((n) => n >= 1 && n <= 5) }
   const { error } = await supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: ctx.tenantId, recurrence }, { onConflict: 'tenant_id' })
+  forget('deeprule:')
   if (error) throw error
 }
 
-async function fetchDeepCleanRule(ctx) {
-  const { data, error } = await supabase.from('cleaning_deep_clean_rule').select('recurrence').eq('tenant_id', ctx.tenantId).maybeSingle()
-  if (error) throw error
-  return data?.recurrence ?? { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] }
+// 여는 속도 2단계: 매장 수만큼 같은 회사 설정을 다시 읽던 것(청소 항목 목록·대청소 규칙이 켤 때 10번씩)을
+// 1분 동안 한 번으로. 같은 기기에서 설정을 고치면 바로 잊는다. 진행 중인 조회는 같이 기다린다
+const _memo = new Map()
+function memo(key, ttlMs, fn) {
+  const hit = _memo.get(key)
+  if (hit && Date.now() - hit.at < ttlMs) return hit.p
+  const p = fn().catch((e) => { _memo.delete(key); throw e })
+  _memo.set(key, { at: Date.now(), p })
+  return p
+}
+function forget(prefix) { for (const k of [..._memo.keys()]) if (k.startsWith(prefix)) _memo.delete(k) }
+
+function fetchDeepCleanRule(ctx) {
+  return memo('deeprule:' + ctx.tenantId, 60000, async () => {
+    const { data, error } = await supabase.from('cleaning_deep_clean_rule').select('recurrence').eq('tenant_id', ctx.tenantId).maybeSingle()
+    if (error) throw error
+    return data?.recurrence ?? { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] }
+  })
+}
+function fetchActiveCleanItemIds(ctx) {
+  return memo('cleanids:' + ctx.tenantId, 60000, async () => {
+    const { data, error } = await supabase.from('cleaning_daily_items').select('id').eq('tenant_id', ctx.tenantId).eq('active', true).order('sort_order')
+    if (error) throw error
+    return data ?? []
+  })
 }
 
 // schedule.js의 evalRecurrence('monthly_weekday_occurrences')와 동일 규칙(cleaningApi.js와
@@ -959,13 +1002,7 @@ async function getOrCreateDeepCleanLog(ctx, storeId, dateKey) {
 async function readChecks(ctx, originalStoreId, dateKey) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return {}
-  const { data: items, error: itemsErr } = await supabase
-    .from('cleaning_daily_items')
-    .select('id')
-    .eq('tenant_id', ctx.tenantId)
-    .eq('active', true)
-    .order('sort_order')
-  if (itemsErr) throw itemsErr
+  const items = await fetchActiveCleanItemIds(ctx)
   const { data: logs, error: logsErr } = await supabase
     .from('cleaning_daily_logs')
     .select('item_id, done, completed_at, photo_path')
@@ -1013,13 +1050,7 @@ async function readChecks(ctx, originalStoreId, dateKey) {
 async function writeChecks(ctx, originalStoreId, dateKey, data) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return
-  const { data: items, error: itemsErr } = await supabase
-    .from('cleaning_daily_items')
-    .select('id')
-    .eq('tenant_id', ctx.tenantId)
-    .eq('active', true)
-    .order('sort_order')
-  if (itemsErr) throw itemsErr
+  const items = await fetchActiveCleanItemIds(ctx)
   const dailyCount = (items ?? []).length
 
   if (Object.keys(data).length === 0) {
@@ -1364,6 +1395,15 @@ export async function cancelInvitation(id) {
 // 예전엔 features·theme 만 저장돼서 나머지 설정이 새로고침하면 사라졌다. extra 열이 아직 없으면(SQL 전) 예전처럼 동작한다.
 let _settingsHasExtra = true
 async function readSettingsConfig(ctx) {
+  const bs = typeof window !== 'undefined' ? window.__vflowBootSettings : null
+  if (bs && Date.now() - bs.at < 30000) {
+    window.__vflowBootSettings = null
+    const data = bs.row
+    if (!data) return null
+    if (!('extra' in data)) _settingsHasExtra = false
+    const extra = data.extra && typeof data.extra === 'object' ? data.extra : {}
+    return { ...extra, features: data.features ?? {}, theme: data.theme ?? 'default' }
+  }
   let q = await supabase.from('tenant_settings').select('features, theme, extra').eq('tenant_id', ctx.tenantId).maybeSingle()
   if (q.error && /extra/.test(String(q.error.message || ''))) { _settingsHasExtra = false; q = await supabase.from('tenant_settings').select('features, theme').eq('tenant_id', ctx.tenantId).maybeSingle() }
   const { data, error } = q

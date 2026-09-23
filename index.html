@@ -305,6 +305,23 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .dash-nav .dn-btn.dn-icon{flex:0 0 44px;padding:0;}
 .dash-nav .dn-btn.dn-icon.on .vf-ic{color:#fff;}
 .dash-nav .dn-caret{font-size:10px;opacity:.7;}
+.dash-nav .dn-btn.dn-txt{padding:8px 6px;}
+.vf-pj{display:flex;align-items:center;gap:10px;padding:10px 0;border:none;border-top:1px solid var(--border);background:none;width:100%;text-align:left;font:inherit;font-size:13px;color:var(--text);cursor:default;}
+button.vf-pj{cursor:pointer;}
+.vf-pj .t{flex:1;min-width:0;line-height:1.4;}
+.vf-pj .t small{display:block;color:var(--text-sub);font-size:11.5px;margin-top:2px;}
+.vf-pj .bar{flex:0 0 72px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.vf-pj .bar i{display:block;height:100%;background:var(--navy);}
+.vf-pj .pct{flex:0 0 36px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+.vf-pj .quiet{color:var(--red);font-weight:700;font-size:11px;white-space:nowrap;}
+.vf-pj-done{color:var(--text-mute);}
+.vf-st3{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text-mute);font-weight:700;white-space:nowrap;flex:0 0 auto;}
+.vf-st3 b{font-weight:700;color:var(--text-mute);}
+.vf-st3 b.on{color:var(--navy);}
+.vf-st3 b.done{color:var(--green);}
+.vf-st3 i{font-style:normal;opacity:.5;}
+.vf-sec{font-size:11px;font-weight:800;color:var(--text-sub);margin:14px 0 2px;display:flex;justify-content:space-between;gap:8px;}
+.vf-sec span:last-child{font-weight:600;color:var(--text-mute);}
 @media(min-width:1024px){.dash-nav{display:none;}}
 /* 기록 시트 · 설정 메뉴 공용 — 아이콘 + 제목 + 한 줄 설명 */
 .menu-list{display:flex;flex-direction:column;}
@@ -319,24 +336,14 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .menu-row.on{background:var(--bg);border-radius:10px;border-top-color:transparent;}
 .menu-row.on .mr-ic{background:var(--navy);color:#fff;}
 .menu-row.on+.menu-row{border-top-color:transparent;}
-/* 설정 — 폰: 목록 → 묶음(뒤로 막대). 데스크탑: 왼쪽 메뉴 + 오른쪽 내용 */
-.st-menu{margin-bottom:12px;}
-.st-menu .menu-row{padding-left:12px;padding-right:10px;}
-.st-back{display:flex;align-items:center;gap:8px;margin:0 0 12px;}
-.st-back .vh-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;}
-.st-back .vh-btn .vf-ic{margin:0;}
-.st-back .st-cur{font-size:15px;font-weight:800;color:var(--text);}
-.st-back .st-cur small{display:block;font-size:11.5px;color:var(--text-sub);font-weight:600;margin-top:2px;}
+/* 설정 — 네 묶음을 위에 가로로 고르게. 묶음 이름 아래 작은 글씨로 안에 뭐가 있는지 */
+.st-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+.st-tabs button{font:inherit;font-size:13px;font-weight:800;padding:11px 6px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;text-align:center;min-height:56px;}
+.st-tabs button small{display:block;font-size:10.5px;font-weight:600;color:var(--text-mute);margin-top:3px;line-height:1.35;}
+.st-tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.st-tabs button.on small{color:rgba(255,255,255,.72);}
+@media(max-width:480px){.st-tabs{gap:6px;}.st-tabs button{padding:9px 4px;font-size:12.5px;}.st-tabs button small{font-size:9.5px;}}
 .st-group>.dash-card{margin-top:0;margin-bottom:12px;}
-@media(min-width:1024px){
-  .st-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start;}
-  .st-menu{position:sticky;top:12px;margin:0;padding:6px 6px;}
-  .st-menu .menu-row{min-height:56px;padding:10px 10px;border-top:none;border-radius:10px;}
-  .st-menu .menu-row.on{box-shadow:inset 3px 0 0 var(--gold);border-radius:10px;}
-  .st-menu .menu-row .vh-arrow{display:none;}
-  .st-menu .menu-row .mr-main small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-  .st-back{display:none;}
-}
 .dash-datenav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;}
 .dash-datenav button{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;}
 .dash-datenav button:disabled{opacity:0.3;cursor:default;}
@@ -3162,8 +3169,8 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.1';
-const BUILD_DATE = '2026-09-21'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v6.2';
+const BUILD_DATE = '2026-09-23'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
 (function(){
@@ -3253,7 +3260,17 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.1 — 대기 화면 · 완료율 곡선',
+    title: '🆕 v6.2 — 진행 중인 것 · 설정 네 묶음 · 여는 속도',
+    items: [
+      '📌 관리자 → 「진행 중인 것」 — 프로젝트는 매장별로, 회사 것은 따로. 줄마다 참여자 · 일지 · 마지막 날 · 진행도. 7일 넘게 조용하면 빨간 글씨',
+      '↪️ 내가 보낸 요청이 보냄 › 받음 › 완료로 — 받은 사람이 그 할 일을 끝내면 「완료」. 상대 업무를 열어보지 않아도 된다',
+      '🗂️ 설정이 네 묶음 — 회사·매장 / 사람 / 일하는 규칙 / 화면·말. 청소 항목은 「일하는 규칙」 맨 앞. 내 계정·동의는 오른쪽 위 내 계정 메뉴에서',
+      '🗓️ 휴무 승인이 관리자 첫 줄(현황 옆)로',
+      '⚡ 켤 때 같은 조회를 여러 번 보내던 것을 줄였다 — 회사 정보·설정을 한 번에 받는다',
+    ]
+  },
+  {
+    title: 'v6.1 — 대기 화면 · 완료율 곡선',
     items: [
       '🕒 매장 컴퓨터를 3분 손대지 않으면 큰 시계와 오늘 남은 것(할 일 · 청소 · 안 본 인수인계)만 보이는 대기 화면. 누르면 홈. 닫는 시각이 지났는데 마감을 안 눌렀으면 「근무 마감 안 됨」이 대신 뜬다. 매장 PC에서만',
       '📈 직원 이력·매장 연혁에 최근 30일 완료율 곡선 한 줄 — 그날 완료 ÷ 그날 등록. 시작과 끝 숫자만',
@@ -6117,8 +6134,7 @@ function renderSideNav(active){
       const inRec=recs.some(t=>t.id===dashTab);
       const open=inRec||!!window.__sideRecOpen;
       const mkSub=(lb,on,fn,cls)=>{const sb=document.createElement('button');sb.className='vs-item vs-sub'+(cls?' '+cls:'')+(on?' active':'');sb.innerHTML=`<span>${lb}</span>`;sb.onclick=fn;if(on)sb.setAttribute('aria-current','page');scroll.appendChild(sb);return sb;};
-      if(vp.role==='owner')mkSub('회사',dashTab==='company',()=>{window.__sideRecOpen=false;goDashTab('company');});
-      mkSub('현황·보고',dashTab==='today',()=>{window.__sideRecOpen=false;goDashTab('today');});
+      defs.filter(t=>t.group==='main').forEach(t=>mkSub(t.label,dashTab===t.id,()=>{window.__sideRecOpen=false;goDashTab(t.id);}));
       const rb=mkSub(`기록 <span class="vs-caret">${open?'▴':'▾'}</span>`,inRec&&!open,()=>{window.__sideRecOpen=!open;renderSideNav('admin');});
       rb.setAttribute('aria-expanded',open?'true':'false');
       if(open)recs.forEach(t=>mkSub(t.label,dashTab===t.id,()=>goDashTab(t.id),'vs-sub2'));
@@ -7170,14 +7186,15 @@ async function wrRespond(reqRow,accept){
     ?{status:'accepted',responded_by:ctx.profileId,responded_at:new Date().toISOString()}
     :{status:'declined',decline_reason:reason,responded_by:ctx.profileId,responded_at:new Date().toISOString()};
   const {error,count}=await sb.from('work_requests').update(patch,{count:'exact'}).eq('id',reqRow.id).eq('status','pending');
+  try{_collabCache.at=0;}catch(e){}
   if(error||count===0){alert('처리에 실패했습니다. 이미 처리되었거나 네트워크 문제입니다. 새로고침 후 확인하세요.');return false;}
   if(accept){
     // 요청은 사람 대 사람이라 매장이 없다(store_id null). 할 일은 매장이 있어야 하므로 수락하는 사람의 오늘 매장으로
     const _me=window.__vflowProfile?.name||'';
     const _sid=reqRow.store_id||window.__vflowProfile?.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||(typeof STAFF_DEFAULT_STORE!=='undefined'&&STAFF_DEFAULT_STORE[_me])||ctx.stores?.[0]?.id||null;
-    const {error:tErr}=await sb.from('daily_tasks').insert({
-      tenant_id:ctx.tenantId,store_id:_sid,employee_id:ctx.profileId,
-      task_date:todayKey(),content:''+reqRow.content,status:'pending'});
+    const _task={tenant_id:ctx.tenantId,store_id:_sid,employee_id:ctx.profileId,task_date:todayKey(),content:''+reqRow.content,status:'pending'};
+    let {error:tErr}=await sb.from('daily_tasks').insert({..._task,request_id:reqRow.id}); // 할 일을 끝내면 요청도 「완료」
+    if(tErr&&/request_id/.test(String(tErr.message||'')))({error:tErr}=await sb.from('daily_tasks').insert(_task));
     if(tErr){alert('수락은 됐지만 할 일 등록 실패 — '+(tErr.message||'')+'\n내 업무에서 직접 추가');}
   }
   const meName=window.__vflowProfile?.name||'동료';const toReq=reqRow.requester_id?{profile_ids:[reqRow.requester_id]}:{names:[reqRow.requester?.name].filter(Boolean)};
@@ -7288,7 +7305,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
@@ -9675,15 +9692,15 @@ function buildAS(y,m){
 function adminTabDefs(){
   const IC=VF_ICONS;
   return [
-    ...(window.__vflowProfile?.role==='owner'?[{id:'company',label:'회사',group:'main',ic:IC.status,desc:`${STORES.length}개 ${T('store')} 중 확인 필요한 곳만`}]:[]),
-    {id:'today',label:'현황·보고',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
+    ...(window.__vflowProfile?.role==='owner'?[{id:'company',label:'회사',short:'회사',group:'main',ic:IC.status,desc:`${STORES.length}개 ${T('store')} 중 확인 필요한 곳만`}]:[]),
+    {id:'today',label:'현황·보고',short:'현황',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
     {id:'report',label:'주간 리포트',group:'records',ic:IC.brief,desc:'매주 월요일 자동 생성 — 지난주 요약'},
     {id:'activity',label:'직원 활동',group:'records',ic:IC.activity,desc:'직원별 주간 활동 원문'},
     {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:`이번 달 ${T('store')}별 누적`},
-    {id:'projects',label:'프로젝트',group:'records',ic:IC.flag,desc:'진행 중 · 협업 프로젝트 현황'},
-    {id:'dayoff',label:'휴무',group:'records',ic:IC.off,desc:'직원 휴무 신청 · 승인'},
+    {id:'projects',label:'진행 중인 것',short:'진행 중',group:'main',ic:IC.flag,desc:'프로젝트 · 요청이 어디까지 됐나'},
+    {id:'dayoff',label:'휴무',short:'휴무',group:'main',ic:IC.off,desc:'직원 휴무 신청 · 승인'},
     {id:'history',label:`${T('store')} 연혁`,group:'records',ic:IC.archive,desc:'월별 한 줄 · 작년 같은 달 · 사건 · 사진'},
-    {id:'settings',label:'설정',group:'settings',ic:IC.admin,desc:'일하는 방식 · 매장 · 사람 · 화면 · 내 계정'},
+    {id:'settings',label:'설정',group:'settings',ic:IC.admin,desc:'회사·매장 · 사람 · 일하는 규칙 · 화면·말'},
   ].filter(td=>!(td.id==='projects'&&!featOn('projects'))&&!(td.id==='dayoff'&&!featOn('dayoff')));
 }
 function goDashTab(id){dashTab=id;dashViewDate=null;renderDashboard();try{const sc=document.getElementById('screen-admin');if(sc)sc.scrollTop=0;window.scrollTo(0,0);}catch(e){}}
@@ -9719,8 +9736,8 @@ async function renderDashboard(){
   const cur=tabDefs.find(td=>td.id===dashTab);
   const nav=document.createElement('div');nav.className='dash-nav';
   const mkNav=(cls,html,on,fn,aria)=>{const b=document.createElement('button');b.type='button';b.className='dn-btn'+(cls?' '+cls:'')+(on?' on':'');b.innerHTML=html;b.onclick=fn;if(aria)b.setAttribute('aria-label',aria);if(on)b.setAttribute('aria-current','page');return b;};
-  if(window.__vflowProfile?.role==='owner')nav.appendChild(mkNav('',`${VF_ICONS.flag||VF_ICONS.status}<span>회사</span>`,dashTab==='company',()=>goDashTab('company')));
-  nav.appendChild(mkNav('',`${VF_ICONS.status}<span>현황·보고</span>`,dashTab==='today',()=>goDashTab('today')));
+  // 첫 줄 묶음은 정의 순서 그대로. 칸이 좁아 짧은 이름만 (아이콘 없이)
+  tabDefs.filter(td=>td.group==='main').forEach(td=>nav.appendChild(mkNav('dn-txt',`<span>${td.short||td.label}</span>`,dashTab===td.id,()=>goDashTab(td.id),td.label)));
   const inRec=cur&&cur.group==='records';
   nav.appendChild(mkNav('',`${VF_ICONS.archive}<span>${inRec?cur.label:'기록'}</span><span class="dn-caret" aria-hidden="true">▾</span>`,inRec,openRecordsSheet,inRec?`기록: ${cur.label} — 누르면 다른 기록 선택`:'기록 열기'));
   nav.appendChild(mkNav('dn-icon',VF_ICONS.admin,dashTab==='settings',()=>goDashTab('settings'),'설정'));
@@ -10072,15 +10089,63 @@ async function renderTodayTab(content,opts={}){
 }
 
 // ── 탭 3: 월간 통계 (이번 달 누적) ──
+// ── 진행 중인 것 — 프로젝트는 매장별로, 회사 것은 따로. 그 아래 내가 보낸 요청(보냄›받음›완료), 나에게 온 것 중 안 끝난 것 ──
+// 예전 「프로젝트」 탭(직원별 블록, 직원 수만큼 조회)을 한 번 조회 한 장으로. 이달 요청 표는 맨 아래 그대로
+const VF_QUIET_DAYS=7;
+function vfSt3(step,names){names=names||['보냄','받음','완료'];return '<span class="vf-st3">'+names.map((n,i)=>`<b class="${i<step?'done':i===step?'on':''}">${n}</b>`).join('<i>›</i>')+'</span>';}
 async function renderProjectsTab(content){
-  content.innerHTML='<div class="monthly-loading">프로젝트 현황 불러오는 중...</div>';
-  const today0=dk(today.getFullYear(),today.getMonth(),today.getDate());
-
-  let hasAny=false;
+  content.innerHTML='<div class="monthly-loading">불러오는 중...</div>';
   const wrap=document.createElement('div');wrap.style.padding='0 12px 12px';
+  const {sb,ctx}=await wrApi();
+  const me=ctx.profileId;
+  const days=(ts)=>ts?Math.floor((Date.now()-new Date(ts).getTime())/86400000):0;
+  const since30=new Date(Date.now()-30*86400000).toISOString();
+  const [rows,sent,mine]=await Promise.all([
+    loadCollabListCached(true).catch(()=>null),
+    (async()=>{let q=await sb.from('work_requests').select('id,content,status,created_at,responded_at,done_at,recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)').eq('tenant_id',ctx.tenantId).eq('requester_id',me).gte('created_at',since30).order('created_at',{ascending:false}).limit(40);
+      if(q.error&&/done_at/.test(String(q.error.message||'')))q=await sb.from('work_requests').select('id,content,status,created_at,responded_at,recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)').eq('tenant_id',ctx.tenantId).eq('requester_id',me).gte('created_at',since30).order('created_at',{ascending:false}).limit(40);
+      return q.data||[];})().catch(()=>[]),
+    (async()=>{const q=await sb.from('work_requests').select('id,content,status,created_at,responded_at,done_at,requester:profiles!requester_id(name)').eq('tenant_id',ctx.tenantId).eq('responded_by',me).eq('status','accepted').is('done_at',null).order('created_at',{ascending:false}).limit(20);return q.error?[]:(q.data||[]);})().catch(()=>[]),
+  ]);
+  const ongoing=(rows||[]).filter(r=>r.status!=='done');
+  const lastOf=(r)=>{const ls=r.project_logs||[];return ls.reduce((x,l)=>(!x||l.created_at>x)?l.created_at:x,null)||r.accepted_at||r.created_at;};
+  const quietOf=(r)=>{
+    if(r.proposed_to&&!r.accepted_at){const d=days(r.created_at);return d>=3?`답 없음 ${d}일`:'';}
+    const d=days(lastOf(r));return d>=VF_QUIET_DAYS?`${d}일째 조용`:'';
+  };
+  const sentOpen=sent.filter(r=>r.status!=='declined'&&!(r.done_at&&days(r.done_at)>7));
+  const quietN=ongoing.filter(quietOf).length;
+  const card=document.createElement('div');card.className='vh-card';card.style.marginBottom='14px';
+  let h=`<div class="vh-ct"><strong>진행 중인 것</strong><span class="vh-tiny">프로젝트 ${ongoing.length} · 내가 보낸 요청 ${sentOpen.length}${quietN?` · <b style="color:var(--red)">조용한 것 ${quietN}</b>`:''}</span></div>`;
+  const pjRow=(r)=>{
+    const mem=[r.owner?.name,...(r.project_members||[]).map(m=>m.profiles?.name)].filter(Boolean);
+    const logs=(r.project_logs||[]).length;
+    const pct=Math.max(0,Math.min(100,r.progress||0));
+    const q=quietOf(r);
+    const sub=r.proposed_to&&!r.accepted_at?`${_wrEsc([...new Set(mem)].join('·'))} · 제안 중`:`${_wrEsc([...new Set(mem)].join('·'))} · 일지 ${logs}건 · 마지막 ${fmtD(String(lastOf(r)).slice(0,10))}`;
+    return `<button type="button" class="vf-pj" data-pj="${r.id}"><span class="t">${_wrEsc(r.title)}<small>${sub}</small></span>${q?`<span class="quiet">${q}</span>`:''}<span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${pct}%</span></button>`;
+  };
+  if(!ongoing.length)h+='<div class="vh-tiny" style="padding:10px 0;">진행 중인 프로젝트 없음</div>';
+  const byStore=new Map();ongoing.forEach(r=>{const k=r.store_id||'';if(!byStore.has(k))byStore.set(k,[]);byStore.get(k).push(r);});
+  STORES.forEach(st=>{const list=byStore.get(st.id);if(!list)return;h+=`<div class="vf-sec"><span>${_wrEsc(st.name)}</span><span>${T('store')} 귀속</span></div>`+list.map(pjRow).join('');});
+  if(byStore.get(''))h+=`<div class="vf-sec"><span>회사</span><span>${T('store')} 없음</span></div>`+byStore.get('').map(pjRow).join('');
+  if(sentOpen.length){
+    h+=`<div class="vf-sec"><span>내가 보낸 요청</span><span>보냄 › 받음 › 완료</span></div>`;
+    h+=sentOpen.map(r=>{const step=r.done_at?3:r.status==='accepted'?2:0;const who=r.recipient?.name||r.responder?.name||'누구나';const d=days(r.created_at);
+      return `<div class="vf-pj"><span class="t">${_wrEsc(r.content)}<small>${_wrEsc(who)} · ${fmtD(String(r.created_at).slice(0,10))}${step<3&&d>=3?` · ${d}일째`:''}</small></span>${vfSt3(step===2?1:step===3?3:0)}</div>`;}).join('');
+  }
+  if(mine.length){
+    h+=`<div class="vf-sec"><span>나에게 온 것 중 안 끝난 것</span><span>내 할 일에 있음</span></div>`;
+    h+=mine.map(r=>{const d=days(r.responded_at||r.created_at);return `<div class="vf-pj"><span class="t">${_wrEsc(r.content)}<small>${_wrEsc(r.requester?.name||'')} · ${fmtD(String(r.created_at).slice(0,10))}${d>=3?` · ${d}일째`:''}</small></span>${vfSt3(1)}</div>`;}).join('');
+  }
+  const done14=(rows||[]).filter(r=>r.status==='done'&&r.done_date&&days(r.done_date)<=14);
+  if(done14.length)h+=`<div class="vf-sec"><span>최근 끝난 것</span><span>14일</span></div>`+done14.map(r=>`<button type="button" class="vf-pj vf-pj-done" data-pj="${r.id}"><span class="t">${_wrEsc(r.title)}<small>${_wrEsc(r.owner?.name||'')} · ${fmtD(r.done_date)} 완료</small></span></button>`).join('');
+  card.innerHTML=h;
+  card.querySelectorAll('[data-pj]').forEach(b=>b.onclick=()=>openCollabDetail(b.dataset.pj));
+  wrap.appendChild(card);
   // ── 이달의 요청 — 누가 누구에게 얼마나 시켰고 일지가 오갔나 (work_requests · projects · project_logs 집계) ──
   try{
-    const {sb,ctx}=await wrApi();
+    
     const y=today.getFullYear(),m=today.getMonth();
     const from=`${y}-${String(m+1).padStart(2,'0')}-01`,to=m===11?`${y+1}-01-01`:`${y}-${String(m+2).padStart(2,'0')}-01`;
     const [wr,pj]=await Promise.all([
@@ -10106,99 +10171,9 @@ async function renderProjectsTab(content){
     }
   }catch(e){}
 
-  // 요약 카드
-  const summary=document.createElement('div');
-  summary.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;';
-  let totalOngoing=0,totalDone=0;
-
-  for(const name of staffList){
-    try{
-      const items=await loadProjects(name);
-      if(items.length===0)continue;
-      hasAny=true;
-      const ongoing=items.filter(i=>!i.done);
-      const done=items.filter(i=>i.done);
-      totalOngoing+=ongoing.length;
-      totalDone+=done.length;
-
-      const block=document.createElement('div');
-      block.className='project-staff-block';
-      const avatar=name[0];
-
-      // 진행중 항목
-      const ongoingHtml=ongoing.length===0
-        ?'<div style="font-size:12px;color:var(--text-mute);padding:6px 0;">진행중 프로젝트 없음</div>'
-        :ongoing.map(item=>{
-          const days=Math.floor((new Date(today0)-new Date(item.startDate||today0))/86400000);
-          const store=STORES.find(s=>s.id===item.storeId);
-          const storeTag=store?`<span style="font-size:10px;color:var(--text-sub);background:var(--soft);padding:1px 5px;border-radius:4px;margin-left:4px;">${store.icon}${storeShort(store.name)}</span>`:'';
-
-          // 일지 최근 3개
-          const logs=(item.logs||[]).slice(-3);
-          const logsHtml=logs.length>0
-            ?`<div style="padding:4px 0 2px 12px;display:flex;flex-direction:column;gap:3px;">
-              ${logs.map(l=>`<div style="font-size:11px;display:flex;gap:6px;">
-                <span style="color:var(--gold);font-weight:700;flex-shrink:0;">${l.date?l.date.slice(5):''}</span>
-                <span style="color:var(--text);">${l.text}</span>
-              </div>`).join('')}
-            </div>`:'';
-
-          const pct=item.progress||0;
-          return `<div class="project-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
-            <div style="display:flex;align-items:center;gap:6px;width:100%;">
-              <span class="project-status project-ongoing">진행중</span>
-              <span style="flex:1;font-size:13px;color:var(--text);">${item.text}${storeTag}</span>
-              <span class="project-days">D+${days}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;width:100%;padding-left:8px;">
-              <div style="flex:1;height:5px;background:#e9e7ff;border-radius:3px;overflow:hidden;">
-                <div style="width:${pct}%;height:100%;background:var(--purple);border-radius:3px;"></div>
-              </div>
-              <span style="font-size:11px;font-weight:700;color:var(--purple);min-width:30px;text-align:right;">${pct}%</span>
-            </div>
-            ${logsHtml}
-          </div>`;
-        }).join('');
-
-      // 완료 항목 (최근 3개만)
-      const doneHtml=done.length===0?''
-        :`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text-mute);margin-bottom:4px;">완료 ${done.length}건</div>
-          ${done.slice(-3).map(item=>`<div class="project-item" style="opacity:0.6;">
-            <span class="project-status project-done">완료</span>
-            <span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--text-mute);">${item.text}</span>
-          </div>`).join('')}
-        </div>`;
-
-      block.innerHTML=`<div class="project-staff-name">
-          <div style="width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--gold);">${avatar}</div>
-          ${name}
-          <span style="font-size:11px;color:var(--text-sub);font-weight:400;margin-left:auto;">진행 ${ongoing.length}건</span>
-        </div>
-        ${ongoingHtml}${doneHtml}`;
-      wrap.appendChild(block);
-    }catch(e){}
-  }
-
-  summary.innerHTML=`
-    <div style="background:var(--blue-light);border-radius:10px;padding:12px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--blue);">${totalOngoing}</div>
-      <div style="font-size:11px;color:var(--text-sub);">진행중</div>
-    </div>
-    <div style="background:var(--green-light);border-radius:10px;padding:12px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--green);">${totalDone}</div>
-      <div style="font-size:11px;color:var(--text-sub);">완료</div>
-    </div>`;
-
-  content.innerHTML='';
-  content.style.padding='12px';
-  content.appendChild(summary);
-
-  if(!hasAny){
-    content.innerHTML+=`<div class="project-empty">등록된 프로젝트가 없습니다<br><span style="font-size:11px;color:var(--text-mute);">내 업무 → 진행중 프로젝트로 추가하세요</span></div>`;
-  } else {
-    content.appendChild(wrap);
-  }
+  content.innerHTML='';content.style.padding='12px 0';
+  content.appendChild(wrap);
+  vfUse('ongoing_open');
 }
 
 async function renderDayoffTab(content){
@@ -10617,7 +10592,7 @@ async function renderReportTab(content){
 }
 
 async function renderSettingsTab(content){
-  document.getElementById('dash-sub').textContent='일하는 방식 · 매장 · 사람 · 화면 · 내 계정 (전 직원 적용)';
+  document.getElementById('dash-sub').textContent='전 직원 적용';
   const savedEl=document.createElement('div');savedEl.className='feedback-saved';savedEl.style.cssText='margin:8px 0;min-height:16px;';
 
   // ── 내 계정 (신규 가입자가 "내가 누구인지" 바로 알 수 있게) ──
@@ -11324,67 +11299,58 @@ async function renderSettingsTab(content){
 
   content.appendChild(savedEl);
 
-  // ── 다섯 묶음으로 정리. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류해 옮긴다 ──
+  // ── 네 묶음 — 회사·매장 / 사람 / 일하는 규칙 / 화면·말. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류·이름 정리 ──
+  // 내 계정·내 동의는 오른쪽 위 내 계정 메뉴에만 (같은 곳으로 가는 문은 하나)
+  [...content.querySelectorAll(':scope > .dash-card')].forEach(card=>{const t=((card.querySelector('.dash-store-name')||{}).textContent||'').trim();if(t==='내 계정'||t.startsWith('내 동의 관리'))card.remove();});
+  // 사람이 찾는 말로 — 명칭 점검표(샘플 ⑧)의 어긋남·찾기 어려움
+  const RENAME={'청소 항목 편집':'청소 항목','매장 점수 규칙':'점수 규칙','컬러테마':'색','매장 관리':`${T('store')} 추가·폐업`,'직원 근무지 설정':'근무지·직함','퇴사자 관리':'퇴사','고정업무':'고정 업무','기능 켜기 / 끄기':'기능 켜기/끄기'};
   const GROUPS=[
-    ['work','일하는 방식',['고정업무','대청소 규칙','청소 항목 편집','매장 점수 규칙','인수인계 규칙','청소 사진 보관'],VF_ICONS.sliders,'고정업무 · 대청소 · 청소 항목 · 점수 · 인수인계 · 사진 보관'],
-    ['store','매장',['회사 이름','매장 관리','매장 아이콘'],VF_ICONS.store,'회사 이름 · 매장 추가·삭제 · 아이콘'],
-    ['people','사람',['직원 초대','직원 근무지 설정','퇴사자 관리','주간 1:1 상담','가맹 초대 코드'],VF_ICONS.users,'직원 초대 · 근무지·직함 · 퇴사자 · 1:1 상담'],
-    ['screen','화면',['기능 켜기 / 끄기','컬러테마'],VF_ICONS.monitor,'기능 켜기/끄기 · 컬러테마'],
-    ['me','내 계정',['내 계정','내 동의 관리'],VF_ICONS.user,'내 이름 · 동의 관리'],
+    ['company','회사·매장',['회사 이름','운영 시간',`${T('store')} 추가·폐업`,'매장 아이콘','가맹 초대 코드'],'이름 · 매장 · 운영 시간'],
+    ['people','사람',['직원 초대','근무지·직함','퇴사','휴무 가져오기','주간 1:1 상담'],'초대 · 근무지 · 퇴사 · 1:1'],
+    ['work','일하는 규칙',['청소 항목','대청소 규칙','청소 사진 보관','고정 업무','인수인계 규칙','점수 규칙','올라오는 기준'],'청소 · 고정 업무 · 인수인계 · 점수'],
+    ['screen','화면·말',['기능 켜기/끄기','우리 회사 말','색'],'기능 · 우리 회사 말 · 색'],
   ];
   const layout=document.createElement('div');layout.className='st-layout';
-  const nav=document.createElement('div');nav.className='st-menu dash-card';
-  const navList=document.createElement('div');navList.className='menu-list';nav.appendChild(navList);
-  const right=document.createElement('div');right.className='st-right';
-  const backBar=document.createElement('div');backBar.className='st-back';
-  backBar.innerHTML=`<button type="button" class="vh-btn" data-st-back>${VF_ICONS.back}설정</button><div class="st-cur"><span data-st-title></span><small data-st-desc></small></div>`;
+  const tabs=document.createElement('div');tabs.className='st-tabs';tabs.setAttribute('role','tablist');
   const groupsEl=document.createElement('div');groupsEl.className='st-groups';
-  right.appendChild(backBar);right.appendChild(groupsEl);
-  layout.appendChild(nav);layout.appendChild(right);
+  layout.appendChild(tabs);layout.appendChild(groupsEl);
   const groupBox={};
-  GROUPS.forEach(([k,lb,names,ic,desc])=>{
+  GROUPS.forEach(([k,lb,names,desc])=>{
     const g=document.createElement('section');g.className='st-group';g.dataset.g=k;g.hidden=true;
     groupsEl.appendChild(g);groupBox[k]=g;
-    const b=document.createElement('button');b.type='button';b.className='menu-row';b.dataset.g=k;
-    b.innerHTML=`<span class="mr-ic">${ic}</span><span class="mr-main"><b>${lb}</b><small>${desc}</small></span><span class="vh-arrow" aria-hidden="true">›</span>`;
-    b.onclick=()=>showSettingsGroup(k);navList.appendChild(b);
+    const b=document.createElement('button');b.type='button';b.dataset.g=k;b.setAttribute('role','tab');
+    b.innerHTML=`${lb}<small>${desc}</small>`;
+    b.onclick=()=>showSettingsGroup(k);tabs.appendChild(b);
   });
-  // 고정업무·대청소·청소 항목은 '일하는 방식' 맨 앞에 — 예전 고정업무 탭 내용 그대로
+  // 고정 업무·대청소·청소 항목 (예전 고정업무 탭 내용)
   const fixedHolder=document.createElement('div');
   await renderFixedTasksTab(fixedHolder);
-  const fixedTitle=document.createElement('div');fixedTitle.className='dash-card';fixedTitle.innerHTML='<div class="dash-store-name">고정업무</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 0;line-height:1.6;">매주·매월 반복되는 일. 규칙마다 달력 표시와 그날 할 일 자동 추가를 정할 수 있고, 고치면 전 매장 달력에 바로 반영돼요. 공휴일은 자동으로 표시됩니다.</div>';
-  groupBox.work.appendChild(fixedTitle);
-  [...fixedHolder.children].forEach(el=>groupBox.work.appendChild(el));
-  // 나머지 카드는 제목으로 분류. 못 찾는 카드는 '화면' 묶음 끝에
-  [...content.querySelectorAll(':scope > .dash-card')].forEach(card=>{
-    const t=(card.querySelector('.dash-store-name')||{}).textContent||'';
-    const hit=GROUPS.find(([k,lb,names])=>names.some(n=>t.trim().startsWith(n)));
-    (hit?groupBox[hit[0]]:groupBox.screen).appendChild(card);
-  });
+  const fixedTitle=document.createElement('div');fixedTitle.className='dash-card';fixedTitle.innerHTML='<div class="dash-store-name">고정업무</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 0;line-height:1.6;">매주·매월 반복되는 일. 규칙마다 달력 표시와 그날 할 일 자동 추가를 정할 수 있고, 고치면 전 매장 달력에 바로 반영돼요.</div>';
+  const fixedCards=[fixedTitle];const cleanCards=[];
+  [...fixedHolder.children].forEach(el=>{const t=((el.querySelector&&el.querySelector('.dash-store-name'))||{}).textContent||'';(/^(청소 항목 편집|대청소 규칙)/.test(t.trim())?cleanCards:fixedCards).push(el);});
+  const all=[...cleanCards,...fixedCards,...content.querySelectorAll(':scope > .dash-card')];
+  all.forEach(card=>{const h=card.querySelector&&card.querySelector('.dash-store-name');if(!h)return;const t=h.textContent.trim();const hit=Object.keys(RENAME).find(k=>t.startsWith(k));if(hit&&h.firstChild&&h.firstChild.nodeType===3)h.firstChild.textContent=h.firstChild.textContent.replace(hit,RENAME[hit]);});
+  // 묶음 안 순서는 GROUPS 이름 순서. 고정 업무 규칙 카드(제목이 규칙 이름)는 고정 업무 바로 뒤에 그대로 붙인다
+  const placed=new Set();
+  GROUPS.forEach(([k,lb,names])=>names.forEach(n=>{
+    all.forEach(card=>{if(placed.has(card))return;const t=((card.querySelector&&card.querySelector('.dash-store-name'))||{}).textContent||'';if(t.trim().startsWith(n)){groupBox[k].appendChild(card);placed.add(card);
+      if(n==='고정 업무')fixedCards.forEach(fc=>{if(!placed.has(fc)){groupBox[k].appendChild(fc);placed.add(fc);}});}});
+  }));
+  all.forEach(card=>{if(!placed.has(card)&&card.parentNode!==null&&!(card===savedEl))groupBox.screen.appendChild(card);});
   content.insertBefore(layout,savedEl);
-  const isDesk=()=>window.innerWidth>=1024;
   let curGroup=null;
-  // 폰: 목록이 첫 화면, 고르면 그 묶음만 + 「← 설정」 막대. 데스크탑: 왼쪽 목록 고정, 오른쪽에 묶음.
   const showSettingsGroup=(k)=>{
     curGroup=k;
     Object.entries(groupBox).forEach(([gk,g])=>g.hidden=gk!==k);
-    nav.querySelectorAll('.menu-row').forEach(c=>{c.classList.toggle('on',c.dataset.g===k);if(c.dataset.g===k)c.setAttribute('aria-current','page');else c.removeAttribute('aria-current');});
-    const def=GROUPS.find(g=>g[0]===k);
-    backBar.querySelector('[data-st-title]').textContent=def?def[1]:'';backBar.querySelector('[data-st-desc]').textContent=def?def[4]:'';
-    if(!isDesk()){nav.hidden=true;right.hidden=false;try{const sc=document.getElementById('screen-admin');if(sc)sc.scrollTop=0;window.scrollTo(0,0);}catch(e){}}
-    else{nav.hidden=false;right.hidden=false;}
+    tabs.querySelectorAll('button').forEach(c=>{const on=c.dataset.g===k;c.classList.toggle('on',on);c.setAttribute('aria-selected',on?'true':'false');});
     try{localStorage.setItem('vflow_settings_group',k);}catch(e){}
   };
-  const showSettingsMenu=()=>{
-    if(isDesk()){let f='work';try{f=localStorage.getItem('vflow_settings_group')||'work';}catch(e){}showSettingsGroup(groupBox[f]?f:'work');return;}
-    curGroup=null;nav.hidden=false;right.hidden=true;
-  };
-  backBar.querySelector('[data-st-back]').onclick=showSettingsMenu;
-  showSettingsMenu();
+  let f0='company';try{f0=localStorage.getItem('vflow_settings_group')||'company';}catch(e){}
+  showSettingsGroup(groupBox[f0]?f0:'company');
   attachSettingsFinder(content);
   // 찾기에 글자를 넣으면 모든 묶음을 펼쳐 검색, 지우면 원래대로
   const sq=content.querySelector('[data-sq]');
-  if(sq){sq.addEventListener('input',()=>{const q=sq.value.trim();if(q){Object.values(groupBox).forEach(g=>g.hidden=false);nav.hidden=true;right.hidden=false;backBar.hidden=true;}else{backBar.hidden=false;if(curGroup)showSettingsGroup(curGroup);else showSettingsMenu();}});}
+  if(sq){sq.addEventListener('input',()=>{const q=sq.value.trim();if(q){Object.values(groupBox).forEach(g=>g.hidden=false);tabs.hidden=true;}else{tabs.hidden=false;showSettingsGroup(curGroup||'company');}});}
 }
 
 // ── 설정 찾기 — 카드가 많아져서 스크롤로만 찾던 문제 ──
@@ -11401,7 +11367,7 @@ function attachSettingsFinder(content){
     const none=bar.querySelector('[data-none]');
     const cards=()=>Array.from(content.querySelectorAll('.dash-card'));
 
-    const grouped=()=>!!content.querySelector('.st-menu'); // 다섯 묶음 메뉴가 있으면 제목 칩은 중복 — 숨긴다
+    const grouped=()=>!!content.querySelector('.st-tabs'); // 다섯 묶음 메뉴가 있으면 제목 칩은 중복 — 숨긴다
     const buildChips=()=>{
       chips.innerHTML='';
       if(grouped()){chips.style.display='none';return;}

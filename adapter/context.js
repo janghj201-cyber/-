@@ -4,10 +4,34 @@
 import { supabase } from './supabase-client.js'
 
 let cached = null
+let pending = null
+// 앱이 켜질 때 여러 곳이 동시에 getContext()를 부른다. 결과만 담아두면 첫 결과가 오기 전에
+// 부른 곳마다 조회를 따로 보내 profiles·stores·tenants가 6번씩 나갔다 → 진행 중인 약속을 같이 기다린다
+export function getContext() {
+  if (cached) return Promise.resolve(cached)
+  if (!pending) pending = loadContext().finally(() => { pending = null })
+  return pending
+}
 
-export async function getContext() {
-  if (cached) return cached
+// 여는 속도 2단계: 프로필 → (매장·회사) → 설정 세 번 오가던 것을 vf_boot() 한 번으로.
+// 함수가 아직 없으면(SQL 전) 예전 방식 그대로. RLS는 함수 안에서도 똑같이 걸린다(security invoker)
+async function bootOnce(uid) {
+  try {
+    const { data, error } = await supabase.rpc('vf_boot')
+    if (!error && data && data.profile) return data
+  } catch (e) {}
+  const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+  if (error) throw error
+  if (!profile) return { profile: null }
+  const [storesRes, tenantRes] = await Promise.all([
+    supabase.from('stores').select('*').eq('tenant_id', profile.tenant_id).order('name'),
+    supabase.from('tenants').select('name, is_platform').eq('id', profile.tenant_id).maybeSingle(),
+  ])
+  if (storesRes.error) throw storesRes.error
+  return { profile, stores: storesRes.data ?? [], tenant: tenantRes.data ?? null }
+}
 
+async function loadContext() {
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -16,21 +40,17 @@ export async function getContext() {
     throw new Error('로그인이 필요합니다')
   }
 
-  const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
-  if (error) throw error
+  const boot = await bootOnce(session.user.id)
+  const profile = boot.profile
   if (!profile) {
     location.href = 'login.html'
     throw new Error('프로필이 없습니다 (온보딩 미완료)')
   }
+  const tenantRes = { data: boot.tenant ?? null }
+  // 설정은 여기서 같이 받아 두고 어댑터가 첫 한 번만 쓴다 (없으면 예전처럼 따로 읽음)
+  if ('settings' in boot) window.__vflowBootSettings = { row: boot.settings ?? null, at: Date.now() }
 
-  // 성능: stores와 tenant는 서로 독립 — 병렬로 (순차 왕복 2회 -> 1회)
-  const [storesRes, tenantRes] = await Promise.all([
-    supabase.from('stores').select('*').eq('tenant_id', profile.tenant_id).order('name'),
-    supabase.from('tenants').select('name, is_platform').eq('id', profile.tenant_id).maybeSingle(),
-  ])
-  if (storesRes.error) throw storesRes.error
-
-  cached = { session, profile, tenantId: profile.tenant_id, profileId: profile.id, stores: (storesRes.data ?? []).filter((s) => s.active !== false) }
+  cached = { session, profile, tenantId: profile.tenant_id, profileId: profile.id, stores: (boot.stores ?? []).filter((s) => s.active !== false) }
   // 5-2: 원본 UI가 "지금 보는 카드가 본인인지"(조회 전용 표시) 판단할 최소 정보만 노출
   const _pad = (n) => String(n).padStart(2, '0')
   const _now = new Date()
