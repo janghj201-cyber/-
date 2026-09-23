@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script>/* vflow.kr 로 처음 온 사람(이 기기에서 V-Flow를 쓴 적 없음)은 소개 페이지로. 로그인 기록·앱 설정이 있거나 매장 컴퓨터(?pc=1)·설치 앱이면 지금처럼 앱 */(function(){try{if(location.pathname!=='/')return;if(/[?&]pc=1/.test(location.search))return;if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)return;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||'';if(k.indexOf('sb-')===0||k.indexOf('vflow_')===0)return;}location.replace('/intro'+location.hash);}catch(e){}})();</script>
 <script>try{var _b=localStorage.getItem('vflow_bright');if(_b==='dark'||(_b==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-bright','dark');}catch(e){}</script>
 <link rel="preconnect" href="https://vbuhueykvizmnrfvkehq.supabase.co" crossorigin>
 <link rel="modulepreload" href="adapter/firebase-shim.js">
@@ -10,6 +11,8 @@
 <link rel="modulepreload" href="vendor/supabase.js">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>V-Flow</title>
+<meta name="description" content="1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱. 사장님은 빠진 것만 보시면 됩니다.">
+<link rel="canonical" href="https://www.vflow.kr/intro">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192-v2.png">
 <meta name="theme-color" content="#172233">
 <link rel="manifest" href="manifest.json?v=3">
