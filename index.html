@@ -579,6 +579,11 @@ button.vf-pj{cursor:pointer;}
 .vh-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
 .vh-btn.gold{background:var(--gold);border-color:var(--gold);color:#172131;}
 .vh-btn:active{opacity:.85;}
+.vf-wp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:12px 0 4px;}
+.vf-wp{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:var(--radius-ctl);padding:10px 12px;font-family:inherit;font-size:14px;font-weight:700;line-height:1.3;cursor:pointer;min-height:52px;}
+.vf-wp small{font-size:11.5px;font-weight:600;color:var(--text-mute);}
+.vf-wp.on{border-color:var(--text-mute);}
+.vf-wp.sel{border-color:var(--navy);box-shadow:0 0 0 1.5px var(--navy) inset;}
 .vh-store-sel{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:var(--radius-ctl);padding:8px 10px;font-size:12px;font-weight:700;font-family:inherit;max-width:180px;}
 .vh-grid{display:flex;flex-direction:column;gap:10px;}
 .vh-col{display:contents;}
@@ -794,7 +799,7 @@ button.vf-pj{cursor:pointer;}
 @keyframes vfToastIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.vf-toast{animation:none;}}
 @media(max-width:1023px){.vf-toast{left:12px;right:12px;width:auto;bottom:calc(76px + var(--safe-bot));}}
-@media(min-width:1024px){.vf-newv{bottom:calc(16px + var(--safe-bot));right:auto;left:240px;}}
+@media(min-width:1024px){.vf-newv{bottom:calc(16px + var(--safe-bot));right:auto;left:calc(var(--side-w,184px) + 16px);}}
 .vf-bell{position:relative;}
 .vf-bell .vh-badge,.vs-item .vf-bdg{min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;}
 .vf-bell .vh-badge{position:absolute;right:-6px;top:-6px;}
@@ -1001,7 +1006,7 @@ button.vf-pj{cursor:pointer;}
   .rm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;}
   .rm-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
   .rm-today,.rm-ho,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
-  #room-overlay,#board-overlay{left:224px!important;} /* 사이드바(224px) 옆에서 시작 — 왼쪽 메뉴는 그대로 */
+  #room-overlay,#board-overlay{left:var(--side-w,184px)!important;} /* 사이드바 옆에서 시작 — 폭은 --side-w 하나로(접으면 60) */
 }
 /* 남기기 시트 */
 .vh-sheet-bg{position:fixed;inset:0;z-index:950;background:rgba(23,34,51,.55);display:flex;align-items:flex-end;justify-content:center;}
@@ -1036,7 +1041,8 @@ button.vf-pj{cursor:pointer;}
 #vf-side{display:none;}
 @media(min-width:1024px){
   .app-shell{flex-direction:row;}
-  #vf-side{display:flex;flex-direction:column;gap:4px;width:184px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:14px 8px;overflow:hidden;transition:width .18s ease;}
+  body{--side-w:184px;}body.vf-rail{--side-w:60px;}
+  #vf-side{display:flex;flex-direction:column;gap:4px;width:var(--side-w);flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:14px 8px;overflow:hidden;transition:width .18s ease;}
   #vf-side .vs-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
   #vf-side .vs-foot{flex:0 0 auto;border-top:1px solid var(--border);padding-top:6px;margin-top:6px;display:flex;flex-direction:column;gap:4px;}
   #vf-side .vs-brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:800;color:var(--navy);padding:2px 6px 12px;}
@@ -1065,7 +1071,7 @@ button.vf-pj{cursor:pointer;}
   #vf-side .vs-gap{flex:1;}
   #vf-side .vs-fold{margin-left:auto;background:none;border:none;color:var(--text-mute);cursor:pointer;font:inherit;font-size:14px;padding:2px 4px;border-radius:6px;}
   #vf-side .vs-fold:hover{background:var(--bg);color:var(--text);}
-  body.vf-rail #vf-side{width:60px;padding:14px 6px;}
+  body.vf-rail #vf-side{padding:14px 6px;}
   body.vf-rail #vf-side .vs-brand{flex-direction:column;gap:6px;padding:2px 0 10px;}
   body.vf-rail #vf-side .vs-brand .vs-bt,body.vf-rail #vf-side .vs-prof{display:none;}
   body.vf-rail #vf-side .vs-fold{margin:0;}
@@ -1334,7 +1340,7 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .vf-net.sending{background:var(--green-light);color:var(--green);}
 .vf-net .vf-net-t{flex:1;min-width:0;}
 .vf-net .vh-btn{min-height:30px;padding:4px 10px;font-size:12px;background:var(--card);}
-@media(min-width:1024px){.vf-net{left:224px;bottom:0;}}
+@media(min-width:1024px){.vf-net{left:var(--side-w,184px);bottom:0;}}
 /* 큐에 있는 줄 — 저장 대기 */
 .hp-todo.vf-pending>span::after,.my-todo-item.vf-pending .my-todo-text::after{content:' · 저장 대기';display:inline-block;background:var(--card);text-decoration:none;font-size:11px;font-weight:700;color:var(--orange);} /* 취소선(배경 그라데이션)이 표시까지 긋지 않게 */
 .vh-item.vf-pending .vh-main>small::after{content:' · 저장 대기';color:var(--orange);font-weight:700;}
@@ -1703,6 +1709,7 @@ html[data-bright=dark] /* 지난달 미완료 알림 배너 */
 html[data-bright=dark] .carry-move-btn{color:var(--text)}
 html[data-bright=dark] .update-modal-version{color:var(--text)}
 html[data-bright=dark] .update-confirm-btn:active{color:var(--text)}
+html[data-bright=dark] .vf-wp.sel{border-color:var(--text-sub)}
 html[data-bright=dark] .vh-metric.danger{background:var(--soft)}
 html[data-bright=dark] .vh-metric.ok{background:var(--soft)}
 html[data-bright=dark] .vc-det .lad b.done{color:var(--text);border-color:var(--text-sub)}
@@ -1711,8 +1718,6 @@ html[data-bright=dark] .vh-hero.light .vh-hclock{color:var(--text)}
 html[data-bright=dark] .vf-cvgrid button.on{border-color:var(--text-sub)}
 html[data-bright=dark] .vf-clk-grid button.on{border-color:var(--text-sub)}
 html[data-bright=dark] .vf-clk-row button.on{border-color:var(--text-sub)}
-html[data-bright=dark] .vf-ck .cd{background:var(--soft)}
-html[data-bright=dark] .vf-ck .cal .day{background:var(--card)}
 html[data-bright=dark] .vf-inbar .vh-btn{color:var(--text)}
 html[data-bright=dark] .vf-pcst span.ok{color:var(--text);border-color:var(--text-sub)}
 html[data-bright=dark] .vh-sub .vf-other{color:var(--text)}
@@ -1722,7 +1727,6 @@ html[data-bright=dark] .vh-qa .vf-ic{color:var(--text)}
 html[data-bright=dark] .vh-tag{color:var(--text)}
 html[data-bright=dark] #vf-side .vs-brand{color:var(--text)}
 html[data-bright=dark] .dt-tile:hover{background:var(--soft)}
-html[data-bright=dark] .vf-idle .close{color:var(--text)}
 html[data-bright=dark] /* ② 비어 있을 때 한 줄 행동 — 누르면 입력창으로 */
 .vf-empty-act{color:var(--text)}
 html[data-bright=dark] .kb-help b{color:var(--text)}
@@ -3529,6 +3533,7 @@ const GUIDE_SECTIONS = [
   {
     title: '🆕 v6.4 — 넓은 본 화면 · 머리 한 장 · 플립 시계',
     items: [
+      '고정 근무 직원이 하루만 다른 매장에 갈 때 — 홈 머리의 매장 이름을 누르고 매장을 고른다. 내일은 원래 매장으로 저절로 돌아간다. 근무지 자체를 바꾸는 건 관리자 → 설정 → 사람 → 직원 근무지 설정',
       '왼쪽 메뉴를 좁혔다(224 → 184px). 맨 위 «를 누르면 아이콘만 남는다 — 기기마다 기억',
       '홈 머리 이미지 위에 인사 · 출근 · 어제 마감이 바로 얹힌다. 그림과 인사가 한 장이라 아래 카드가 위로 올라온다',
       '시계는 머리 오른쪽에 크게 — 기본은 플립(흰 카드 시:분:초 + 요일·날짜 + 마감까지). 머리 이미지 위 「머리 이미지 · 시계」에서 8종 중 고름(플립 · 숫자 · 링 · 타임라인 · 달력 · LED · 바늘 · 클래식)',
@@ -5751,7 +5756,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       }catch(e){}})();
     }
   }
-  if(_isFixed||!entry){
+  if(_isFixed&&entry&&!_vp.monitorOnly){
+    // 고정 직원 — 매장 이름을 누르면 「오늘만 다른 매장」. 내일은 원래 매장으로 저절로 돌아간다
+    const wb=el('button','vh-btn',`${shortStore(entry.name)}${_vp.overrideActive?' · 오늘만':''}`);wb.type='button';wb.title='오늘만 다른 매장에서 일할 때';
+    wb.onclick=()=>vfWorkplaceSheet();acts.appendChild(wb);
+  } else if(_isFixed||!entry){
     acts.appendChild(el('span','vh-btn',`${entry?shortStore(entry.name):'-'}${_vp.overrideActive?' · 예외출근':''}`));
   } else {
     const sel=el('select','vh-store-sel');
@@ -7024,6 +7033,27 @@ async function loadCompanyStatus(){
 // 우선 확인 줄의 종류 표시 — 뭔지 먼저, 언제인지 뒤에
 const vfKind=(k,cls)=>`<span class="vh-ktag${cls?' '+cls:''}">${k}</span>`;
 // 근무 마감 한 장 — 남은 것을 세어 보이고, 줄을 누르면 그 자리로. 「그래도 마감」이 퇴근
+// 고정 직원 「오늘만 다른 매장」 — 설정의 근무지는 그대로, 오늘 하루만(profiles.store_override_*). 내일은 원래 매장
+function vfWorkplaceSheet(){
+  const vp=window.__vflowProfile||{};const base=STORES.find(s=>s.id===vp.baseStoreId);
+  const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
+  const others=STORES.filter(s=>s.id!==vp.baseStoreId);
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>오늘 근무 매장</h3>
+    <span class="vh-tiny">원래 ${_wrEsc(base?storeShort(base.name):'-')} · 오늘만 바꾸면 내일은 원래 매장으로 돌아갑니다. 근무지 자체를 바꾸는 건 설정 → 사람</span>
+    <div class="vf-wp-list" data-list></div>
+    <div class="vh-sheet-btns"><button class="vh-btn" data-cancel style="flex:1;">돌아가기</button><button class="vh-btn primary" data-ok style="flex:1;" disabled>매장 고르기</button></div>`;
+  const list=sh.querySelector('[data-list]');let pick=null;const ok=sh.querySelector('[data-ok]');
+  const add=(id,name,sub)=>{const b=document.createElement('button');b.type='button';b.className='vf-wp'+((vp.overrideActive?vp.storeId:vp.baseStoreId)===id?' on':'');b.innerHTML=`${_wrEsc(name)}<small>${_wrEsc(sub)}</small>`;
+    b.onclick=()=>{list.querySelectorAll('.vf-wp').forEach(x=>x.classList.toggle('sel',x===b));pick=id;const cur=vp.overrideActive?vp.storeId:vp.baseStoreId;ok.disabled=(id===cur);ok.textContent=id===cur?'지금 이 매장':(id===vp.baseStoreId?'원래 매장으로':`오늘 ${storeShort(name)} 출근`);};list.appendChild(b);};
+  if(base)add(base.id,storeShort(base.name),vp.overrideActive?'원래 매장 · 누르면 돌아감':'원래 매장 · 지금');
+  others.forEach(s=>add(s.id,storeShort(s.name),vp.overrideActive&&vp.storeId===s.id?'오늘만 · 지금':'오늘만'));
+  const close=()=>vfSheetClose(ov);sh.querySelector('[data-cancel]').onclick=close;ov.onclick=(e)=>{if(e.target===ov)close();};
+  ok.onclick=async()=>{if(!pick)return;ok.disabled=true;ok.textContent='저장 중';
+    try{const mod=await import('./adapter/supabase-client.js');const {error}=await mod.supabase.rpc('set_today_workplace',{target_store:pick===vp.baseStoreId?null:pick});if(error)throw error;
+      try{localStorage.removeItem('vflow_todaystore_'+todayKey());}catch(e){}vfUse(pick===vp.baseStoreId?'workplace_back':'workplace_today');location.reload();}
+    catch(err){ok.disabled=false;ok.textContent='다시 누르기';alert('저장 실패 · 네트워크 확인');}};
+  ov.appendChild(sh);document.body.appendChild(ov);
+}
 function vfCloseSheet(entry,onClose){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
   const now=new Date();const nowHm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
