@@ -56,7 +56,7 @@ body.home-quick #screen-dashboard .app-footer{margin-top:auto;padding-bottom:cal
 body.home-quick #screen-dashboard .pb{display:none;}
 body.home-quick #screen-dashboard #home-personal{max-width:1400px;width:100%;margin-left:auto;margin-right:auto;box-sizing:border-box;}
 body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding-top:var(--safe-top);margin:0;}
-.app-shell{display:flex;flex-direction:column;height:calc(100dvh - var(--safe-top));overflow:hidden;}
+.app-shell{display:flex;flex-direction:column;height:calc((100dvh - var(--safe-top)) / var(--vf-zoom,1));overflow:hidden;} /* zoom이 걸리면 dvh도 같이 커지므로 나눠 준다 */
 
 /* ── 공통 헤더 ── */
 .header{background:var(--navy);color:#fff;padding:13px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -643,8 +643,8 @@ body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Noto Sans KR'
 .vf-esc td{padding:7px 6px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;}
 .vf-esc td input{width:56px;border:1.5px solid var(--border);border-radius:7px;padding:4px 6px;font:inherit;font-size:12.5px;text-align:right;}
 /* 우선 확인 — 종류 표시 */
-.vh-kind{display:inline-block;font-size:9.5px;font-weight:800;border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-right:4px;color:var(--text-sub);line-height:14px;vertical-align:1px;white-space:nowrap;}
-.vh-kind.k-ho{border-color:var(--navy);color:var(--navy);}
+.vh-ktag{display:inline-block;font-size:9.5px;font-weight:800;border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-right:4px;color:var(--text-sub);line-height:14px;min-height:0;height:16px;box-sizing:border-box;vertical-align:1px;white-space:nowrap;}
+.vh-ktag.k-ho{border-color:var(--navy);color:var(--navy);}
 /* 매장 컴퓨터 · 근무 마감 · 새 버전 */
 .vf-newv{position:fixed;right:12px;bottom:calc(72px + var(--safe-bot));z-index:1200;background:var(--navy);color:#fff;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-size:12px;font-weight:800;box-shadow:var(--shadow-card);cursor:pointer;}
 .vf-inbar{display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;margin:0 0 10px;}
@@ -1182,7 +1182,7 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .vf-empty-act .vf-ic{width:15px;height:15px;}
 .vf-empty-act:hover{text-decoration:underline;}
 /* ⑤ 글자 크게 — 내 계정에서 고름, 이 기기만 */
-body.vf-big{zoom:1.1;}
+body.vf-big{zoom:1.1;--vf-zoom:1.1;}
 /* ④ 키보드로 훑기 — J/K로 고른 줄 */
 .vh-item.kb-on{box-shadow:inset 3px 0 0 var(--gold);background:var(--bg);border-radius:8px;}
 .kb-help{position:fixed;right:16px;bottom:16px;z-index:960;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-card);font-size:12.5px;line-height:1.7;color:var(--text);min-width:220px;}
@@ -6677,7 +6677,7 @@ async function loadCompanyStatus(){
   return {stores,ok:stores.filter(x=>x.ok).length,bad:stores.filter(x=>!x.ok),know,esc,at:now};
 }
 // 우선 확인 줄의 종류 표시 — 뭔지 먼저, 언제인지 뒤에
-const vfKind=(k,cls)=>`<span class="vh-kind${cls?' '+cls:''}">${k}</span>`;
+const vfKind=(k,cls)=>`<span class="vh-ktag${cls?' '+cls:''}">${k}</span>`;
 // 근무 마감 한 장 — 남은 것을 세어 보이고, 줄을 누르면 그 자리로. 「그래도 마감」이 퇴근
 function vfCloseSheet(entry,onClose){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
