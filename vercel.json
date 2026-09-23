@@ -3,5 +3,8 @@
     { "path": "/api/sync-dayoffs", "schedule": "0 4 1,2 * *" },
     { "path": "/api/weekly-report", "schedule": "30 22 * * 0" },
     { "path": "/api/push-daily", "schedule": "0 0 * * *" }
+  ],
+  "rewrites": [
+    { "source": "/intro", "destination": "/landing.html" }
   ]
 }
