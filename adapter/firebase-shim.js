@@ -237,18 +237,28 @@ const assertAffected = (count, what) => {
   if (count === 0) throw new Error(`${what} 저장이 반영되지 않았습니다 (권한 또는 대상 없음)`)
 }
 
+// 인수인계 「처리 중」(working_by/working_at) — 고장·클레임·재고를 누가 잡고 있는지. 확인은 됐어도 끝나기 전까지
+// 매일 보인다. 칸이 아직 없으면(SQL 전) 한 번 보고 예전 범위로.
+let _hoWorking = true
+const hoRange = (dateKey) => _hoWorking
+  ? `handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey}),and(working_at.not.is.null,closed.eq.false,handover_date.lt.${dateKey})`
+  : `handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`
+const isWorkingColErr = (e) => /working_/.test(String(e?.message || ''))
+
 async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, deletedIds }) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return
 
   // 읽기와 동일한 범위로 diff 대상을 좁힌다 — 다른 날짜의 확인된 항목까지 삭제 후보로
   // 잡히면 안 되므로.
-  const { data: currentRows, error: selErr } = await supabase
+  const selCur = () => supabase
     .from('handovers')
-    .select('id, content, confirmed, closed, until_date')
+    .select(_hoWorking ? 'id, content, confirmed, closed, until_date, working_at' : 'id, content, confirmed, closed, until_date')
     .eq('store_id', storeId)
     .is('deleted_at', null)
-    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
+    .or(hoRange(dateKey))
+  let { data: currentRows, error: selErr } = await selCur()
+  if (selErr && _hoWorking && isWorkingColErr(selErr)) { _hoWorking = false; ({ data: currentRows, error: selErr } = await selCur()) }
   if (selErr) throw selErr
   const currentById = new Map((currentRows ?? []).map((r) => [r.id, r]))
 
@@ -305,6 +315,10 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
         patch.closed_by = item.closed ? ctx.profileId : null
         patch.closed_at = item.closed ? new Date().toISOString() : null
       }
+      if (_hoWorking && 'working' in item && !!current.working_at !== !!item.working) {
+        patch.working_by = item.working ? ctx.profileId : null
+        patch.working_at = item.working ? new Date().toISOString() : null
+      }
       if (Object.keys(patch).length > 0) {
         const { error, count } = await supabase.from('handovers').update(patch, { count: 'exact' }).eq('id', item.id)
         if (error) throw error
@@ -318,13 +332,16 @@ async function writeHandoverItems(ctx, originalStoreId, dateKey, { items, delete
 async function readHandoverItems(ctx, originalStoreId, dateKey) {
   const storeId = resolveStoreId(originalStoreId, ctx)
   if (!storeId) return []
-  const { data, error } = await supabase
+  const COLS = 'id, content, handover_date, until_date, tag, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)'
+  const sel = () => supabase
     .from('handovers')
-    .select('id, content, handover_date, until_date, tag, confirmed, confirmed_at, closed, author:profiles!from_employee(name), confirmer:profiles!confirmed_by(name), recip:profiles!recipient_id(name), closer:profiles!closed_by(name)')
+    .select(_hoWorking ? COLS + ', working_at, worker:profiles!working_by(name)' : COLS)
     .eq('store_id', storeId)
     .is('deleted_at', null)
-    .or(`handover_date.eq.${dateKey},and(confirmed.eq.false,closed.eq.false,handover_date.lt.${dateKey})`)
+    .or(hoRange(dateKey))
     .order('created_at', { ascending: true })
+  let { data, error } = await sel()
+  if (error && _hoWorking && isWorkingColErr(error)) { _hoWorking = false; ({ data, error } = await sel()) }
   if (error) throw error
   const rows = data ?? []
 
@@ -358,6 +375,9 @@ async function readHandoverItems(ctx, originalStoreId, dateKey) {
     recipient: h.recip?.name ?? null,
     closed: h.closed ?? false,
     closedBy: h.closer?.name ?? null,
+    working: !!h.working_at, // 처리 중 — 누가 잡았는지(끝나면 closed)
+    workingBy: h.worker?.name ?? null,
+    workingAt: h.working_at ?? null,
     feedbacks: feedbacksByHandover.get(h.id) ?? [],
   }))
 }
@@ -1312,6 +1332,45 @@ export async function staffHistory(profileId) {
 }
 
 // ── 매장 연혁 — 월별 한 줄. 있는 표 넷을 그대로 집계한다(근무 기록·청소 기록·인수인계·프로젝트). 관리자만 부른다 ──
+// ── 매장 컨디션 — 매장별·날짜별 원재료(청소 완료 수·업무 완료 수·그날 끝에 미확인 인수인계 수)를 한 번에 ──
+// 점수 계산은 화면(calcStoreScore)이 한다 — 규칙(설정의 점수 규칙)이 거기 있으므로. 조회 4번(매장 수와 상관없이).
+// 볼 수 있는 매장만 나온다(RLS). 1분 기억
+export function storeConditionRaw(storeIds, fromKey, toKey, graceDays = 1) {
+  const ids = (storeIds || []).filter(Boolean).sort()
+  return memo(`cond:${ids.join(',')}:${fromKey}:${toKey}:${graceDays}`, 60000, async () => {
+    const out = {}
+    const cell = (sid, d) => ((out[sid] = out[sid] || {})[d] = out[sid][d] || { clean: 0, cleanPh: 0, task: 0, ho: 0 })
+    if (!ids.length) return out
+    const hoFrom = new Date(new Date(fromKey).getTime() - 30 * 86400000).toISOString().slice(0, 10)
+    const [cl, dp, tk, ho] = await Promise.all([
+      supabase.from('cleaning_daily_logs').select('store_id, log_date, photo_path').in('store_id', ids).eq('done', true).gte('log_date', fromKey).lte('log_date', toKey).limit(20000),
+      supabase.from('cleaning_deep_logs').select('store_id, log_date, cleaning_deep_item_logs(done, photo_path)').in('store_id', ids).gte('log_date', fromKey).lte('log_date', toKey).limit(2000),
+      supabase.from('daily_tasks').select('store_id, task_date').in('store_id', ids).eq('status', 'done').gte('task_date', fromKey).lte('task_date', toKey).limit(20000),
+      supabase.from('handovers').select('store_id, handover_date, confirmed_at, closed_at').in('store_id', ids).is('deleted_at', null).is('until_date', null).gte('handover_date', hoFrom).lte('handover_date', toKey).limit(20000),
+    ])
+    for (const r of cl.data ?? []) { const c = cell(r.store_id, r.log_date); c.clean++; if (r.photo_path) c.cleanPh++ }
+    for (const r of dp.data ?? []) for (const it of r.cleaning_deep_item_logs ?? []) if (it.done) { const c = cell(r.store_id, r.log_date); c.clean++; if (it.photo_path) c.cleanPh++ }
+    for (const r of tk.data ?? []) cell(r.store_id, r.task_date).task++
+    // 그날 끝에 아직 확인도 종료도 안 됐고, 남긴 지 graceDays 이상 지난 인수인계 — 그날 점수의 감점(오늘 남긴 것은 안 셈)
+    const days = []
+    for (let t = new Date(fromKey + 'T00:00:00'); t <= new Date(toKey + 'T00:00:00'); t = new Date(t.getTime() + 86400000)) {
+      days.push(`${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`)
+    }
+    for (const r of ho.data ?? []) {
+      const ok = [r.confirmed_at, r.closed_at].filter(Boolean).map((x) => new Date(x)).sort((a, b) => a - b)[0]
+      for (const d of days) {
+        if (r.handover_date > d) continue
+        if ((new Date(d + 'T00:00:00') - new Date(r.handover_date + 'T00:00:00')) / 86400000 < graceDays) continue
+        const end = new Date(d + 'T23:59:59')
+        if (ok && ok <= end) continue
+        cell(r.store_id, d).ho++
+      }
+    }
+    out.__ok = !cl.error && !tk.error
+    return out
+  })
+}
+
 export async function storeHistory(storeId) {
   const ctx = await getContext()
   const T = ctx.tenantId

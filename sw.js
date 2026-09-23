@@ -52,15 +52,19 @@ self.addEventListener('fetch', (e) => {
   })());
 });
 
-// ── 🔔 웹 푸시 수신 — 윈도우 알림과 함께, 열려 있는 화면에도 한 줄 ──
+// ── 웹 푸시 수신 — 앱이 앞에 있으면 화면 안 토스트, 아니면 윈도우 알림 ──
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
   e.waitUntil((async () => {
+    let front = false
     try {
       const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       list.forEach((c) => c.postMessage({ type: 'vf-push', title: d.title || '', body: d.body || '', url: d.url || '/' }));
+      // 앱이 앞에 떠 있으면 화면 안 토스트만 — 같은 알림이 두 번 뜨지 않게
+      front = list.some((c) => c.visibilityState === 'visible' && c.focused)
     } catch (err) {}
+    if (front) return
     await self.registration.showNotification(d.title || 'V-Flow 알림', {
       body: d.body || '확인할 항목',
       icon: '/icons/icon-192-v2.png',
