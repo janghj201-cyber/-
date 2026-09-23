@@ -2,11 +2,11 @@
 // 문서 본문은 legal.html에서 전체 열람. 여기엔 요약·버전·항목 정의.
 import { supabase } from './adapter/supabase-client.js'
 
-export const OPERATOR = { name: 'V-Flow 운영사 (상호·사업자번호·주소·연락처 입력 필요)', contact: 'support@vflow.kr' }
+export const OPERATOR = { name: 'Dutyvo 운영사 (상호·사업자번호·주소·연락처 입력 필요)', contact: 'support@vflow.kr' }
 
 // 문서 버전 — 문구가 바뀌면 날짜를 올린다 → 필수 항목은 다음 로그인 때 재동의
 export const CONSENT_DOCS = {
-  terms:         { version: '2026-08-25', title: 'V-Flow 이용약관',                       required: true,  subject: 'tenant' },
+  terms:         { version: '2026-08-25', title: 'Dutyvo 이용약관',                       required: true,  subject: 'tenant' },
   privacy:       { version: '2026-08-15', title: '개인정보처리방침',                       required: true,  subject: 'both'   },
   insights:      { version: '2026-08-15', title: '비식별 사용 데이터 활용 동의',           required: true,  subject: 'tenant' },
   benchmark:     { version: '2026-08-15', title: '업종 벤치마크 리포트 수신 (제공 시)',    required: false, subject: 'tenant' },
@@ -18,8 +18,8 @@ export const TENANT_KEYS = ['terms', 'privacy', 'insights', 'benchmark', 'market
 export const STAFF_KEYS  = ['staff_privacy', 'privacy', 'staff_insights']
 
 const SUMMARY = {
-  terms: '서비스 이용 계약. 업장이 입력한 운영 데이터의 소유권은 업장에 있고, V-Flow는 서비스 제공 목적으로만 처리하며 다른 업장에 공개하지 않습니다.',
-  privacy: '어떤 개인정보를 왜, 얼마나 보관하는지. 업장은 직원 개인정보의 처리 책임자, V-Flow는 수탁자입니다.',
+  terms: '서비스 이용 계약. 업장이 입력한 운영 데이터의 소유권은 업장에 있고, Dutyvo는 서비스 제공 목적으로만 처리하며 다른 업장에 공개하지 않습니다.',
+  privacy: '어떤 개인정보를 왜, 얼마나 보관하는지. 업장은 직원 개인정보의 처리 책임자, Dutyvo는 수탁자입니다.',
   insights: '개인·업장을 식별할 수 없게 집계한 사용 건수·비율만 수집합니다(업무·인수인계 원문, 이름, 업장명은 수집하지 않음). 서비스 개선·업종 통계 목적.',
   benchmark: '같은 업종·비슷한 규모 업장 평균과 비교한 리포트를, 비교 데이터가 충분히 모이면 제공할 예정이며 제공 시 받아봅니다.',
   marketing: '신기능·이벤트 안내를 이메일/푸시로 받습니다. 언제든 철회 가능.',

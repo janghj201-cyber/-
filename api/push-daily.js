@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
     if (req.query && req.query.test === '1') {
       let sent = 0;
       for (const pid of subsByProfile.keys()) {
-        sent += await send(pid, { title: '🔔 V-Flow 테스트 알림', body: '푸시가 정상 작동합니다!', url: '/' });
+        sent += await send(pid, { title: '🔔 Dutyvo 테스트 알림', body: '푸시가 정상 작동합니다!', url: '/' });
       }
       res.status(200).json({ ok: true, mode: 'test', subscribers: subsByProfile.size, sent });
       return;

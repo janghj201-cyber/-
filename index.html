@@ -10,19 +10,21 @@
 <link rel="modulepreload" href="adapter/context.js">
 <link rel="modulepreload" href="vendor/supabase.js">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>V-Flow</title>
+<title>Dutyvo</title>
 <meta name="description" content="1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱. 사장님은 빠진 것만 보시면 됩니다.">
 <link rel="canonical" href="https://www.vflow.kr/intro">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192-v2.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/dutyvo-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
 <meta name="theme-color" content="#172233">
 <link rel="manifest" href="manifest.json?v=3">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="apple-touch-icon" href="icons/apple-touch-icon-v2.png">
+<link rel="apple-touch-icon" href="icons/dutyvo-apple-180.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="V-Flow">
+<meta name="apple-mobile-web-app-title" content="Dutyvo">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -1049,7 +1051,8 @@ button.vf-pj{cursor:pointer;}
   #vf-side .vs-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
   #vf-side .vs-foot{flex:0 0 auto;border-top:1px solid var(--border);padding-top:6px;margin-top:6px;display:flex;flex-direction:column;gap:4px;}
   #vf-side .vs-brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:800;color:var(--navy);padding:2px 6px 12px;}
-  #vf-side .vs-mark{width:26px;height:26px;border:2px solid var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:12px;font-weight:800;}
+  #vf-side .vs-mark{width:26px;height:26px;display:block;flex:none;}
+  html[data-bright=dark] #vf-side .vs-mark{content:url(icons/dutyvo-mark-dark.svg);} /* 어둡게 — 밝은 초록 심볼(로고 세트의 어두운 바탕용) */
   #vf-side .vs-prof{padding:4px 8px 12px;}
   #vf-side .vs-prof strong{display:block;font-size:14px;color:var(--text);}
   #vf-side .vs-prof span{font-size:11.5px;color:var(--text-sub);}
@@ -1943,7 +1946,7 @@ html[data-bright=dark] img{opacity:.92}html[data-bright=dark] input,html[data-br
 <!-- ① 대시보드 화면 (첫 화면) -->
 <div class="screen active has-tab-bar" id="screen-dashboard">
   <div class="header">
-    <div><div class="header-title" id="home-greeting">V-Flow</div><div class="header-sub" id="dashboard-date-sub"></div></div>
+    <div><div class="header-title" id="home-greeting">Dutyvo</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <div class="vh-head-btns" style="display:flex;gap:6px;">
       <button type="button" class="vf-bell" data-bell onclick="vfGoPriority()" aria-label="알림 — 우선 확인" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
       <button onclick="openGuideModal()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">가이드</button>
@@ -1997,7 +2000,7 @@ html[data-bright=dark] img{opacity:.92}html[data-bright=dark] input,html[data-br
     <div id="dashboard-collab-list"></div>
   </div>
   <div class="app-footer">
-    <div class="app-footer-title">V-Flow</div>
+    <div class="app-footer-title">Dutyvo</div>
     <div class="footer-app-name" style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;"></div>
     <div style="font-size:10.5px;color:var(--text-mute);margin:2px 0 4px;">버전 <b class="app-version-label" style="color:var(--text-sub);"></b></div>
     <div class="app-footer-copyright">Copyright © 2026 <b>Su Ho Jang</b>. All Rights Reserved.</div>
@@ -3443,7 +3446,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.4';
+const GUIDE_VERSION = 'v6.5';
 const BUILD_DATE = '2026-09-23'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3534,7 +3537,14 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.4 — 넓은 본 화면 · 머리 한 장 · 플립 시계',
+    title: '🆕 v6.5 — 이름이 Dutyvo(듀티보)로',
+    items: [
+      '앱 이름이 V-Flow에서 Dutyvo(듀티보)로 바뀌었다. 아이콘도 초록 연결 모양으로. 쓰는 법 · 기록 · 주소(vflow.kr)는 그대로',
+      '폰 홈 화면 아이콘이 옛 모양이면 — 아이폰은 아이콘을 지우고 사파리에서 다시 「홈 화면에 추가」. 안드로이드는 보통 며칠 안에 저절로 바뀐다',
+    ]
+  },
+  {
+    title: 'v6.4 — 넓은 본 화면 · 머리 한 장 · 플립 시계',
     items: [
       '고정 근무 직원이 하루만 다른 매장에 갈 때 — 홈 머리의 매장 이름을 누르고 매장을 고른다. 내일은 원래 매장으로 저절로 돌아간다. 근무지 자체를 바꾸는 건 관리자 → 설정 → 사람 → 직원 근무지 설정',
       '왼쪽 메뉴를 좁혔다(224 → 184px). 맨 위 «를 누르면 아이콘만 남는다 — 기기마다 기억',
@@ -3592,7 +3602,7 @@ const GUIDE_SECTIONS = [
   {
     title: 'v5.9 — 매장 컴퓨터 · 근무 마감 · 빨리 뜨기',
     items: [
-      '🖥️ 내 계정 → 「매장 컴퓨터」(윈도우에서만 보임) — 설치 파일을 받아 매장 컴퓨터에서 실행하고 「예」를 누르면 크롬·엣지가 V-Flow를 앱으로 설치하고 윈도우 로그인 때 스스로 켠다. 바탕 화면·작업 표시줄 아이콘까지. 해제 파일로 원래대로',
+      '🖥️ 내 계정 → 「매장 컴퓨터」(윈도우에서만 보임) — 설치 파일을 받아 매장 컴퓨터에서 실행하고 「예」를 누르면 크롬·엣지가 Dutyvo를 앱으로 설치하고 윈도우 로그인 때 스스로 켠다. 바탕 화면·작업 표시줄 아이콘까지. 해제 파일로 원래대로',
       '🕘 출근·퇴근은 매장 컴퓨터에서만 — 폰에서는 시각을 보기만. 같은 컴퓨터를 여럿이 쓰면 인사 줄 옆 「다른 사람」으로 계정 바꾸기',
       '🧾 「근무 마감」을 누르면 남은 것 한 장 — 미완료 업무 · 안 한 청소 · 안 본 인수인계. 줄을 누르면 그 자리로, 다 봤으면 「그래도 마감」',
       '⏰ 관리자 → 설정 → 「운영 시간」 — 매장마다 여는·닫는 시각. 닫는 시각 30분 전에 매장 컴퓨터가 「남은 것 N」을 윈도우 알림으로',
@@ -3612,7 +3622,7 @@ const GUIDE_SECTIONS = [
       '🔔 인수인계·요청·답·프로젝트 제안·도움 요청·공지가 생기면 바로 폰으로 — 내 계정 → 「알림」에서 켜고 끕니다. 밤 10시~아침 8시엔 안 보냅니다',
       '📈 관리자 → 월간 통계 맨 아래 「무엇이 쓰이는지」 — 기능별로 몇 번, 몇 사람이 썼는지. 내용은 안 세고 기능 이름만',
       '🗣️ 관리자 → 설정 → 「우리 회사 말」 — 매장·근무자·청소·인수인계를 우리 회사 식으로. 비워두면 지금 그대로',
-      '🕘 출근·퇴근 — 그날 앱을 처음 열면(순환 직원은 매장을 고르면) 출근 시각이 남고, 홈 오른쪽 위 「근무 마감」이 퇴근. 매장 컴퓨터는 켜면 V-Flow가 먼저 뜨게 설정할 수 있어요(설치 파일)',
+      '🕘 출근·퇴근 — 그날 앱을 처음 열면(순환 직원은 매장을 고르면) 출근 시각이 남고, 홈 오른쪽 위 「근무 마감」이 퇴근. 매장 컴퓨터는 켜면 Dutyvo가 먼저 뜨게 설정할 수 있어요(설치 파일)',
       '👤 관리자 → 기록 → 직원 활동 → 「이력」 — 사람마다 근무 일수·평균 출근·거친 매장·완료 업무·인수인계·프로젝트 한 장. 「인쇄」로 근무 확인서',
       '📚 관리자 → 기록 → 「매장 연혁」 — 매장마다 월별 한 줄(근무자·청소·인수인계·사건·프로젝트·사진), 숫자 아래는 작년 같은 달. 줄을 누르면 그달 사건과 사진. 「인쇄」로 한 장',
       '🏷️ 인수인계 남길 때 「고장·클레임·재고·기타」 태그(선택) — 붙이면 매장 연혁의 「사건」으로 쌓여요',
@@ -3778,7 +3788,7 @@ const GUIDE_SECTIONS = [
     title: '🆕 v4.4 — ⚙️ 내 계정 메뉴 · 🎟️ 가맹 초대 코드',
     items: [
       '⚙️ 홈 오른쪽 위 톱니 = 내 계정 — 직원 목록·월간 스케줄·내 동의·가이드·비밀번호·로그아웃',
-      '🎟️ (대표 전용) 관리자 → 설정에 가맹 초대 코드가 생겼습니다 — 다른 매장·가맹점이 V-Flow를 시작할 때 필요한 코드를 발급·중지하고 사용 내역을 봅니다',
+      '🎟️ (대표 전용) 관리자 → 설정에 가맹 초대 코드가 생겼습니다 — 다른 매장·가맹점이 Dutyvo를 시작할 때 필요한 코드를 발급·중지하고 사용 내역을 봅니다',
     ]
   },
   {
@@ -5228,7 +5238,7 @@ async function renderDashboardHome(){
   // v3 홈: 인사말 + 실시간 시계
   const _greetEl=document.getElementById('home-greeting');
   const _me=window.__vflowProfile;
-  if(_greetEl)_greetEl.innerHTML=`<span style="display:inline-flex;width:22px;height:22px;border:2px solid var(--gold);border-radius:7px;align-items:center;justify-content:center;color:var(--gold);font-size:11px;font-weight:800;vertical-align:-5px;margin-right:6px;">V</span>V-Flow`;
+  if(_greetEl)_greetEl.innerHTML=`<img src="icons/dutyvo-mark-white.svg" alt="" width="22" height="22" style="display:inline-block;vertical-align:-5px;margin-right:6px;">Dutyvo`;
   startHomeClock();
   try{renderSideNav('dashboard');}catch(e){}
   try{initOfflineBanner();}catch(e){}
@@ -5437,7 +5447,7 @@ window.openAppMenu=function(){
     list.appendChild(b);
   };
   mk('📲','앱으로 설치','바탕화면·홈 화면에 추가해서 앱처럼 쓰기',()=>{try{openInstallModal();}catch(e){}});
-  if(/Windows/.test(navigator.userAgent))mk('🖥️','매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 V-Flow 먼저':'컴퓨터 켜면 V-Flow 먼저 · 설치 파일',()=>{try{openPcSheet();}catch(e){}});
+  if(/Windows/.test(navigator.userAgent))mk('🖥️','매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 Dutyvo 먼저':'컴퓨터 켜면 Dutyvo 먼저 · 설치 파일',()=>{try{openPcSheet();}catch(e){}});
   mk('👥','직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
   mk('🗓️','월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
@@ -6451,7 +6461,7 @@ function renderSideNav(active){
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
   if(isAdm)items.push({k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()}); // 오늘 현황은 관리자 현황·보고에 흡수
-  side.innerHTML=`<div class="vs-brand"><span class="vs-mark">V</span><span class="vs-bt">V-Flow</span><button type="button" class="vs-fold" data-fold title="메뉴 접기 · 펴기" aria-label="메뉴 접기 · 펴기">${document.body.classList.contains('vf-rail')?'»':'«'}</button></div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
+  side.innerHTML=`<div class="vs-brand"><img class="vs-mark" src="icons/dutyvo-mark.svg" alt="" width="26" height="26"><span class="vs-bt">Dutyvo</span><button type="button" class="vs-fold" data-fold title="메뉴 접기 · 펴기" aria-label="메뉴 접기 · 펴기">${document.body.classList.contains('vf-rail')?'»':'«'}</button></div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   side.querySelector('[data-fold]').onclick=()=>{const on=!document.body.classList.contains('vf-rail');document.body.classList.toggle('vf-rail',on);try{localStorage.setItem('vflow_rail',on?'1':'0');}catch(e){}renderSideNav(active);};
   // 위는 스크롤, 아래(설정·가이드·내 계정)는 항상 보이게 — 항목이 화면보다 길어도 문이 안 사라진다
   const scroll=document.createElement('div');scroll.className='vs-scroll';side.appendChild(scroll);
@@ -7330,20 +7340,20 @@ function vfPcBat(kind){
   const force='{\\"url\\":\\"'+url+'\\",\\"default_launch_container\\":\\"window\\",\\"create_desktop_shortcut\\":true}';
   const st='[{\\"manifest_id\\":\\"'+id+'\\",\\"run_on_os_login\\":\\"run_windowed\\"}]';
   const L=['@echo off','setlocal',
-    'rem V-Flow store PC: install as an app + run at Windows sign-in. Browser policy for this computer (all Windows accounts).',
+    'rem Dutyvo store PC: install as an app + run at Windows sign-in. Browser policy for this computer (all Windows accounts).',
     'net session >nul 2>&1',
     'if not "%errorlevel%"=="0" (',
-    '  echo [V-Flow] Administrator permission is needed. Click Yes on the next window.',
+    '  echo [Dutyvo] Administrator permission is needed. Click Yes on the next window.',
     '  powershell -NoProfile -Command "Start-Process -FilePath \'%~f0\' -Verb RunAs"',
     '  exit /b',
     ')'];
   if(kind==='install'){
     L.push(`reg add "HKLM\\Software\\Policies\\${K}\\WebAppInstallForceList" /v 1 /t REG_SZ /d "${force}" /f >nul`);
-    L.push('if errorlevel 1 ( echo [V-Flow] Failed to write the policy. & pause & exit /b 1 )');
+    L.push('if errorlevel 1 ( echo [Dutyvo] Failed to write the policy. & pause & exit /b 1 )');
     L.push(`reg add "HKLM\\Software\\Policies\\${K}" /v WebAppSettings /t REG_SZ /d "${st}" /f >nul`);
-    L.push('if errorlevel 1 ( echo [V-Flow] Failed to write the policy. & pause & exit /b 1 )');
-    L.push(`echo [V-Flow] Done for ${edge?'Edge':'Chrome'}. Close the browser completely and open it again -`);
-    L.push('echo          V-Flow installs as an app, starts at sign-in, and gets a desktop icon.');
+    L.push('if errorlevel 1 ( echo [Dutyvo] Failed to write the policy. & pause & exit /b 1 )');
+    L.push(`echo [Dutyvo] Done for ${edge?'Edge':'Chrome'}. Close the browser completely and open it again -`);
+    L.push('echo          Dutyvo installs as an app, starts at sign-in, and gets a desktop icon.');
     // 전에 만든 바로가기 방식(시작 프로그램 V-Flow.lnk)이 남아 있으면 창이 둘 뜬다 — 같이 지운다
     L.push('del "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\V-Flow.lnk" >nul 2>&1');
     L.push('set BR=');
@@ -7363,7 +7373,7 @@ function vfPcBat(kind){
       L.push(`reg delete "HKCU\\Software\\Policies\\${k}\\WebAppInstallForceList" /f >nul 2>&1`);
       L.push(`reg delete "HKCU\\Software\\Policies\\${k}" /v WebAppSettings /f >nul 2>&1`);
     }
-    L.push('echo [V-Flow] Removed. Open the browser again - the app and auto-start are gone.');
+    L.push('echo [Dutyvo] Removed. Open the browser again - the app and auto-start are gone.');
   }
   L.push('pause');
   const blob=new Blob([L.join('\r\n')+'\r\n'],{type:'application/octet-stream'});
@@ -7373,7 +7383,7 @@ function vfPcBat(kind){
 function openPcSheet(){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet';
   const edge=/Edg\//.test(navigator.userAgent);
-  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>매장 컴퓨터</h3><span class="vh-tiny">컴퓨터를 켜면 V-Flow가 앱 창으로 먼저 뜨고, 바탕 화면·작업 표시줄에 아이콘. 출근·퇴근과 마감 전 알림은 매장 컴퓨터에서만</span>
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>매장 컴퓨터</h3><span class="vh-tiny">컴퓨터를 켜면 Dutyvo가 앱 창으로 먼저 뜨고, 바탕 화면·작업 표시줄에 아이콘. 출근·퇴근과 마감 전 알림은 매장 컴퓨터에서만</span>
     <ol style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text);">
       <li>설치 파일 받아 실행 → 「예」 <span class="vh-tiny">관리자 권한을 묻는다 · 컴퓨터마다 한 번</span></li>
       <li>${edge?'엣지':'크롬'} 완전히 닫고 다시 열기 <span class="vh-tiny">앱으로 설치 · 로그인 시 자동 시작</span></li>
@@ -7457,7 +7467,7 @@ async function vfIdleShow(){
   const entry=_vfIdleEntry;const me=window.__vflowProfile?.name||'';
   const el=document.createElement('div');el.className='vf-idle';el.setAttribute('role','button');el.setAttribute('aria-label','대기 화면 · 누르면 홈');
   const _dows=['일','월','화','수','목','금','토'];
-  el.innerHTML=`<div class="top"><span>V-Flow · ${_wrEsc(storeShort(entry.name))}</span><span data-d></span></div>
+  el.innerHTML=`<div class="top"><span>Dutyvo · ${_wrEsc(storeShort(entry.name))}</span><span data-d></span></div>
     <div class="ix"><div class="face-wrap" data-face></div><div><div class="clock" data-c style="display:none"></div><div class="date" data-sub>남은 것 세는 중</div><div data-body></div></div></div><div class="hint">화면을 누르면 돌아옵니다</div>`;
   vfClockMount(el.querySelector('[data-face]'),vfClockStyle(),entry.id,window.innerWidth>=900?'xl':'md');
   document.body.appendChild(el);_vfIdleEl=el;
@@ -7515,7 +7525,7 @@ function vfCloseAlarm(entry){
       const title=L.total?`남은 것 ${L.total} · 근무 마감 전`:'근무 마감 전';
       const body=L.total?`업무 ${L.tasks.length} · ${T('clean')} ${L.clean.length} · ${T('handover')} ${L.ho.length}`:'남은 것 없음 · 「근무 마감」';
       vfBanner(title,body,()=>vfCloseSheet(entry,()=>{try{switchTab('dashboard');}catch(e){}}));
-      try{if('Notification' in window&&Notification.permission==='granted'){const reg=await navigator.serviceWorker.ready;reg.showNotification(title,{body,icon:'/icons/icon-192-v2.png',tag:'vf-close'});}}catch(e){}
+      try{if('Notification' in window&&Notification.permission==='granted'){const reg=await navigator.serviceWorker.ready;reg.showNotification(title,{body,icon:'/icons/dutyvo-192.png',tag:'vf-close'});}}catch(e){}
       vfUse('close_alarm');
     }catch(e){}
   };
@@ -7693,7 +7703,7 @@ async function renderSetupChecklist(wrap){
        d:'홈 화면·바탕화면에 추가하면 매번 주소를 치지 않아도 돼요',
        btn:'설치하기', go:()=>{markSetupStep('install');try{openInstallModal();}catch(e){}}},
       {k:'ho', done:hasHo, ico:'📝', t:'첫 인수인계 남겨보기',
-       d:'다음 근무자에게 한 줄만 남겨보세요 — 이게 V-Flow의 핵심입니다',
+       d:'다음 근무자에게 한 줄만 남겨보세요 — 이게 Dutyvo의 핵심입니다',
        btn:'남겨보기', go:()=>{const s=curStore||STORES[0];if(s)openStoreRoom(s);}},
     ];
     const done=steps.filter(s=>s.done).length;
@@ -11237,7 +11247,7 @@ async function renderReportTab(content){
   if(p.praise){
     html+=`<div class="dash-card" style="margin-top:10px;border-left:4px solid var(--green);"><div class="dash-store-name">이번 주 칭찬</div><div style="font-size:12px;line-height:1.5;">${esc(p.praise)}</div></div>`;
   }
-  html+='<div style="font-size:10px;color:var(--text-mute);text-align:center;padding:10px 0 4px;">V-Flow가 실제 업무 기록으로 자동 생성한 리포트입니다</div>';
+  html+='<div style="font-size:10px;color:var(--text-mute);text-align:center;padding:10px 0 4px;">Dutyvo가 실제 업무 기록으로 자동 생성한 리포트입니다</div>';
   const body=document.createElement('div');body.innerHTML=html;content.appendChild(body);
 }
 
@@ -11631,7 +11641,7 @@ async function renderSettingsTab(content){
   // 운영사(V-Flow 본사) 테넌트의 대표만 — 가맹 대표도 role='owner'라 role만으로는 못 막는다
   if((window.__vflowProfile||{}).role==='owner' && (window.__vflowProfile||{}).isPlatform){
     const secC2=document.createElement('div');secC2.className='dash-card';secC2.style.marginTop='12px';
-    secC2.innerHTML='<div class="dash-store-name">가맹 초대 코드</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">다른 매장·가맹점이 V-Flow를 시작하려면 이 코드가 필요해요. 코드를 만들어 전달하고, 누가 썼는지 여기서 확인합니다.<br>안내: <b>vflow.kr/onboarding.html</b> 접속 → 코드 입력 → 회사·매장 등록</div><div id="code-list">불러오는 중...</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><input id="code-label" type="text" placeholder="용도 메모 (예: 검단점 테스트)" style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><input id="code-days" type="number" value="90" min="1" style="width:72px;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:inherit;" title="유효 일수"><button id="code-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 코드 발급</button></div><div id="code-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
+    secC2.innerHTML='<div class="dash-store-name">가맹 초대 코드</div><div style="font-size:12px;color:var(--text-sub);margin:4px 0 8px;">다른 매장·가맹점이 Dutyvo를 시작하려면 이 코드가 필요해요. 코드를 만들어 전달하고, 누가 썼는지 여기서 확인합니다.<br>안내: <b>vflow.kr/onboarding.html</b> 접속 → 코드 입력 → 회사·매장 등록</div><div id="code-list">불러오는 중...</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><input id="code-label" type="text" placeholder="용도 메모 (예: 검단점 테스트)" style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;"><input id="code-days" type="number" value="90" min="1" style="width:72px;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:inherit;" title="유효 일수"><button id="code-add" style="background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 코드 발급</button></div><div id="code-msg" style="min-height:16px;font-size:12px;margin-top:6px;"></div>';
     content.appendChild(secC2);
     (async()=>{
       const box=secC2.querySelector('#code-list');
@@ -12556,7 +12566,7 @@ window.openInstallModal=function(forceOs){
         <button data-pick style="${BTN}background:var(--bg);color:var(--text-sub);font-weight:700;font-size:13px;">다른 기기 방법 보기</button></div>`;
   } else if(E.hasPrompt && !forceOs){
     const mob=E.os!=='desktop';
-    html=top(mob?'📲':'🖥️',mob?'홈 화면에 V-Flow 추가':'바탕화면에 V-Flow 설치',
+    html=top(mob?'📲':'🖥️',mob?'홈 화면에 Dutyvo 추가':'바탕화면에 Dutyvo 설치',
       mob?'앱처럼 열리고, 주소창 없이 꽉 찬 화면으로 씁니다':'창 하나로 따로 뜨고, 작업표시줄에 고정할 수 있어요')+
       `<div style="padding:15px 16px 17px;">
         <button data-install style="${BTN}background:var(--gold);color:var(--navy);">${mob?'홈 화면에 추가하기':'바탕화면에 설치하기'}</button>
@@ -12671,7 +12681,7 @@ function applyTenantBranding(){
   if(!name)return;
   document.title=`${name} 일정표`;
   document.querySelectorAll('.header-title').forEach(el=>{
-    if(el.textContent.includes('위베이프')||el.textContent.includes('V-Flow'))el.textContent=`${name}`;
+    if(el.textContent.includes('위베이프')||el.textContent.includes('Dutyvo')||el.textContent.includes('Dutyvo'))el.textContent=`${name}`;
   });
   document.querySelectorAll('.footer-app-name').forEach(el=>el.textContent=name);
 }

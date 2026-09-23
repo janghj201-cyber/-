@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>V-Flow — 매장 관리 앱 · 직원 인수인계 · 청소 체크 · 근무 마감</title>
+<title>Dutyvo — 매장 관리 앱 · 직원 인수인계 · 청소 체크 · 근무 마감</title>
 <meta name="description" content="1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱. 설치 없이 주소로 접속, 초기 도입 매장은 지금 무료입니다.">
 <meta name="keywords" content="매장 관리 앱, 매장 업무 관리, 직원 인수인계 앱, 교대 인수인계, 매장 청소 체크리스트, 1인 매장 관리, 다점포 관리, 근무 마감">
 <link rel="canonical" href="https://www.vflow.kr/intro">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="V-Flow">
-<meta property="og:title" content="V-Flow — 전화 안 하셔도 매장이 먼저 말합니다">
+<meta property="og:site_name" content="Dutyvo">
+<meta property="og:title" content="Dutyvo — 전화 안 하셔도 매장이 먼저 말합니다">
 <meta property="og:description" content="인수인계 · 청소 체크 · 근무 마감을 시스템이 기억합니다. 사장님은 빠진 것만 보시면 됩니다.">
 <meta property="og:url" content="https://www.vflow.kr/intro">
 <meta property="og:image" content="https://www.vflow.kr/lp/og.jpg">
@@ -17,9 +17,10 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0B1712">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192-v2.png">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon-v2.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"V-Flow","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"ko","url":"https://www.vflow.kr/intro","description":"1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱","offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"}}</script>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
+<link rel="apple-touch-icon" href="/icons/dutyvo-apple-180.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Dutyvo","alternateName":["듀티보","V-Flow"],"applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"ko","url":"https://www.vflow.kr/intro","description":"1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱","offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;600;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -63,7 +64,7 @@ svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;st
 .nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(11,23,18,.72);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid var(--night-line)}
 .nav .wrap{display:flex;align-items:center;gap:28px;height:64px}
 .logo{display:flex;align-items:center;gap:10px;color:var(--on-night);text-decoration:none;font:700 19px/1 var(--body);letter-spacing:-.01em}
-.logo i{display:grid;place-items:center;width:30px;height:30px;border:2px solid var(--gold);border-radius:9px;color:var(--gold);font:700 14px/1 var(--body);font-style:normal}
+.logo img{width:30px;height:30px;display:block;flex:none}
 .nav nav{display:flex;gap:26px;margin-left:12px}
 .nav nav a{color:var(--on-night-sub);text-decoration:none;font-size:14.5px}
 .nav nav a:hover{color:var(--on-night)}
@@ -81,7 +82,7 @@ svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;st
 @keyframes live{70%{box-shadow:0 0 0 10px rgba(63,178,122,0)}100%{box-shadow:0 0 0 0 rgba(63,178,122,0)}}
 .hero h1{font-size:clamp(38px,5.4vw,66px);line-height:1.12;font-weight:700;margin:22px 0 22px}
 .hero h1 .quiet{color:var(--on-night-sub);font-weight:500}
-.hero .lede{color:var(--on-night-sub);font-size:clamp(16px,1.6vw,18px);max-width:34em}
+.hero .lede{color:var(--on-night-sub);font-size:clamp(16px,1.6vw,18px);max-width:24em}
 .hero .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
 .hero .fine{margin-top:18px;font-size:13.5px;color:var(--on-night-dim)}
 .hero .fine b{color:var(--on-night-sub);font-weight:600}
@@ -301,7 +302,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 
 .sample-note{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:rgba(17,26,21,.88);color:#E7EFE9;font-size:12.5px;padding:8px 14px;border-radius:999px;backdrop-filter:blur(8px);white-space:nowrap}
 
-/* ─ 여는 장면 — 흰 화면에 사장님 속마음 → 한 줄 → V-Flow → 첫 화면으로 ─ */
+/* ─ 여는 장면 — 흰 화면에 사장님 속마음 → 한 줄 → Dutyvo → 첫 화면으로 ─ */
 .intro{position:fixed;inset:0;z-index:100;background:#FBFBF8;color:var(--ink);overflow:hidden;clip-path:circle(150% at 50% 50%);transition:clip-path 1s cubic-bezier(.7,0,.2,1)}
 .intro.out{clip-path:circle(0% at 50% 46%)}
 .intro .stagebox{position:absolute;inset:0;display:grid;place-items:center;padding-inline:var(--gut)}
@@ -323,10 +324,9 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 .intro .brand.in{opacity:1}
 .intro .brand small{font:500 clamp(15px,1.8vw,20px)/1.4 var(--body);color:var(--sub);letter-spacing:.02em}
 .intro .brand .mk{display:flex;align-items:center;gap:clamp(12px,2vw,22px);font:700 clamp(56px,11vw,150px)/1 var(--body);letter-spacing:-.04em;color:var(--forest)}
-.intro .brand svg{width:1em;height:1em}
-.intro .brand svg rect,.intro .brand svg path{fill:none;stroke:var(--gold);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:420;stroke-dashoffset:420;transition:stroke-dashoffset 1.1s cubic-bezier(.6,0,.2,1)}
-.intro .brand.in svg rect,.intro .brand.in svg path{stroke-dashoffset:0}
-.intro .brand .word{display:inline-block;clip-path:inset(0 100% 0 0);transition:clip-path .9s .35s cubic-bezier(.7,0,.2,1)}
+.intro .brand .mk img{width:1em;height:1em;display:block;opacity:0;transform:scale(.8) rotate(-8deg);transition:opacity .6s,transform 1s cubic-bezier(.2,.9,.25,1.15)}
+.intro .brand.in .mk img{opacity:1;transform:none}
+.intro .brand .word{display:inline-block;padding:0 .08em .06em 0;clip-path:inset(0 100% 0 0);transition:clip-path .9s .35s cubic-bezier(.7,0,.2,1)}
 .intro .brand.in .word{clip-path:inset(0 0 0 0)}
 .intro .skip{position:absolute;right:calc(var(--gut));bottom:calc(24px + env(safe-area-inset-bottom,0px));height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--sub);font:500 14px var(--body);cursor:pointer}
 .intro .prog{position:absolute;left:0;bottom:0;height:3px;background:var(--gold);width:0}
@@ -399,20 +399,20 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
   <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></symbol>
 </svg>
 
-<div class="intro" id="intro" hidden role="img" aria-label="오늘 매장 별일 없었나, 청소는 했을까, 인수인계는 봤을까 — 이제 묻지 않아도 보입니다. 더 쉽고 간편한 매장 운영의 시작, V-Flow">
+<div class="intro" id="intro" hidden role="img" aria-label="오늘 매장 별일 없었나, 청소는 했을까, 인수인계는 봤을까 — 이제 묻지 않아도 보입니다. 더 쉽고 간편한 매장 운영의 시작, Dutyvo">
   <div class="stagebox"><div class="qs">
     <div class="q q1">오늘 매장, 별일 없었나?</div>
     <div class="q q2">청소는 했을까?</div>
     <div class="q q3">인수인계는… 봤을까?</div>
   </div></div>
   <div class="one" id="introOne"><div>이제 묻지 않아도<br><em>보입니다.</em></div></div>
-  <div class="brand" id="introBrand"><small>더 쉽고 간편한 매장 운영의 시작</small><div class="mk"><svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="24"/><path d="M30 32 50 70 70 32"/></svg><span class="word">V-Flow</span></div></div>
+  <div class="brand" id="introBrand"><small>더 쉽고 간편한 매장 운영의 시작</small><div class="mk"><img src="/icons/dutyvo-mark.svg" alt="" width="150" height="150"><span class="word">Dutyvo</span></div></div>
   <button class="skip" type="button" id="introSkip">건너뛰기</button>
   <div class="prog" id="introProg"></div>
 </div>
 <header class="nav">
   <div class="wrap">
-    <a class="logo" href="#top"><i>V</i>V-Flow</a>
+    <a class="logo" href="#top"><img src="/icons/dutyvo-mark-dark.svg" alt="" width="30" height="30">Dutyvo</a>
     <nav aria-label="바로가기">
       <a href="#day">매장의 하루</a>
       <a href="#owner">사장님 화면</a>
@@ -433,7 +433,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
     <div>
       <div class="eyebrow"><span class="live"></span>1인 근무 매장 운영 시스템</div>
       <h1 id="h1">전화 안 하셔도<br>매장이 먼저<br>말합니다<span class="quiet">.</span></h1>
-      <p class="lede">인수인계, 청소, 근무 마감. 사람이 기억하던 것을 V-Flow가 기록하고 알려드립니다. 사장님은 빠진 것만 보시면 됩니다.</p>
+      <p class="lede">인수인계, 청소, 근무 마감. 사람이 기억하던 것을 Dutyvo가 기록하고 알려드립니다. 사장님은 빠진 것만 보시면 됩니다.</p>
       <div class="ctas">
         <a class="btn btn-gold" href="#contact">도입 문의 <svg class="ic"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-ghost" href="#day">하루 흐름 보기</a>
@@ -442,13 +442,13 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <button class="replay" type="button" id="replay">여는 장면 다시 보기</button>
     </div>
 
-    <div class="stage" id="stage" aria-label="V-Flow 실제 화면 — 컴퓨터 홈, 폰 홈, 알림, 매장 컨디션">
+    <div class="stage" id="stage" aria-label="Dutyvo 실제 화면 — 컴퓨터 홈, 폰 홈, 알림, 매장 컨디션">
       <div class="rig" id="rig">
         <div class="laptop">
-          <div class="lid"><div class="scr"><img src="/lp/desk_owner.webp" alt="V-Flow 컴퓨터 홈 — 매장 컨디션 표와 오늘 할 일" width="1600" height="1000"></div></div>
+          <div class="lid"><div class="scr"><img src="/lp/desk_owner.webp" alt="Dutyvo 컴퓨터 홈 — 매장 컨디션 표와 오늘 할 일" width="1600" height="1000"></div></div>
           <div class="deck"></div>
         </div>
-        <div class="phone"><div class="body"><div class="scr"><img src="/lp/phone_home.webp" alt="V-Flow 직원 폰 홈" width="780" height="1688"></div></div></div>
+        <div class="phone"><div class="body"><div class="scr"><img src="/lp/phone_home.webp" alt="Dutyvo 직원 폰 홈" width="780" height="1688"></div></div></div>
         <div class="chip c-toast"><div class="in"><div class="row"><div class="bell"><svg class="ic"><use href="#i-bell"/></svg></div><div><strong>인수인계 1건 · 2호점</strong><span>김철수 → 다음 근무자<br>포스 영수증 용지 교체</span></div></div></div></div>
         <div class="chip c-cond"><div class="in"><div class="top"><span>본점 컨디션</span><span>7일</span></div><div class="big"><b>95</b><span class="pill-good">좋음</span></div><div class="minibars" aria-hidden="true"><i style="height:100%"></i><i style="height:72%"></i><i style="height:100%"></i><i style="height:95%"></i><i style="height:100%"></i><i style="height:72%"></i><i style="height:90%"></i></div></div></div>
       </div>
@@ -485,7 +485,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
     <div class="sec-head">
       <div class="eyebrow">매장의 하루</div>
       <h2 id="day-h">출근부터 다음 날 아침까지, 한 화면이 따라갑니다</h2>
-      <p>아래로 내리시면 시간이 흘러갑니다. 화면은 전부 실제 V-Flow입니다.</p>
+      <p>아래로 내리시면 시간이 흘러갑니다. 화면은 전부 실제 Dutyvo입니다.</p>
     </div>
     <div class="day-grid">
       <div class="day-sticky" aria-hidden="true">
@@ -614,7 +614,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
     </div>
     <div class="steps3">
       <div class="s3"><span class="n">1단계</span><h3>문의 남기기</h3><p>매장 이름과 연락처만 주세요. 업종과 매장 수를 알려주시면 더 빨리 안내드립니다.</p><a href="#contact">문의하러 가기 <svg class="ic"><use href="#i-arrow"/></svg></a></div>
-      <div class="s3"><span class="n">2단계</span><h3>초대 코드 받기</h3><p>확인하고 초대 코드를 보내드립니다. 코드 하나로 우리 회사 전용 V-Flow가 만들어집니다. 보통 당일에 드립니다.</p></div>
+      <div class="s3"><span class="n">2단계</span><h3>초대 코드 받기</h3><p>확인하고 초대 코드를 보내드립니다. 코드 하나로 우리 회사 전용 Dutyvo가 만들어집니다. 보통 당일에 드립니다.</p></div>
       <div class="s3"><span class="n">3단계</span><h3>코드 넣고 시작</h3><p>회사 이름 · 업종 · 매장을 등록하면 끝입니다. 직원은 초대 링크로 들어옵니다.</p><a href="/onboarding.html">코드 입력하고 시작 <svg class="ic"><use href="#i-arrow"/></svg></a></div>
     </div>
     <div class="price">
@@ -664,7 +664,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 </section>
 </main>
 
-<footer><div class="wrap"><span>V-Flow · 매장 운영 시스템</span><span><a href="/legal.html#terms">이용약관</a><a href="/legal.html#privacy">개인정보처리방침</a></span></div></footer>
+<footer><div class="wrap"><span>Dutyvo · 매장 운영 시스템</span><span><a href="/legal.html#terms">이용약관</a><a href="/legal.html#privacy">개인정보처리방침</a></span></div></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -835,7 +835,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
   const f=document.getElementById('form');const out=document.getElementById('sent');
   f.addEventListener('submit',e=>{e.preventDefault();const v=id=>document.getElementById(id).value.trim();
     if(!v('f-store')||!v('f-phone')){out.hidden=false;out.style.color='#C2463E';out.textContent='매장 이름과 연락처를 적어주세요.';return;}
-    const body=`[V-Flow 도입 문의]\n매장: ${v('f-store')}\n담당: ${v('f-name')}\n연락처: ${v('f-phone')}\n${v('f-memo')}`;
+    const body=`[Dutyvo 도입 문의]\n매장: ${v('f-store')}\n담당: ${v('f-name')}\n연락처: ${v('f-phone')}\n${v('f-memo')}`;
     const a=document.createElement('a');a.href='sms:01047876928?&body='+encodeURIComponent(body);a.click();
     out.hidden=false;out.style.color='';out.textContent='문자 앱이 안 열리면 위 번호로 이 내용을 보내주세요.';
   });

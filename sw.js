@@ -1,4 +1,4 @@
-// V-Flow 서비스워커 — "캐시 먼저 그리고 뒤에서 새것" (stale-while-revalidate)
+// Dutyvo(옛 V-Flow) 서비스워커 — "캐시 먼저 그리고 뒤에서 새것" (stale-while-revalidate)
 // 목적: 켜자마자 화면이 뜬다. 새 배포는 뒤에서 받아 다음 열 때 쓰고, 지금 열린 화면엔 「새 버전」 표시를 보낸다.
 // 같은 사이트의 GET만. /api/ 와 외부(Supabase 등)는 절대 캐시하지 않는다.
 // v3: 화면(HTML)은 주소가 '/', '/?pc=1', '/index.html' 어느 것이든 한 칸('/index.html')에만 둔다.
@@ -72,10 +72,10 @@ self.addEventListener('push', (e) => {
       front = list.some((c) => c.visibilityState === 'visible' && c.focused)
     } catch (err) {}
     if (front) return
-    await self.registration.showNotification(d.title || 'V-Flow 알림', {
+    await self.registration.showNotification(d.title || 'Dutyvo 알림', {
       body: d.body || '확인할 항목',
-      icon: '/icons/icon-192-v2.png',
-      badge: '/icons/icon-192-v2.png',
+      icon: '/icons/dutyvo-192.png',
+      badge: '/icons/dutyvo-192.png',
       data: { url: d.url || '/' },
     });
   })());
