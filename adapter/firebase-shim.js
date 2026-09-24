@@ -769,7 +769,7 @@ const SCHEDULE_RULE_COLOR_MAP = { blue: 'c-blue', orange: 'c-orange', purple: 'c
 // 다른 라벨(다른 업종 커스텀 규칙)은 매칭 키가 없어 그리드 배지만 조용히 안 뜬다
 // (고정업무 관리 탭 등 rule.task 기반 화면은 영향 없음 — 5단계 항목 아님, renderCal
 // 자체의 하드코딩 스코프 한계라 필요하면 별도로 다룰 것).
-const SCHEDULE_RULE_LABEL_TO_KEY = { 전체주문: 'order', 재고실사: 'stock', 월마감보고: 'report' }
+const SCHEDULE_RULE_LABEL_TO_KEY = { 전체주문: 'order', 재고실사: 'stock' }
 const SCHEDULE_RULE_COLOR_REVERSE = Object.fromEntries(Object.entries(SCHEDULE_RULE_COLOR_MAP).map(([k, v]) => [v, k]))
 
 // 고정업무 편집 실저장 (커스터마이징 묶음 1번 — "✓저장됨" 가짜 메시지 해결).
@@ -849,11 +849,8 @@ async function readScheduleRulesConfig(ctx) {
     const rec = row.recurrence ?? {}
     const col = SCHEDULE_RULE_COLOR_MAP[row.color] ?? 'c-blue'
     const key = SCHEDULE_RULE_LABEL_TO_KEY[row.label] ?? `rule_${i}`
-    // 원본 '월간 보고 마감' 배지의 안내 패널(작성 가이드)은 rule.report 플래그로 열린다 —
-    // 라벨이 보고 계열로 매핑되면 플래그를 되살린다(최종점검에서 발견·복원).
-    const report = key === 'report'
     // id: 이름을 바꿔도 같은 규칙으로 이어지게 · show: 달력 표시 · autoTodo: 그날 매장 할 일에 자동 추가
-    const extra = { id: row.id, meta: row.description ?? '', show: row.show_on_calendar !== false, autoTodo: !!row.auto_todo, col, report }
+    const extra = { id: row.id, meta: row.description ?? '', show: row.show_on_calendar !== false, autoTodo: !!row.auto_todo, col }
     if (rec.type === 'weekly') {
       rules.push({ key, condType: 'weekday', weekday: rec.weekday, task: row.label, ...extra })
     } else if (rec.type === 'monthly_day') {
