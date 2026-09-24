@@ -1,7 +1,9 @@
+// 고객사 연동 — 위베이프(고객) 사내 허브에 매장 숫자를 넘겨주는 전용 창구. Dutyvo 공통 기능이 아니다.
+// 다른 고객이 같은 연동을 원하면 HUB_TENANT_NAME 만 바꿔 따로 배포한다.
 // 허브 연동용 읽기 전용 통계 — 매장별 오늘 업무 완료/미완료, 인수인계 미확인 건수 (JSON)
 // GET /api/hub-stats?token=HUB_TOKEN  (읽기 전용 · 개인 식별정보 없음 · 매장 단위 숫자만)
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vbuhueykvizmnrfvkehq.supabase.co';
-const TENANT_NAME  = process.env.TENANT_NAME || '위베이프 인천/경기 지사';
+const TENANT_NAME  = process.env.HUB_TENANT_NAME || process.env.TENANT_NAME || '위베이프 인천/경기 지사';
 
 module.exports = async (req, res) => {
   const token = process.env.HUB_TOKEN || process.env.CRON_SECRET;

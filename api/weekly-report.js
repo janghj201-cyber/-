@@ -1,8 +1,8 @@
 // 주간 경영 리포트 자동 생성 — 매주 월요일 07:30 KST (Vercel Cron: 일 22:30 UTC)
 // 지난주(월~일) 데이터를 집계해 weekly_reports에 저장. 관리자 앱의 "주간 리포트" 탭이 읽는다.
+// Dutyvo를 쓰는 회사(테넌트)마다 한 장씩 만든다. 수동 실행 &tenant=<id> = 한 회사만.
 // 필요 env: SUPABASE_SERVICE_ROLE_KEY, (권장) CRON_SECRET
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vbuhueykvizmnrfvkehq.supabase.co';
-const TENANT_NAME  = process.env.TENANT_NAME || '위베이프 인천/경기 지사';
 
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -36,9 +36,8 @@ module.exports = async (req, res) => {
     const kstIso = (d) => new Date(d.getTime() - 9 * 3600e3).toISOString();
     const wkStartTs = kstIso(wkStart), thisMonTs = kstIso(thisMon), trendTs = kstIso(trendStart);
 
-    const tenants = await sb(`tenants?select=id&name=eq.${encodeURIComponent(TENANT_NAME)}`);
-    if (!tenants.length) throw new Error(`테넌트 없음: ${TENANT_NAME}`);
-    const T = tenants[0].id;
+    // 회사 하나 분량
+    const runTenant = async (T) => {
 
     const [stores, profiles, tasks, hos, unconf, cleanLogs] = await Promise.all([
       sb(`stores?select=id,name&tenant_id=eq.${T}&order=name&limit=100`),
@@ -144,8 +143,17 @@ module.exports = async (req, res) => {
       body: JSON.stringify({ tenant_id: T, week_start: wsS, payload }),
     });
     if (!up.ok) throw new Error('저장 실패: ' + (await up.text()));
+    return { completion: compV, stores: storeRows.length };
+    };
 
-    res.status(200).json({ ok: true, week: `${wsS}~${weS}`, completion: compV, stores: storeRows.length });
+    const only = req.query && req.query.tenant;
+    const tenants = await sb(`tenants?select=id,name${only ? `&id=eq.${encodeURIComponent(only)}` : ''}&limit=1000`);
+    const results = [];
+    for (const t of tenants) {
+      try { results.push({ tenant: t.name, ok: true, ...(await runTenant(t.id)) }); }
+      catch (e) { results.push({ tenant: t.name, ok: false, error: String((e && e.message) || e) }); }
+    }
+    res.status(200).json({ ok: results.every((r) => r.ok), week: `${wsS}~${weS}`, tenants: results });
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }

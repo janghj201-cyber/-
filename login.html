@@ -10,33 +10,25 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="apple-touch-icon" href="icons/dutyvo-apple-180.png">
-<style>
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8f7f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-  .card{background:#fff;border-radius:14px;padding:32px;width:100%;max-width:360px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
-  h2{margin:0 0 8px;color:#1a2332;}
-  p{color:#6b7a8d;font-size:14px;margin:0 0 20px;}
-  label{display:block;font-size:13px;color:#1a2332;margin-bottom:6px;margin-top:14px;}
-  input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e8e4dc;border-radius:8px;font-size:14px;}
-  button{width:100%;margin-top:20px;padding:12px;border:none;border-radius:8px;background:#1a2332;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
-  button:disabled{opacity:0.6;cursor:default;}
-  .error{color:#c0392b;font-size:13px;margin-top:10px;}
-</style>
+<link rel="stylesheet" href="lp/dv-auth.css?v=1">
 </head>
 <body>
-  <div class="card">
-    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;"><img src="icons/dutyvo-mark.svg" alt="" width="32" height="32"><b style="font-size:21px;letter-spacing:-.01em;color:#1a2332;">Dutyvo</b></div>
-    <h2>매장 스케줄 앱</h2>
-    <p>로그인하고 오늘 업무를 시작하세요.</p>
-    <form id="login-form">
-      <label>이메일<input type="email" id="email" required placeholder="you@example.com" /></label>
-      <label>비밀번호<input type="password" id="password" required /></label>
-      <label style="display:flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;cursor:pointer;"><input type="checkbox" id="remember" style="width:auto;margin:0;" /> 이메일 기억하기</label>
-      <p class="error" id="error" hidden></p>
-      <button type="submit" id="submitBtn">로그인</button>
-    </form>
-    <p style="text-align:center;margin:14px 0 0;font-size:13px;"><a href="#" id="forgot-link" style="color:#6b7a8d;text-decoration:underline;">비밀번호를 잊으셨나요?</a></p>
-    <p style="text-align:center;margin:16px 0 0;font-size:13px;color:#6b7a8d;">처음이세요? <a href="onboarding.html" style="color:#f5a623;font-weight:700;">회원가입하고 시작하기</a></p>
-  </div>
+  <main class="shell narrow">
+    <a class="brand" href="/intro"><img src="icons/dutyvo-mark.svg" alt="">Dutyvo</a>
+    <section class="card">
+      <h1>로그인</h1>
+      <p class="sub">오늘 할 일과 인수인계가 기다리고 있습니다.</p>
+      <form id="login-form">
+        <label class="f">이메일<input type="email" id="email" required placeholder="you@example.com" autocomplete="email" /></label>
+        <label class="f">비밀번호<input type="password" id="password" required autocomplete="current-password" /></label>
+        <label class="remember"><input type="checkbox" id="remember" /> 이메일 기억하기</label>
+        <p class="err" id="error" hidden></p>
+        <div class="acts"><button type="submit" class="btn main" id="submitBtn">로그인</button></div>
+      </form>
+      <span class="link"><a href="#" id="forgot-link" class="plain">비밀번호를 잊으셨나요?</a></span>
+    </section>
+    <span class="link">처음이면 <a href="onboarding.html">초대 코드로 시작하기</a> · 직원은 받은 초대 링크로</span>
+  </main>
 
   <script type="module">
     import { supabase } from './adapter/supabase-client.js'
@@ -56,6 +48,7 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault()
       errorEl.hidden = true
+      errorEl.className = 'err'
       submitBtn.disabled = true
       submitBtn.textContent = '로그인 중...'
       try {
@@ -86,11 +79,11 @@
           redirectTo: location.origin + location.pathname.replace(/login\.html$/, '') + 'reset-password.html',
         })
         if (error) throw error
-        errorEl.style.color = '#0f766e'
-        errorEl.textContent = '✓ ' + email + ' 로 재설정 링크를 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.'
+        errorEl.className = 'okmsg'
+        errorEl.textContent = email + ' 로 재설정 링크를 보냈습니다. 메일함(스팸함 포함)을 확인해 주세요.'
         errorEl.hidden = false
       } catch (err) {
-        errorEl.style.color = '#c0392b'
+        errorEl.className = 'err'
         errorEl.textContent = err.message || '메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
         errorEl.hidden = false
       }

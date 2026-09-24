@@ -6,44 +6,36 @@
 <title>초대 수락 — Dutyvo</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
-<style>
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8f7f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-  .card{background:#fff;border-radius:14px;padding:32px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
-  h2{margin:0 0 8px;color:#1a2332;}
-  p.sub{color:#6b7a8d;font-size:14px;margin:0 0 18px;}
-  label{display:block;font-size:13px;color:#1a2332;margin-bottom:6px;margin-top:14px;font-weight:600;}
-  input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e8e4dc;border-radius:8px;font-size:14px;}
-  button.primary{width:100%;margin-top:20px;padding:12px;border:none;border-radius:8px;background:#1a2332;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
-  button:disabled{opacity:0.6;cursor:default;}
-  .error{color:#c0392b;font-size:13px;margin-top:10px;}
-  .toggle{display:block;text-align:center;margin-top:14px;font-size:13px;color:#6b7a8d;}
-  .toggle a{color:#f5a623;font-weight:700;cursor:pointer;}
-</style>
+<link rel="stylesheet" href="lp/dv-auth.css?v=1">
 </head>
 <body>
-  <div class="card">
-    <h2>👋 초대를 받으셨어요</h2>
-    <p class="sub" id="sub">초대받은 이메일로 계정을 만들면 바로 팀에 합류됩니다.</p>
-    <form id="form">
-      <label>이메일<input type="email" id="email" required placeholder="초대받은 이메일" /></label>
-      <label>비밀번호<input type="password" id="password" required minlength="6" placeholder="6자 이상" /></label>
-      <div id="inv-consent"></div>
-      <p class="error" id="error" hidden></p>
-      <button type="submit" class="primary" id="btn" disabled style="opacity:.5;">가입하고 합류하기</button>
-    </form>
-    <span class="toggle" id="toggle-wrap">이미 계정이 있으세요? <a id="toggle">로그인으로 합류</a></span>
-  </div>
+  <main class="shell narrow">
+    <a class="brand" href="/intro"><img src="icons/dutyvo-mark.svg" alt="">Dutyvo</a>
+    <section class="card">
+      <h1>초대를 받았습니다</h1>
+      <p class="sub" id="sub">초대받은 이메일로 비밀번호만 정하면 바로 팀에 합류합니다.</p>
+      <form id="form">
+        <label class="f">이메일<input type="email" id="email" required placeholder="초대받은 이메일" autocomplete="email" /></label>
+        <label class="f">비밀번호<input type="password" id="password" required minlength="6" placeholder="6자 이상" autocomplete="new-password" /></label>
+        <div id="inv-consent"></div>
+        <p class="err" id="error" hidden></p>
+        <div class="acts"><button type="submit" class="btn main" id="btn" disabled>가입하고 합류하기</button></div>
+      </form>
+      <span class="link" id="toggle-wrap">이미 계정이 있으면 <a href="#" id="toggle">로그인으로 합류</a></span>
+    </section>
+  </main>
 
   <script type="module">
     import { supabase } from './adapter/supabase-client.js'
     import { renderConsentBox, saveConsents, STAFF_KEYS } from './consent.js'
     const $ = (id) => document.getElementById(id)
-    { const _b=$('btn'); window.__invConsent = renderConsentBox($('inv-consent'), STAFF_KEYS, (ok) => { _b.disabled = !ok; _b.style.opacity = ok ? '1' : '.5' }) }
+    { const _b=$('btn'); window.__invConsent = renderConsentBox($('inv-consent'), STAFF_KEYS, (ok) => { _b.disabled = !ok }, { cls: true }) }
     const inviteId = new URLSearchParams(location.search).get('id')
     if (!inviteId) { $('sub').textContent='초대 링크가 올바르지 않아요. 관리자에게 링크를 다시 받아주세요.'; $('form').style.display='none'; $('toggle-wrap').style.display='none' }
 
     let mode = 'signup'
-    $('toggle').onclick = () => {
+    $('toggle').onclick = (e) => {
+      e.preventDefault()
       mode = mode==='signup' ? 'login' : 'signup'
       $('btn').textContent = mode==='signup' ? '가입하고 합류하기' : '로그인하고 합류하기'
       $('toggle').textContent = mode==='signup' ? '로그인으로 합류' : '가입으로 합류'

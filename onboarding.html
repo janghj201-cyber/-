@@ -6,211 +6,478 @@
 <title>시작하기 — Dutyvo</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/dutyvo-192.png">
+<link rel="manifest" href="manifest.json?v=3">
+<link rel="apple-touch-icon" href="icons/dutyvo-apple-180.png">
+<link rel="stylesheet" href="lp/dv-auth.css?v=1">
 <style>
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8f7f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-  .card{background:#fff;border-radius:14px;padding:32px;width:100%;max-width:420px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
-  h2{margin:0 0 8px;color:#1a2332;}
-  p.sub{color:#6b7a8d;font-size:14px;margin:0 0 20px;}
-  label{display:block;font-size:13px;color:#1a2332;margin-bottom:6px;margin-top:14px;font-weight:600;}
-  input,select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e8e4dc;border-radius:8px;font-size:14px;background:#fff;}
-  button.primary{width:100%;margin-top:20px;padding:12px;border:none;border-radius:8px;background:#1a2332;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
-  button:disabled{opacity:0.6;cursor:default;}
-  .error{color:#c0392b;font-size:13px;margin-top:10px;}
-  .steps{display:flex;gap:6px;margin-bottom:18px;}
-  .step-dot{flex:1;height:5px;border-radius:3px;background:#e8e4dc;}
-  .step-dot.on{background:#f5a623;}
-  .store-row{display:flex;gap:6px;margin-top:8px;}
-  .store-row input{flex:1;}
-  .store-row button{border:1px solid #e8e4dc;background:#fff;border-radius:8px;padding:0 12px;cursor:pointer;color:#c0392b;font-size:16px;}
-  .add-store{margin-top:10px;background:none;border:none;color:#f5a623;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;}
-  .hint{font-size:12px;color:#a0aab4;margin-top:6px;}
-  .login-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:#6b7a8d;}
-  .login-link a{color:#f5a623;font-weight:700;}
+/* 시작 화면만 쓰는 것 */
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.tile{font:inherit;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 6px;cursor:pointer;display:grid;justify-items:center;gap:6px;color:var(--ink);font-size:13.5px;font-weight:700}
+.tile svg{width:22px;height:22px;color:var(--sub)}
+.tile[aria-pressed=true]{border-color:var(--green);background:var(--tint)}
+.tile[aria-pressed=true] svg{color:var(--green)}
+details.words{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+details.words summary{cursor:pointer;font-size:13.5px;font-weight:800;list-style:none;display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 8px}
+details.words summary::-webkit-details-marker{display:none}
+details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
+.words-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.words-grid label{font-size:12px;color:var(--sub);font-weight:700;display:grid;gap:4px}
+.words-grid input{padding:9px 10px;font-size:14px}
+.lbl{font-size:12.5px;font-weight:800;color:var(--sub);margin:12px 0 6px;display:flex;justify-content:space-between;gap:8px}
+.lbl span{font-weight:600;color:var(--mute)}
+.store{margin-top:8px}
+.store .nm{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:6px;align-items:center}
+.store.own{border:1px solid var(--line);border-radius:12px;padding:10px 10px 12px}
+.store .own-b{margin-top:10px}
+.hrs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.hrs input[type=time]{padding:10px}
+.hrs .til{color:var(--mute)}
+.common{margin-top:16px;border-top:1px solid var(--line);padding-top:4px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.days button{font:inherit;font-size:13.5px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--sub);border-radius:9px;padding:8px 0;cursor:pointer}
+.days button[aria-pressed=true]{border-color:var(--red);color:var(--red);background:var(--soft)}
+.x{font:inherit;border:none;background:transparent;color:var(--mute);font-size:20px;width:34px;height:40px;cursor:pointer;border-radius:8px}
+.x:hover{background:var(--soft);color:var(--ink)}
+.add{font:inherit;margin-top:10px;background:none;border:1.5px dashed var(--line);border-radius:10px;width:100%;padding:10px;color:var(--sub);font-weight:800;cursor:pointer}
+.same{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:14px;color:var(--sub);cursor:pointer}
+.feat{display:grid;margin-top:4px}
+.feat label{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 2px;border-top:1px solid var(--line);cursor:pointer;position:relative}
+.feat label:first-child{border-top:none}
+.feat b{font-size:14.5px}.feat small{grid-column:1;color:var(--sub);font-size:12.5px}
+.feat input.swi{position:absolute;opacity:0;width:1px;height:1px}
+.sw{grid-row:1 / span 2;grid-column:2;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.swi:checked+.sw{background:var(--green)}.swi:checked+.sw::after{left:21px}
+.swi:focus-visible+.sw{box-shadow:0 0 0 3px var(--tint)}
+.grp{font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.02em;margin:18px 0 2px}
+.clean{margin-top:18px;background:var(--soft);border-radius:12px;padding:12px 14px}
+.clean b{font-size:13.5px}.clean ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--sub);display:grid;gap:2px}
+.inv{display:grid;grid-template-columns:1fr 1.4fr 1fr auto;gap:6px;margin-top:8px;align-items:center}
+.inv select{padding:10px 8px;font-size:14px}
+.inv-head{display:grid;grid-template-columns:1fr 1.4fr 1fr 34px;gap:6px;font-size:12px;color:var(--mute);font-weight:700;margin-top:4px}
+.next3{display:grid;gap:10px;margin-top:6px}
+.nx{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:14px}
+.nx .ic{grid-row:1 / span 2;width:38px;height:38px;border-radius:11px;background:var(--tint);color:var(--green);display:grid;place-items:center}
+.nx .ic svg{width:20px;height:20px}
+.nx b{font-size:14.5px}.nx p{margin:0;color:var(--sub);font-size:13px}
+.nx .do{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.nx .do button{font:inherit;font-size:13px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.nx .do button.pri{border-color:var(--green);color:var(--green)}
+.nx .how{grid-column:2;margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--sub);display:grid;gap:2px}
+.nx textarea{grid-column:2;width:100%;margin-top:8px;height:84px;font:11px/1.45 ui-monospace,Menlo,monospace;border:1.5px solid var(--line);border-radius:8px;padding:8px;background:var(--soft);color:var(--ink)}
+.invl{grid-column:2;display:grid;gap:6px;margin-top:8px}
+.invl div{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px}
+.invl button{font:inherit;font-size:12.5px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.done-mark{width:52px;height:52px;border-radius:16px;background:var(--tint);color:var(--green);display:grid;place-items:center;margin-bottom:12px}
+.done-mark svg{width:28px;height:28px}
+.eyebrow{font-size:13px;font-weight:800;color:var(--green);margin:0 0 4px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;max-width:calc(100% - 32px);z-index:9}
+@media (max-width:560px){
+  .tiles{grid-template-columns:repeat(3,1fr)}
+  .words-grid{grid-template-columns:repeat(2,1fr)}
+  .days button{font-size:13px}
+  .inv,.inv-head{grid-template-columns:1fr 1fr 34px}
+  .inv input[type=email]{grid-column:1 / 3;grid-row:2}
+  .inv-head span:nth-child(2){display:none}
+}
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="steps"><div class="step-dot on" id="dot1"></div><div class="step-dot" id="dot2"></div><div class="step-dot" id="dot3"></div></div>
+<main class="shell">
+  <a class="brand" href="/intro"><img src="icons/dutyvo-mark.svg" alt="">Dutyvo</a>
+  <ol class="steps" id="steps"><li class="on">계정</li><li>회사</li><li>매장</li><li>쓸 기능</li><li>직원</li></ol>
 
-    <!-- 1단계: 회원가입 -->
-    <div id="step1">
-      <h2>시작하기</h2>
-      <p class="sub">대표자(관리자) 계정을 만듭니다. 직원은 나중에 초대로 가입해요.<br><b>초대 코드</b>가 필요합니다 — 없으시면 도입 문의를 남겨주세요.</p>
-      <form id="signup-form">
-        <label>초대 코드<input type="text" id="su-code" required placeholder="예) WV-TEST-01" style="text-transform:uppercase;" /></label>
-        <div id="su-code-msg" style="font-size:12px;margin:-4px 0 8px;min-height:16px;"></div>
-        <label>이름<input type="text" id="su-name" required placeholder="예) 장현진" /></label>
-        <label>이메일<input type="email" id="su-email" required placeholder="you@example.com" /></label>
-        <label>비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" /></label>
-        <div id="su-consent"></div>
-        <p class="error" id="su-error" hidden></p>
-        <button type="submit" class="primary" id="su-btn" disabled style="opacity:.5;">계정 만들기</button>
-      </form>
-      <span class="login-link">이미 계정이 있으세요? <a href="login.html">로그인</a></span>
+  <!-- 1 계정 -->
+  <section class="card" data-step="1">
+    <h1>대표 계정 만들기</h1>
+    <p class="sub">회사를 만드는 사람의 계정입니다. 직원은 마지막 단계에서 초대합니다.</p>
+    <form id="f1">
+      <label class="f">초대 코드<input type="text" id="su-code" required placeholder="받은 초대 코드" autocomplete="off" style="text-transform:uppercase"></label>
+      <div class="msg" id="su-code-msg"></div>
+      <label class="f">이름<input type="text" id="su-name" required placeholder="예) 김민지" autocomplete="name"></label>
+      <label class="f">이메일<input type="email" id="su-email" required placeholder="you@example.com" autocomplete="email"></label>
+      <label class="f">비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" autocomplete="new-password"></label>
+      <div id="su-consent"></div>
+      <p class="err" id="su-err" hidden></p>
+      <div class="acts"><button type="submit" class="btn main" id="su-btn" disabled>계정 만들기</button></div>
+    </form>
+    <span class="link">이미 계정이 있으면 <a href="login.html">로그인</a> · 초대 코드가 없으면 <a href="/intro">도입 문의</a></span>
+  </section>
+
+  <!-- 2 회사 -->
+  <section class="card" data-step="2" hidden>
+    <h1>회사 정보</h1>
+    <p class="sub">업종에 맞춰 청소 항목과 매달 반복되는 일을 미리 채워 둡니다. 전부 나중에 바꿀 수 있습니다.</p>
+    <label class="f">회사 · 브랜드 이름<input type="text" id="co" placeholder="예) 온기 커피" maxlength="40"></label>
+    <div class="lbl" style="margin-top:14px"><b>업종</b></div>
+    <div class="tiles" id="tiles">
+      <button type="button" class="tile" data-ind="cafe" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 2v3M12 2v3"/></svg>카페</button>
+      <button type="button" class="tile" data-ind="convenience" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/></svg>편의점</button>
+      <button type="button" class="tile" data-ind="beauty" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.2 16 20 4M15.8 16 4 4"/></svg>뷰티</button>
+      <button type="button" class="tile" data-ind="academy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>학원</button>
+      <button type="button" class="tile" data-ind="etc" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 12h6M12 9v6"/></svg>기타</button>
     </div>
+    <details class="words">
+      <summary>화면에 쓰는 말 <span id="words-sum">매장 · 근무자 · 청소 · 인수인계</span></summary>
+      <div class="words-grid">
+        <label>일하는 곳<input type="text" data-w="store" value="매장" maxlength="12"></label>
+        <label>그날 일하는 사람<input type="text" data-w="worker" value="근무자" maxlength="12"></label>
+        <label>매일 점검<input type="text" data-w="clean" value="청소" maxlength="12"></label>
+        <label>다음 사람에게 남기는 말<input type="text" data-w="handover" value="인수인계" maxlength="12"></label>
+      </div>
+    </details>
+    <p class="err" id="co-err" hidden></p>
+    <div class="acts"><button type="button" class="btn quiet" data-prev>이전</button><button type="button" class="btn main" data-next>다음</button></div>
+  </section>
 
-    <!-- 2단계: 회사 정보 -->
-    <div id="step2" hidden>
-      <h2>회사(브랜드) 정보</h2>
-      <p class="sub">업종을 고르면 청소 체크리스트·고정업무 기본값을 맞춰드려요. 나중에 관리자 설정에서 자유롭게 수정됩니다.</p>
-      <form id="company-form">
-        <label>회사/브랜드 이름<input type="text" id="co-name" required placeholder="예) 위베이프" /></label>
-        <label>업종
-          <select id="co-industry">
-            <option value="cafe">카페</option>
-            <option value="convenience">편의점</option>
-            <option value="beauty">뷰티</option>
-            <option value="academy">학원</option>
-            <option value="etc" selected>기타</option>
-          </select>
-        </label>
-        <p class="error" id="co-error" hidden></p>
-        <button type="submit" class="primary" id="co-btn">다음</button>
-      </form>
+  <!-- 3 매장 · 운영 시간 · 정기 휴무 -->
+  <section class="card" data-step="3" hidden>
+    <h1><span class="w-store">매장</span>과 운영 시간</h1>
+    <p class="sub">닫는 시각 30분 전에 <span class="w-store">매장</span> 컴퓨터에 오늘 남은 일이 뜹니다.</p>
+    <div class="lbl"><b><b class="w-store">매장</b> 이름</b></div>
+    <div id="stores"></div>
+    <button type="button" class="add" id="add-store">+ <span class="w-store">매장</span> 추가</button>
+    <div class="common" id="common">
+      <div class="lbl">운영 시간 <span>모든 <span class="w-store">매장</span></span></div>
+      <div class="hrs"><input type="time" value="10:00" aria-label="여는 시각"><span class="til">~</span><input type="time" value="22:00" aria-label="닫는 시각"></div>
+      <div class="lbl">정기 휴무 <span>없으면 비워 두기</span></div>
+      <div class="days"></div>
     </div>
+    <label class="same"><input type="checkbox" id="diff"><span><span class="w-store">매장</span>마다 시간 · 휴무가 다름</span></label>
+    <p class="hint">주소 · 아이콘은 나중에 관리자 → 설정에서.</p>
+    <p class="err" id="st-err" hidden></p>
+    <div class="acts"><button type="button" class="btn quiet" data-prev>이전</button><button type="button" class="btn main" data-next>다음</button></div>
+  </section>
 
-    <!-- 3단계: 매장 등록 -->
-    <div id="step3" hidden>
-      <h2>매장 등록</h2>
-      <p class="sub">운영 중인 매장을 등록해 주세요. 나중에 추가할 수도 있어요.</p>
-      <div id="store-list"></div>
-      <button class="add-store" id="add-store-btn">+ 매장 추가</button>
-      <p class="hint">매장 이름만 필수예요 (주소는 선택).</p>
-      <p class="error" id="st-error" hidden></p>
-      <button class="primary" id="st-btn">설정 완료하고 시작하기</button>
+  <!-- 4 쓸 기능 -->
+  <section class="card" data-step="4" hidden>
+    <h1>쓸 기능 고르기</h1>
+    <p class="sub">끈 기능은 모든 화면에서 숨습니다. 나중에 관리자 → 설정에서 언제든 켤 수 있습니다.</p>
+    <div class="grp">매일 쓰는 것</div>
+    <div class="feat">
+      <label><b><span class="w-clean">청소</span> 체크리스트</b><small>매일 점검 항목 · 사진 · <span class="w-store">매장</span> 점수</small><input type="checkbox" class="swi" data-f="cleaning" checked><span class="sw"></span></label>
+      <label><b><span class="w-handover">인수인계</span></b><small>다음 <span class="w-worker">근무자</span>에게 한 줄 남기기 · 확인 기록</small><input type="checkbox" class="swi" data-f="handover" checked><span class="sw"></span></label>
+      <label><b>업무 요청</b><small>동료에게 부탁하고 수락 · 완료까지</small><input type="checkbox" class="swi" data-f="workreq" checked><span class="sw"></span></label>
+      <label><b>휴무 관리</b><small>월간 스케줄에 휴무 표시</small><input type="checkbox" class="swi" data-f="dayoff" checked><span class="sw"></span></label>
     </div>
-
-    <!-- 완료 -->
-    <div id="step-done" hidden>
-      <h2>🎉 준비 완료!</h2>
-      <p class="sub" id="done-msg">회사와 매장이 만들어졌어요. 이제 앱으로 이동합니다.</p>
-      <button class="primary" onclick="location.href='index.html'">앱 시작하기</button>
+    <div class="grp">있으면 좋은 것</div>
+    <div class="feat">
+      <label><b><span class="w-handover">인수인계</span> 피드백</b><small>남긴 말에 한 줄 답</small><input type="checkbox" class="swi" data-f="hofeedback" checked><span class="sw"></span></label>
+      <label><b>게시판</b><small>공지 · 업무 공유</small><input type="checkbox" class="swi" data-f="board" checked><span class="sw"></span></label>
+      <label><b><span class="w-store">매장</span> 고정 정보</b><small>와이파이 · 도어락처럼 늘 필요한 것</small><input type="checkbox" class="swi" data-f="storeinfo" checked><span class="sw"></span></label>
+      <label><b>개인 메모</b><small>나만 보는 메모</small><input type="checkbox" class="swi" data-f="memo" checked><span class="sw"></span></label>
     </div>
-  </div>
+    <div class="grp">팀이 커지면</div>
+    <div class="feat">
+      <label><b>프로젝트</b><small>며칠 걸리는 일 · 진행률</small><input type="checkbox" class="swi" data-f="projects"><span class="sw"></span></label>
+      <label><b>협업 프로젝트</b><small>여러 사람이 함께 하는 일 · 도움 요청</small><input type="checkbox" class="swi" data-f="collab"><span class="sw"></span></label>
+      <label><b>주간 1:1 상담</b><small>매주 한 명씩 자동 배정</small><input type="checkbox" class="swi" data-f="meeting"><span class="sw"></span></label>
+    </div>
+    <div class="clean"><b><span class="w-clean">청소</span> 항목 미리보기</b> <span style="font-size:12.5px;color:var(--sub)">· 업종 기본값 · 나중에 수정</span>
+      <ol id="clean-list"></ol></div>
+    <div class="acts"><button type="button" class="btn quiet" data-prev>이전</button><button type="button" class="btn main" data-next>다음</button></div>
+  </section>
 
-  <script type="module">
-    import { supabase } from './adapter/supabase-client.js'
-    import { renderConsentBox, saveConsents, TENANT_KEYS } from './consent.js'
+  <!-- 5 직원 초대 -->
+  <section class="card" data-step="5" hidden>
+    <h1>직원 초대</h1>
+    <p class="sub">초대마다 링크가 하나씩 생깁니다. 다음 화면에서 링크를 복사해 카톡으로 보내면, 받은 사람은 비밀번호만 정하고 바로 씁니다. 지금 건너뛰어도 됩니다.</p>
+    <div class="inv-head"><span>이름</span><span>이메일</span><span>일하는 곳</span><span></span></div>
+    <div id="invs"></div>
+    <button type="button" class="add" id="add-inv">+ 한 명 더</button>
+    <p class="err" id="fin-err" hidden></p>
+    <div class="acts"><button type="button" class="btn quiet" id="fin-skip">나중에</button><button type="button" class="btn main" id="fin-go">초대하고 시작</button></div>
+  </section>
 
-    // 이미 온보딩까지 끝난 계정이면 앱으로
-    const { data: { session: existing } } = await supabase.auth.getSession()
-    if (existing) {
-      const { data: prof } = await supabase.from('profiles').select('id').eq('id', existing.user.id).maybeSingle()
-      if (prof) location.href = 'index.html'
+  <!-- 6 끝 -->
+  <section class="card" data-step="6" hidden>
+    <div class="done-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <p class="eyebrow" id="done-eb"></p>
+    <h1>새로운 한 걸음 시작해 볼까요</h1>
+    <p class="sub">쓸 기기에 깔아 두면 내일 아침부터 바로 씁니다. 설정은 전부 관리자 → 설정에서 바꿀 수 있습니다.</p>
+    <p class="err" id="done-warn" hidden></p>
+    <div class="next3">
+      <div class="nx"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><b>이 기기에 앱으로</b><p>홈 화면 아이콘으로 바로 열리고, <span class="w-handover">인수인계</span> · 요청 알림이 옵니다.</p>
+        <div class="do"><button type="button" class="pri" id="b-install">앱 설치</button></div>
+        <ol class="how" id="how-install" hidden></ol></div>
+      <div class="nx"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><b><span class="w-store">매장</span> 컴퓨터 — 켜면 바로</b><p id="pc-desc"></p>
+        <div class="do" id="pc-do"></div>
+        <ol class="how" id="how-pc" hidden></ol>
+        <textarea id="pc-cmd" readonly hidden aria-label="터미널 명령"></textarea></div>
+      <div class="nx"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span><b>직원</b><p id="inv-msg"></p>
+        <div class="invl" id="inv-list" hidden></div></div>
+    </div>
+    <div class="acts"><button type="button" class="btn main" id="b-start">Dutyvo 시작</button></div>
+  </section>
+</main>
+
+<script type="module">
+import { supabase } from './adapter/supabase-client.js'
+import { renderConsentBox, saveConsents, TENANT_KEYS } from './consent.js'
+import { pcBat, pcMacCmd, pcOS, pcCopy } from './adapter/pcsetup.js'
+
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)]
+const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+function toast(t) { const o = $('.toast'); if (o) o.remove(); const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600) }
+
+// 앱 설치 — 이 화면에서도 설치 창을 띄울 수 있게 (서비스워커 · 매니페스트)
+let bip = null
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); bip = e })
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {})
+
+// 이미 끝까지 한 계정이면 앱으로
+const { data: { session: existing } } = await supabase.auth.getSession()
+if (existing) {
+  const { data: prof } = await supabase.from('profiles').select('id').eq('id', existing.user.id).maybeSingle()
+  if (prof) location.href = 'index.html'
+}
+let userId = existing?.user?.id ?? null
+let contactName = existing?.user?.user_metadata?.name || (existing?.user?.email || '').split('@')[0] || ''
+let consentValues = null
+let signupCode = ''
+
+// ── 단계 이동 ──
+let step = 1
+function show(n) {
+  step = n
+  $$('[data-step]').forEach((s) => (s.hidden = +s.dataset.step !== n))
+  $$('#steps li').forEach((li, i) => { li.className = i + 1 < n ? 'done' : i + 1 === n ? 'on' : '' })
+  $('#steps').hidden = n === 6
+  if (n === 4) loadCleanPreview()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+$$('[data-prev]').forEach((b) => (b.onclick = () => show(step - 1)))
+$$('[data-next]').forEach((b) => (b.onclick = () => { if (validate(step)) show(step + 1) }))
+function validate(n) {
+  if (n === 2) {
+    const ok = !!$('#co').value.trim(); $('#co-err').hidden = ok
+    if (!ok) { $('#co-err').textContent = '회사 · 브랜드 이름을 적어 주세요.'; $('#co').focus() }
+    return ok
+  }
+  if (n === 3) {
+    const ok = storeNames().length > 0; $('#st-err').hidden = ok
+    if (!ok) { $('#st-err').textContent = `${W().store}을 하나 이상 적어 주세요.`; $('.store input[type=text]').focus() }
+    return ok
+  }
+  return true
+}
+
+// ── 1 계정 ──
+const suBtn = $('#su-btn')
+const consentBox = renderConsentBox($('#su-consent'), TENANT_KEYS, (ok) => { suBtn.disabled = !ok }, { cls: true })
+if (userId) show(2) // 가입만 하고 나갔던 계정 — 회사부터
+$('#f1').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const err = $('#su-err'); err.hidden = true; suBtn.disabled = true; suBtn.textContent = '만드는 중…'
+  const back = () => { suBtn.disabled = false; suBtn.textContent = '계정 만들기' }
+  try {
+    contactName = $('#su-name').value.trim()
+    consentValues = consentBox.values()
+    signupCode = $('#su-code').value.trim().toUpperCase()
+    const msg = $('#su-code-msg')
+    const { data: okCode, error: cErr } = await supabase.rpc('check_signup_code', { p_code: signupCode })
+    if (cErr) throw cErr
+    if (!okCode) { msg.className = 'msg bad'; msg.textContent = '쓸 수 없는 코드 — 오타 · 만료 · 이미 사용'; back(); return }
+    msg.className = 'msg ok'; msg.textContent = '확인된 코드'
+    const { data, error } = await supabase.auth.signUp({ email: $('#su-email').value.trim(), password: $('#su-password').value, options: { data: { name: contactName } } })
+    if (error) throw error
+    if (!data.session) { err.textContent = '가입 확인 메일을 보냈습니다. 메일의 링크를 누른 뒤 이 화면을 새로고침하면 이어집니다.'; err.hidden = false; back(); return }
+    userId = data.user.id
+    show(2)
+  } catch (e2) { err.textContent = e2.message || '가입에 실패했습니다.'; err.hidden = false; back() }
+})
+
+// ── 2 회사 · 업종 · 쓰는 말 ──
+const IND = {
+  cafe: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '에스프레소 머신 · 스팀 노즐 세척', '제빙기 · 냉장고 온도 확인', '테이블 · 의자 정리', '쓰레기통 비우기', '화장실 점검'] },
+  convenience: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '진열대 전면 정리', '유통기한 확인', '냉장 · 냉동 온도 확인', '쓰레기통 비우기', '카운터 주변 정리'] },
+  beauty: { w: ['매장', '디자이너', '청소', '인수인계'], c: ['바닥 · 머리카락 정리', '도구 소독', '수건 · 가운 교체', '거울 · 의자 닦기', '쓰레기통 비우기', '카운터 주변 정리'] },
+  academy: { w: ['교실', '선생님', '마감 점검', '전달 사항'], c: ['교실 정리 · 책상 줄 맞추기', '화이트보드 지우기', '창문 · 냉난방 끄기', '출입문 잠금 확인', '쓰레기통 비우기', '복도 · 화장실 점검'] },
+  etc: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '출입문 · 유리창 닦기', '쓰레기통 비우기', '진열대 · 집기 정리', '화장실 점검', '카운터 주변 정리'] },
+}
+const TERM_DEFAULT = { store: '매장', worker: '근무자', clean: '청소', handover: '인수인계' }
+let ind = 'etc'
+const W = () => { const w = {}; $$('[data-w]').forEach((i) => (w[i.dataset.w] = i.value.trim() || TERM_DEFAULT[i.dataset.w])); return w }
+function words() { const w = W(); Object.keys(w).forEach((k) => $$('.w-' + k).forEach((e) => (e.textContent = w[k]))); $('#words-sum').textContent = [w.store, w.worker, w.clean, w.handover].join(' · ') }
+function setInd(k) { ind = k; $$('.tile').forEach((t) => t.setAttribute('aria-pressed', t.dataset.ind === k)); $$('[data-w]').forEach((i, n) => (i.value = IND[k].w[n])); words(); tplCache = null }
+$$('.tile').forEach((t) => (t.onclick = () => setInd(t.dataset.ind)))
+$$('[data-w]').forEach((i) => (i.oninput = words))
+
+// ── 3 매장 · 운영 시간 · 정기 휴무 ──
+const DAYS = [['월', 1], ['화', 2], ['수', 3], ['목', 4], ['금', 5], ['토', 6], ['일', 0]]
+function dayChips(box) { box.innerHTML = DAYS.map(([d, n]) => `<button type="button" data-d="${n}" aria-pressed="false">${d}</button>`).join(''); box.querySelectorAll('button').forEach((b) => (b.onclick = () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'))) }
+const readDays = (box) => [...box.querySelectorAll('button[aria-pressed=true]')].map((b) => +b.dataset.d)
+function copyHours(r) {
+  const c = $$('#common input[type=time]'), t = r.querySelectorAll('.own-b input[type=time]'); t[0].value = c[0].value; t[1].value = c[1].value
+  const on = $$('#common .days button').map((b) => b.getAttribute('aria-pressed')); r.querySelectorAll('.own-b .days button').forEach((b, i) => b.setAttribute('aria-pressed', on[i]))
+}
+function storeRow(name) {
+  const r = document.createElement('div'); r.className = 'store'
+  r.innerHTML = `<div class="nm"><input type="text" placeholder="이름 (예: 강남점)" maxlength="30" value="${esc(name || '')}"><button type="button" class="x" aria-label="삭제">×</button></div>
+    <div class="own-b" hidden><div class="hrs"><input type="time" value="10:00" aria-label="여는 시각"><span class="til">~</span><input type="time" value="22:00" aria-label="닫는 시각"></div><div class="lbl">정기 휴무 <span>없으면 비워 두기</span></div><div class="days"></div></div>`
+  dayChips(r.querySelector('.days'))
+  r.querySelector('.x').onclick = () => { if ($$('.store').length > 1) { r.remove(); storeOpts() } }
+  r.querySelector('input[type=text]').oninput = storeOpts
+  $('#stores').appendChild(r)
+  if ($('#diff').checked) copyHours(r)
+  diffView(); storeOpts()
+}
+function diffView() { const d = $('#diff').checked; $('#common').hidden = d; $$('.store').forEach((r) => { r.classList.toggle('own', d); r.querySelector('.own-b').hidden = !d }) }
+dayChips($('#common .days'))
+$('#diff').onchange = () => { if ($('#diff').checked) $$('.store').forEach(copyHours); diffView() }
+$('#add-store').onclick = () => { storeRow(); $$('.store input[type=text]').pop().focus() }
+storeRow()
+const storeRows = () => $$('.store').map((r) => ({ r, name: r.querySelector('input[type=text]').value.trim() })).filter((x) => x.name)
+const storeNames = () => storeRows().map((x) => x.name)
+function hoursOf(r) {
+  if ($('#diff').checked) { const t = r.querySelectorAll('.own-b input[type=time]'); return { open: t[0].value || '10:00', close: t[1].value || '22:00', off: readDays(r.querySelector('.own-b .days')) } }
+  const c = $$('#common input[type=time]'); return { open: c[0].value || '10:00', close: c[1].value || '22:00', off: readDays($('#common .days')) }
+}
+
+// ── 4 청소 미리보기 — 실제로 넣을 업종 기본값 ──
+let tplCache = null
+async function loadTemplates() {
+  if (tplCache && tplCache.ind === ind) return tplCache.rows
+  const { data, error } = await supabase.from('industry_templates').select('template_type, content').eq('industry', ind)
+  if (error) throw error
+  tplCache = { ind, rows: data || [] }
+  return tplCache.rows
+}
+const pick = (rows, t) => rows.find((r) => r.template_type === t)?.content ?? []
+async function loadCleanPreview() {
+  let list = IND[ind].c
+  try { const cl = pick(await loadTemplates(), 'cleaning_checklist').map((x) => x.name).filter(Boolean); if (cl.length) list = cl } catch (e) {}
+  $('#clean-list').innerHTML = list.map((x) => `<li>${esc(x)}</li>`).join('')
+}
+
+// ── 5 직원 초대 ──
+function storeOpts() {
+  const names = $$('.store input[type=text]').map((i, n) => [n, i.value.trim()]).filter((x) => x[1])
+  $$('.inv select').forEach((s) => { const v = s.value; s.innerHTML = names.map(([n, nm]) => `<option value="${n}">${esc(nm)}</option>`).join('') + '<option value="all">전체</option>'; if ([...s.options].some((o) => o.value === v)) s.value = v })
+}
+function invRow() {
+  const r = document.createElement('div'); r.className = 'inv'
+  r.innerHTML = '<input type="text" placeholder="이름" maxlength="20"><input type="email" placeholder="이메일"><select aria-label="일하는 곳"></select><button type="button" class="x" aria-label="삭제">×</button>'
+  r.querySelector('.x').onclick = () => { if ($$('.inv').length > 1) r.remove(); else r.querySelectorAll('input').forEach((i) => (i.value = '')) }
+  $('#invs').appendChild(r); storeOpts()
+}
+$('#add-inv').onclick = invRow
+invRow()
+
+// ── 만들기 — 마지막에 한 번에. 회사 · 계정 · 매장은 꼭, 나머지(기본값 · 설정 · 초대)는 실패해도 앱은 쓸 수 있다 ──
+let created = null
+async function finish(withInvites) {
+  const err = $('#fin-err'); err.hidden = true
+  const go = $('#fin-go'), skip = $('#fin-skip'); go.disabled = skip.disabled = true; go.textContent = '만드는 중…'
+  const warn = []
+  try {
+    if (!userId) throw new Error('계정 정보가 없습니다. 처음부터 다시 해 주세요.')
+    const coName = $('#co').value.trim()
+    const rows = await loadTemplates().catch(() => [])
+    const tenantId = crypto.randomUUID()
+    const { error: tErr } = await supabase.from('tenants').insert({ id: tenantId, name: coName, industry: ind, evaluation_metric_labels: pick(rows, 'evaluation_metrics') })
+    if (tErr) throw tErr
+    const { error: pErr } = await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, name: contactName || coName, role: 'owner' })
+    if (pErr) throw pErr
+    if (consentValues) { try { await saveConsents(tenantId, userId, 'tenant', consentValues) } catch (ce) { console.warn('[consent]', ce) } }
+    if (signupCode) { try { await supabase.rpc('use_signup_code', { p_code: signupCode, p_tenant: tenantId, p_tenant_name: coName, p_email: (await supabase.auth.getUser()).data?.user?.email ?? null }) } catch (ue) { console.warn('[code]', ue) } }
+    // 매장 — 하나씩 넣어 id를 정확히 받는다(운영 시간 · 초대가 이 id를 쓴다)
+    const sr = storeRows(); const idByRow = new Map(); const hours = {}
+    for (const x of sr) {
+      const { data, error } = await supabase.from('stores').insert({ tenant_id: tenantId, name: x.name }).select('id').single()
+      if (error) throw error
+      idByRow.set(x.r, data.id); hours[data.id] = hoursOf(x.r)
     }
-
-    const $ = (id) => document.getElementById(id)
-    let userId = existing?.user?.id ?? null
-    let contactName = ''
-    let tenantInfo = null // {name, industry}
-    let consentValues = null
-    let signupCode = ''
-    const _suBtn = $('su-btn')
-    const consentBox = renderConsentBox($('su-consent'), TENANT_KEYS, (ok) => { _suBtn.disabled = !ok; _suBtn.style.opacity = ok ? '1' : '.5' })
-
-    function showStep(n) {
-      ;['step1','step2','step3','step-done'].forEach((id,i)=>{ $(id).hidden = (id !== (n===4?'step-done':'step'+n)) })
-      ;[1,2,3].forEach(i=>$('dot'+i).classList.toggle('on', i<=Math.min(n,3)))
-    }
-    // 가입만 하고 이탈했던 계정이면 2단계부터
-    if (userId) { contactName = existing.user.email.split('@')[0]; showStep(2) }
-
-    // ── 1단계: 가입 ──
-    $('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault()
-      const btn=$('su-btn'), err=$('su-error'); err.hidden=true; btn.disabled=true; btn.textContent='만드는 중...'
-      try {
-        contactName = $('su-name').value.trim()
-        consentValues = consentBox.values()
-        signupCode = $('su-code').value.trim().toUpperCase()
-        {
-          const { data: okCode, error: cErr } = await supabase.rpc('check_signup_code', { p_code: signupCode })
-          if (cErr) throw cErr
-          if (!okCode) { $('su-code-msg').innerHTML = '<span style="color:#c0392b;font-weight:700;">사용할 수 없는 코드예요 (오타·만료·사용완료)</span>'; btn.disabled=false; btn.textContent='계정 만들기'; return }
-          $('su-code-msg').innerHTML = '<span style="color:#0f8a5f;font-weight:700;">✓ 확인된 코드</span>'
-        }
-        const { data, error } = await supabase.auth.signUp({ email: $('su-email').value.trim(), password: $('su-password').value })
-        if (error) throw error
-        if (!data.session) {
-          err.textContent='가입 확인 메일이 발송됐어요. 메일의 링크를 누른 뒤 이 페이지에서 새로고침 해주세요.'
-          err.hidden=false; btn.disabled=false; btn.textContent='계정 만들기'; return
-        }
-        userId = data.user.id
-        showStep(2)
-      } catch (e2) {
-        err.textContent = e2.message || '가입에 실패했습니다.'; err.hidden=false; btn.disabled=false; btn.textContent='계정 만들기'
+    // 업종 기본값 — 고정업무 · 대청소 구역 · 대청소 규칙 · 매일 청소
+    const seed = async (label, fn) => { try { const { error } = await fn(); if (error) throw error } catch (e) { console.warn('[seed]', label, e); warn.push(label) } }
+    const ev = pick(rows, 'calendar_events'), zones = pick(rows, 'cleaning_zones'), cl = pick(rows, 'cleaning_checklist')
+    if (ev.length) await seed('고정업무', () => supabase.from('calendar_event_types').insert(ev.map((x, i) => ({ tenant_id: tenantId, label: x.label, color: x.color, recurrence: x.recurrence, sort_order: i }))))
+    if (zones.length) await seed('대청소 구역', () => supabase.from('cleaning_zones').insert(zones.map((z) => ({ tenant_id: tenantId, zone_number: z.zone_number, title: z.title, items: z.items }))))
+    await seed('대청소 규칙', () => supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: tenantId, recurrence: { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] } }, { onConflict: 'tenant_id' }))
+    if (cl.length) await seed('청소 항목', () => supabase.from('cleaning_daily_items').insert(cl.map((x, i) => ({ tenant_id: tenantId, label: x.name, sort_order: i }))))
+    // 설정 — 쓸 기능 · 우리 회사 말 · 운영 시간 · 기본 설정 안내(첫 화면)
+    const features = Object.fromEntries($$('.swi').map((i) => [i.dataset.f, i.checked]))
+    const w = W(), terms = {}; Object.keys(TERM_DEFAULT).forEach((k) => { if (w[k] && w[k] !== TERM_DEFAULT[k]) terms[k] = w[k] })
+    const row = { tenant_id: tenantId, features, theme: 'default', updated_at: new Date().toISOString(), extra: { terms, hours, setup: { asked: false, done: {} } } }
+    await seed('설정', async () => { let r = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' }); if (r.error && /extra/.test(String(r.error.message || ''))) { delete row.extra; r = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' }) } return r })
+    // 초대
+    const invites = []
+    if (withInvites) {
+      for (const r of $$('.inv')) {
+        const name = r.querySelector('input[type=text]').value.trim(), email = r.querySelector('input[type=email]').value.trim()
+        if (!name || !email) continue
+        const sv = r.querySelector('select').value
+        const storeRow = sv === 'all' ? null : $$('.store')[+sv]
+        const storeId = storeRow ? idByRow.get(storeRow) ?? null : null
+        const { data, error } = await supabase.from('invitations').insert({ tenant_id: tenantId, store_id: storeId, role: 'staff', name, email, invited_by: userId, monitor_only: false }).select('id').single()
+        if (error) { console.warn('[invite]', error); warn.push(`${name} 초대`) } else invites.push({ name, id: data.id })
       }
-    })
-
-    // ── 2단계: 회사 ──
-    $('company-form').addEventListener('submit', (e) => {
-      e.preventDefault()
-      tenantInfo = { name: $('co-name').value.trim(), industry: $('co-industry').value }
-      if (!tenantInfo.name) return
-      showStep(3)
-      if (!$('store-list').children.length) addStoreRow()
-    })
-
-    // ── 3단계: 매장 ──
-    function addStoreRow(){
-      const row=document.createElement('div'); row.className='store-row'
-      row.innerHTML=`<input type="text" class="st-name" placeholder="매장 이름 (필수)"><input type="text" class="st-addr" placeholder="주소 (선택)"><button type="button" title="삭제">×</button>`
-      row.querySelector('button').onclick=()=>{ if($('store-list').children.length>1) row.remove() }
-      $('store-list').appendChild(row)
     }
-    $('add-store-btn').onclick=addStoreRow
+    created = { coName, stores: sr.length, feats: Object.values(features).filter(Boolean).length, invites }
+    paintDone(warn)
+    show(6)
+  } catch (e3) {
+    err.textContent = (e3 && e3.message) || '만들지 못했습니다. 잠시 후 다시 눌러 주세요.'; err.hidden = false
+    go.disabled = skip.disabled = false; go.textContent = '초대하고 시작'
+  }
+}
+$('#fin-go').onclick = () => finish(true)
+$('#fin-skip').onclick = () => finish(false)
 
-    $('st-btn').onclick = async () => {
-      const btn=$('st-btn'), err=$('st-error'); err.hidden=true
-      const stores=[...document.querySelectorAll('.store-row')].map(r=>({name:r.querySelector('.st-name').value.trim(),address:r.querySelector('.st-addr').value.trim()})).filter(s=>s.name)
-      if(!stores.length){ err.textContent='매장을 최소 1개 등록해 주세요.'; err.hidden=false; return }
-      btn.disabled=true; btn.textContent='만드는 중...'
-      try {
-        // 업종 템플릿 로드
-        const { data: tpl, error: tplErr } = await supabase.from('industry_templates').select('template_type, content').eq('industry', tenantInfo.industry)
-        if (tplErr) throw tplErr
-        const pick=(t)=>tpl.find(r=>r.template_type===t)?.content ?? []
-        const metrics=pick('evaluation_metrics'), checklist=pick('cleaning_checklist'), calendarEvents=pick('calendar_events'), zones=pick('cleaning_zones')
+// ── 6 끝 화면 ──
+function paintDone(warn) {
+  const w = W()
+  $('#done-eb').textContent = `${created.coName} · ${w.store} ${created.stores}곳 · 기능 ${created.feats}개`
+  $('#done-warn').hidden = !warn.length
+  if (warn.length) $('#done-warn').textContent = `${warn.join(' · ')}을(를) 넣지 못했습니다 — 관리자 → 설정에서 직접 넣을 수 있습니다.`
+  // 매장 컴퓨터 — 지금 기기가 윈도우 · 맥이면 여기서 바로. 폰이면 매장 컴퓨터에서 열 주소를 준다
+  const os = pcOS(), pcUrl = location.origin + '/?pc=1'
+  const how = $('#how-pc'), cmd = $('#pc-cmd'), doBox = $('#pc-do')
+  const btn = (t, pri, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (pri) b.className = 'pri'; b.onclick = fn; doBox.appendChild(b); return b }
+  doBox.innerHTML = ''
+  const copyUrl = async () => { const ok = await pcCopy(pcUrl); toast(ok ? '주소를 복사했습니다 — 매장 컴퓨터에서 열기' : pcUrl) }
+  if (os === 'win') {
+    $('#pc-desc').innerHTML = '설치 파일을 한 번 실행하면 앱으로 깔리고, 컴퓨터를 켤 때마다 Dutyvo가 먼저 뜹니다. 출근 · 마감 알림은 매장 컴퓨터에서만.'
+    btn('설치 파일 받기', true, () => { pcBat('install'); how.innerHTML = '<li>받은 파일 실행 → 「예」 (컴퓨터마다 한 번)</li><li>크롬 · 엣지를 완전히 닫고 다시 열기</li><li>다음부터는 컴퓨터를 켜면 자동으로 뜹니다</li>'; how.hidden = false })
+    btn('다른 컴퓨터 — 주소 복사', false, copyUrl)
+  } else if (os === 'mac') {
+    $('#pc-desc').innerHTML = '터미널에 한 줄만 붙여 넣으면, 맥을 켤 때마다 Dutyvo가 앱 창으로 먼저 뜹니다. 관리자 암호는 묻지 않습니다.'
+    btn('명령 복사 · 맥', true, async () => {
+      const c = pcMacCmd('install'), ok = await pcCopy(c)
+      how.innerHTML = '<li>⌘ + 스페이스 → 「터미널」 → 엔터</li><li>⌘ + V → 엔터</li><li>처음 한 번 「백그라운드 항목 추가됨」 알림이 뜨면 정상</li>'; how.hidden = false
+      cmd.value = c; cmd.hidden = ok; if (!ok) { cmd.focus(); cmd.select(); toast('복사가 막혀 있어요 — 아래 글을 전부 선택해 복사') } else toast('복사했습니다 — 터미널에 붙여 넣고 엔터')
+    })
+    btn('다른 컴퓨터 — 주소 복사', false, copyUrl)
+  } else {
+    $('#pc-desc').innerHTML = `매장 컴퓨터에서 이 주소를 열고, 오른쪽 위 내 계정 → 「매장 컴퓨터」를 한 번 누르면 켤 때마다 Dutyvo가 먼저 뜹니다.`
+    btn('주소 복사', true, copyUrl)
+  }
+  // 직원 — 초대마다 링크
+  const list = $('#inv-list')
+  if (created.invites.length) {
+    $('#inv-msg').textContent = `초대 ${created.invites.length}명 — 링크를 복사해 카톡으로 보내면 됩니다.`
+    list.innerHTML = ''
+    created.invites.forEach((v) => {
+      const d = document.createElement('div'); d.innerHTML = `<span>${esc(v.name)}</span>`
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = '링크 복사'
+      b.onclick = async () => { const link = `${location.origin}/invite.html?id=${v.id}`; const ok = await pcCopy(link); b.textContent = ok ? '복사됨' : '복사 막힘'; if (!ok) prompt('아래 링크를 복사해 보내세요.', link); setTimeout(() => (b.textContent = '링크 복사'), 1600) }
+      d.appendChild(b); list.appendChild(d)
+    })
+    list.hidden = false
+  } else {
+    $('#inv-msg').textContent = '관리자 → 설정 → 사람 → 직원 초대에서 언제든. 링크를 복사해 카톡으로 보내면 됩니다.'
+    list.hidden = true
+  }
+}
+$('#b-install').onclick = async () => {
+  if (bip) { bip.prompt(); bip = null; return }
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1), and = /Android/.test(ua)
+  const steps = ios ? ['사파리 아래 공유 버튼', '「홈 화면에 추가」 → 추가'] : and ? ['크롬 오른쪽 위 ⋮', '「앱 설치」 또는 「홈 화면에 추가」'] : ['주소창 오른쪽 설치 아이콘', '「설치」']
+  const h = $('#how-install'); h.innerHTML = steps.map((x) => `<li>${x}</li>`).join(''); h.hidden = false
+}
+$('#b-start').onclick = () => { location.href = 'index.html' }
 
-        // 테넌트 + owner 프로필 (id를 미리 만들어 select 되읽기 없이 진행 — RLS 부트스트랩 순서)
-        const tenantId = crypto.randomUUID()
-        const { error: tErr } = await supabase.from('tenants').insert({ id: tenantId, name: tenantInfo.name, industry: tenantInfo.industry, evaluation_metric_labels: metrics })
-        if (tErr) throw tErr
-        const { error: pErr } = await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, name: contactName, role: 'owner' })
-        if (pErr) throw pErr
-        // 동의 기록 (1단계에서 받은 값 — 가입만 하고 이탈했다 돌아온 경우는 로그인 후 재동의 모달이 받는다)
-        if (consentValues) { try { await saveConsents(tenantId, userId, 'tenant', consentValues) } catch (ce) { console.warn('[consent]', ce) } }
-        // 🎟️ 초대 코드 사용 처리 (누가 어느 코드로 만들었는지 기록)
-        if (signupCode) { try { await supabase.rpc('use_signup_code', { p_code: signupCode, p_tenant: tenantId, p_tenant_name: tenantInfo.name, p_email: (await supabase.auth.getUser()).data?.user?.email ?? null }) } catch (ue) { console.warn('[code]', ue) } }
-
-        // 매장
-        const { error: sErr } = await supabase.from('stores').insert(stores.map(s=>({ tenant_id: tenantId, name: s.name, address: s.address || null })))
-        if (sErr) throw sErr
-
-        // 업종 템플릿 시드: 고정업무(캘린더 규칙) / 대청소 구역 / 대청소 발생규칙 / 기본청소 항목
-        if (calendarEvents.length) {
-          const { error } = await supabase.from('calendar_event_types').insert(calendarEvents.map((ev,i)=>({ tenant_id: tenantId, label: ev.label, color: ev.color, recurrence: ev.recurrence, sort_order: i })))
-          if (error) throw error
-        }
-        if (zones.length) {
-          const { error } = await supabase.from('cleaning_zones').insert(zones.map(z=>({ tenant_id: tenantId, zone_number: z.zone_number, title: z.title, items: z.items })))
-          if (error) throw error
-        }
-        { // 대청소 발생 규칙 기본값 (V-Flow DEFAULT_DEEP_CLEAN_RULE와 동일)
-          const { error } = await supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: tenantId, recurrence: { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] } }, { onConflict: 'tenant_id' })
-          if (error) throw error
-        }
-        if (checklist.length) {
-          const { error } = await supabase.from('cleaning_daily_items').insert(checklist.map((item,i)=>({ tenant_id: tenantId, label: item.name, sort_order: i })))
-          if (error) throw error
-        }
-
-        $('done-msg').textContent=`"${tenantInfo.name}" 준비 완료! 매장 ${stores.length}개가 등록됐어요. 직원 초대는 관리자 → 설정에서 할 수 있어요.`
-        showStep(4)
-      } catch (e3) {
-        err.textContent = e3.message || '설정에 실패했습니다.'; err.hidden=false; btn.disabled=false; btn.textContent='설정 완료하고 시작하기'
-      }
-    }
-  </script>
+setInd('etc')
+</script>
 </body>
 </html>

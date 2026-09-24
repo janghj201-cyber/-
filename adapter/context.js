@@ -74,8 +74,10 @@ async function loadContext() {
   }
 
   // 최종점검: 테넌트(회사) 이름 — 헤더/문서 제목 브랜딩용
-  window.__vflowTenant = { id: profile.tenant_id, name: tenantRes.data?.name ?? '', isPlatform: !!tenantRes.data?.is_platform }
-  // 운영사(V-Flow 본사) 테넌트만 쓰는 기능 판별 — 가맹 초대 코드 등
-  window.__vflowProfile.isPlatform = !!tenantRes.data?.is_platform
+  window.__vflowTenant = { id: profile.tenant_id, name: tenantRes.data?.name ?? '', isPlatform: false }
+  // Dutyvo 운영 권한은 회사(테넌트)가 아니라 사람에 붙는다 — platform_admins 에 있는 계정만.
+  // 그래서 운영자가 한 고객사(위베이프)의 사장님이어도 그 회사는 평범한 고객사다.
+  // SQL 전(vf_boot 에 platform_admin 이 없음)에는 예전처럼 회사 표시를 따른다.
+  window.__vflowProfile.isPlatform = ('platform_admin' in boot) ? !!boot.platform_admin : !!tenantRes.data?.is_platform
   return cached
 }

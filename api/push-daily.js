@@ -1,9 +1,9 @@
 // 🔔 매일 아침 푸시 — 3일 이상 미확인 인수인계를 담당자·관리자에게 알림
-// Vercel Cron: 매일 00:00 UTC = 09:00 KST. 수동 실행: ?secret=CRON_SECRET (&test=1 = 전체 구독자 테스트 발송)
+// Vercel Cron: 매일 00:00 UTC = 09:00 KST. 수동 실행: ?secret=CRON_SECRET (&test=1 = 전체 구독자 테스트 발송, &tenant=<id> = 한 회사만)
+// Dutyvo를 쓰는 회사(테넌트)마다 따로 돈다 — 한 회사의 오류가 다른 회사 알림을 막지 않는다.
 // 필요 env: SUPABASE_SERVICE_ROLE_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, (권장) CRON_SECRET
 const webpush = require('web-push');
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vbuhueykvizmnrfvkehq.supabase.co';
-const TENANT_NAME  = process.env.TENANT_NAME || '위베이프 인천/경기 지사';
 
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -29,10 +29,8 @@ module.exports = async (req, res) => {
     }).catch(() => {});
   };
 
-  try {
-    const tenants = await sb(`tenants?select=id&name=eq.${encodeURIComponent(TENANT_NAME)}`);
-    if (!tenants.length) throw new Error(`테넌트 없음: ${TENANT_NAME}`);
-    const T = tenants[0].id;
+  // 회사 하나 분량. 결과는 { stale, sent, subscribers } (테스트 모드면 { mode, subscribers, sent })
+  const runTenant = async (T, testMode) => {
 
     const [subs, profiles, stores] = await Promise.all([
       sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&tenant_id=eq.${T}&limit=1000`),
@@ -58,19 +56,18 @@ module.exports = async (req, res) => {
     };
 
     // 테스트 모드: 구독자 전원에게 테스트 알림
-    if (req.query && req.query.test === '1') {
+    if (testMode) {
       let sent = 0;
       for (const pid of subsByProfile.keys()) {
-        sent += await send(pid, { title: '🔔 Dutyvo 테스트 알림', body: '푸시가 정상 작동합니다!', url: '/' });
+        sent += await send(pid, { title: 'Dutyvo 테스트 알림', body: '알림이 잘 옵니다.', url: '/' });
       }
-      res.status(200).json({ ok: true, mode: 'test', subscribers: subsByProfile.size, sent });
-      return;
+      return { mode: 'test', subscribers: subsByProfile.size, sent };
     }
 
     // 본편: 3일 이상 미확인 인수인계
     const cutoff = new Date(Date.now() - 3 * 86400e3).toISOString();
     const stale = await sb(`handovers?select=id,store_id,recipient_id,content,created_at&tenant_id=eq.${T}&confirmed=eq.false&closed=eq.false&deleted_at=is.null&created_at=lte.${encodeURIComponent(cutoff)}&limit=1000`);
-    if (!stale.length) { res.status(200).json({ ok: true, stale: 0, sent: 0 }); return; }
+    if (!stale.length) return { stale: 0, sent: 0, subscribers: subsByProfile.size };
 
     let sent = 0;
     // ① 수신 지정된 담당자에게 — 본인 것만
@@ -79,7 +76,7 @@ module.exports = async (req, res) => {
     for (const [pid, items] of byRecipient) {
       const st = storeName.get(items[0].store_id) || '';
       sent += await send(pid, {
-        title: `🔔 미확인 인수인계 ${items.length}건 (3일 이상)`,
+        title: `미확인 인수인계 ${items.length}건 (3일 이상)`,
         body: `${st} · "${String(items[0].content).slice(0, 30)}"${items.length > 1 ? ` 외 ${items.length - 1}건` : ''} — 확인해주세요`,
         url: '/',
       });
@@ -91,12 +88,24 @@ module.exports = async (req, res) => {
     const summary = [...storeCnt.entries()].map(([sid, n]) => `${storeName.get(sid) || '?'} ${n}건`).join(' · ');
     for (const m of managers) {
       sent += await send(m.id, {
-        title: `⚠️ 3일 이상 미확인 인수인계 ${stale.length}건`,
+        title: `3일 이상 미확인 인수인계 ${stale.length}건`,
         body: summary.slice(0, 120) + ' — 매장 점검이 필요해요',
         url: '/',
       });
     }
-    res.status(200).json({ ok: true, stale: stale.length, sent, subscribers: subsByProfile.size });
+    return { stale: stale.length, sent, subscribers: subsByProfile.size };
+  };
+
+  try {
+    const only = req.query && req.query.tenant;
+    const tenants = await sb(`tenants?select=id,name${only ? `&id=eq.${encodeURIComponent(only)}` : ''}&limit=1000`);
+    const testMode = !!(req.query && req.query.test === '1');
+    const results = [];
+    for (const t of tenants) {
+      try { results.push({ tenant: t.name, ok: true, ...(await runTenant(t.id, testMode)) }); }
+      catch (e) { results.push({ tenant: t.name, ok: false, error: String((e && e.message) || e) }); }
+    }
+    res.status(200).json({ ok: results.every((r) => r.ok), tenants: results });
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }

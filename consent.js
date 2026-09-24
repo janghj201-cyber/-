@@ -29,8 +29,10 @@ const SUMMARY = {
 
 // ── 체크 UI 렌더 ──
 // mount: 컨테이너 element, keys: 항목 키 배열, onChange(allRequiredChecked)
-export function renderConsentBox(mount, keys, onChange) {
+// opts.cls: true면 인라인 색 대신 클래스(.cb …)만 — 들어오는 화면 공통 스타일(lp/dv-auth.css)이 어두운 화면까지 맞춘다
+export function renderConsentBox(mount, keys, onChange, opts) {
   mount.innerHTML = ''
+  if (opts && opts.cls) return renderConsentBoxCls(mount, keys, onChange)
   mount.style.cssText = 'border:1px solid #e8e4dc;border-radius:10px;padding:10px 12px;margin:10px 0;background:#fbfaf6;font-size:13px;'
   const all = document.createElement('label')
   all.style.cssText = 'display:flex;align-items:center;gap:8px;font-weight:800;padding-bottom:8px;border-bottom:1px solid #e8e4dc;margin-bottom:6px;cursor:pointer;'
@@ -46,6 +48,26 @@ export function renderConsentBox(mount, keys, onChange) {
       <a href="legal.html#${k}" target="_blank" style="font-size:11.5px;color:#1a5fb5;white-space:nowrap;font-weight:700;">보기</a>`
     mount.appendChild(row)
   })
+  const boxes = [...mount.querySelectorAll('input[data-key]')]
+  const allBox = mount.querySelector('input[data-all]')
+  const fire = () => {
+    const ok = keys.every((k) => !CONSENT_DOCS[k].required || mount.querySelector(`input[data-key="${k}"]`).checked)
+    allBox.checked = boxes.every((b) => b.checked)
+    onChange && onChange(ok)
+  }
+  boxes.forEach((b) => (b.onchange = fire))
+  allBox.onchange = () => { boxes.forEach((b) => (b.checked = allBox.checked)); fire() }
+  fire()
+  return { values: () => Object.fromEntries(keys.map((k) => [k, mount.querySelector(`input[data-key="${k}"]`).checked])) }
+}
+
+function renderConsentBoxCls(mount, keys, onChange) {
+  mount.className = 'cb'
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  mount.innerHTML = '<label class="cb-all"><input type="checkbox" data-all> 전체 동의</label>' + keys.map((k) => {
+    const d = CONSENT_DOCS[k]
+    return `<div class="cb-row"><input type="checkbox" data-key="${k}" id="cb-${k}"><label for="cb-${k}"><span class="cb-tag${d.required ? ' req' : ''}">${d.required ? '필수' : '선택'}</span><b>${esc(d.title)}</b></label><a href="legal.html#${k}" target="_blank" rel="noopener">보기</a><div class="cb-sum">${esc(SUMMARY[k])}</div></div>`
+  }).join('')
   const boxes = [...mount.querySelectorAll('input[data-key]')]
   const allBox = mount.querySelector('input[data-all]')
   const fire = () => {
