@@ -3493,7 +3493,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.13';
+const GUIDE_VERSION = 'v6.14';
 const BUILD_DATE = '2026-09-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3584,7 +3584,15 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.13 — 보관기한을 마감 · 매장 컴퓨터에',
+    title: '🆕 v6.14 — 누구나 바로 가입 · Dutyvo에 문의',
+    items: [
+      '새 회사는 초대 코드 없이 가입한다 — 소개 페이지 「무료로 시작」 → 대표 계정 → 회사 · 업종 · 매장 → 직원 초대. 직원 합류는 전처럼 초대 링크',
+      '내 계정 → 「Dutyvo에 문의」(대표 · 매니저) — 막힌 곳 · 불편한 점 · 기능 제안을 운영팀에 바로. 답이 오면 폰 알림. 대표는 회사 정리 · 데이터 받기 요청도 여기서',
+      '회사 게시판 「건의/문의」는 그대로 — 회사 안(우리 관리자)에게 남기는 곳이다'
+    ]
+  },
+  {
+    title: 'v6.13 — 보관기한을 마감 · 매장 컴퓨터에',
     items: [
       '홈 「우선 확인」에 이 매장 보관기한 한 줄 — 지난 것(빨강) · 오늘까지(노랑). 「보기」를 누르면 그 매장 보관기한이 바로 열린다',
       '「근무 마감」 한 장에 「보관기한 지남 · 오늘까지」 줄 — 다 씀 · 버림 · 아직 있음을 하고 마감',
@@ -5577,6 +5585,9 @@ window.openAppMenu=function(){
   if(pcOS()!=='other')mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>`,'매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 Dutyvo 먼저':(pcOS()==='mac'?'컴퓨터 켜면 Dutyvo 먼저 · 터미널 한 줄':'컴퓨터 켜면 Dutyvo 먼저 · 설치 파일'),()=>{try{openPcSheet();}catch(e){}});
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>`,'직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
   if(featOn('calendar'))mk(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar());
+  // Dutyvo 에 묻기(v6.14) — 회사 게시판 「건의/문의」는 회사 안, 이건 Dutyvo 운영팀으로
+  if(vp.role==='owner'||vp.role==='manager')mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5"/><path d="M12 15h.01"/></svg>`,'Dutyvo에 문의','막힌 곳 · 불편한 점 · 기능 제안 — 운영팀이 답해요',()=>vfOpenAsk());
+  if(vp.isPlatform)mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>`,'Dutyvo 운영','가입한 회사 · 문의 — 운영자만',()=>vfOpenOps());
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,'월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
@@ -6778,8 +6789,12 @@ async function vfOpenBooking(tab){
   }catch(e){alert('고객 예약을 열지 못했습니다. '+(e&&e.message||''));}
 }
 window.vfOpenBooking=vfOpenBooking;
+// Dutyvo 문의 · 운영자 화면(v6.14) — 자동 가입을 열면서 같이 생긴 두 창구. 모듈은 처음 열 때만 받는다
+async function vfOpenAsk(kind){vfUse('ask_open');try{const {openAsk}=await import('./adapter/ops.js');await openAsk({kind});}catch(e){alert('문의 화면을 열지 못했습니다. '+(e&&e.message||''));}}
+async function vfOpenOps(tab){try{const {openOps}=await import('./adapter/ops.js');await openOps({tab});}catch(e){alert('운영 화면을 열지 못했습니다. '+(e&&e.message||''));}}
+window.vfOpenAsk=vfOpenAsk;window.vfOpenOps=vfOpenOps;
 // 알림에서 누르고 들어오면(?cal=1) 캘린더부터
-try{const _q=new URLSearchParams(location.search);if(_q.get('cal')==='1'||_q.get('exp')==='1'||_q.get('deal')==='1'||_q.get('rsv')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():_q.get('deal')==='1'?vfOpenDeals():_q.get('rsv')==='1'?vfOpenBooking():vfOpenCalendar(),1200);}}catch(e){}
+try{const _q=new URLSearchParams(location.search);if(['cal','exp','deal','rsv','ask','ops'].some(k=>_q.get(k)==='1')){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():_q.get('deal')==='1'?vfOpenDeals():_q.get('rsv')==='1'?vfOpenBooking():_q.get('ask')==='1'?vfOpenAsk():_q.get('ops')==='1'?vfOpenOps('tickets'):vfOpenCalendar(),1200);}}catch(e){}
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
 function openBriefingNow(){
   vfUse('brief_open');
@@ -8123,7 +8138,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={todo_check:'할 일 체크',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={todo_check:'할 일 체크',ask_open:'Dutyvo 문의',rsv_open:'고객 예약',exp_open:'보관기한',deal_open:'거래처',cal_open:'캘린더',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{

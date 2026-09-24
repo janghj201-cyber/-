@@ -92,8 +92,6 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
     <h1>대표 계정 만들기</h1>
     <p class="sub">회사를 만드는 사람의 계정입니다. 직원은 마지막 단계에서 초대합니다.</p>
     <form id="f1">
-      <label class="f">초대 코드<input type="text" id="su-code" required placeholder="받은 초대 코드" autocomplete="off" style="text-transform:uppercase"></label>
-      <div class="msg" id="su-code-msg"></div>
       <label class="f">이름<input type="text" id="su-name" required placeholder="예) 김민지" autocomplete="name"></label>
       <label class="f">이메일<input type="email" id="su-email" required placeholder="you@example.com" autocomplete="email"></label>
       <label class="f">비밀번호<input type="password" id="su-password" required minlength="6" placeholder="6자 이상" autocomplete="new-password"></label>
@@ -101,7 +99,7 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
       <p class="err" id="su-err" hidden></p>
       <div class="acts"><button type="submit" class="btn main" id="su-btn" disabled>계정 만들기</button></div>
     </form>
-    <span class="link">이미 계정이 있으면 <a href="login.html">로그인</a> · 초대 코드가 없으면 <a href="/intro">도입 문의</a></span>
+    <span class="link">이미 계정이 있으면 <a href="login.html">로그인</a> · 직원은 받은 초대 링크로</span>
   </section>
 
   <!-- 2 회사 -->
@@ -233,8 +231,7 @@ if (existing) {
 }
 let userId = existing?.user?.id ?? null
 let contactName = existing?.user?.user_metadata?.name || (existing?.user?.email || '').split('@')[0] || ''
-let consentValues = null
-let signupCode = ''
+let consentValues = existing?.user?.user_metadata?.consents || null // 확인 메일을 누르고 돌아온 경우 — 1단계에서 고른 동의를 계정에 실어 두었다가 이어서 저장
 
 // ── 단계 이동 ──
 let step = 1
@@ -273,15 +270,9 @@ $('#f1').addEventListener('submit', async (e) => {
   try {
     contactName = $('#su-name').value.trim()
     consentValues = consentBox.values()
-    signupCode = $('#su-code').value.trim().toUpperCase()
-    const msg = $('#su-code-msg')
-    const { data: okCode, error: cErr } = await supabase.rpc('check_signup_code', { p_code: signupCode })
-    if (cErr) throw cErr
-    if (!okCode) { msg.className = 'msg bad'; msg.textContent = '쓸 수 없는 코드 — 오타 · 만료 · 이미 사용'; back(); return }
-    msg.className = 'msg ok'; msg.textContent = '확인된 코드'
-    const { data, error } = await supabase.auth.signUp({ email: $('#su-email').value.trim(), password: $('#su-password').value, options: { data: { name: contactName } } })
+    const { data, error } = await supabase.auth.signUp({ email: $('#su-email').value.trim(), password: $('#su-password').value, options: { data: { name: contactName, consents: consentValues }, emailRedirectTo: location.origin + '/onboarding.html' } })
     if (error) throw error
-    if (!data.session) { err.textContent = '가입 확인 메일을 보냈습니다. 메일의 링크를 누른 뒤 이 화면을 새로고침하면 이어집니다.'; err.hidden = false; back(); return }
+    if (!data.session) { err.textContent = '가입 확인 메일을 보냈습니다. 메일의 「가입 확인」을 누르면 이 화면으로 돌아와 이어집니다. 메일이 안 보이면 스팸함도 봐 주세요.'; err.hidden = false; back(); return }
     userId = data.user.id
     show(2)
   } catch (e2) { err.textContent = e2.message || '가입에 실패했습니다.'; err.hidden = false; back() }
@@ -374,13 +365,16 @@ async function finish(withInvites) {
     if (!userId) throw new Error('계정 정보가 없습니다. 처음부터 다시 해 주세요.')
     const coName = $('#co').value.trim()
     const rows = await loadTemplates().catch(() => [])
-    const tenantId = crypto.randomUUID()
-    const { error: tErr } = await supabase.from('tenants').insert({ id: tenantId, name: coName, industry: ind, evaluation_metric_labels: pick(rows, 'evaluation_metrics') })
-    if (tErr) throw tErr
-    const { error: pErr } = await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, name: contactName || coName, role: 'owner' })
-    if (pErr) throw pErr
+    // 회사 · 대표 계정은 서버 함수 하나로(v6.14) — 계정 하나에 회사 하나, 이름 길이, 한꺼번에 몰리는 가입은 서버가 막는다
+    // 앞에서 회사까지 만들고 매장에서 멈췄다가 다시 누른 경우 — 만든 회사에 이어서
+    const { data: mine } = await supabase.from('profiles').select('tenant_id').eq('id', userId).maybeSingle()
+    let tenantId = mine?.tenant_id
+    if (!tenantId) {
+      const r = await supabase.rpc('vf_create_company', { p_name: coName, p_industry: ind, p_contact: contactName || coName })
+      if (r.error) throw r.error
+      tenantId = r.data
+    }
     if (consentValues) { try { await saveConsents(tenantId, userId, 'tenant', consentValues) } catch (ce) { console.warn('[consent]', ce) } }
-    if (signupCode) { try { await supabase.rpc('use_signup_code', { p_code: signupCode, p_tenant: tenantId, p_tenant_name: coName, p_email: (await supabase.auth.getUser()).data?.user?.email ?? null }) } catch (ue) { console.warn('[code]', ue) } }
     // 매장 — 하나씩 넣어 id를 정확히 받는다(운영 시간 · 초대가 이 id를 쓴다)
     const sr = storeRows(); const idByRow = new Map(); const hours = {}
     for (const x of sr) {

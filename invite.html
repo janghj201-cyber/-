@@ -53,7 +53,7 @@
       if (pErr && !String(pErr.message).includes('duplicate')) throw pErr
       const { error: uErr } = await supabase.from('invitations').update({ status: 'accepted' }).eq('id', inv.id)
       if (uErr) throw uErr
-      try { await saveConsents(inv.tenant_id, user.id, 'staff', window.__invConsent ? window.__invConsent.values() : { staff_privacy: true, privacy: true, staff_insights: false }) } catch (ce) { console.warn('[consent]', ce) }
+      try { await saveConsents(inv.tenant_id, user.id, 'staff', user.user_metadata?.consents || (window.__invConsent ? window.__invConsent.values() : { staff_privacy: true, privacy: true, staff_insights: false })) } catch (ce) { console.warn('[consent]', ce) }
     }
 
     // 이미 로그인된 상태로 링크를 열었으면 바로 수락 시도
@@ -72,9 +72,9 @@
       try {
         const email=$('email').value.trim(), password=$('password').value
         if (mode==='signup') {
-          const { data, error } = await supabase.auth.signUp({ email, password })
+          const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.href, data: { consents: window.__invConsent ? window.__invConsent.values() : null } } }) // 확인 메일을 누르면 이 초대 링크로 돌아와 바로 합류
           if (error) throw error
-          if (!data.session) { err.textContent='가입 확인 메일이 발송됐어요. 메일 링크 확인 후 이 초대 링크를 다시 열어주세요.'; err.hidden=false; btn.disabled=false; btn.textContent='가입하고 합류하기'; return }
+          if (!data.session) { err.textContent='가입 확인 메일을 보냈어요. 메일의 「가입 확인」을 누르면 이 화면으로 돌아와 바로 합류합니다. 안 보이면 스팸함도 봐 주세요.'; err.hidden=false; btn.disabled=false; btn.textContent='가입하고 합류하기'; return }
         } else {
           const { error } = await supabase.auth.signInWithPassword({ email, password })
           if (error) throw error

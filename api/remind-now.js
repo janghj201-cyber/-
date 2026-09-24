@@ -3,6 +3,7 @@
 //    대상: 그 회사 관리자(owner/manager) + 그 예약 담당자. 누르면 고객 예약 화면(?rsv=1)
 //    표시: appointments.alerted_at(SQL_v612). 비어 있는 건 한 번 보고 찍는다 — 매장에서 직접 넣은 예약은 알리지 않고 찍기만.
 //    손님 관리 링크에서 취소 · 변경 · 제안 받기를 하면 DB 함수가 alerted_at 을 다시 비운다.
+// ③ 운영자 — 새 회사 가입 · Dutyvo 문의 → 운영자, 답 → 물어본 사람(v6.14)
 // ② 「1시간 전」 알림(remind = '1h') — 시작 60분 안으로 들어온 일정을 담당자(없으면 관리자)에게 한 번. reminded_at 으로 두 번 안 감.
 // 수동 실행: ?secret=CRON_SECRET&dry=1 (보내지 않고 셈만 · 찍지도 않음)
 // 필요 env: SUPABASE_SERVICE_ROLE_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, (권장) CRON_SECRET
@@ -106,12 +107,51 @@ module.exports = async (req, res) => {
         for (const pid of to) sent += await send(pid, { title: `1시간 뒤 · ${hm(a.starts_at)} ${what(a)}`, body: nm ? `${nm}${a.kind === 'booking' ? ' 손님' : ''}` : '곧 시작해요', url: a.kind === 'booking' ? '/?rsv=1' : '/?cal=1' });
       }
     }
+    // ③ 운영자(v6.14) — 새 회사 가입 · 새 문의는 운영자 폰으로, 운영자가 단 답은 물어본 사람 폰으로.
+    //    SQL_v614 전이면 표 · 칸이 없어 조용히 건너뛴다(예약 알림은 그대로)
+    let ops = { cos: [], tks: [], ans: [] };
+    try {
+      const [cos2, tks2, ans2, pa] = await Promise.all([
+        sb(`tenants?select=id,name,industry&ops_alerted_at=is.null&limit=50`),
+        sb(`support_tickets?select=id,tenant_id,kind,body&alerted_at=is.null&limit=100`),
+        sb(`support_tickets?select=id,profile_id,answer&status=eq.answered&answer_alerted_at=is.null&limit=100`),
+        sb(`platform_admins?select=user_id`),
+      ]);
+      ops = { cos: cos2, tks: tks2, ans: ans2 };
+      const opsIds = pa.map((x) => x.user_id);
+      const pids = [...new Set([...opsIds, ...ans2.map((x) => x.profile_id).filter(Boolean)])];
+      if (pids.length && (cos2.length || tks2.length || ans2.length)) {
+        const subs2 = await sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&profile_id=${inList(pids)}&limit=2000`);
+        const tn = tks2.length ? await sb(`tenants?select=id,name&id=${inList(tks2.map((x) => x.tenant_id))}`) : [];
+        const push2 = async (pid, payload) => {
+          const mine = subs2.filter((x) => x.profile_id === pid);
+          if (dry) return mine.length;
+          let n = 0;
+          for (const x of mine) {
+            try { await webpush.sendNotification({ endpoint: x.endpoint, keys: { p256dh: x.p256dh, auth: x.auth } }, JSON.stringify(payload)); n++; }
+            catch (e) { if (e.statusCode === 404 || e.statusCode === 410) await delSub(x.endpoint); }
+          }
+          return n;
+        };
+        const IND = { cafe: '카페', convenience: '편의점', beauty: '뷰티', academy: '학원', etc: '기타', restaurant: '음식점', wholesale: '도매 · 유통', clinic: '의원 · 치료' };
+        const KIND = { ask: '질문', bug: '불편한 점', idea: '기능 제안', close: '회사 정리 요청', export: '데이터 받기 요청' };
+        for (const pid of opsIds) {
+          if (cos2.length) sent += await push2(pid, { title: `새 회사 가입 ${cos2.length}곳`, body: cos2.slice(0, 3).map((c) => `${c.name} · ${IND[c.industry] || c.industry}`).join('\n'), url: '/?ops=1' });
+          for (const k of tks2.slice(0, 5)) sent += await push2(pid, { title: `Dutyvo 문의 · ${KIND[k.kind] || k.kind}`, body: `${(tn.find((t) => t.id === k.tenant_id) || {}).name || ''} — ${String(k.body).slice(0, 80)}`, url: '/?ops=1' });
+          if (tks2.length > 5) sent += await push2(pid, { title: `Dutyvo 문의 ${tks2.length - 5}건 더`, body: '운영 화면에서 확인', url: '/?ops=1' });
+        }
+        for (const k of ans2) if (k.profile_id) sent += await push2(k.profile_id, { title: 'Dutyvo 답변이 왔어요', body: String(k.answer).slice(0, 100), url: '/?ask=1' });
+      }
+    } catch (e) { ops = { cos: [], tks: [], ans: [], skipped: String((e && e.message) || e).slice(0, 120) }; }
     if (!dry) {
       const stamp = new Date().toISOString();
+      if (ops.cos.length) await patch(`tenants?id=${inList(ops.cos.map((x) => x.id))}`, { ops_alerted_at: stamp });
+      if (ops.tks.length) await patch(`support_tickets?id=${inList(ops.tks.map((x) => x.id))}`, { alerted_at: stamp });
+      if (ops.ans.length) await patch(`support_tickets?id=${inList(ops.ans.map((x) => x.id))}`, { answer_alerted_at: stamp });
       if (fresh.length) await patch(`appointments?id=${inList(fresh.map((a) => a.id))}`, { alerted_at: stamp });
       if (soon.length) await patch(`appointments?id=${inList(soon.map((a) => a.id))}`, { reminded_at: stamp });
     }
-    res.status(200).json({ ok: true, dry, checked: fresh.length, alerts: events.length, soon: soon.length, sent });
+    res.status(200).json({ ok: true, dry, checked: fresh.length, alerts: events.length, soon: soon.length, ops: { cos: ops.cos.length, tks: ops.tks.length, ans: ops.ans.length, skipped: ops.skipped }, sent });
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }
