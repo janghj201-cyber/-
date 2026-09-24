@@ -204,7 +204,7 @@ export async function openExpiry(host = {}) {
   const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0)
   const TK = dk(TODAY)
   const diff = (k) => Math.round((new Date(k + 'T00:00') - TODAY) / 864e5)
-  const myStore = (window.__vflowProfile || {}).storeId
+  const myStore = host.store || (window.__vflowProfile || {}).storeId // 근무 마감 · 대기 화면에서 열면 그 매장
   let tab = 'now', filt = 'urgent', store = STORES.find((s) => s.id === myStore) ? myStore : 'all', foldOpen = false
   let here = store !== 'all' ? store : (STORES[0] || {}).id
   let items = [], lots = [], waste = [], recent = [], names = {}, industry = ''

@@ -3493,7 +3493,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.12';
+const GUIDE_VERSION = 'v6.13';
 const BUILD_DATE = '2026-09-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3584,7 +3584,16 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.12 — 고객 예약',
+    title: '🆕 v6.13 — 보관기한을 마감 · 매장 컴퓨터에',
+    items: [
+      '홈 「우선 확인」에 이 매장 보관기한 한 줄 — 지난 것(빨강) · 오늘까지(노랑). 「보기」를 누르면 그 매장 보관기한이 바로 열린다',
+      '「근무 마감」 한 장에 「보관기한 지남 · 오늘까지」 줄 — 다 씀 · 버림 · 아직 있음을 하고 마감',
+      '매장 컴퓨터 대기 화면에 보관기한 칸, 마감 30분 전 알림에도 보관기한 수',
+      '「아직 있음」으로 미룬 것은 다음 날 다시 나온다. 보관기한 기능을 끄면 어디에도 안 나온다'
+    ]
+  },
+  {
+    title: 'v6.12 — 고객 예약',
     items: [
       '예약을 받는 업종만 쓰는 기능이라 처음엔 꺼져 있다 — 설정 › 기능 켜기 / 끄기 › 「고객 예약」을 켜면 왼쪽 메뉴 · 홈 바로가기에 생긴다',
       '받는 방법(관리자): 예약 칸(디자이너 · 치료사 · 단체석) → 시술(이름 · 걸리는 시간) → 예약 페이지 주소(/r/이름) 순서로 넣는다. 확정 방식 · 마감 · 쉬는 시간 · 공휴일도 여기서',
@@ -6344,6 +6353,20 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       refreshPri();
     }
   })();
+  // 보관기한 — 이 매장에 지난 것 · 오늘까지가 있으면 우선 확인에 한 줄(매장 컴퓨터 첫 화면에서 바로 보이게). 누르면 그 매장 보관기한
+  (async()=>{
+    if(!entry||!featOn('expiry'))return;
+    let E;try{E=await vfExpiryDue(entry.id);}catch(e){return;} // 표(SQL) 전이거나 권한 문제면 조용히 생략
+    if(!E.n)return;
+    const row=el('div','vh-item',`<span class="vh-dot ${E.over.length?'danger':'warn'}"></span><div class="vh-main">${_wrEsc([...E.over,...E.today].slice(0,3).map(i=>i.text).join(' · '))}${E.n>3?` 외 ${E.n-3}`:''}<small>${vfKind('보관기한')}${vfExpLabel(E)} · ${shortStore(entry.name)}</small></div>`);
+    const b=el('button','vh-btn','보기');b.type='button';
+    const go=(e)=>{if(e)e.stopPropagation();vfOpenExpiry(null,entry.id);};
+    b.onclick=go;row.onclick=()=>go();row.appendChild(b);
+    // 인수인계(빨강) 다음, 노랑 줄들 앞
+    const firstNonHo=[...priList.querySelectorAll('.vh-item')].find(x=>!x.querySelector('.vh-dot.danger'));
+    if(firstNonHo)priList.insertBefore(row,firstNonHo);else priList.appendChild(row);
+    refreshPri();
+  })();
 
   // ── 2열: 바로가기 목록 ──
   const links=el('div','vh-card vh-links');
@@ -6722,11 +6745,12 @@ async function vfOpenCalendar(){
 }
 window.vfOpenCalendar=vfOpenCalendar;
 // 보관기한(v6.10) — 들어온 것 · 챙길 것 · 버린 기록. 캘린더와 같은 표(expiry_lots)를 본다
-async function vfOpenExpiry(tab){
+async function vfOpenExpiry(tab,storeId){
   vfUse('exp_open');
   try{
     const {openExpiry}=await import('./adapter/expiry.js');
-    await openExpiry({stores:STORES.map(s=>({id:s.id,name:s.name})),tab});
+    // 닫으면 홈 우선 확인 · 대기 화면의 보관기한 수를 새로 센다
+    await openExpiry({stores:STORES.map(s=>({id:s.id,name:s.name})),tab,store:storeId,onClose:()=>{_vfExpC={};try{if(document.getElementById('screen-dashboard')?.classList.contains('active'))renderDashboardHome();}catch(e){}}});
   }catch(e){alert('보관기한을 열지 못했습니다. '+(e&&e.message||''));}
 }
 window.vfOpenExpiry=vfOpenExpiry;
@@ -7158,8 +7182,26 @@ async function vfLeftovers(entry){
   }catch(e){}
   const items=(hs&&hs.exists())?(hs.data().items||[]):[];
   const ho=items.filter(it=>hoNeedsConfirm(it)&&(it.recipient===me||hoOpenToAll(it,tKey)));
-  return {tasks,clean,ho,total:tasks.length+clean.length+ho.length};
+  const exp=entry?await vfExpiryDue(entry.id).catch(()=>VF_EXP_NONE):VF_EXP_NONE;
+  return {tasks,clean,ho,exp,total:tasks.length+clean.length+ho.length+exp.n};
 }
+// 보관기한(v6.10) — 이 매장의 지난 것 · 오늘까지 · 내일까지. 「아직 있음」으로 미룬 것은 그날 다시.
+// 근무 마감 한 장 · 대기 화면 · 마감 전 알림 · 홈 우선 확인이 같이 쓴다. 1분 동안은 다시 안 읽는다(보관기한 화면을 닫으면 비움)
+const VF_EXP_NONE={over:[],today:[],tmr:[],n:0};
+let _vfExpC={};
+async function vfExpiryDue(storeId){
+  if(!featOn('expiry')||!storeId)return VF_EXP_NONE;
+  const c=_vfExpC[storeId];if(c&&Date.now()-c.at<60000)return c.v;
+  const tKey=todayKey();const t=new Date(today);t.setDate(t.getDate()+1);const tmr=dk(t.getFullYear(),t.getMonth(),t.getDate());
+  const {sb}=await wrApi();
+  const {data,error}=await sb.from('expiry_lots').select('id,qty,due_on,snooze_until,expiry_items(name,unit)').eq('store_id',storeId).eq('status','active').lte('due_on',tmr).order('due_on').limit(300);
+  if(error)throw error;
+  const L=(data||[]).filter(r=>!r.snooze_until||r.snooze_until<=tKey).map(r=>{const it=r.expiry_items||{};const q=Number(r.qty)||0;return {id:r.id,due:r.due_on,text:`${it.name||'품목'}${q&&q!==1?` ${q}${it.unit||''}`:''}`};});
+  const v={over:L.filter(x=>x.due<tKey),today:L.filter(x=>x.due===tKey),tmr:L.filter(x=>x.due===tmr)};v.n=v.over.length+v.today.length;
+  _vfExpC[storeId]={at:Date.now(),v};return v;
+}
+// 보관기한 한 줄 글 — 「지남 2 · 오늘까지 3」
+function vfExpLabel(E){return [E.over.length?`지남 ${E.over.length}`:'',E.today.length?`오늘까지 ${E.today.length}`:''].filter(Boolean).join(' · ');}
 // ── 대표 화면 — 올라오는 기준. 코드에 숫자 없음: 설정 「올라오는 기준」이 원본, 여기는 없을 때 값 ──
 const VF_ESC_DEFAULT={hoDays:3,openGrace:30,lateGrace:10,repeatN:3,bigLate:60,carryDays:3,claimHours:24};
 const VF_ESC_LABEL={hoDays:['인수인계 미확인','','일째','→ 대표'],openGrace:['출근 없음','여는 시각 +','분','→ 대표'],lateGrace:['지각 기준','여는 시각 +','분','뒤 출근이면 지각'],repeatN:['지각 반복','30일 안','회','→ 반복'],bigLate:['큰 지각','','분','넘으면 횟수 무관'],carryDays:['미완료 이월','','일 연속','→ 대표'],claimHours:['클레임 태그','','시간','미확인 → 대표']};
@@ -7268,6 +7310,7 @@ function vfCloseSheet(entry,onClose){
     if(L.tasks.length)row(L.tasks.length,'오늘 업무 미완료',L.tasks.slice(0,3).map(i=>i.text).join(' · '),()=>enterMyWork(me));
     if(L.clean.length)row(L.clean.length,`${T('clean')} 안 한 곳`,L.clean.slice(0,3).map(i=>i.text).join(' · '),()=>openStoreRoom(entry));
     if(L.ho.length)row(L.ho.length,`안 본 ${T('handover')}`,L.ho.slice(0,2).map(i=>`${i.author||''} · ${String(i.text||'').slice(0,18)}`).join(' · '),()=>openStoreRoom(entry));
+    if(L.exp.n)row(L.exp.n,`보관기한 ${vfExpLabel(L.exp)}`,[...L.exp.over,...L.exp.today].slice(0,3).map(i=>i.text).join(' · ')+' — 다 씀 · 버림 · 아직 있음',()=>vfOpenExpiry(null,entry.id));
     head.textContent=L.total?`남은 것 ${L.total}`:'남은 것 없음';
     if(!L.total){ok.textContent='마감';}
     sh.querySelector('[data-foot]').textContent=`마감하면 퇴근 ${nowHm}${L.tasks.length?' · 남은 업무는 내일로 이월 표시':''}`;
@@ -7654,7 +7697,7 @@ async function vfIdleShow(){
       const es=_wrEsc;
       body.innerHTML=`<div class="row"><div class="tile"><span>오늘 할 일</span><b>${L.tasks.length}</b><small>${es(L.tasks.slice(0,2).map(i=>i.text).join(' · '))||'없음'}</small></div>
         <div class="tile"><span>${T('clean')}</span><b>${L.clean.length?L.clean.length+' 남음':'끝'}</b><small>${es(L.clean.slice(0,2).map(i=>i.text).join(' · '))||''}</small></div>
-        <div class="tile"><span>안 본 ${T('handover')}</span><b class="${L.ho.length?'warn':''}">${L.ho.length}</b><small>${es(L.ho.slice(0,1).map(i=>`${i.author||''} · ${String(i.text||'').slice(0,18)}`).join(''))}</small></div>${condTile}</div>`;
+        <div class="tile"><span>안 본 ${T('handover')}</span><b class="${L.ho.length?'warn':''}">${L.ho.length}</b><small>${es(L.ho.slice(0,1).map(i=>`${i.author||''} · ${String(i.text||'').slice(0,18)}`).join(''))}</small></div>${featOn('expiry')&&(L.exp.n||L.exp.tmr.length)?`<div class="tile"><span>보관기한</span><b class="${L.exp.over.length?'warn':''}">${L.exp.n}</b><small>${es(L.exp.n?vfExpLabel(L.exp)+' · '+[...L.exp.over,...L.exp.today].slice(0,2).map(i=>i.text).join(' · '):`내일까지 ${L.exp.tmr.length}`)}</small></div>`:''}${condTile}</div>`;
     }catch(e){}
   };
   fill();const rf=setInterval(()=>{if(!_vfIdleEl){clearInterval(rf);return;}fill();},5*60*1000);
@@ -7687,7 +7730,7 @@ function vfCloseAlarm(entry){
       localStorage.setItem(k,'1');
       const L=await vfLeftovers(entry);
       const title=L.total?`남은 것 ${L.total} · 근무 마감 전`:'근무 마감 전';
-      const body=L.total?`업무 ${L.tasks.length} · ${T('clean')} ${L.clean.length} · ${T('handover')} ${L.ho.length}`:'남은 것 없음 · 「근무 마감」';
+      const body=L.total?`업무 ${L.tasks.length} · ${T('clean')} ${L.clean.length} · ${T('handover')} ${L.ho.length}${L.exp.n?` · 보관기한 ${L.exp.n}`:''}`:'남은 것 없음 · 「근무 마감」';
       vfBanner(title,body,()=>vfCloseSheet(entry,()=>{try{switchTab('dashboard');}catch(e){}}));
       try{if('Notification' in window&&Notification.permission==='granted'){const reg=await navigator.serviceWorker.ready;reg.showNotification(title,{body,icon:'/icons/dutyvo-192.png',tag:'vf-close'});}}catch(e){}
       vfUse('close_alarm');
