@@ -3488,7 +3488,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.8';
+const GUIDE_VERSION = 'v6.9';
 const BUILD_DATE = '2026-09-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3579,7 +3579,17 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.8 — 처음 시작하는 화면 · 맥 매장 컴퓨터',
+    title: '🆕 v6.9 — 캘린더',
+    items: [
+      '손님 예약 · 거래처 미팅 · 보관기한 · 고정업무 · 휴무를 한 달력에 — 왼쪽 메뉴 · 홈 바로가기 「캘린더」',
+      '일정 넣기: 종류를 고르면 필요한 칸만. 손님 이름을 치면 번호 · 지난 방문 · 노쇼가 따라온다. 같은 담당 시간이 겹치면 넣기 전에 알려 준다. 매주 · 2주 · 매월 반복',
+      '방문 완료 · 노쇼 · 시간 변경 · 취소 · 되돌리기. 안내 문자는 폰 문자 앱을 내용 채운 채로 연다',
+      '알림: 일정마다 전날 오후 6시 · 당일 아침 9시 중에 골라 담당자 폰으로. 보관기한은 관리자에게',
+      '중요한 날 표시(관리자) · 배치 · 일정 표시 · 색은 보기에서. 기능 켜기/끄기는 관리자만 — 회사 전체'
+    ]
+  },
+  {
+    title: 'v6.8 — 처음 시작하는 화면 · 맥 매장 컴퓨터',
     items: [
       '새 회사 시작 화면을 다섯 단계로 — 계정 · 회사(업종 · 화면에 쓰는 말) · 매장(운영 시간 · 정기 휴무) · 쓸 기능 · 직원 초대',
       '끝 화면에서 바로 앱 설치 · 매장 컴퓨터 설치 · 초대 링크 복사',
@@ -5519,6 +5529,7 @@ window.openAppMenu=function(){
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="m9 11 3 3 3-3"/></svg>`,'앱으로 설치','바탕화면·홈 화면에 추가해서 앱처럼 쓰기',()=>{try{openInstallModal();}catch(e){}});
   if(pcOS()!=='other')mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>`,'매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 Dutyvo 먼저':(pcOS()==='mac'?'컴퓨터 켜면 Dutyvo 먼저 · 터미널 한 줄':'컴퓨터 켜면 Dutyvo 먼저 · 설치 파일'),()=>{try{openPcSheet();}catch(e){}});
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>`,'직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
+  mk(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar());
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,'월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
@@ -6302,6 +6313,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const mkLink=(ic,title,desc,fn,cnt)=>{const r=el('button','vh-item link',`${ic||''}<div class="vh-main"><b>${title}</b><small>${desc}</small></div>${cnt!=null?`<span class="vh-tiny">${cnt}</span>`:''}<span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.setAttribute('aria-label',`${title}: ${desc}`);r.onclick=fn;return r;};
   if(entry)ll.appendChild(mkLink(VF_ICONS.store,`${shortStore(entry.name)} 방`,`오늘 근무 ${workers.length}명 · 고정정보 · 인수인계 기록`,()=>openStoreRoom(entry)));
   ll.appendChild(mkLink(VF_ICONS.task,'내 업무','지난 날짜 · 프로젝트 · 히스토리 · 휴무',()=>enterMyWork(me)));
+  ll.appendChild(mkLink(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar()));
   if(featOn('board')){const bl=mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay());bl.setAttribute('data-board-link','');ll.appendChild(bl);}
   ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
@@ -6527,6 +6539,7 @@ function renderSideNav(active){
     {k:'my',lb:'내 업무',ic:IC.task,fn:()=>enterMyWork(me)},
     {k:'room',lb:entry?`${storeShort(entry.name)} 방`:`${T('store')} 방`,ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
   ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
+  items.push({k:'cal',lb:'캘린더',ic:IC.cal,fn:()=>vfOpenCalendar()});
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
@@ -6644,6 +6657,27 @@ function openBoardOverlay(){
   try{renderSideNav('board');}catch(e){}
 }
 window.openBoardOverlay=openBoardOverlay;
+// 새 캘린더(v6.9) — 예약 · 미팅 · 보관기한 · 고정업무 · 휴무를 한 달력에. 모듈은 처음 열 때만 받는다(첫 화면 속도 그대로)
+// 고정업무 · 영업시간 · 기능 켜기는 여기 값을 그대로 넘긴다 — 규칙은 한 곳에만
+async function vfOpenCalendar(){
+  vfUse('cal_open');
+  try{
+    const {openCalendar}=await import('./adapter/calendar.js');
+    await openCalendar({
+      stores:STORES.map(s=>({id:s.id,name:s.name})),
+      co:(window.__vflowTenant||{}).name||'',
+      features:appSettings.features||{},
+      rulesFor:(y,m,d)=>rulesForDate(y,m,d).filter(r=>r.show!==false).map(r=>r.task),
+      hours:vfHours,
+      saveFeatures:async(f)=>{appSettings.features={...(appSettings.features||{}),...f};await saveSettings();},
+      openFixSettings:isAdmin?()=>vfJumpSetting('work','고정 업무'):null,
+      openDayRecord:(k)=>{const d=new Date(k+'T00:00');cy=d.getFullYear();cm=d.getMonth();if(!curStore){const vp=window.__vflowProfile||{};curStore=STORES.find(s=>s.id===vp.storeId)||STORES[0]||null;}switchTab('monthly');setTimeout(()=>{try{showDetail(cy,cm,d.getDate());}catch(e){}},450);},
+    });
+  }catch(e){alert('캘린더를 열지 못했습니다. '+(e&&e.message||''));}
+}
+window.vfOpenCalendar=vfOpenCalendar;
+// 알림에서 누르고 들어오면(?cal=1) 캘린더부터
+try{if(new URLSearchParams(location.search).get('cal')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>vfOpenCalendar(),1200);}}catch(e){}
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
 function openBriefingNow(){
   vfUse('brief_open');
