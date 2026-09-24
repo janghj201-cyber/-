@@ -22,6 +22,12 @@ html[data-bright=dark] #vdeal{--us:#7FB0F2;--us-bg:#1A2B42;--them:#B49CF4;--them
 #vdeal .cedit .row2 input,#vdeal .cedit .row2 select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;font-size:13px;width:100%;min-width:0}
 #vdeal .first{border:1.5px dashed var(--line);border-radius:14px;padding:16px;display:grid;gap:6px;font-size:13.5px;color:var(--sub)}
 #vdeal .first b{color:var(--ink);font-size:15px}
+#vdeal .mbtn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:1px solid var(--line);background:var(--card);border-radius:10px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap}
+#vdeal .mbtn svg{width:16px;height:16px;color:var(--green)}
+#vdeal .mq{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--sub);white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto}
+#vdeal .maddr{margin:14px 0;padding:14px;border-radius:12px;background:var(--tint);color:var(--deep);font-weight:800;font-size:17px;text-align:center;font-variant-numeric:tabular-nums;word-break:break-all}
+#vdeal .mhow{margin:0 0 12px;padding-left:20px;display:grid;gap:8px;font-size:13.5px;color:var(--ink)}
+#vdeal .mhow b{font-weight:700}
 #vdeal .app{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 @media(min-width:1060px){
 #vdeal .app{grid-template-columns:minmax(0,1fr) 340px}
@@ -173,6 +179,7 @@ export async function openDeals(host = {}) {
   const TK = dk(TODAY)
   let tab = 'deals', filt = 'all', q = ''
   let clients = [], deals = [], logs = [], meets = [], last = {}, profiles = [], HOL = new Set(), industry = ''
+  let inbox = [] // 메일 자동 기록 — 거래처 · 건을 못 찾은 메일(분류 필요)
   const kinds = () => KINDS[industry] || ['매출처', '매입처']
 
   const root = document.createElement('div'); root.id = 'vdeal'
@@ -184,12 +191,14 @@ export async function openDeals(host = {}) {
       <div class="top">
         <div><h1>거래처 · 진행 건</h1><div class="sum" data-sum></div></div>
         <div class="row"><input class="srch" data-q placeholder="거래처 · 건 찾기" aria-label="찾기">
+          <button class="mbtn" data-mail type="button" title="거래처 메일을 자동으로 기록"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>메일 자동 기록</button>
           <button class="add" data-new><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>진행 건</button></div>
       </div>
       <div class="seg" data-tab><button data-t="deals">진행 건</button><button data-t="clients">거래처</button><button data-t="done">끝난 것</button></div>
       <div data-body><div class="loading">불러오는 중…</div></div>
     </section>
     <aside class="side">
+      <section class="panel" data-inbox hidden></section>
       <section class="panel" data-today></section>
       <section class="panel" data-money></section>
     </aside>
@@ -221,12 +230,14 @@ export async function openDeals(host = {}) {
       sb.from('profiles').select('id,name,status').eq('tenant_id', T).order('name').limit(1000),
       sb.from('public_holidays').select('date').gte('date', addD(TK, -120)).lte('date', addD(TK, 120)),
       sb.from('tenants').select('industry').eq('id', T).maybeSingle(),
+      sb.from('mail_inbox').select('id,direction,from_addr,other_addr,subject,snippet,received_at,client_id,status').eq('tenant_id', T).eq('status', 'pending').order('received_at', { ascending: false }).limit(50),
     ])
     const bad = q2.slice(0, 4).find((r) => r.error); if (bad) throw bad.error
     clients = q2[0].data || []; deals = q2[1].data || []; logs = q2[2].data || []; meets = (q2[3].data || []).filter((m) => m.status !== 'cancelled')
     last = {}; (q2[4].data || []).forEach((r) => { last[r.client_id] = r.last_on })
     profiles = (q2[5].data || []).filter((p) => p.status !== 'inactive' && p.status !== 'left')
     HOL = new Set((q2[6].data || []).map((h) => h.date)); industry = (q2[7].data || {}).industry || ''
+    inbox = (q2[8] && !q2[8].error) ? (q2[8].data || []) : [] // SQL_v617 전이면 조용히 빈 목록
   }
   const cli = (id) => clients.find((c) => c.id === id) || { name: '거래처', id }
   const pname = (id) => (profiles.find((p) => p.id === id) || {}).name || ''
@@ -278,7 +289,54 @@ export async function openDeals(host = {}) {
       <span class="mt">${md(l.log_date)} ${(LOG[l.kind] || LOG.note)[0]}${l.body ? ' · ' + esc(l.body) : ''}</span>${nx}
       <span class="rt"><span class="ball b-${i.cls}">${i.txt}</span><span class="age ${i.late ? 'late' : ''}">${d.ball === 'them' ? `${i.age ? i.age + '일째' : '오늘'} · 기준 ${i.lim}일` : i.age ? `${i.age}일째` : '오늘'}</span>${d.amount ? `<span class="amt">${won(d.amount)}</span>` : ''}<span class="hint">${esc(pname(d.owner_id))}</span></span></button>`
   }
+  function renderInbox() {
+    const P = $('[data-inbox]'); if (!P) return
+    P.hidden = !inbox.length; if (!inbox.length) return
+    P.innerHTML = `<h2>메일 분류 필요 ${inbox.length}<small>자동으로 못 찾은 메일</small></h2><ul class="tl2">${inbox.slice(0, 5).map((m) => `<li><span class="w">${md(dk(new Date(m.received_at)))}</span><span><b>${esc(m.subject || '(제목 없음)')}</b></span><small>${m.direction === 'out' ? '보냄 → ' : '받음 ← '}${esc(m.other_addr || m.from_addr || '')}${m.client_id ? ' · ' + esc(cli(m.client_id).name) + ' — 진행 중인 건 없음' : ''}</small><button data-mi="${m.id}">건 고르기</button></li>`).join('')}</ul>${inbox.length > 5 ? `<div class="hint" style="margin-top:6px">외 ${inbox.length - 5}건</div>` : ''}`
+    P.querySelectorAll('[data-mi]').forEach((b) => b.onclick = () => openInbox(inbox.find((m) => m.id === b.dataset.mi)))
+  }
+  // 분류 필요 메일 하나 — 어느 건에 기록할지 고르기 · 거래처 이메일로 남겨 다음부터 자동 · 무시
+  function openInbox(m) {
+    const O = open().sort((a, b) => (b.client_id === m.client_id) - (a.client_id === m.client_id))
+    const sc = sheet(`<div class="sheet" role="dialog" aria-modal="true" aria-label="메일 분류"><div class="shead"><h2>${esc(m.subject || '(제목 없음)')}</h2><button class="x" type="button" data-x aria-label="닫기">×</button></div>
+      <div class="hint" style="margin-bottom:8px">${md(dk(new Date(m.received_at)))} · ${m.direction === 'out' ? '우리가 보냄 → ' : '받음 ← '}${esc(m.other_addr || m.from_addr || '')}</div>
+      ${m.snippet ? `<div class="mq">${esc(String(m.snippet).slice(0, 400))}</div>` : ''}
+      <div class="sec">어느 건에 기록할까요</div>
+      ${O.map((d) => `<button type="button" class="deal" data-to="${d.id}"><span class="c">${esc(cli(d.client_id).name)}</span><b>${esc(d.title)}</b><span class="rt"><span class="ball b-${info(d).cls}">${info(d).txt}</span></span></button>`).join('') || '<div class="hint">진행 중인 건이 없어요 — 「+ 진행 건」으로 먼저 만들어 주세요</div>'}
+      <label class="remember" style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" data-rem checked>이 주소(${esc(m.other_addr || '')})를 그 거래처 이메일로 — 다음부터 자동</label>
+      <div class="sacts"><button type="button" data-ign>무시</button><button type="button" data-nw2>새 건 만들기</button></div></div>`, true)
+    sc.querySelector('[data-x]').onclick = () => { sc.remove(); render() }
+    sc.querySelector('[data-nw2]').onclick = () => { sc.remove(); openNew(m.client_id ? cli(m.client_id).name : '') } // 만든 뒤 다시 「건 고르기」
+    sc.querySelector('[data-ign]').onclick = async () => { const { error } = await sb.from('mail_inbox').update({ status: 'ignored' }).eq('id', m.id); if (error) return fail('메일', error); inbox = inbox.filter((x) => x !== m); sc.remove(); render(); toast('무시했어요') }
+    sc.querySelectorAll('[data-to]').forEach((b) => b.onclick = async () => {
+      const d = deals.find((x) => x.id === b.dataset.to); b.disabled = true
+      const { error } = await sb.rpc('vf_mail_assign', { p_inbox: m.id, p_deal: d.id })
+      if (error) { b.disabled = false; return fail('메일 기록', error) }
+      const c = cli(d.client_id)
+      if (sc.querySelector('[data-rem]').checked && m.other_addr && !c.email) { const r = await sb.from('clients').update({ email: m.other_addr }).eq('id', c.id); if (!r.error) c.email = m.other_addr }
+      inbox = inbox.filter((x) => x !== m); sc.remove()
+      try { await load() } catch (e) {}
+      render(); toast(`${c.name} · ${d.title}에 기록 — ${m.direction === 'out' ? '상대 차례' : '우리 차례'}`)
+    })
+  }
+  // 메일 자동 기록 안내 — 회사 전용 주소
+  async function openMailHelp() {
+    const sc = sheet(`<div class="sheet" role="dialog" aria-modal="true" aria-label="메일 자동 기록"><div class="shead"><h2>메일 자동 기록</h2><button class="x" type="button" data-x aria-label="닫기">×</button></div>
+      <div class="hint">거래처와 주고받는 메일을 이 주소에 같이 보내면, 「메일 받음 · 보냄」이 저절로 남고 누구 차례인지도 바뀌어요.</div>
+      <div class="maddr" data-addr>주소 만드는 중…</div>
+      <ol class="mhow"><li><b>보낼 때</b> — 거래처에 보내는 메일의 <b>숨은 참조(BCC)</b>에 이 주소</li><li><b>받았을 때</b> — 받은 메일을 이 주소로 <b>전달</b></li><li><b>거래처 이메일</b> — 거래처 화면에서 이메일을 넣어 두면 그 주소 · 같은 회사 주소로 자동으로 찾아요. 못 찾은 메일은 「메일 분류 필요」에 모여요</li></ol>
+      <div class="hint">메일 본문은 앞부분만 남기고 첨부 파일은 저장하지 않아요. 이 주소는 우리 회사 전용이라 밖에 알리지 마세요.</div>
+      <div class="sacts"><button type="button" data-x>닫기</button><button type="button" class="main" data-cp disabled>주소 복사</button></div></div>`, true)
+    sc.querySelectorAll('[data-x]').forEach((b) => b.onclick = () => { sc.remove(); render() })
+    const { data, error } = await sb.rpc('vf_mail_address')
+    const A = sc.querySelector('[data-addr]')
+    if (error || !data) { A.textContent = error && /대표|매니저/.test(error.message || '') ? '대표 · 매니저만 주소를 볼 수 있어요' : '주소를 만들지 못했어요 — 잠시 뒤 다시'; return }
+    const addr = `${data}@in.dutyvo.kr`; A.textContent = addr
+    const cp = sc.querySelector('[data-cp]'); cp.disabled = false
+    cp.onclick = async () => { try { await navigator.clipboard.writeText(addr); toast('주소를 복사했어요') } catch (e) { toast(addr) } }
+  }
   function renderSide() {
+    renderInbox()
     const O = open(), td = O.filter((d) => d.ball === 'us' && ((d.next_date && d.next_date <= TK) || info(d).late)), nr = O.filter((d) => d.ball === 'them' && info(d).late)
     let h = '<h2>오늘 챙길 것<small>담당자 폰 · 아침 9시</small></h2><ul class="tl2">'
     td.forEach((d) => h += `<li><span class="w ${d.next_date && d.next_date < TK ? 'l' : ''}">${d.next_date && d.next_date < TK ? md(d.next_date) + ' 지남' : '오늘'}</span><span><b>${esc(cli(d.client_id).name)}</b> · ${esc(d.next_text || d.title)}</span><small>담당 ${esc(pname(d.owner_id))}</small></li>`)
@@ -382,6 +440,7 @@ export async function openDeals(host = {}) {
     const D = deals.filter((d) => d.client_id === c.id)
     const sc = sheet(`<form class="sheet" role="dialog" aria-modal="true" aria-label="${esc(c.name)}"><div class="shead"><h2>${esc(c.name)}</h2><button class="x" type="button" data-x aria-label="닫기">×</button></div>
       <div class="cedit"><div class="row2"><label class="fld">담당자 이름<input data-ct value="${esc(c.contact_name || '')}" placeholder="예) 박 팀장"></label><label class="fld">연락처<input data-ph value="${esc(c.phone || '')}" inputmode="tel"></label></div>
+      <label class="fld">이메일 <span class="hint">메일 자동 기록이 이 주소 · 같은 회사 주소로 거래처를 찾아요</span><input data-em type="email" value="${esc(c.email || '')}" placeholder="예) park@greenmart.co.kr"></label>
       <div class="row2"><label class="fld">종류<input data-kd list="vdeal-kinds" value="${esc(c.kind || '')}"></label><label class="fld">우리 담당<select data-ow><option value="">없음</option>${profiles.map((p) => `<option value="${p.id}"${p.id === c.owner_id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label></div>
       <datalist id="vdeal-kinds">${kinds().map((k) => `<option value="${esc(k)}">`).join('')}</datalist>
       <label class="fld">메모<input data-mm value="${esc(c.memo || '')}" placeholder="예) 결제일 매월 10일"></label></div>
@@ -393,7 +452,7 @@ export async function openDeals(host = {}) {
     S('[data-nw]').onclick = () => { sc.remove(); openNew(c.name) }
     S('form').onsubmit = async (ev) => {
       ev.preventDefault()
-      const p = { contact_name: S('[data-ct]').value.trim() || null, phone: S('[data-ph]').value.trim() || null, kind: S('[data-kd]').value.trim() || null, owner_id: S('[data-ow]').value || null, memo: S('[data-mm]').value.trim() || null }
+      const p = { contact_name: S('[data-ct]').value.trim() || null, phone: S('[data-ph]').value.trim() || null, email: S('[data-em]').value.trim().toLowerCase() || null, kind: S('[data-kd]').value.trim() || null, owner_id: S('[data-ow]').value || null, memo: S('[data-mm]').value.trim() || null }
       const { error } = await sb.from('clients').update(p).eq('id', c.id); if (error) return fail('거래처', error)
       Object.assign(c, p); sc.remove(); render(); toast('저장했습니다')
     }
@@ -443,6 +502,7 @@ export async function openDeals(host = {}) {
   $$('[data-tab] button').forEach((b) => b.onclick = () => { tab = b.dataset.t; render() })
   $('[data-q]').oninput = (e) => { q = e.target.value.trim(); render() }
   $('[data-new]').onclick = () => openNew()
+  $('[data-mail]').onclick = () => openMailHelp()
   try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[deal] load', e); $('[data-err]').innerHTML = `<div class="st-err">거래처를 불러오지 못했어요 — ${esc(e.message || e)}. 잠시 뒤 다시 열어 주세요</div>` }
   render()
   if (host.dealId) { const d = deals.find((x) => x.id === host.dealId); if (d) openDeal(d) }

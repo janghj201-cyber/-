@@ -143,15 +143,34 @@ module.exports = async (req, res) => {
         for (const k of ans2) if (k.profile_id) sent += await push2(k.profile_id, { title: 'Dutyvo 답변이 왔어요', body: String(k.answer).slice(0, 100), url: '/?ask=1' });
       }
     } catch (e) { ops = { cos: [], tks: [], ans: [], skipped: String((e && e.message) || e).slice(0, 120) }; }
+    // ④ 거래처 메일(v6.17) — 자동 기록된 「받은 메일」은 그 건 담당자에게(우리 차례), 못 찾은 메일은 관리자에게 「분류 필요」.
+    //    SQL_v617 전이면 표가 없어 조용히 건너뛴다
+    let mails = [];
+    try {
+      mails = await sb(`mail_inbox?select=id,tenant_id,direction,status,subject,deal_id,client_id&alerted_at=is.null&limit=200`);
+      const inLogged = mails.filter((m) => m.status === 'logged' && m.direction === 'in' && m.deal_id), pend = mails.filter((m) => m.status === 'pending');
+      if (inLogged.length || pend.length) {
+        const dls = inLogged.length ? await sb(`deals?select=id,title,owner_id,client_id&id=${inList(inLogged.map((m) => m.deal_id))}`) : [];
+        const cls = dls.length ? await sb(`clients?select=id,name&id=${inList(dls.map((x) => x.client_id))}`) : [];
+        const tIds = [...new Set(pend.map((m) => m.tenant_id))];
+        const adm = tIds.length ? await sb(`profiles?select=id,tenant_id,role,status&tenant_id=${inList(tIds)}&role=in.(owner,manager)`) : [];
+        const pids = [...new Set([...dls.map((x) => x.owner_id).filter(Boolean), ...adm.filter((p) => (p.status ?? 'active') !== 'inactive').map((p) => p.id)])];
+        const subs3 = pids.length ? await sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&profile_id=${inList(pids)}&limit=2000`) : [];
+        const push3 = async (pid, payload) => { const mine = subs3.filter((x) => x.profile_id === pid); if (dry) return mine.length; let n = 0; for (const x of mine) { try { await webpush.sendNotification({ endpoint: x.endpoint, keys: { p256dh: x.p256dh, auth: x.auth } }, JSON.stringify(payload)); n++; } catch (e) { if (e.statusCode === 404 || e.statusCode === 410) await delSub(x.endpoint); } } return n; };
+        for (const m of inLogged) { const dl = dls.find((x) => x.id === m.deal_id); if (dl && dl.owner_id) sent += await push3(dl.owner_id, { title: `거래처 메일 · ${(cls.find((c) => c.id === dl.client_id) || {}).name || ''} — 우리 차례`, body: `${dl.title} · ${String(m.subject || '').slice(0, 60)}`, url: '/?deal=1' }); }
+        for (const T of tIds) { const n = pend.filter((m) => m.tenant_id === T).length; for (const a of adm.filter((p) => p.tenant_id === T)) sent += await push3(a.id, { title: `거래처 메일 분류 필요 ${n}건`, body: '거래처 · 건을 못 찾은 메일 — 거래처 화면에서 건 고르기', url: '/?deal=1' }); }
+      }
+    } catch (e) { mails = []; }
     if (!dry) {
       const stamp = new Date().toISOString();
+      if (mails.length) await patch(`mail_inbox?id=${inList(mails.map((m) => m.id))}`, { alerted_at: stamp });
       if (ops.cos.length) await patch(`tenants?id=${inList(ops.cos.map((x) => x.id))}`, { ops_alerted_at: stamp });
       if (ops.tks.length) await patch(`support_tickets?id=${inList(ops.tks.map((x) => x.id))}`, { alerted_at: stamp });
       if (ops.ans.length) await patch(`support_tickets?id=${inList(ops.ans.map((x) => x.id))}`, { answer_alerted_at: stamp });
       if (fresh.length) await patch(`appointments?id=${inList(fresh.map((a) => a.id))}`, { alerted_at: stamp });
       if (soon.length) await patch(`appointments?id=${inList(soon.map((a) => a.id))}`, { reminded_at: stamp });
     }
-    res.status(200).json({ ok: true, dry, checked: fresh.length, alerts: events.length, soon: soon.length, ops: { cos: ops.cos.length, tks: ops.tks.length, ans: ops.ans.length, skipped: ops.skipped }, sent });
+    res.status(200).json({ ok: true, dry, checked: fresh.length, alerts: events.length, soon: soon.length, ops: { cos: ops.cos.length, tks: ops.tks.length, ans: ops.ans.length, skipped: ops.skipped }, mails: mails.length, sent });
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }

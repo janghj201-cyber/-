@@ -410,6 +410,7 @@ function hoursOf(r) {
 // ── 4 청소 미리보기 — 실제로 넣을 업종 기본값 ──
 let tplCache = null
 setInd(ind) // 처음 기타 — 기능 스위치도 업종 기본값으로
+{ const qi = new URLSearchParams(location.search).get('ind'); if (qi && IND[qi]) setInd(qi) } // 소개 페이지 「이 업종으로 무료 시작」에서 왔으면 그 업종으로
 async function loadTemplates() {
   if (tplCache && tplCache.ind === ind) return tplCache.rows
   const { data, error } = await supabase.from('industry_templates').select('template_type, content').eq('industry', ind)
