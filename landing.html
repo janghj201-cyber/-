@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dutyvo — 매장 관리 앱 · 직원 인수인계 · 청소 체크 · 근무 마감</title>
-<meta name="description" content="1인 근무 매장의 인수인계 · 청소 체크 · 근무 마감을 기록하고 알려주는 매장 운영 앱. 설치 없이 주소로 접속, 초기 도입 매장은 지금 무료입니다.">
+<title>Dutyvo — 매장 관리 앱 · 인수인계 · 청소 체크 · 손님 예약 · 보관기한 · 거래처</title>
+<meta name="description" content="인수인계 · 청소 체크 · 근무 마감에 손님 예약 · 식자재 보관기한 · 거래처 관리까지. 카페 · 음식점 · 미용실 · 의원 · 학원 · 도매 업종별로 바로 시작하는 매장 운영 앱. 설치 없이 주소로 접속, 지금 무료입니다.">
 <meta name="keywords" content="매장 관리 앱, 매장 업무 관리, 직원 인수인계 앱, 교대 인수인계, 매장 청소 체크리스트, 1인 매장 관리, 다점포 관리, 근무 마감">
 <link rel="canonical" href="https://www.dutyvo.kr/intro">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dutyvo">
 <meta property="og:title" content="Dutyvo — 전화 안 하셔도 매장이 먼저 말합니다">
-<meta property="og:description" content="인수인계 · 청소 체크 · 근무 마감을 시스템이 기억합니다. 사장님은 빠진 것만 보시면 됩니다.">
+<meta property="og:description" content="인수인계 · 청소 · 근무 마감부터 손님 예약 · 보관기한 · 거래처까지 시스템이 기억합니다. 사장님은 빠진 것만 보시면 됩니다.">
 <meta property="og:url" content="https://www.dutyvo.kr/intro">
 <meta property="og:image" content="https://www.dutyvo.kr/lp/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -392,11 +392,50 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
   *{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+
+/* ─ 업종별 기능(v6.15) ─ 실제 Dutyvo 화면 캡처. 업종 칩을 누르면 그 업종에 켜지는 기능이 바뀐다 */
+.more{padding-block:120px;background:var(--card);box-shadow:0 -1px 0 var(--line)}
+.more h2,.more h3,.more p,.more li{word-break:keep-all}
+.inds{display:flex;gap:8px;margin-top:36px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.inds::-webkit-scrollbar{display:none}
+.inds button{flex:none;display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--sub);font:700 15px/1 var(--body);cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.inds button[aria-selected=true]{background:var(--forest);border-color:var(--forest);color:#fff}
+.inds button svg.ic{width:18px;height:18px}
+.ipanel{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:48px;align-items:center;margin-top:40px}
+.ipanel[hidden]{display:none}
+.ishot{position:relative}
+.ishot .win{border-radius:18px;background:var(--card);box-shadow:0 50px 90px -48px rgba(17,26,21,.5),0 0 0 1px var(--line);overflow:hidden}
+.ishot .bar{display:flex;gap:6px;padding:11px 14px;background:var(--paper);border-bottom:1px solid var(--line)}
+.ishot .bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.ishot .win img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left}
+.ishot .ph{position:absolute;right:-18px;bottom:-34px;width:31%;border-radius:28px;padding:7px;background:linear-gradient(160deg,#F1F3F1,#C9CFCB);box-shadow:0 30px 60px -24px rgba(0,0,0,.55)}
+.ishot .ph img{border-radius:22px;aspect-ratio:390/700;object-fit:cover;object-position:top}
+.itext .eyebrow{color:var(--green)}
+.itext h3{font-size:clamp(24px,2.6vw,32px);line-height:1.3;margin:10px 0 14px}
+.itext p{color:var(--sub);font-size:16.5px}
+.itext ul{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:12px}
+.itext li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:15.5px;color:var(--ink)}
+.itext li .ck{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--mint);color:var(--green)}
+.itext li .ck svg.ic{width:16px;height:16px}
+.itext li small{display:block;color:var(--mute);font-size:13.5px}
+.itext .on{margin-top:22px;font-size:14px;color:var(--mute)}
+.itext .on b{color:var(--forest)}
+.more-foot{margin-top:72px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.more-foot .op h3{font-size:17px;margin-bottom:6px}
+.more-foot .op p{font-size:14.5px;color:var(--sub)}
+@media (max-width:900px){
+  .more{padding-block:80px}
+  .ipanel{grid-template-columns:minmax(0,1fr);gap:28px}
+  .ishot .ph{right:-4px;bottom:-24px;width:34%}
+  .ishot{margin-bottom:24px}
+  .more-foot{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:48px}
+}
+@media (max-width:480px){.more-foot{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-food" viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 1-4 0V3M5 11v10"/><path d="M19 21V3c-2.2 1-4 3.6-4 7v4h4"/></symbol><symbol id="i-cut" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.2 16 20 4M15.8 16 4 4"/></symbol><symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-broom" viewBox="0 0 24 24"><path d="m13 11 8-8"/><path d="M5.5 13.5 10 18l1.5-5.5L7 8z"/><path d="M3 21c1-3 2.5-5.5 4-7"/></symbol>
   <symbol id="i-hand" viewBox="0 0 24 24"><path d="M4 12h9"/><path d="m10 8 4 4-4 4"/><path d="M20 4v16"/></symbol>
@@ -429,6 +468,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <a href="#day">매장의 하루</a>
       <a href="#owner">사장님 화면</a>
       <a href="#staff">직원 폰</a>
+      <a href="#more">업종별 기능</a>
       <a href="#start">시작하기</a>
     </nav>
     <div class="right">
@@ -443,9 +483,9 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
   <canvas id="net" aria-hidden="true"></canvas>
   <div class="wrap">
     <div>
-      <div class="eyebrow"><span class="live"></span>1인 근무 매장 운영 시스템</div>
+      <div class="eyebrow"><span class="live"></span>매장 운영 · 손님 예약 · 보관기한 · 거래처</div>
       <h1 id="h1">전화 안 하셔도<br>매장이 먼저<br>말합니다<span class="quiet">.</span></h1>
-      <p class="lede">인수인계, 청소, 근무 마감. 사람이 기억하던 것을 Dutyvo가 기록하고 알려드립니다. 사장님은 빠진 것만 보시면 됩니다.</p>
+      <p class="lede">인수인계, 청소, 근무 마감에 손님 예약 · 보관기한 · 거래처까지. 사람이 기억하던 것을 Dutyvo가 기록하고 알려드립니다. 사장님은 빠진 것만 보시면 됩니다.</p>
       <div class="ctas">
         <a class="btn btn-gold" href="/onboarding.html">무료로 시작 <svg class="ic"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-ghost" href="#day">하루 흐름 보기</a>
@@ -617,6 +657,44 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
   </div>
 </section>
 
+<section class="more" id="more" aria-labelledby="more-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">업종별 기능</div>
+      <h2 id="more-h">매장 운영에 더해, 우리 업종에 필요한 것까지</h2>
+      <p>가입할 때 업종을 고르면 맞는 기능이 켜진 채로 시작합니다. 전부 설정에서 켜고 끌 수 있고, 켜지 않은 기능은 화면에 보이지 않습니다.</p>
+    </div>
+    <div class="inds" role="tablist" aria-label="업종">
+      <button type="button" role="tab" id="it-food" aria-controls="ip-food" aria-selected="true"><svg class="ic"><use href="#i-food"/></svg>음식점 · 카페</button>
+      <button type="button" role="tab" id="it-book" aria-controls="ip-book" aria-selected="false"><svg class="ic"><use href="#i-cut"/></svg>미용 · 의원 · 학원</button>
+      <button type="button" role="tab" id="it-b2b" aria-controls="ip-b2b" aria-selected="false"><svg class="ic"><use href="#i-box"/></svg>도매 · 유통</button>
+      <button type="button" role="tab" id="it-all" aria-controls="ip-all" aria-selected="false"><svg class="ic"><use href="#i-cal"/></svg>모든 업종</button>
+    </div>
+    <div class="ipanel" id="ip-food" role="tabpanel" aria-labelledby="it-food">
+      <div class="ishot"><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="/lp/f_exp.webp" alt="Dutyvo 보관기한 화면 — 지남 · 오늘까지 · 내일까지" width="1600" height="1000" loading="lazy"></div></div>
+      <div class="itext"><div class="eyebrow">보관기한</div><h3>사 온 식자재, 날짜를 적어 두지 않아도 됩니다</h3><p>품목마다 보관 일수를 한 번만 정해 두면, 들어올 때 품목을 누르기만 해도 기한이 계산됩니다. 포장 제품은 포장에 찍힌 날짜를 칩으로 고릅니다.</p><ul><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>하루 전에 알려 줍니다<small>전날 저녁 6시 「내일까지 N건」 · 당일 아침 9시</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>마감 때 한 번 더<small>근무 마감 · 매장 컴퓨터 대기 화면에 지난 것 · 오늘까지</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>버린 것은 금액까지<small>이번 달 버린 것 · 가장 많은 이유 · 단가 기준 금액</small></div></li></ul><p class="on">음식점을 고르면 <b>보관기한 · 단체 예약</b>, 카페 · 편의점은 <b>보관기한</b>이 켜집니다</p></div>
+    </div>
+    <div class="ipanel" id="ip-book" role="tabpanel" aria-labelledby="it-book" hidden>
+      <div class="ishot"><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="/lp/f_rsv.webp" alt="Dutyvo 고객 예약 매장 화면 — 확인 필요 · 담당별 시간표" width="1600" height="1000" loading="lazy"></div><div class="ph"><img src="/lp/f_rsv_phone.webp" alt="손님이 보는 예약 페이지" width="780" height="1688" loading="lazy"></div></div>
+      <div class="itext"><div class="eyebrow">고객 예약</div><h3>예약 링크 · 전화 · 네이버 예약을 한 시간표에</h3><p>손님은 링크에서 시술 · 날짜 · 시간을 고르고 이름과 번호만 넣습니다. 쉬는 날 · 점심 · 이미 찬 시간은 처음부터 안 보입니다. 매장은 확인 필요에서 확정 · 다른 시간 제안 · 어려움만 누릅니다.</p><ul><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>다녀간 손님은 바로 확정<small>처음 오는 손님 · 노쇼 이력만 매장이 확인</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>1분 안에 담당자 폰으로<small>새 요청 · 취소 · 시간 변경 요청 · 1시간 전</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>네이버 예약도 같이<small>스마트플레이스 알림을 붙여 넣으면 새 예약 · 취소 · 변경이 한 번에</small></div></li></ul><p class="on">뷰티 · 의원/치료 · 학원을 고르면 <b>고객 예약</b>이 켜지고, 예약 칸과 기본 시술이 들어가 있습니다</p></div>
+    </div>
+    <div class="ipanel" id="ip-b2b" role="tabpanel" aria-labelledby="it-b2b" hidden>
+      <div class="ishot"><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="/lp/f_deal.webp" alt="Dutyvo 거래처 화면 — 우리 차례 · 답 기다림 · 늦어짐" width="1600" height="1000" loading="lazy"></div></div>
+      <div class="itext"><div class="eyebrow">거래처</div><h3>메일은 오갔는데, 지금 누구 차례인가요</h3><p>견적 · 단가 · 입점처럼 며칠씩 걸리는 건을 「지금 누구 차례인지」로 봅니다. 메일 받음 · 보냄을 한 번 누르면 차례가 바뀌고, 답이 늦어지면 먼저 알려 줍니다.</p><ul><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>우리 차례 · 상대 차례<small>메일 받음 → 우리 차례, 메일 보냄 → 상대 차례 + 회신 확인일</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>답 없는 건을 영업일로<small>주말 · 공휴일은 빼고 세서, 기준을 넘으면 「답 없음」</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>미팅은 캘린더로<small>전날 알림 · 아침 9시 오늘 할 일 정리</small></div></li></ul><p class="on">도매 · 유통을 고르면 <b>거래처</b>가 켜집니다</p></div>
+    </div>
+    <div class="ipanel" id="ip-all" role="tabpanel" aria-labelledby="it-all" hidden>
+      <div class="ishot"><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="/lp/f_cal.webp" alt="Dutyvo 캘린더 — 손님 예약 · 미팅 · 보관기한 · 고정업무 · 휴무" width="1600" height="1000" loading="lazy"></div></div>
+      <div class="itext"><div class="eyebrow">캘린더</div><h3>예약 · 미팅 · 보관기한 · 휴무를 한 달력에</h3><p>따로 적던 일정이 한 달력에 모입니다. 보고 싶은 것만 켜고, 같은 시간에 겹치면 넣기 전에 알려 줍니다. 알림은 1시간 전 · 당일 아침 · 전날 저녁 중에 고릅니다.</p><ul><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>매장 · 담당자별로<small>전체 매장 · 모든 담당자에서 골라 보기</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>반복 일정 한 번에<small>매주 · 2주마다 · 매월</small></div></li><li><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div>고정 업무 · 공휴일까지<small>발주 · 재고실사 같은 매달 반복되는 일이 자동으로</small></div></li></ul><p class="on">캘린더는 <b>모든 업종</b>에서 켜진 채로 시작합니다</p></div>
+    </div>
+    <div class="more-foot">
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-store"/></svg></span><h3>업종 8가지</h3><p>카페 · 음식점 · 편의점 · 뷰티 · 의원/치료 · 학원 · 도매/유통 · 기타</p></div>
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-check"/></svg></span><h3>켜 둔 채로 시작</h3><p>업종을 고르면 청소표 · 고정 업무 · 쓸 기능이 먼저 들어가 있습니다</p></div>
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-bell"/></svg></span><h3>알림은 담당자에게</h3><p>예약 · 보관기한 · 거래처 알림이 그 일을 맡은 사람 폰으로</p></div>
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-text"/></svg></span><h3>막히면 앱에서 문의</h3><p>내 계정 → 「Dutyvo에 문의」 · 답이 오면 폰으로</p></div>
+    </div>
+  </div>
+</section>
+
 <section class="start" id="start" aria-labelledby="start-h">
   <div class="wrap">
     <div class="sec-head">
@@ -642,7 +720,9 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
     <div>
       <details><summary>우리 매장 기록이 다른 회사에 보이나요?</summary><p>보이지 않습니다. 회사별로 데이터가 나뉘어 있고, 서버에서 접근 권한을 막습니다. 화면에서 숨기는 방식이 아닙니다.</p></details>
       <details><summary>직원들이 어려워하지 않을까요?</summary><p>직원 화면은 네 칸과 「남기기」가 전부입니다. 지금 쓰는 매장도 공지 한 장으로 시작했습니다.</p></details>
-      <details><summary>업종이 달라도 되나요?</summary><p>가입할 때 업종을 고르면 청소표와 고정 업무가 그 업종에 맞게 먼저 들어가 있고, 그다음부터는 자유롭게 고치시면 됩니다.</p></details>
+      <details><summary>업종이 달라도 되나요?</summary><p>카페 · 음식점 · 편의점 · 뷰티 · 의원/치료 · 학원 · 도매/유통 중에 고르시면 청소표 · 고정 업무 · 쓸 기능이 그 업종에 맞게 먼저 들어가 있습니다. 음식점은 보관기한과 단체 예약, 미용실은 손님 예약, 도매는 거래처가 켜진 채로 시작합니다. 그다음부터는 자유롭게 고치시면 됩니다.</p></details>
+      <details><summary>네이버 예약을 이미 쓰고 있어요</summary><p>그대로 쓰시면 됩니다. 스마트플레이스 알림을 복사해 붙여 넣으면 새 예약 · 취소 · 변경이 Dutyvo 시간표에 한 번에 들어가서, 전화 예약 · 링크 예약과 겹치지 않게 한곳에서 봅니다. 네이버 예약이 없는 매장은 Dutyvo 예약 링크를 플레이스 「예약」 버튼에 붙이면 됩니다.</p></details>
+      <details><summary>손님에게 문자가 자동으로 가나요?</summary><p>아직은 아닙니다. 확정 · 시간 제안 · 변경 때 폰의 문자 앱이 내용을 채운 채로 열려서 보내기만 누르시면 됩니다. 매장 쪽 알림(새 예약 요청 · 취소 · 1시간 전)은 담당자 폰으로 바로 갑니다.</p></details>
       <details><summary>점수로 직원을 평가하나요?</summary><p>아닙니다. 매장 컨디션은 매장 점수입니다. 사람별 점수나 순위는 만들지 않았습니다.</p></details>
       <details><summary>쓰다가 막히면 어디에 묻나요?</summary><p>앱의 내 계정 → 「Dutyvo에 문의」에 남기시면 운영팀이 답하고, 답이 오면 폰으로 알려드립니다. 아래 번호로 문자 · 전화도 됩니다.</p></details>
     </div>
@@ -853,6 +933,12 @@ const lerp=(a,b,t)=>a+(b-a)*t;
   });
 })();
 })();
+</script>
+<script>
+/* 업종별 기능 — 칩(탭) 전환. 키보드 ← → 로도 */
+(function(){var tabs=[].slice.call(document.querySelectorAll('.inds [role=tab]'));if(!tabs.length)return;
+function go(t,focus){tabs.forEach(function(b){var on=b===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;var p=document.getElementById(b.getAttribute('aria-controls'));if(p)p.hidden=!on;});if(focus)t.focus();}
+tabs.forEach(function(b,i){b.tabIndex=i?-1:0;b.addEventListener('click',function(){go(b)});b.addEventListener('keydown',function(e){var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();go(tabs[(i+d+tabs.length)%tabs.length],true);}});});})();
 </script>
 </body>
 </html>

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="lp/dv-auth.css?v=1">
 <style>
 /* 시작 화면만 쓰는 것 */
-.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
 .tile{font:inherit;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 6px;cursor:pointer;display:grid;justify-items:center;gap:6px;color:var(--ink);font-size:13.5px;font-weight:700}
 .tile svg{width:22px;height:22px;color:var(--sub)}
 .tile[aria-pressed=true]{border-color:var(--green);background:var(--tint)}
@@ -73,16 +73,75 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
 .eyebrow{font-size:13px;font-weight:800;color:var(--green);margin:0 0 4px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;max-width:calc(100% - 32px);z-index:9}
 @media (max-width:560px){
-  .tiles{grid-template-columns:repeat(3,1fr)}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .tile{grid-auto-flow:column;justify-content:start;padding:11px 12px}
   .words-grid{grid-template-columns:repeat(2,1fr)}
   .days button{font-size:13px}
   .inv,.inv-head{grid-template-columns:1fr 1fr 34px}
   .inv input[type=email]{grid-column:1 / 3;grid-row:2}
   .inv-head span:nth-child(2){display:none}
 }
+
+/* ─ 컴퓨터 화면(1024px 이상): 왼쪽 안내 · 오른쪽 입력 (v6.15) ─ 소개 페이지와 같은 깊은 초록 · 실제 Dutyvo 화면
+   폰은 지금 흐름 그대로(왼쪽 안내 숨김) */
+.side{display:none}
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  .ob{display:grid;grid-template-columns:minmax(440px,44%) minmax(0,1fr);min-height:100vh}
+  .side{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden;background:linear-gradient(150deg,#0F3A2A 0%,#174C38 48%,#1E7254 100%);color:#EEF4EF;padding:44px clamp(36px,4vw,72px) 36px}
+  .side::after{content:"";position:absolute;right:-160px;bottom:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(89,186,139,.28),transparent 70%);pointer-events:none}
+  .side .brand{color:#fff;margin:0 0 44px}
+  .s-eb{font-size:13.5px;font-weight:800;color:#9FD9BC;letter-spacing:.02em}
+  .s-h{font-size:clamp(28px,2.5vw,36px);line-height:1.3;margin:10px 0 12px;letter-spacing:-.025em;word-break:keep-all}
+  .s-p{font-size:15.5px;color:#B9CCC1;margin:0;max-width:460px;word-break:keep-all}
+  .s-steps{list-style:none;margin:30px 0 0;padding:0;display:grid;gap:4px}
+  .s-steps li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:center;padding:7px 0;color:#8FA99A;font-weight:700;font-size:15px}
+  .s-steps li i{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(233,244,236,.25);display:grid;place-items:center;font-style:normal;font-size:13px}
+  .s-steps li.on{color:#fff}.s-steps li.on i{background:#fff;color:#174C38;border-color:#fff}
+  .s-steps li.done{color:#CFE3D7}.s-steps li.done i{background:#59BA8B;border-color:#59BA8B;color:#0B1B14}
+  .s-steps li small{display:block;font-weight:500;font-size:12.5px;color:#7F9C8C}
+  .s-prev{margin-top:auto;padding-top:28px;position:relative;z-index:1}
+  .s-win{border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 40px 80px -40px rgba(0,0,0,.7);transform:perspective(1200px) rotateY(-6deg) rotateX(3deg);transform-origin:left center}
+  .s-win .bar{display:flex;gap:5px;padding:8px 11px;background:#EEF2EE}.s-win .bar i{width:8px;height:8px;border-radius:50%;background:#CBD5CE}
+  .s-win img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left}
+  .s-cap{font-size:12.5px;color:#9FB8AA;margin-top:12px}
+  .s-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .s-chips span{font-size:13px;font-weight:700;border-radius:999px;padding:5px 12px;background:rgba(255,255,255,.1);color:#DDEBE3;border:1px solid rgba(233,244,236,.16)}
+  .s-chips span.on{background:#59BA8B;border-color:#59BA8B;color:#0B1B14}
+  .s-list{display:grid;gap:8px}
+  .s-list div{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(233,244,236,.12);border-radius:12px;padding:12px 14px;font-weight:700;font-size:14.5px}
+  .s-list small{color:#9FB8AA;font-weight:500}
+  .s-ben{display:grid;gap:10px}
+  .s-ben div{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:center;font-size:14.5px;font-weight:700}
+  .s-ben svg{width:34px;height:34px;padding:8px;border-radius:10px;background:rgba(255,255,255,.1);color:#9FD9BC}
+  .s-ben small{display:block;font-weight:500;color:#9FB8AA;font-size:12.5px}
+  .s-foot{font-size:12.5px;color:#7F9C8C;margin-top:22px;position:relative;z-index:1}
+  .s-foot a{color:#CFE3D7}
+  .ob .shell{max-width:660px;padding:64px 48px 80px;width:100%}
+  .ob .shell > .brand,.ob .shell > #steps{display:none}
+  .card{padding:34px 36px 28px;border-radius:22px}
+  h1{font-size:26px}
+  .sub{font-size:15px}
+}
 </style>
 </head>
 <body>
+<div class="ob">
+<aside class="side" aria-label="시작 안내">
+  <a class="brand" href="/intro"><img src="icons/dutyvo-mark-white.svg" alt="">Dutyvo</a>
+  <div class="s-eb">무료로 시작 · 설치 없음 · 카드 등록 없음</div>
+  <h2 class="s-h" data-sh>5분이면 우리 회사 Dutyvo가 생깁니다</h2>
+  <p class="s-p" data-sp>대표 계정을 만들고 업종 · 매장을 고르면, 청소표 · 고정 업무 · 쓸 기능이 먼저 채워진 채로 시작합니다.</p>
+  <ol class="s-steps" data-ss>
+    <li class="on"><i>1</i><span>대표 계정<small>이름 · 이메일 · 비밀번호</small></span></li>
+    <li><i>2</i><span>회사 · 업종<small>업종에 맞는 기능이 켜짐</small></span></li>
+    <li><i>3</i><span>매장 · 운영 시간<small>여는 시각 · 쉬는 날</small></span></li>
+    <li><i>4</i><span>쓸 기능<small>필요한 것만</small></span></li>
+    <li><i>5</i><span>직원 초대<small>나중에 해도 됨</small></span></li>
+  </ol>
+  <div class="s-prev" data-sprev></div>
+  <p class="s-foot">이미 계정이 있으면 <a href="login.html">로그인</a> · 쓰다가 막히면 앱의 내 계정 → 「Dutyvo에 문의」</p>
+</aside>
 <main class="shell">
   <a class="brand" href="/intro"><img src="icons/dutyvo-mark.svg" alt="">Dutyvo</a>
   <ol class="steps" id="steps"><li class="on">계정</li><li>회사</li><li>매장</li><li>쓸 기능</li><li>직원</li></ol>
@@ -105,14 +164,17 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
   <!-- 2 회사 -->
   <section class="card" data-step="2" hidden>
     <h1>회사 정보</h1>
-    <p class="sub">업종에 맞춰 청소 항목과 매달 반복되는 일을 미리 채워 둡니다. 전부 나중에 바꿀 수 있습니다.</p>
+    <p class="sub">업종에 맞춰 청소 항목 · 매달 반복되는 일 · 쓸 기능을 미리 채워 둡니다. 전부 나중에 바꿀 수 있습니다.</p>
     <label class="f">회사 · 브랜드 이름<input type="text" id="co" placeholder="예) 온기 커피" maxlength="40"></label>
     <div class="lbl" style="margin-top:14px"><b>업종</b></div>
     <div class="tiles" id="tiles">
       <button type="button" class="tile" data-ind="cafe" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 2v3M12 2v3"/></svg>카페</button>
+      <button type="button" class="tile" data-ind="restaurant" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 1-4 0V3M5 11v10"/><path d="M19 21V3c-2.2 1-4 3.6-4 7v4h4"/></svg>음식점</button>
       <button type="button" class="tile" data-ind="convenience" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/></svg>편의점</button>
       <button type="button" class="tile" data-ind="beauty" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.2 16 20 4M15.8 16 4 4"/></svg>뷰티</button>
+      <button type="button" class="tile" data-ind="clinic" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>의원 · 치료</button>
       <button type="button" class="tile" data-ind="academy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>학원</button>
+      <button type="button" class="tile" data-ind="wholesale" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>도매 · 유통</button>
       <button type="button" class="tile" data-ind="etc" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 12h6M12 9v6"/></svg>기타</button>
     </div>
     <details class="words">
@@ -151,6 +213,13 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
   <section class="card" data-step="4" hidden>
     <h1>쓸 기능 고르기</h1>
     <p class="sub">끈 기능은 모든 화면에서 숨습니다. 나중에 관리자 → 설정에서 언제든 켤 수 있습니다.</p>
+    <div class="grp">업종에 맞춰 골라 둔 것 <span data-indname style="font-weight:500"></span></div>
+    <div class="feat">
+      <label><b>캘린더</b><small>손님 예약 · 거래처 미팅 · 보관기한 · 고정업무 · 휴무를 한 달력에</small><input type="checkbox" class="swi" data-f="calendar"><span class="sw"></span></label>
+      <label><b>보관기한</b><small>들어온 식자재 · 재료를 넣어 두면 기한 전날 알림 · 마감 때 확인</small><input type="checkbox" class="swi" data-f="expiry"><span class="sw"></span></label>
+      <label><b>고객 예약</b><small>예약 링크 · 전화 예약 · 네이버 예약 알림을 한 시간표에</small><input type="checkbox" class="swi" data-f="booking"><span class="sw"></span></label>
+      <label><b>거래처</b><small>거래처와 주고받는 건 — 지금 누구 차례인지 · 답 없는 건 · 미팅</small><input type="checkbox" class="swi" data-f="clients"><span class="sw"></span></label>
+    </div>
     <div class="grp">매일 쓰는 것</div>
     <div class="feat">
       <label><b><span class="w-clean">청소</span> 체크리스트</b><small>매일 점검 항목 · 사진 · <span class="w-store">매장</span> 점수</small><input type="checkbox" class="swi" data-f="cleaning" checked><span class="sw"></span></label>
@@ -208,6 +277,7 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
     <div class="acts"><button type="button" class="btn main" id="b-start">Dutyvo 시작</button></div>
   </section>
 </main>
+</div>
 
 <script type="module">
 import { supabase } from './adapter/supabase-client.js'
@@ -241,6 +311,7 @@ function show(n) {
   $$('#steps li').forEach((li, i) => { li.className = i + 1 < n ? 'done' : i + 1 === n ? 'on' : '' })
   $('#steps').hidden = n === 6
   if (n === 4) loadCleanPreview()
+  paintSide()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 $$('[data-prev]').forEach((b) => (b.onclick = () => show(step - 1)))
@@ -279,18 +350,29 @@ $('#f1').addEventListener('submit', async (e) => {
 })
 
 // ── 2 회사 · 업종 · 쓰는 말 ──
+// f: 업종에 맞춰 켜 두는 기능(캘린더 · 보관기한 · 고객 예약 · 거래처). rsv: 고객 예약을 켜면 넣어 두는 예약 칸 · 시술 — 받는 방법에서 고친다
 const IND = {
-  cafe: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '에스프레소 머신 · 스팀 노즐 세척', '제빙기 · 냉장고 온도 확인', '테이블 · 의자 정리', '쓰레기통 비우기', '화장실 점검'] },
-  convenience: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '진열대 전면 정리', '유통기한 확인', '냉장 · 냉동 온도 확인', '쓰레기통 비우기', '카운터 주변 정리'] },
-  beauty: { w: ['매장', '디자이너', '청소', '인수인계'], c: ['바닥 · 머리카락 정리', '도구 소독', '수건 · 가운 교체', '거울 · 의자 닦기', '쓰레기통 비우기', '카운터 주변 정리'] },
-  academy: { w: ['교실', '선생님', '마감 점검', '전달 사항'], c: ['교실 정리 · 책상 줄 맞추기', '화이트보드 지우기', '창문 · 냉난방 끄기', '출입문 잠금 확인', '쓰레기통 비우기', '복도 · 화장실 점검'] },
-  etc: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '출입문 · 유리창 닦기', '쓰레기통 비우기', '진열대 · 집기 정리', '화장실 점검', '카운터 주변 정리'] },
+  restaurant: { w: ['매장', '근무자', '청소', '인수인계'], c: ['주방 바닥 · 배수구 청소', '냉장 · 냉동고 온도 기록', '식자재 보관기한 확인', '조리 도구 · 도마 세척 · 소독', '홀 테이블 · 의자 정리', '쓰레기 · 음식물 쓰레기 배출'], f: { calendar: 1, expiry: 1, booking: 1, clients: 0 }, rsv: { res: '단체석', svc: [['단체 예약 (8명 이상)', 120]] } },
+  clinic: { w: ['지점', '직원', '청소 · 소독', '인수인계'], c: ['치료실 베드 · 기구 소독', '대기실 정리', '수건 · 시트 교체', '소모품 재고 확인', '화장실 점검', '접수대 정리'], f: { calendar: 1, expiry: 0, booking: 1, clients: 0 }, rsv: { res: '치료실 1', svc: [['초진 상담', 30], ['도수치료', 50], ['물리치료', 30]] } },
+  wholesale: { w: ['사업장', '직원', '정리 점검', '전달 사항'], c: ['입고 · 출고 구역 정리', '재고 위치 표시 확인', '포장재 · 박스 정리', '지게차 · 운반 기구 점검', '사무실 정리', '출입문 · 창고 잠금 확인'], f: { calendar: 1, expiry: 0, booking: 0, clients: 1 } },
+  cafe: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '에스프레소 머신 · 스팀 노즐 세척', '제빙기 · 냉장고 온도 확인', '테이블 · 의자 정리', '쓰레기통 비우기', '화장실 점검'], f: { calendar: 1, expiry: 1, booking: 0, clients: 0 } },
+  convenience: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '진열대 전면 정리', '유통기한 확인', '냉장 · 냉동 온도 확인', '쓰레기통 비우기', '카운터 주변 정리'], f: { calendar: 1, expiry: 1, booking: 0, clients: 0 } },
+  beauty: { w: ['매장', '디자이너', '청소', '인수인계'], c: ['바닥 · 머리카락 정리', '도구 소독', '수건 · 가운 교체', '거울 · 의자 닦기', '쓰레기통 비우기', '카운터 주변 정리'], f: { calendar: 1, expiry: 0, booking: 1, clients: 0 }, rsv: { res: '디자이너 1', svc: [['커트', 60], ['펌', 150], ['염색', 120]] } },
+  academy: { w: ['교실', '선생님', '마감 점검', '전달 사항'], c: ['교실 정리 · 책상 줄 맞추기', '화이트보드 지우기', '창문 · 냉난방 끄기', '출입문 잠금 확인', '쓰레기통 비우기', '복도 · 화장실 점검'], f: { calendar: 1, expiry: 0, booking: 1, clients: 0 }, rsv: { res: '체험반', svc: [['체험 수업', 60], ['입학 상담', 30]] } },
+  etc: { w: ['매장', '근무자', '청소', '인수인계'], c: ['매장 바닥 청소', '출입문 · 유리창 닦기', '쓰레기통 비우기', '진열대 · 집기 정리', '화장실 점검', '카운터 주변 정리'], f: { calendar: 1, expiry: 0, booking: 0, clients: 0 } },
 }
 const TERM_DEFAULT = { store: '매장', worker: '근무자', clean: '청소', handover: '인수인계' }
 let ind = 'etc'
 const W = () => { const w = {}; $$('[data-w]').forEach((i) => (w[i.dataset.w] = i.value.trim() || TERM_DEFAULT[i.dataset.w])); return w }
 function words() { const w = W(); Object.keys(w).forEach((k) => $$('.w-' + k).forEach((e) => (e.textContent = w[k]))); $('#words-sum').textContent = [w.store, w.worker, w.clean, w.handover].join(' · ') }
-function setInd(k) { ind = k; $$('.tile').forEach((t) => t.setAttribute('aria-pressed', t.dataset.ind === k)); $$('[data-w]').forEach((i, n) => (i.value = IND[k].w[n])); words(); tplCache = null }
+const IND_NAME = { cafe: '카페', restaurant: '음식점', convenience: '편의점', beauty: '뷰티', clinic: '의원 · 치료', academy: '학원', wholesale: '도매 · 유통', etc: '기타' }
+function setInd(k) {
+  ind = k; $$('.tile').forEach((t) => t.setAttribute('aria-pressed', t.dataset.ind === k)); $$('[data-w]').forEach((i, n) => (i.value = IND[k].w[n])); words(); tplCache = null
+  // 업종을 고르면 그 업종에 맞는 기능이 켜진다 — 4단계에서 바꿀 수 있다
+  Object.entries(IND[k].f).forEach(([f, on]) => { const i = document.querySelector(`.swi[data-f="${f}"]`); if (i) i.checked = !!on })
+  const nm = document.querySelector('[data-indname]'); if (nm) nm.textContent = `· ${IND_NAME[k] || ''}`
+  if (typeof paintSide === 'function' && step >= 2) paintSide()
+}
 $$('.tile').forEach((t) => (t.onclick = () => setInd(t.dataset.ind)))
 $$('[data-w]').forEach((i) => (i.oninput = words))
 
@@ -327,6 +409,7 @@ function hoursOf(r) {
 
 // ── 4 청소 미리보기 — 실제로 넣을 업종 기본값 ──
 let tplCache = null
+setInd(ind) // 처음 기타 — 기능 스위치도 업종 기본값으로
 async function loadTemplates() {
   if (tplCache && tplCache.ind === ind) return tplCache.rows
   const { data, error } = await supabase.from('industry_templates').select('template_type, content').eq('industry', ind)
@@ -342,6 +425,43 @@ async function loadCleanPreview() {
 }
 
 // ── 5 직원 초대 ──
+
+// ── 컴퓨터 화면 왼쪽 안내 — 단계마다 제목 · 미리보기가 바뀐다(폰에서는 숨김) ──
+const SVGI = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`
+const FEAT_NM = { calendar: '캘린더', expiry: '보관기한', booking: '고객 예약', clients: '거래처' }
+const SHOT = { restaurant: ['f_exp', '보관기한 — 지난 것 · 오늘까지 · 내일까지'], cafe: ['f_exp', '보관기한 — 지난 것 · 오늘까지 · 내일까지'], convenience: ['f_exp', '보관기한 — 지난 것 · 오늘까지 · 내일까지'], beauty: ['f_rsv', '고객 예약 — 확인 필요 · 담당별 시간표'], clinic: ['f_rsv', '고객 예약 — 확인 필요 · 담당별 시간표'], academy: ['f_rsv', '고객 예약 — 확인 필요 · 담당별 시간표'], wholesale: ['f_deal', '거래처 — 우리 차례 · 답 기다림'], etc: ['f_cal', '캘린더 — 예약 · 미팅 · 보관기한 · 휴무'] }
+const SIDE_TX = {
+  1: ['5분이면 우리 회사 Dutyvo가 생깁니다', '대표 계정을 만들고 업종 · 매장을 고르면, 청소표 · 고정 업무 · 쓸 기능이 먼저 채워진 채로 시작합니다.'],
+  2: ['업종을 고르면, 맞는 기능이 켜진 채로', '청소 항목 · 매달 반복되는 일 · 화면에 쓰는 말까지 그 업종에 맞춰 둡니다. 전부 나중에 고칠 수 있습니다.'],
+  3: ['매장마다 여는 시각 · 쉬는 날', '닫는 시각 30분 전에 매장 컴퓨터가 오늘 남은 일을 알려 줍니다. 예약 페이지도 이 시간대로 열립니다.'],
+  4: ['필요한 것만 켜 두세요', '끈 기능은 모든 화면에서 사라집니다. 설정에서 언제든 다시 켤 수 있고, 기록은 지워지지 않습니다.'],
+  5: ['직원은 폰 하나면 됩니다', '초대 링크를 카톡으로 보내면 직원은 비밀번호만 정하고 들어옵니다. 지금 건너뛰어도 됩니다.'],
+  6: ['준비 끝 — 내일 아침부터', '쓸 기기에 깔아 두면 켤 때마다 Dutyvo가 먼저 뜹니다.'],
+}
+const win = (img, cap) => `<div class="s-win"><div class="bar"><i></i><i></i><i></i></div><img src="/lp/${img}.webp" alt="" loading="lazy"></div><div class="s-cap">실제 Dutyvo 화면 · ${esc(cap)}</div>`
+function paintSide() {
+  try { paintSide0() } catch (e) { /* 스크립트가 다 읽히기 전(가입만 하고 돌아온 경우 등) — 끝에서 다시 그린다 */ }
+}
+function paintSide0() {
+  const box = $('[data-sprev]'); if (!box) return
+  const t = SIDE_TX[step] || SIDE_TX[1]; $('[data-sh]').textContent = t[0]; $('[data-sp]').textContent = t[1]
+  $$('[data-ss] li').forEach((li, i) => { li.className = i + 1 < step ? 'done' : i + 1 === step ? 'on' : ''; li.querySelector('i').textContent = i + 1 < step ? '✓' : String(i + 1) })
+  const on = (f) => { const i = document.querySelector(`.swi[data-f="${f}"]`); return i && i.checked }
+  const chips = () => `<div class="s-chips">${Object.keys(FEAT_NM).map((f) => `<span class="${on(f) ? 'on' : ''}">${FEAT_NM[f]}</span>`).join('')}</div>`
+  if (step === 1) box.innerHTML = `<div class="s-ben">
+    <div>${SVGI('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>')}<span>설치 없이 주소로<small>폰 · 매장 컴퓨터 · 노트북 어디서나</small></span></div>
+    <div>${SVGI('<path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/>')}<span>업종에 맞게 먼저 채워 둠<small>카페 · 음식점 · 미용 · 의원 · 학원 · 도매 · 편의점</small></span></div>
+    <div>${SVGI('<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')}<span>지금 무료<small>카드 등록 · 결제 절차 없음</small></span></div></div>`
+  else if (step === 2) { const sh = SHOT[ind] || SHOT.etc; box.innerHTML = `<div class="s-cap" style="margin:0 0 8px">${esc((document.querySelector(`.tile[data-ind="${ind}"]`) || {}).textContent || '')} — 켜지는 기능</div>${chips()}${win(sh[0], sh[1])}` }
+  else if (step === 3) { const L = storeRows(); box.innerHTML = `<div class="s-list">${(L.length ? L : [{ name: '매장 이름을 적으면 여기 보여요', r: null }]).map((x) => { const h = x.r ? hoursOf(x.r) : null; return `<div><span>${esc(x.name)}</span><small>${h ? `${h.open}~${h.close}${h.off.length ? ' · 휴무 ' + h.off.map((d) => '일월화수목금토'[d]).join('') : ''}` : ''}</small></div>` }).join('')}</div>` }
+  else if (step === 4) { const sh = SHOT[ind] || SHOT.etc; box.innerHTML = `${chips()}${win(sh[0], sh[1])}` }
+  else if (step === 5) box.innerHTML = `<div class="s-list"><div><span>초대 링크 복사 → 카톡</span><small>직원마다 하나</small></div><div><span>비밀번호만 정하고 합류</span><small>받은 사람</small></div><div><span>일하는 매장이 자동으로</span><small>초대할 때 고른 곳</small></div></div>`
+  else box.innerHTML = win('f_cal', '캘린더 — 예약 · 미팅 · 보관기한 · 휴무')
+}
+document.addEventListener('input', () => { if (step === 3) paintSide() })
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.days button, #add-store, .store .x')) setTimeout(paintSide, 0) })
+document.addEventListener('change', (e) => { if (e.target.classList && e.target.classList.contains('swi')) paintSide() })
+
 function storeOpts() {
   const names = $$('.store input[type=text]').map((i, n) => [n, i.value.trim()]).filter((x) => x[1])
   $$('.inv select').forEach((s) => { const v = s.value; s.innerHTML = names.map(([n, nm]) => `<option value="${n}">${esc(nm)}</option>`).join('') + '<option value="all">전체</option>'; if ([...s.options].some((o) => o.value === v)) s.value = v })
@@ -388,12 +508,20 @@ async function finish(withInvites) {
     if (ev.length) await seed('고정업무', () => supabase.from('calendar_event_types').insert(ev.map((x, i) => ({ tenant_id: tenantId, label: x.label, color: x.color, recurrence: x.recurrence, sort_order: i }))))
     if (zones.length) await seed('대청소 구역', () => supabase.from('cleaning_zones').insert(zones.map((z) => ({ tenant_id: tenantId, zone_number: z.zone_number, title: z.title, items: z.items }))))
     await seed('대청소 규칙', () => supabase.from('cleaning_deep_clean_rule').upsert({ tenant_id: tenantId, recurrence: { type: 'monthly_weekday_occurrences', weekday: 0, occurrences: [1, 3] } }, { onConflict: 'tenant_id' }))
-    if (cl.length) await seed('청소 항목', () => supabase.from('cleaning_daily_items').insert(cl.map((x, i) => ({ tenant_id: tenantId, label: x.name, sort_order: i }))))
+    // 업종 템플릿이 아직 없는 업종(새로 넣은 업종 · SQL 전)은 화면에 보여 준 기본 청소 항목으로
+    const clNames = cl.length ? cl.map((x) => x.name) : IND[ind].c
+    if (clNames.length) await seed('청소 항목', () => supabase.from('cleaning_daily_items').insert(clNames.map((x, i) => ({ tenant_id: tenantId, label: x, sort_order: i }))))
     // 설정 — 쓸 기능 · 우리 회사 말 · 운영 시간 · 기본 설정 안내(첫 화면)
     const features = Object.fromEntries($$('.swi').map((i) => [i.dataset.f, i.checked]))
     const w = W(), terms = {}; Object.keys(TERM_DEFAULT).forEach((k) => { if (w[k] && w[k] !== TERM_DEFAULT[k]) terms[k] = w[k] })
     const row = { tenant_id: tenantId, features, theme: 'default', updated_at: new Date().toISOString(), extra: { terms, hours, setup: { asked: false, done: {} } } }
     await seed('설정', async () => { let r = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' }); if (r.error && /extra/.test(String(r.error.message || ''))) { delete row.extra; r = await supabase.from('tenant_settings').upsert(row, { onConflict: 'tenant_id' }) } return r })
+    // 고객 예약을 켰으면 — 매장마다 예약 칸 하나 · 업종 기본 시술. 첫 화면이 비어 있지 않게(받는 방법에서 이름 · 시간을 고친다)
+    if (features.booking && IND[ind].rsv) {
+      const R = IND[ind].rsv
+      await seed('예약 칸', () => supabase.from('booking_resources').insert([...idByRow.values()].map((sid) => ({ tenant_id: tenantId, store_id: sid, name: R.res }))))
+      await seed('예약 시술', () => supabase.from('booking_services').insert(R.svc.map(([n, d], i) => ({ tenant_id: tenantId, store_id: null, name: n, duration_min: d, sort: i }))))
+    }
     // 초대
     const invites = []
     if (withInvites) {
@@ -472,6 +600,7 @@ $('#b-install').onclick = async () => {
 $('#b-start').onclick = () => { location.href = 'index.html' }
 
 setInd('etc')
+paintSide() // 모든 값이 준비된 뒤 한 번 더
 </script>
 </body>
 </html>
