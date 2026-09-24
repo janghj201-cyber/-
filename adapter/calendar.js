@@ -364,8 +364,8 @@ const STK = {
 }
 const KC = { rsv: 1, mtg: 1, exp: 1, fix: 1, off: 1 }
 const KN0 = { rsv: '손님 예약', mtg: '거래처 미팅', exp: '보관기한', fix: '고정업무', off: '휴무' }
-// 알림 — 매일 두 번(아침 9시 · 오후 6시)에 담당자 폰으로. 「1시간 전」은 매시간 도는 작업이 있어야 해서 아직 없다
-const RM = { none: '알림 없음', am9: '당일 아침 9시', prev18: '전날 오후 6시' }
+// 알림 — 담당자 폰으로. 아침 9시 · 오후 6시는 하루 두 번 도는 작업, 「1시간 전」은 매분 도는 작업(api/remind-now, v6.12 Pro)
+const RM = { none: '알림 없음', '1h': '1시간 전', am9: '당일 아침 9시', prev18: '전날 오후 6시' }
 const DEF_RM = { rsv: 'prev18', mtg: 'prev18', exp: 'am9', fix: 'none', off: 'none' }
 const STS = { plan: '', done: '완료', noshow: '노쇼', cancel: '취소' }
 const ST_DB = { plan: 'confirmed', done: 'done', noshow: 'noshow', cancel: 'cancelled' }
@@ -721,6 +721,8 @@ export async function openCalendar(host = {}) {
     const items2 = []
     const am = events.filter((e) => e.date === td && K(e) && P(e) && e.rm === 'am9')
     if (am.length) items2.push({ w: '오늘 09:00', sent: hr >= 9, t: `오늘 일정 ${am.length}건`, s: `${who(am)}에게${hr >= 9 ? ' 보냄' : ''}` })
+    const h1 = events.filter((e) => e.date === td && K(e) && P(e) && e.rm === '1h')
+    if (h1.length) items2.push({ w: '시작 1시간 전', t: `오늘 ${h1.length}건 — ${h1.slice(0, 4).map((e) => (e.t ? e.t + ' ' : '') + e.title).join(', ')}${h1.length > 4 ? ' …' : ''}`, s: `${who(h1)}에게 · 하나씩` })
     const ex0 = events.filter((e) => e.k === 'exp' && e.date === td && K(e))
     if (ex0.length) items2.push({ w: '오늘 09:00', sent: hr >= 9, t: `${KN.exp} ${ex0.length}건 — ${ex0.map((e) => e.title).join(', ')}`, s: `관리자에게${hr >= 9 ? ' 보냄' : ''}` })
     const tm = events.filter((e) => e.date === tk && K(e) && e.rm === 'prev18')
@@ -821,7 +823,7 @@ export async function openCalendar(host = {}) {
       Q('[data-who]').innerHTML = (isAdmin ? '<option value="store">매장 휴무 (그 매장 전체)</option>' : '') + profiles.filter((p) => isAdmin || p.id === ME).map((p) => `<option value="${p.id}"${p.id === ME ? ' selected' : ''}>${esc(p.name)}</option>`).join('')
     }
     const paint = () => {
-      sc.querySelectorAll('[data-k]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === kind)); sc.querySelectorAll('[data-r]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.r === rm))
+      sc.querySelectorAll('[data-k]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === kind)); sc.querySelectorAll('[data-r]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.r === rm); if (b.dataset.r === '1h') b.hidden = !['rsv', 'mtg'].includes(kind) })
       const fx = kind === 'fix'; Q('[data-fixnote]').hidden = !fx; Q('[data-main]').hidden = fx; Q('[data-go]').hidden = fx
       const Pk = kind === 'rsv' || kind === 'mtg'
       Q('[data-cw]').hidden = !Pk; Q('[data-dw]').hidden = !Pk; Q('[data-tw]').style.visibility = Pk ? 'visible' : 'hidden'; Q('[data-rw]').hidden = !feat.rem || !Pk; Q('[data-repw]').hidden = !Pk

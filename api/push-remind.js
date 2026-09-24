@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
   const when = slot === 'am9' ? '오늘' : '내일';
 
   const runTenant = async (T) => {
-    const appts = await sb(`appointments?select=id,staff_id,kind,title,starts_at,guest_id,client_id,extra&tenant_id=eq.${T}&remind=eq.${slot}&status=in.(request,confirmed,offered)&reminded_at=is.null&starts_at=gte.${encodeURIComponent(from.toISOString())}&starts_at=lt.${encodeURIComponent(to.toISOString())}&order=starts_at&limit=2000`);
+    const appts = await sb(`appointments?select=id,staff_id,kind,title,starts_at,guest_id,client_id,service_id,extra&tenant_id=eq.${T}&remind=eq.${slot}&status=in.(request,confirmed,offered)&reminded_at=is.null&starts_at=gte.${encodeURIComponent(from.toISOString())}&starts_at=lt.${encodeURIComponent(to.toISOString())}&order=starts_at&limit=2000`);
     // 보관기한 — 아침: 오늘까지 + 지났는데 정리 안 된 것(「아직 있음」은 다음 날 아침에 다시) / 저녁: 내일까지
     const lots = await sb(`expiry_lots?select=id,item_id,store_id,qty,due_on&tenant_id=eq.${T}&status=eq.active&${slot === 'am9' ? `due_on=lte.${dayKey}&or=(snooze_until.is.null,snooze_until.lte.${dayKey})` : `due_on=eq.${dayKey}`}&limit=1000`);
     // 거래처 진행 건(아침만) — 우리 차례인데 다음 할 일 날짜가 오늘이거나 지난 것 · 상대 차례인데 기준 영업일을 넘긴 것 → 담당에게
@@ -65,7 +65,10 @@ module.exports = async (req, res) => {
         dealsDue = open.filter((x) => x.owner_id && (x.ball === 'us' ? (x.next_date && x.next_date <= dayKey) : bizSince(lastOf.get(x.id) || String(x.created_at).slice(0, 10)) >= (x.wait_days || 3)));
       }
     }
-    if (!appts.length && !lots.length && !dealsDue.length) return { appts: 0, lots: 0, deals: 0, sent: 0 };
+    // 고객 예약(v6.12) — 매장이 아직 답하지 않은 링크 요청 · 손님 변경 요청. 손님이 기다리고 있으니 아침 · 저녁 두 번 관리자에게
+    const now = new Date().toISOString();
+    const rsvWait = await sb(`appointments?select=id&tenant_id=eq.${T}&kind=eq.booking&starts_at=gte.${encodeURIComponent(now)}&or=(status.eq.request,and(status.eq.confirmed,change_to.not.is.null))&limit=500`).catch(() => []);
+    if (!appts.length && !lots.length && !dealsDue.length && !rsvWait.length) return { appts: 0, lots: 0, deals: 0, rsv: 0, sent: 0 };
 
     const [subs, profiles] = await Promise.all([
       sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&tenant_id=eq.${T}&limit=1000`),
@@ -84,20 +87,22 @@ module.exports = async (req, res) => {
     };
     // 손님 · 거래처 이름 — 담당자가 알림만 보고 누군지 알게
     const ids = (k) => [...new Set(appts.map((a) => a[k]).filter(Boolean))];
-    const gIds = ids('guest_id'), cIds = ids('client_id');
-    const [gs, cs] = await Promise.all([
+    const gIds = ids('guest_id'), cIds = ids('client_id'), vIds = ids('service_id');
+    const [gs, cs, vs] = await Promise.all([
       gIds.length ? sb(`guests?select=id,name&id=in.(${gIds.join(',')})`) : [],
       cIds.length ? sb(`clients?select=id,name&id=in.(${cIds.join(',')})`) : [],
+      vIds.length ? sb(`booking_services?select=id,name&id=in.(${vIds.join(',')})`).catch(() => []) : [],
     ]);
     const nameOf = (a) => (gs.find((g) => g.id === a.guest_id) || cs.find((c) => c.id === a.client_id) || {}).name || (a.extra && a.extra.party) || '';
-    const line = (a) => `${hm(a.starts_at)} ${a.title || (a.kind === 'booking' ? '예약' : '미팅')}${nameOf(a) ? ' · ' + nameOf(a) : ''}`;
+    const line = (a) => `${hm(a.starts_at)} ${a.title || (vs.find((v) => v.id === a.service_id) || {}).name || (a.kind === 'booking' ? '예약' : '미팅')}${nameOf(a) ? ' · ' + nameOf(a) : ''}`;
 
     let sent = 0;
     const byWho = new Map();
     appts.forEach((a) => { const to2 = a.staff_id ? [a.staff_id] : admins; to2.forEach((p) => { const l = byWho.get(p) || []; l.push(a); byWho.set(p, l); }); });
     for (const [pid, list] of byWho) {
-      sent += await send(pid, { title: `${when} 일정 ${list.length}건`, body: list.slice(0, 3).map(line).join('\n') + (list.length > 3 ? `\n외 ${list.length - 3}건` : ''), url: '/?cal=1' });
+      sent += await send(pid, { title: `${when} 일정 ${list.length}건`, body: list.slice(0, 3).map(line).join('\n') + (list.length > 3 ? `\n외 ${list.length - 3}건` : ''), url: list.every((a) => a.kind === 'booking') ? '/?rsv=1' : '/?cal=1' });
     }
+    if (rsvWait.length) for (const pid of admins) sent += await send(pid, { title: `예약 확인 필요 ${rsvWait.length}건`, body: '손님이 답을 기다려요 — 확정 · 다른 시간 제안 · 어려움', url: '/?rsv=1' });
     if (lots.length) {
       const its = await sb(`expiry_items?select=id,name,unit&id=in.(${[...new Set(lots.map((l) => l.item_id))].join(',')})`);
       const nm = (l) => { const it = its.find((i) => i.id === l.item_id) || {}; const qn = Number(l.qty) || 0; return `${it.name || '품목'}${qn && qn !== 1 ? ` ${qn}${it.unit || ''}` : ''}`; };
@@ -127,7 +132,7 @@ module.exports = async (req, res) => {
       }
     }
     if (!dry && appts.length) await patch(`appointments?id=in.(${appts.map((a) => a.id).join(',')})`, { reminded_at: new Date().toISOString() });
-    return { appts: appts.length, lots: lots.length, deals: dealsDue.length, sent };
+    return { appts: appts.length, lots: lots.length, deals: dealsDue.length, rsv: rsvWait.length, sent };
   };
 
   try {

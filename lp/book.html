@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>예약</title>
+<link rel="preconnect" href="https://vbuhueykvizmnrfvkehq.supabase.co" crossorigin>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
+<!-- 손님 예약 페이지(v6.12). /r/<주소> = 예약, /b/<토큰> = 내 예약 보기 · 변경 · 취소. 로그인 없음 — booking_public_* 함수만 부른다.
+     빈 시간 계산은 매장 화면과 같은 /adapter/bookslots.js. 최종 판정은 서버(booking_public_request)가 다시 한다 -->
+<style>
+:root{
+  --bg:#F2F4F0;--card:#FFFFFF;--ink:#101914;--sub:#4C5B53;--mute:#86938C;--line:#DDE4DE;--soft:#EEF2EE;
+  --deep:#174C38;--green:#238B65;--tint:#E4F3EA;--on-main:#FFFFFF;
+  --ok:#1E63C4;--req:#8E5A06;--req-bg:#FEEFCF;--late:#B42A1F;--late-bg:#FBE7E4;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1712;--card:#12221A;--ink:#EAF1EC;--sub:#A6B8AD;--mute:#728479;--line:#223A2D;--soft:#172B21;
+  --deep:#59BA8B;--green:#59BA8B;--tint:#163527;--on-main:#0B1712;
+  --ok:#7FB0F2;--req:#EDB25A;--req-bg:#35280F;--late:#F08A80;--late-bg:#3A1D1A;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0B1712;--card:#12221A;--ink:#EAF1EC;--sub:#A6B8AD;--mute:#728479;--line:#223A2D;--soft:#172B21;
+  --deep:#59BA8B;--green:#59BA8B;--tint:#163527;--on-main:#0B1712;
+  --ok:#7FB0F2;--req:#EDB25A;--req-bg:#35280F;--late:#F08A80;--late-bg:#3A1D1A;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font:14px/1.55 Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;-webkit-text-size-adjust:100%}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+[hidden]{display:none!important}
+.pg{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;background:var(--card);padding-bottom:110px;position:relative}
+@media(min-width:520px){body{padding:24px 0}.pg{border:1px solid var(--line);border-radius:24px;min-height:0;overflow:hidden}}
+.sh{padding:24px 20px 14px;border-bottom:1px solid var(--line)}
+.sh .lg{width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--green);display:grid;place-items:center;font-weight:800;margin-bottom:8px}
+.sh h1{margin:0;font-size:19px}
+.sh p{margin:2px 0 0;font-size:12.5px;color:var(--sub);white-space:pre-line}
+.sh .nt{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;background:var(--req-bg);color:var(--req);border-radius:8px;padding:3px 8px}
+.cs{padding:16px 20px 4px}
+.cs h2{font-size:13px;margin:0 0 8px;color:var(--sub);display:flex;justify-content:space-between;gap:8px}
+.cs h2 small{font-weight:500;color:var(--mute)}
+.svc{display:grid;gap:6px}
+.svc button{display:grid;grid-template-columns:minmax(0,1fr) auto;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;gap:0 8px}
+.svc button b{font-size:14.5px}
+.svc button small{grid-column:1;color:var(--sub);font-size:12px}
+.svc button span{grid-row:1 / span 2;grid-column:2;align-self:center;font-size:12.5px;font-weight:700;color:var(--sub)}
+.svc button[aria-pressed=true],.chp button[aria-pressed=true]{border-color:var(--green);background:var(--tint)}
+.chp{display:flex;flex-wrap:wrap;gap:6px}
+.chp button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;min-width:64px}
+.cd{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.cd button{flex:none;width:52px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:grid;justify-items:center;font-size:11.5px;color:var(--sub)}
+.cd button b{font-size:16px;color:var(--ink)}
+.cd button:disabled{background:var(--soft);border-style:dashed;opacity:.75}
+.cd button:disabled b{color:var(--mute)}
+.cd button[aria-pressed=true]{border-color:var(--green);background:var(--tint)}
+.cd button.su b{color:var(--late)}
+.tgrp{font-size:12px;color:var(--mute);margin:8px 0 5px}
+.fl{display:grid;gap:5px;margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--sub)}
+.fl input,.fl select,.fl textarea{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 11px;font-size:16px;width:100%;min-width:0;color:var(--ink);font-weight:400}
+.agree{display:flex;gap:8px;align-items:flex-start;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.agree input{width:18px;height:18px;accent-color:var(--green);margin:1px 0 0;flex:none}
+.agree small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
+.hint{font-size:12px;color:var(--mute);font-weight:500}
+.nope{font-size:13px;color:var(--sub);background:var(--soft);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.nope button{justify-self:start;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font-weight:700;font-size:12.5px}
+.err{margin:12px 20px 0;background:var(--late-bg);color:var(--late);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600}
+.cta{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--card) 72%,transparent);z-index:5}
+.cta>div{max-width:448px;margin:0 auto}
+.cta button{width:100%;height:52px;border:0;border-radius:14px;background:var(--deep);color:var(--on-main);font-weight:800;font-size:15px}
+.cta button:disabled{background:var(--line);color:var(--mute)}
+.fin{padding:34px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;justify-items:start}
+.fin .ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--green)}
+.fin .ic.q{background:var(--req-bg);color:var(--req)}
+.fin .ic.x{background:var(--late-bg);color:var(--late)}
+.fin .ic svg{width:24px;height:24px}
+.fin h1{margin:0;font-size:20px}
+.fin p{margin:0;color:var(--sub);font-size:13.5px}
+.box{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;display:grid;gap:3px}
+.box b{font-size:16px}
+.lnk{width:100%;display:flex;gap:6px;align-items:center;background:var(--soft);border-radius:10px;padding:8px 8px 8px 12px;font-size:12.5px}
+.lnk span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ok);font-weight:700}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 14px;height:40px;font-weight:700;font-size:13.5px;white-space:nowrap}
+.btn.main{background:var(--deep);border-color:var(--deep);color:var(--on-main)}
+.btn.warn{color:var(--late)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+.acts .btn{flex:1}
+.loading{padding:60px 20px;text-align:center;color:var(--mute)}
+.foot{padding:18px 20px 0;font-size:11.5px;color:var(--mute)}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;z-index:40;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+<main class="pg" id="pg"><div class="loading">불러오는 중…</div></main>
+<div class="cta" id="cta" hidden><div><button id="go" disabled>시간을 고르세요</button></div></div>
+<script type="module">
+import { supabase as sb } from '/adapter/supabase-client.js'
+import { slotsFor, openHours, dk, addD, hm, dowOf } from '/adapter/bookslots.js'
+
+const DOW = ['일', '월', '화', '수', '목', '금', '토']
+const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+const md = (k) => { const d = new Date(k + 'T00:00'); return `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]})` }
+const durTx = (m) => m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ` ${m % 60}분` : ''}` : `${m}분`
+const digits = (v) => String(v || '').replace(/\D/g, '')
+const fmtPh = (v) => { const d = digits(v).slice(0, 11); if (d.startsWith('02')) return d.replace(/^(02)(\d{0,4})(\d{0,4}).*/, (m, a, b, c) => [a, b, c].filter(Boolean).join('-')); return d.replace(/^(\d{0,3})(\d{0,4})(\d{0,4}).*/, (m, a, b, c) => [a, b, c].filter(Boolean).join('-')) }
+const whenTx = (iso) => { const d = new Date(iso); return `${md(dk(d))} ${hm(d.getHours() * 60 + d.getMinutes())}` }
+const IC = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+}
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)]
+const PG = $('#pg'), CTA = $('#cta'), GO = $('#go')
+const toast = (t) => { const o = $('.toast'); if (o) o.remove(); const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600) }
+const errMsg = (e) => { const m = (e && e.message) || ''; return /[가-힣]/.test(m) ? m.replace(/^.*?:\s*/, '') : '잠시 뒤 다시 해 주세요 — 인터넷 연결을 확인해 주세요' }
+const copy = async (t) => { try { await navigator.clipboard.writeText(t); toast('주소를 복사했어요') } catch (e) { toast(t) } }
+
+const parts = location.pathname.split('/').filter(Boolean)
+const qs = new URLSearchParams(location.search)
+const mode = parts[0] === 'b' || qs.get('t') ? 'manage' : 'book'
+const key = (mode === 'manage' ? (parts[0] === 'b' ? parts[1] : qs.get('t')) : (parts[0] === 'r' ? parts[1] : qs.get('s'))) || ''
+
+function dead(title, text) {
+  CTA.hidden = true
+  PG.innerHTML = `<div class="fin"><span class="ic x">${IC.x}</span><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`
+}
+
+// ────────── 예약하기 ──────────
+async function book() {
+  let P
+  try { const { data, error } = await sb.rpc('booking_public_page', { p_slug: key }); if (error) throw error; P = data } catch (e) { return dead('예약 페이지를 열지 못했어요', errMsg(e)) }
+  if (!P || !key) return dead('없는 예약 페이지예요', '주소를 다시 확인해 주세요')
+  document.title = `${P.store} 예약`
+  const B = P.booking || {}, RANGE = B.range || 14, LEAD = B.lead ?? 120
+  const svcs = (P.services || []).map((s) => ({ ...s, duration_min: s.dur, resource_id: s.resource, fixed_slots: s.fixed }))
+  const res = (P.resources || []).map((r) => ({ id: r.id, name: r.name, capacity: r.cap || 1 }))
+  const closed = new Set(P.closed || []), hours = P.hours || {}
+  const TK = dk(new Date())
+  let busy = []
+  const C = { svc: null, res: null, date: null, t: null, name: '', phone: '', memo: '', agree: false, wmode: false, done: null, err: '' }
+  async function loadBusy() {
+    const { data, error } = await sb.rpc('booking_public_busy', { p_slug: key, p_from: TK, p_to: addD(TK, RANGE + 1) })
+    if (error) throw error
+    busy = (data || []).map((b, i) => ({ id: 'b' + i, status: 'confirmed', resource_id: b.resource_id, starts_at: b.starts_at, duration_min: b.duration_min }))
+  }
+  try { await loadBusy() } catch (e) { return dead('빈 시간을 불러오지 못했어요', errMsg(e)) }
+  const sv = () => svcs.find((s) => s.id === C.svc)
+  const slots = (k) => slotsFor({ date: k, svc: sv(), resId: C.res, resources: res, busy, hours, closed, brk: B.break, lead: LEAD })
+  const firstAvail = () => { for (let i = 0; i <= RANGE; i++) { const k = addD(TK, i); if (slots(k).length) return k } return null }
+  const ready = () => sv() && (C.t != null || C.wmode) && C.name.trim() && digits(C.phone).length >= 9 && C.agree
+
+  function paint() {
+    if (C.done) return paintDone()
+    const s = sv()
+    let dd = ''
+    if (s) for (let i = 0; i <= RANGE; i++) {
+      const k = addD(TK, i), h = openHours(k, hours, closed), prep = s.lead_days && k < addD(TK, s.lead_days), n = h && !prep ? slots(k).length : 0
+      dd += `<button type="button" data-d="${k}" ${!h || prep ? 'disabled' : ''} aria-pressed="${C.date === k}" class="${dowOf(k) === 0 ? 'su' : ''}">${i === 0 ? '오늘' : DOW[dowOf(k)]}<b>${new Date(k + 'T00:00').getDate()}</b>${!h ? '휴무' : prep ? '준비 기간' : !n ? '<span style="color:var(--late)">마감</span>' : ''}</button>`
+    }
+    const SL = s && C.date ? slots(C.date) : [], am = SL.filter((x) => x.t < 720), pm = SL.filter((x) => x.t >= 720)
+    const chips = (L) => `<div class="chp">${L.map((x) => `<button type="button" data-t="${x.t}" aria-pressed="${C.t === x.t}">${hm(x.t)}</button>`).join('')}</div>`
+    const pickRes = s && !s.resource_id && res.length > 1
+    PG.innerHTML = `<header class="sh"><div class="lg">${esc(String(P.store).slice(0, 1))}</div><h1>${esc(P.store)}</h1>${B.info ? `<p>${esc(B.info)}</p>` : ''}${B.notice ? `<span class="nt">${esc(B.notice)}</span>` : ''}</header>
+      ${C.err ? `<div class="err" role="alert">${esc(C.err)}</div>` : ''}
+      ${svcs.length ? `<section class="cs"><h2>예약 항목</h2><div class="svc">${svcs.map((x) => `<button type="button" data-s="${x.id}" aria-pressed="${C.svc === x.id}"><b>${esc(x.name)}</b><small>${durTx(x.dur)}${x.lead_days ? ` · ${x.lead_note ? esc(x.lead_note) : `${x.lead_days}일 전까지 예약`}` : ''}</small><span>${esc(x.price || '')}</span></button>`).join('')}</div></section>` : '<section class="cs"><div class="nope">지금은 링크로 예약을 받지 않아요 — 매장에 연락 주세요</div></section>'}
+      ${pickRes ? `<section class="cs"><h2>담당 · 자리</h2><div class="chp"><button type="button" data-r="" aria-pressed="${!C.res}">상관없음</button>${res.map((r) => `<button type="button" data-r="${r.id}" aria-pressed="${C.res === r.id}">${esc(r.name)}</button>`).join('')}</div></section>` : ''}
+      ${s ? `<section class="cs"><h2>날짜<small>${RANGE}일 앞까지</small></h2><div class="cd">${dd}</div></section>` : ''}
+      ${s && C.date ? `<section class="cs"><h2>시간<small>${LEAD >= 1440 ? '전날까지 예약' : LEAD >= 60 ? `${LEAD / 60}시간 전까지 예약` : `${LEAD}분 전까지 예약`}</small></h2>${SL.length ? (am.length ? `<div class="tgrp">오전</div>${chips(am)}` : '') + (pm.length ? `<div class="tgrp">오후</div>${chips(pm)}` : '')
+        : `<div class="nope">이 날은 자리가 모두 찼어요${B.wait && !C.wmode ? '<button type="button" data-w>빈 자리 나면 알림 받기</button>' : C.wmode ? '<span class="hint">아래에 이름 · 번호를 남겨 주세요</span>' : ''}</div>`}</section>` : ''}
+      ${s && (C.t != null || C.wmode) ? `<section class="cs"><h2>${C.wmode ? '대기 신청하시는 분' : '예약하시는 분'}</h2>
+        <label class="fl">이름<input id="cn" value="${esc(C.name)}" autocomplete="name" maxlength="30"></label>
+        <label class="fl">휴대폰<input id="cp" value="${esc(C.phone)}" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>
+        ${C.wmode ? '' : `<label class="fl"><span>요청 사항 <span class="hint">선택</span></span><input id="cm" value="${esc(C.memo)}" maxlength="100"></label>`}
+        <label class="agree"><input type="checkbox" id="ca" ${C.agree ? 'checked' : ''}><span><b>[필수]</b> 예약 확인 · 안내를 위한 개인정보 수집 · 이용 동의<small>받는 것: 이름 · 휴대폰 번호 · 요청 사항<br>쓰는 곳: 예약 확인 · 변경 · 안내 연락<br>보관: 마지막 방문(예약일)부터 1년 — 지나면 자동 삭제</small></span></label></section>` : ''}
+      <div class="foot">${esc(P.store)} 예약 · Dutyvo</div>`
+    CTA.hidden = !svcs.length
+    GO.disabled = !ready()
+    GO.textContent = C.wmode ? `${md(C.date)} 대기 신청` : s && C.t != null ? `${md(C.date)} ${hm(C.t)} · ${s.name} 예약` : '시간을 고르세요'
+    $$('[data-s]').forEach((b) => b.onclick = () => { C.svc = b.dataset.s; const x = sv(); C.res = x.resource_id || null; C.t = null; C.wmode = false; C.date = firstAvail() || (C.date && openHours(C.date, hours, closed) ? C.date : null); C.err = ''; paint() })
+    $$('[data-r]').forEach((b) => b.onclick = () => { C.res = b.dataset.r || null; C.t = null; C.wmode = false; if (!C.date || !slots(C.date).length) C.date = firstAvail() || C.date; paint() })
+    $$('[data-d]').forEach((b) => b.onclick = () => { C.date = b.dataset.d; C.t = null; C.wmode = false; paint() })
+    $$('[data-t]').forEach((b) => b.onclick = () => { C.t = +b.dataset.t; C.err = ''; paint(); setTimeout(() => { const n = $('#cn'); if (n && !C.name) n.scrollIntoView({ block: 'center', behavior: 'smooth' }) }, 30) })
+    const w = $('[data-w]'); if (w) w.onclick = () => { C.wmode = true; paint(); setTimeout(() => { const n = $('#cn'); if (n) n.scrollIntoView({ block: 'center' }) }, 30) }
+    const upd = () => { GO.disabled = !ready() }
+    if ($('#cn')) $('#cn').oninput = (e) => { C.name = e.target.value; upd() }
+    if ($('#cp')) $('#cp').oninput = (e) => { e.target.value = fmtPh(e.target.value); C.phone = e.target.value; upd() }
+    if ($('#cm')) $('#cm').oninput = (e) => { C.memo = e.target.value }
+    if ($('#ca')) $('#ca').onchange = (e) => { C.agree = e.target.checked; upd() }
+  }
+  GO.onclick = async () => {
+    if (!ready() || GO.dataset.busy) return
+    GO.dataset.busy = '1'; GO.disabled = true; const was = GO.textContent; GO.textContent = '보내는 중…'
+    try {
+      if (C.wmode) {
+        const { error } = await sb.rpc('booking_public_wait', { p_slug: key, p_service: C.svc, p_resource: C.res, p_date: C.date, p_name: C.name.trim(), p_phone: digits(C.phone), p_agree: C.agree })
+        if (error) throw error
+        C.done = { wait: true, date: C.date }
+      } else {
+        const iso = new Date(`${C.date}T${hm(C.t)}`).toISOString()
+        const { data, error } = await sb.rpc('booking_public_request', { p_slug: key, p_service: C.svc, p_resource: C.res, p_starts: iso, p_name: C.name.trim(), p_phone: digits(C.phone), p_extra: C.memo.trim() ? { memo: C.memo.trim() } : {}, p_agree: C.agree })
+        if (error) throw error
+        C.done = { ...data, date: C.date, t: C.t, svc: sv().name }
+      }
+      C.err = ''; paint(); window.scrollTo(0, 0)
+    } catch (e) {
+      C.err = errMsg(e)
+      if (/잡았어요|자리/.test(C.err)) { C.t = null; try { await loadBusy() } catch (e2) {} }
+      GO.textContent = was; paint(); window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally { delete GO.dataset.busy }
+  }
+  function paintDone() {
+    CTA.hidden = true
+    const d = C.done
+    if (d.wait) { PG.innerHTML = `<div class="fin"><span class="ic q">${IC.clock}</span><h1>대기 신청했어요</h1><p>${md(d.date)}에 자리가 나면 매장에서 연락드려요.</p><button class="btn" data-again>처음으로</button></div>`; $('[data-again]').onclick = reset; return }
+    const ok = d.status === 'confirmed', url = `${location.origin}/b/${d.token}`
+    PG.innerHTML = `<div class="fin"><span class="ic ${ok ? '' : 'q'}">${ok ? IC.check : IC.clock}</span><h1>${ok ? '예약됐어요' : '예약 요청을 보냈어요'}</h1>
+      <p>${ok ? '매장 예약표에 들어갔어요.' : '매장에서 확인한 뒤 연락드려요. 그동안 이 시간은 잡아 둘게요.'}</p>
+      <div class="box"><b>${md(d.date)} ${hm(d.t)}</b><span>${esc(d.svc)}${d.resource && res.length > 1 ? ` · ${esc(d.resource)}` : ''}</span><span class="hint">${esc(P.store)}</span></div>
+      <p style="font-size:12.5px">내 예약 보기 · 변경 · 취소 주소 — 저장해 두세요</p>
+      <div class="lnk"><span>${esc(url.replace(/^https?:\/\//, ''))}</span><button class="btn" data-cp style="height:32px">복사</button></div>
+      <div class="acts"><a class="btn main" href="${esc(url)}" style="display:grid;place-items:center;text-decoration:none">내 예약 보기</a><button class="btn" data-again>처음으로</button></div></div>`
+    $('[data-cp]').onclick = () => copy(url)
+    $('[data-again]').onclick = reset
+  }
+  async function reset() { Object.assign(C, { svc: null, res: null, date: null, t: null, memo: '', agree: false, wmode: false, done: null, err: '' }); try { await loadBusy() } catch (e) {} paint(); window.scrollTo(0, 0) }
+  paint()
+}
+
+// ────────── 내 예약 (문자 · 완료 화면의 주소) ──────────
+async function manage() {
+  if (!/^[0-9a-f-]{36}$/i.test(key)) return dead('예약을 찾을 수 없어요', '주소를 다시 확인해 주세요')
+  CTA.hidden = true
+  let A, pick = null
+  const call = async (action, p_new) => { const { data, error } = await sb.rpc('booking_public_manage', { p_token: key, p_action: action, p_new: p_new || null }); if (error) throw error; return data }
+  try { A = await call('view') } catch (e) { return dead('예약을 찾을 수 없어요', errMsg(e)) }
+  document.title = `${A.store} 예약`
+  function paint(msg) {
+    const st = A.status, can = A.can_change
+    const head = st === 'confirmed' ? ['', IC.check, '예약 확정'] : st === 'request' ? ['q', IC.clock, '매장 확인 중'] : st === 'offered' ? ['q', IC.clock, '매장이 다른 시간을 제안했어요'] : st === 'done' ? ['', IC.check, '다녀가셨어요'] : ['x', IC.x, st === 'noshow' ? '오지 않은 예약' : '취소된 예약']
+    const live = ['confirmed', 'request'].includes(st)
+    let act = ''
+    if (st === 'offered') act = `<div class="box"><span class="hint">제안한 시간</span><b>${whenTx(A.offer)}</b><span class="hint">원래 요청 ${whenTx(A.starts_at)}</span></div>
+      <div class="acts"><button class="btn main" data-acc>제안한 시간으로 예약</button>${can ? '<button class="btn warn" data-cx>취소</button>' : ''}</div>`
+    else if (live) act = `${A.change_to ? `<div class="box"><span class="hint">시간 변경 요청함 · 매장 확인 중</span><b>${whenTx(A.change_to)}</b></div>` : ''}
+      <div class="acts">${st === 'confirmed' ? '<button class="btn main" data-yes>갈게요</button>' : ''}${can ? '<button class="btn" data-chg>시간 바꾸기</button><button class="btn warn" data-cx>취소</button>' : ''}</div>
+      ${can ? '' : '<p style="font-size:12.5px">지금은 링크로 바꾸거나 취소할 수 없어요 — 매장에 전화 주세요</p>'}
+      ${pick ? pickHTML() : ''}`
+    PG.innerHTML = `<div class="fin"><span class="ic ${head[0]}">${head[1]}</span><h1>${head[2]}</h1>
+      ${msg ? `<p style="color:var(--green);font-weight:700">${esc(msg)}</p>` : ''}
+      <div class="box"><b>${whenTx(A.starts_at)}</b><span>${esc(A.service || '')}</span><span class="hint">${esc(A.store)}</span></div>${act}</div>`
+    const on = (s, f) => { const b = $(s); if (b) b.onclick = f }
+    const run = async (action, p_new, done) => { try { A = await call(action, p_new); pick = null; paint(done) } catch (e) { toast(errMsg(e)) } }
+    on('[data-yes]', () => run('yes', null, '매장에 「갈게요」를 남겼어요'))
+    on('[data-acc]', () => run('accept_offer', null, '제안한 시간으로 예약했어요'))
+    on('[data-cx]', () => { if ($('[data-cx]').dataset.sure) run('cancel', null, '취소했어요'); else { $('[data-cx]').dataset.sure = '1'; $('[data-cx]').textContent = '한 번 더 누르면 취소' } })
+    on('[data-chg]', () => { pick = pick ? null : { date: null, t: null }; paint() })
+    $$('[data-pd]').forEach((b) => b.onclick = () => { pick.date = b.dataset.pd; pick.t = null; paint() })
+    $$('[data-pt]').forEach((b) => b.onclick = () => { pick.t = +b.dataset.pt; paint() })
+    on('[data-send]', () => run('change', new Date(`${pick.date}T${hm(pick.t)}`).toISOString(), '시간 변경을 요청했어요 · 매장이 확인하면 연락드려요'))
+  }
+  // 바꿀 시간 — 매장이 받아야 바뀐다(자리 확인은 매장 화면). 14일 · 30분 단위
+  function pickHTML() {
+    const TK = dk(new Date()), cur = new Date(A.starts_at), cm = cur.getHours() * 60 + cur.getMinutes()
+    let d = ''; for (let i = 0; i < 14; i++) { const k = addD(TK, i); d += `<button type="button" data-pd="${k}" aria-pressed="${pick.date === k}" class="${dowOf(k) === 0 ? 'su' : ''}">${i === 0 ? '오늘' : DOW[dowOf(k)]}<b>${new Date(k + 'T00:00').getDate()}</b></button>` }
+    const ts = []; for (let t = Math.max(540, cm - 240); t <= Math.min(1320, cm + 240); t += 30) ts.push(t)
+    return `<div style="width:100%"><div class="tgrp">바꾸고 싶은 날</div><div class="cd">${d}</div>
+      ${pick.date ? `<div class="tgrp">시간</div><div class="chp">${ts.map((t) => `<button type="button" data-pt="${t}" aria-pressed="${pick.t === t}">${hm(t)}</button>`).join('')}</div>` : ''}
+      <p class="hint" style="margin:8px 0">매장이 확인한 뒤 바뀌어요. 그 전까지는 지금 예약 그대로예요.</p>
+      <button class="btn main" data-send ${pick.date && pick.t != null ? '' : 'disabled'} style="width:100%">${pick.date && pick.t != null ? `변경 요청 · ${md(pick.date)} ${hm(pick.t)}` : '날짜 · 시간을 고르세요'}</button></div>`
+  }
+  paint()
+}
+
+if (mode === 'manage') manage(); else if (!key) dead('없는 예약 페이지예요', '주소를 다시 확인해 주세요'); else book()
+</script>
+</body>
+</html>

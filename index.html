@@ -2324,6 +2324,7 @@ const FEATURE_DEFS=[
   {key:'calendar',label:'캘린더'},
   {key:'expiry',label:'보관기한'},
   {key:'clients',label:'거래처'},
+  {key:'booking',label:'고객 예약 (예약 받는 업종)'},
 ];
 const THEME_DEFS=[
   {key:'default',label:'클래식 네이비',navy:'#172233',gold:'#d6a246'},
@@ -2366,7 +2367,8 @@ function scoreChip(sc,extraCss=''){
   const bg=sc.level==='green'?'var(--green-light)':sc.level==='orange'?'var(--blue-light)':'var(--red-light)';
   return `<span class="score-chip" style="background:${bg};color:${col};${extraCss}" title="청소 ${sc.base} + 업무 ${sc.bonus}${sc.penalty?` − 인수인계 ${sc.penalty}`:''}">${sc.score}점</span>`;
 }
-function featOn(key){return appSettings.features[key]!==false;} // 미설정=켜짐
+const FEAT_DEFAULT_OFF=['booking']; // 업종에 따라 쓰는 기능은 켜야 보인다
+function featOn(key){const v=(appSettings.features||{})[key];return v===undefined?!FEAT_DEFAULT_OFF.includes(key):v!==false;} // 미설정=켜짐(예약만 꺼짐)
 // 우리 회사 말 — 화면의 뼈대 말(메뉴·카드 제목·칸 이름·안내문)에만 쓴다. 직원이 적은 내용·안내 본문은 손대지 않는다
 const TERM_DEFAULT={store:'매장',worker:'근무자',clean:'청소',handover:'인수인계'};
 const TERM_LABEL={store:'매장 (일하는 곳 하나)',worker:'근무자 (그날 그곳에서 일하는 사람)',clean:'청소 (매일 체크하는 점검)',handover:'인수인계 (다음 사람에게 남기는 말)'};
@@ -3491,7 +3493,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.11';
+const GUIDE_VERSION = 'v6.12';
 const BUILD_DATE = '2026-09-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3582,7 +3584,20 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.11 — 거래처',
+    title: '🆕 v6.12 — 고객 예약',
+    items: [
+      '예약을 받는 업종만 쓰는 기능이라 처음엔 꺼져 있다 — 설정 › 기능 켜기 / 끄기 › 「고객 예약」을 켜면 왼쪽 메뉴 · 홈 바로가기에 생긴다',
+      '받는 방법(관리자): 예약 칸(디자이너 · 치료사 · 단체석) → 시술(이름 · 걸리는 시간) → 예약 페이지 주소(/r/이름) 순서로 넣는다. 확정 방식 · 마감 · 쉬는 시간 · 공휴일도 여기서',
+      '손님은 링크에서 시술 · 날짜 · 시간을 고르고 이름 · 연락처만 넣는다. 다녀간 손님은 바로 확정, 처음 오는 손님 · 노쇼 이력은 매장이 확인(설정으로 바꿀 수 있음)',
+      '매장 화면 「확인 필요」: 새 요청(확정 · 다른 시간 제안 · 어려움), 손님 변경 요청, 시간 겹침, 취소로 빈 자리에 대기 손님. 확정 · 제안 때는 문자 앱이 내용을 채운 채로 열린다(문자 발송 계약 전)',
+      '전화 · 방문 예약도 「전화 · 방문 예약」으로 넣어야 링크 예약과 겹치지 않는다. 네이버 예약을 쓰면 스마트플레이스 알림을 복사해 「네이버 알림 붙여넣기」 — 새 예약 · 취소 · 변경이 한 번에 들어간다',
+      '확정된 예약은 캘린더에도 보이고, 전날 저녁 6시 담당자 폰에 알림',
+      '손님이 링크로 예약 · 취소 · 시간 변경 요청을 하면 1분 안에 관리자 · 담당자 폰으로 알림. 캘린더 예약 · 미팅에 「1시간 전」 알림도 고를 수 있다',
+      '손님 정보는 마지막 방문(예약일)부터 1년이 지나면 매일 새벽 자동 삭제 — 예약 페이지 동의 문구와 같다. 예약 기록은 이름 없이 남는다'
+    ]
+  },
+  {
+    title: 'v6.11 — 거래처',
     items: [
       '왼쪽 메뉴 · 홈 바로가기 「거래처」 — 거래처와 주고받는 건(견적 · 단가 · 입점 상담)을 「지금 누구 차례인가」로 본다',
       '기록 버튼 한 번: 메일 받음 → 우리 차례 · 메일 보냄 → 상대 차례 + 회신 확인일. 전화 · 메모는 차례 그대로. 미팅은 캘린더에 들어가고 전날 알림',
@@ -6339,6 +6354,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   if(featOn('calendar'))ll.appendChild(mkLink(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar()));
   if(featOn('expiry'))ll.appendChild(mkLink(VF_ICONS.clock,'보관기한','들어온 것 · 챙길 것 · 버린 기록',()=>vfOpenExpiry()));
   if(featOn('clients'))ll.appendChild(mkLink(VF_ICONS.users,'거래처','진행 건 · 누구 차례 · 다음 할 일',()=>vfOpenDeals()));
+  if(featOn('booking'))ll.appendChild(mkLink(VF_ICONS.rsv,'고객 예약','확인 필요 · 시간표 · 예약 링크',()=>vfOpenBooking()));
   if(featOn('board')){const bl=mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay());bl.setAttribute('data-board-link','');ll.appendChild(bl);}
   ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
@@ -6549,7 +6565,7 @@ chart:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none"
 activity:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
 off:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="M9.5 14.5l5 5M14.5 14.5l-5 5"/></svg>`,
 bell:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>`,
-clock:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+rsv:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>`,clock:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
 board:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>`};
 // 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
@@ -6568,6 +6584,7 @@ function renderSideNav(active){
   if(featOn('calendar'))items.push({k:'cal',lb:'캘린더',ic:IC.cal,fn:()=>vfOpenCalendar()});
   if(featOn('expiry'))items.push({k:'exp',lb:'보관기한',ic:IC.clock,fn:()=>vfOpenExpiry()});
   if(featOn('clients'))items.push({k:'deal',lb:'거래처',ic:IC.users,fn:()=>vfOpenDeals()});
+  if(featOn('booking'))items.push({k:'rsv',lb:'고객 예약',ic:IC.rsv,fn:()=>vfOpenBooking()});
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
@@ -6720,8 +6737,25 @@ async function vfOpenDeals(){
   catch(e){alert('거래처를 열지 못했습니다. '+(e&&e.message||''));}
 }
 window.vfOpenDeals=vfOpenDeals;
+// 고객 예약(v6.12) — 손님이 링크로 신청 · 매장이 확인 · 전화 예약 · 네이버 알림 붙여넣기. 손님 페이지는 lp/book.html(/r/주소)
+// 받는 방법(확정 방식 · 마감 등)은 설정의 다른 값처럼 appSettings.booking → tenant_settings.extra.booking. 손님 페이지 서버 함수가 같은 값을 읽는다
+async function vfOpenBooking(tab){
+  vfUse('rsv_open');
+  try{
+    const {openBooking}=await import('./adapter/booking.js');
+    await openBooking({
+      stores:STORES.map(s=>({id:s.id,name:s.name})),
+      co:(window.__vflowTenant||{}).name||'',
+      hours:vfHours,
+      booking:appSettings.booking||{},
+      saveBooking:async(b)=>{const prev=appSettings.booking;appSettings.booking=b;try{await saveSettings();}catch(e){appSettings.booking=prev;throw e;}},
+      tab,
+    });
+  }catch(e){alert('고객 예약을 열지 못했습니다. '+(e&&e.message||''));}
+}
+window.vfOpenBooking=vfOpenBooking;
 // 알림에서 누르고 들어오면(?cal=1) 캘린더부터
-try{const _q=new URLSearchParams(location.search);if(_q.get('cal')==='1'||_q.get('exp')==='1'||_q.get('deal')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():_q.get('deal')==='1'?vfOpenDeals():vfOpenCalendar(),1200);}}catch(e){}
+try{const _q=new URLSearchParams(location.search);if(_q.get('cal')==='1'||_q.get('exp')==='1'||_q.get('deal')==='1'||_q.get('rsv')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():_q.get('deal')==='1'?vfOpenDeals():_q.get('rsv')==='1'?vfOpenBooking():vfOpenCalendar(),1200);}}catch(e){}
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
 function openBriefingNow(){
   vfUse('brief_open');
@@ -11354,7 +11388,7 @@ async function renderSettingsTab(content){
       appSettings.features={...appSettings.features,[f.key]:e.target.checked};
       savedEl.textContent='저장 중...';
       try{await saveSettings();savedEl.textContent='✓ 저장됨';setTimeout(()=>savedEl.textContent='',1500);}
-      catch(err){appSettings.features={...appSettings.features,[f.key]:prev};e.target.checked=prev!==false;applySettings();savedEl.textContent='저장 실패 (권한/네트워크 확인)';}
+      catch(err){appSettings.features={...appSettings.features,[f.key]:prev};e.target.checked=featOn(f.key);applySettings();savedEl.textContent='저장 실패 (권한/네트워크 확인)';}
     };
     secF.appendChild(row);
   });
