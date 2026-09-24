@@ -1,6 +1,6 @@
 // 🔔 캘린더 알림 — 하루 두 번. 일정마다 고른 시각(remind)에 담당자 폰으로
-// Vercel Cron: 00:00 UTC(= 09:00 KST) → 당일 아침 9시 알림 · 보관기한 오늘까지(관리자)
-//              09:00 UTC(= 18:00 KST) → 전날 오후 6시 알림(내일 일정)
+// Vercel Cron: 00:00 UTC(= 09:00 KST) → 당일 아침 9시 알림 · 보관기한 오늘까지 + 지난 것(관리자)
+//              09:00 UTC(= 18:00 KST) → 전날 오후 6시 알림(내일 일정) · 보관기한 내일까지(관리자 + 오늘 그 매장 근무자)
 // 수동 실행: ?secret=CRON_SECRET&slot=am9|prev18 (&tenant=<id> = 한 회사만, &dry=1 = 보내지 않고 셈만)
 // 보낸 일정은 reminded_at 을 찍어 두 번 가지 않게. 시간을 바꾸면 앱이 reminded_at 을 비운다.
 // 담당이 없는 일정은 그 회사 관리자(owner/manager)에게. 회사마다 따로 돈다 — 한 회사 오류가 다른 회사를 막지 않는다.
@@ -48,8 +48,24 @@ module.exports = async (req, res) => {
 
   const runTenant = async (T) => {
     const appts = await sb(`appointments?select=id,staff_id,kind,title,starts_at,guest_id,client_id,extra&tenant_id=eq.${T}&remind=eq.${slot}&status=in.(request,confirmed,offered)&reminded_at=is.null&starts_at=gte.${encodeURIComponent(from.toISOString())}&starts_at=lt.${encodeURIComponent(to.toISOString())}&order=starts_at&limit=2000`);
-    const lots = slot === 'am9' ? await sb(`expiry_lots?select=id,item_id,store_id,qty&tenant_id=eq.${T}&status=eq.active&due_on=eq.${dayKey}&limit=1000`) : [];
-    if (!appts.length && !lots.length) return { appts: 0, lots: 0, sent: 0 };
+    // 보관기한 — 아침: 오늘까지 + 지났는데 정리 안 된 것(「아직 있음」은 다음 날 아침에 다시) / 저녁: 내일까지
+    const lots = await sb(`expiry_lots?select=id,item_id,store_id,qty,due_on&tenant_id=eq.${T}&status=eq.active&${slot === 'am9' ? `due_on=lte.${dayKey}&or=(snooze_until.is.null,snooze_until.lte.${dayKey})` : `due_on=eq.${dayKey}`}&limit=1000`);
+    // 거래처 진행 건(아침만) — 우리 차례인데 다음 할 일 날짜가 오늘이거나 지난 것 · 상대 차례인데 기준 영업일을 넘긴 것 → 담당에게
+    let dealsDue = [];
+    if (slot === 'am9') {
+      const open = await sb(`deals?select=id,client_id,title,ball,owner_id,next_date,next_text,wait_days,created_at&tenant_id=eq.${T}&ball=in.(us,them)&limit=2000`).catch(() => []);
+      if (open.length) {
+        const [lg, hs] = await Promise.all([
+          sb(`deal_logs?select=deal_id,log_date&tenant_id=eq.${T}&deal_id=in.(${open.map((x) => x.id).join(',')})&log_date=lte.${dayKey}&order=log_date.desc&limit=5000`).catch(() => []),
+          sb(`public_holidays?select=date&date=gte.${new Date(Date.UTC(y, m, d - 60)).toISOString().slice(0, 10)}&date=lte.${dayKey}`).catch(() => []),
+        ]);
+        const hol = new Set(hs.map((h) => h.date)), lastOf = new Map();
+        lg.forEach((l) => { if (!lastOf.has(l.deal_id)) lastOf.set(l.deal_id, l.log_date); });
+        const bizSince = (k) => { let n = 0; const t = new Date(k + 'T00:00:00Z'); while (t.toISOString().slice(0, 10) < dayKey) { t.setUTCDate(t.getUTCDate() + 1); const w = t.getUTCDay(); if (w !== 0 && w !== 6 && !hol.has(t.toISOString().slice(0, 10))) n++; } return n; };
+        dealsDue = open.filter((x) => x.owner_id && (x.ball === 'us' ? (x.next_date && x.next_date <= dayKey) : bizSince(lastOf.get(x.id) || String(x.created_at).slice(0, 10)) >= (x.wait_days || 3)));
+      }
+    }
+    if (!appts.length && !lots.length && !dealsDue.length) return { appts: 0, lots: 0, deals: 0, sent: 0 };
 
     const [subs, profiles] = await Promise.all([
       sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&tenant_id=eq.${T}&limit=1000`),
@@ -85,10 +101,33 @@ module.exports = async (req, res) => {
     if (lots.length) {
       const its = await sb(`expiry_items?select=id,name,unit&id=in.(${[...new Set(lots.map((l) => l.item_id))].join(',')})`);
       const nm = (l) => { const it = its.find((i) => i.id === l.item_id) || {}; const qn = Number(l.qty) || 0; return `${it.name || '품목'}${qn && qn !== 1 ? ` ${qn}${it.unit || ''}` : ''}`; };
-      for (const pid of admins) sent += await send(pid, { title: `보관기한 오늘까지 ${lots.length}건`, body: lots.slice(0, 4).map(nm).join(', ') + (lots.length > 4 ? ` 외 ${lots.length - 4}건` : ''), url: '/?cal=1' });
+      const list = (a) => a.slice(0, 4).map(nm).join(', ') + (a.length > 4 ? ` 외 ${a.length - 4}건` : '');
+      if (slot === 'am9') {
+        const td = lots.filter((l) => l.due_on === dayKey), ov = lots.filter((l) => l.due_on < dayKey);
+        const title = td.length ? `보관기한 오늘까지 ${td.length}건${ov.length ? ` · 지난 것 ${ov.length}건` : ''}` : `보관기한 지난 것 ${ov.length}건 — 정리 전`;
+        for (const pid of admins) sent += await send(pid, { title, body: list(td.length ? td : ov), url: '/?exp=1' });
+      } else {
+        // 내일까지 — 관리자 + 오늘 그 매장에서 일한 사람(마감 근무자)
+        const today = new Date(Date.UTC(y, m, d - 1)).toISOString().slice(0, 10);
+        const ws = await sb(`work_sessions?select=profile_id,store_id&store_id=in.(${[...new Set(lots.map((l) => l.store_id))].join(',')})&work_date=eq.${today}&limit=1000`).catch(() => []);
+        const who = new Map(); admins.forEach((p) => who.set(p, lots));
+        ws.forEach((w) => { const mine = lots.filter((l) => l.store_id === w.store_id); if (mine.length && !who.has(w.profile_id)) who.set(w.profile_id, mine); });
+        for (const [pid, a] of who) sent += await send(pid, { title: `보관기한 내일까지 ${a.length}건`, body: list(a), url: '/?exp=1' });
+      }
+    }
+    if (dealsDue.length) {
+      const cl = await sb(`clients?select=id,name&id=in.(${[...new Set(dealsDue.map((x) => x.client_id))].join(',')})`).catch(() => []);
+      const cn = (x) => (cl.find((c) => c.id === x.client_id) || {}).name || '';
+      const byOwner = new Map(); dealsDue.forEach((x) => { const a = byOwner.get(x.owner_id) || []; a.push(x); byOwner.set(x.owner_id, a); });
+      for (const [pid, a] of byOwner) {
+        const us = a.filter((x) => x.ball === 'us'), th = a.filter((x) => x.ball === 'them');
+        const title = [us.length ? `우리 차례 ${us.length}건` : '', th.length ? `답 없음 ${th.length}건` : ''].filter(Boolean).join(' · ');
+        const body = a.slice(0, 3).map((x) => `${cn(x)} · ${x.ball === 'us' ? (x.next_text || x.title) : x.title + ' — 답 없음'}`).join('\n') + (a.length > 3 ? `\n외 ${a.length - 3}건` : '');
+        sent += await send(pid, { title: `거래처 ${title}`, body, url: '/?deal=1' });
+      }
     }
     if (!dry && appts.length) await patch(`appointments?id=in.(${appts.map((a) => a.id).join(',')})`, { reminded_at: new Date().toISOString() });
-    return { appts: appts.length, lots: lots.length, sent };
+    return { appts: appts.length, lots: lots.length, deals: dealsDue.length, sent };
   };
 
   try {

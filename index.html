@@ -2323,6 +2323,7 @@ const FEATURE_DEFS=[
   {key:'storeinfo',label:'매장 고정 정보'},
   {key:'calendar',label:'캘린더'},
   {key:'expiry',label:'보관기한'},
+  {key:'clients',label:'거래처'},
 ];
 const THEME_DEFS=[
   {key:'default',label:'클래식 네이비',navy:'#172233',gold:'#d6a246'},
@@ -3490,7 +3491,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.10';
+const GUIDE_VERSION = 'v6.11';
 const BUILD_DATE = '2026-09-24'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3581,7 +3582,17 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.10 — 보관기한',
+    title: '🆕 v6.11 — 거래처',
+    items: [
+      '왼쪽 메뉴 · 홈 바로가기 「거래처」 — 거래처와 주고받는 건(견적 · 단가 · 입점 상담)을 「지금 누구 차례인가」로 본다',
+      '기록 버튼 한 번: 메일 받음 → 우리 차례 · 메일 보냄 → 상대 차례 + 회신 확인일. 전화 · 메모는 차례 그대로. 미팅은 캘린더에 들어가고 전날 알림',
+      '며칠째는 영업일로 센다(주말 · 공휴일 뺌). 답 기다리는 기준(1~7일)을 넘으면 「답 없음」',
+      '아침 9시 담당자에게: 오늘 할 우리 차례 · 답 없는 건',
+      '새 건을 넣을 때 비슷한 거래처 이름이 있으면 알려 준다(같은 곳이 두 번 생기지 않게). 거래처 탭은 연락이 오래된 순서 — 60일 넘으면 표시'
+    ]
+  },
+  {
+    title: 'v6.10 — 보관기한',
     items: [
       '왼쪽 메뉴 · 홈 바로가기 「보관기한」 — 들어온 것을 넣고, 지남 · 오늘까지 · 내일까지만 챙긴다. 나머지는 접혀 있다',
       '들어온 것: 품목을 누를 때마다 1개, 포장 제품은 포장에 적힌 날짜를 칩으로 한 번. 「지난번과 같이」로 한 번에. 같은 품목의 이전 것이 남았는지 바로 묻는다',
@@ -6327,6 +6338,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   ll.appendChild(mkLink(VF_ICONS.task,'내 업무','지난 날짜 · 프로젝트 · 히스토리 · 휴무',()=>enterMyWork(me)));
   if(featOn('calendar'))ll.appendChild(mkLink(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar()));
   if(featOn('expiry'))ll.appendChild(mkLink(VF_ICONS.clock,'보관기한','들어온 것 · 챙길 것 · 버린 기록',()=>vfOpenExpiry()));
+  if(featOn('clients'))ll.appendChild(mkLink(VF_ICONS.users,'거래처','진행 건 · 누구 차례 · 다음 할 일',()=>vfOpenDeals()));
   if(featOn('board')){const bl=mkLink(VF_ICONS.board,'게시판','공지 · 업무공유 · 건의',()=>openBoardOverlay());bl.setAttribute('data-board-link','');ll.appendChild(bl);}
   ll.appendChild(mkLink(VF_ICONS.brief,'오늘의 브리핑','인수인계 · 미완료 · 공지 한눈에',()=>openBriefingNow()));
   links.appendChild(ll);
@@ -6555,6 +6567,7 @@ function renderSideNav(active){
   ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
   if(featOn('calendar'))items.push({k:'cal',lb:'캘린더',ic:IC.cal,fn:()=>vfOpenCalendar()});
   if(featOn('expiry'))items.push({k:'exp',lb:'보관기한',ic:IC.clock,fn:()=>vfOpenExpiry()});
+  if(featOn('clients'))items.push({k:'deal',lb:'거래처',ic:IC.users,fn:()=>vfOpenDeals()});
   // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
   items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
   if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
@@ -6700,8 +6713,15 @@ async function vfOpenExpiry(tab){
   }catch(e){alert('보관기한을 열지 못했습니다. '+(e&&e.message||''));}
 }
 window.vfOpenExpiry=vfOpenExpiry;
+// 거래처 · 진행 건(v6.11) — 바깥 거래처와 주고받는 건을 「누구 차례」로. 「진행 중인 건」(직원 업무)과는 다른 화면
+async function vfOpenDeals(){
+  vfUse('deal_open');
+  try{const {openDeals}=await import('./adapter/deals.js');await openDeals({});}
+  catch(e){alert('거래처를 열지 못했습니다. '+(e&&e.message||''));}
+}
+window.vfOpenDeals=vfOpenDeals;
 // 알림에서 누르고 들어오면(?cal=1) 캘린더부터
-try{const _q=new URLSearchParams(location.search);if(_q.get('cal')==='1'||_q.get('exp')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():vfOpenCalendar(),1200);}}catch(e){}
+try{const _q=new URLSearchParams(location.search);if(_q.get('cal')==='1'||_q.get('exp')==='1'||_q.get('deal')==='1'){history.replaceState(null,'',location.pathname);setTimeout(()=>_q.get('exp')==='1'?vfOpenExpiry():_q.get('deal')==='1'?vfOpenDeals():vfOpenCalendar(),1200);}}catch(e){}
 // 오늘의 브리핑 — 홈이 그려질 때 남겨둔 데이터로 연다. 다른 화면이면 홈으로 간 뒤 연다.
 function openBriefingNow(){
   vfUse('brief_open');
