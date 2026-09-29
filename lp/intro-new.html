@@ -499,6 +499,99 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
   .fm-grid,.fm-grid.four{grid-template-columns:minmax(0,1fr)}
   .pk-rows li{grid-template-columns:minmax(0,1fr);gap:2px}
 }
+
+/* ─ 사장님 화면(폰 중심) · 직원 화면(매장 컴퓨터 + 폰) ─ */
+.owner h2,.owner p,.owner b,.owner small,.staff h2,.staff p,.staff b{word-break:keep-all}
+.owner-grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:56px;align-items:center}
+.o-flow{list-style:none;margin:36px 0 0;padding:0;display:grid;gap:12px}
+.o-flow li{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:16px 18px;border-radius:16px;background:var(--card);box-shadow:0 0 0 1px var(--line);opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s cubic-bezier(.2,.8,.2,1)}
+.o-flow li:nth-child(2){transition-delay:.12s}.o-flow li:nth-child(3){transition-delay:.24s}
+.o-flow.in li{opacity:1;transform:none}
+.o-flow .n{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--forest);color:#fff;font:600 15px/1 var(--mono)}
+.o-flow b{display:block;font-size:17px}
+.o-flow small{display:block;color:var(--sub);font-size:14px;margin-top:2px}
+.o-stage2{position:relative;height:640px;perspective:1600px;display:grid;place-items:center}
+.o-rig{position:relative;width:290px;transform-style:preserve-3d;transform:rotateY(var(--ory,-14deg)) rotateX(var(--orx,6deg));transition:transform .15s linear}
+.o-rig .o-ph{position:relative;right:auto;top:auto;width:100%;transform:none}
+.o-rig .o-ph .body{border-radius:48px;padding:11px}
+.o-rig .o-ph .scr{border-radius:38px}
+.o-push{position:absolute;left:-150px;top:70px;width:300px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 30px 60px -22px rgba(17,26,21,.55),0 0 0 1px var(--line);transform:translateZ(90px);opacity:0;transition:opacity .5s,transform .7s cubic-bezier(.2,.9,.25,1.2)}
+.o-push .bell{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--red);color:#fff}
+.o-push .bell svg{width:18px;height:18px}
+.o-push small{display:block;font-size:11.5px;color:var(--mute)}
+.o-push b{display:block;font-size:14.5px;margin-top:1px}
+.o-push span:last-child{display:block;font-size:13px;color:var(--sub);margin-top:2px}
+.o-stage2.in .o-push{opacity:1;transform:translateZ(90px) translateY(0)}
+.o-stage2:not(.in) .o-push{transform:translateZ(90px) translateY(-24px)}
+.o-mini{position:absolute;right:-96px;bottom:110px;display:flex;align-items:baseline;gap:6px;padding:12px 16px;border-radius:14px;background:var(--card);box-shadow:0 24px 50px -24px rgba(17,26,21,.5),0 0 0 1px var(--line);font-size:13.5px;font-weight:600;color:var(--sub);transform:translateZ(60px);white-space:nowrap}
+.o-mini b{font-size:22px;color:var(--green)}.o-mini b.r{color:var(--red)}
+.o-mini i{width:1px;height:18px;background:var(--line);margin:0 6px;align-self:center}
+.owner .owner-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-top:72px;align-items:stretch}
+.rules-card .rules{margin-top:16px}
+.o-note{margin-top:18px;font-size:14px;color:var(--mute)}
+.s-stage{position:relative;height:600px;perspective:1700px;display:grid;place-items:center}
+.s-rig{position:relative;width:100%;max-width:560px;transform-style:preserve-3d;transform:rotateY(var(--pry,-14deg)) rotateX(6deg);transition:transform .15s linear}
+.s-rig .s-lap{position:relative;left:0;top:0;width:92%;transform:none}
+.s-rig .s-lap .deck{height:150px}
+.s-rig .s-ph{position:absolute;right:-2%;top:26%;width:30%;transform:translateZ(120px) rotateZ(1.5deg)}
+.s-rig .s-ph .scr img{position:absolute;inset:0;transition:opacity .6s}
+.s-rig .s-ph .scr img.alt{opacity:0}
+.s-rig.alt .s-ph .scr img.alt{opacity:1}
+@media (max-width:900px){
+  .owner-grid2{grid-template-columns:1fr;gap:24px}
+  .o-stage2{height:560px;order:-1}
+  .o-rig{width:230px}
+  .o-push{left:-70px;top:40px;width:250px}
+  .o-mini{right:-60px;bottom:70px}
+  .owner .owner-grid{margin-top:40px}
+  .s-stage{height:380px;order:-1}
+}
+@media (max-width:480px){
+  .o-stage2{height:500px}
+  .o-rig{width:210px}
+  .o-push{left:-40px;top:24px;width:230px;padding:11px 12px}
+  .o-mini{right:-30px;bottom:50px;padding:9px 12px}
+  .s-stage{height:300px}
+}
+@media (prefers-reduced-motion:reduce){.o-flow li,.o-push{opacity:1!important;transform:none!important}}
+
+/* ─ 우리 가게는: 저절로 넘어가는 업종 · 칩 아래 진행 막대 · 바뀔 때마다 줄이 차례로 올라옴 ─ */
+.pk-tiles button{position:relative;overflow:hidden}
+.pk-tiles button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--gold)}
+.pk-tiles.auto button[aria-selected=true]::after{animation:pkfill var(--pkdur,5200ms) linear forwards}
+.pk-tiles.auto.hold button[aria-selected=true]::after{animation-play-state:paused}
+@keyframes pkfill{from{width:0}to{width:100%}}
+.pk-eb{font:700 13px/1 var(--body);color:var(--green);letter-spacing:.02em}
+.pk-hook{font-size:clamp(26px,2.8vw,36px)!important;line-height:1.25!important;margin-top:10px;letter-spacing:-.02em}
+.pk-card.go .pk-eb,.pk-card.go .pk-hook{animation:pkUp .55s cubic-bezier(.2,.8,.2,1) both}
+.pk-card.go .pk-hook{animation-delay:.06s}
+.pk-card.go .pk-rows li{animation:pkUp .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.16s + var(--i,0) * .11s)}
+.pk-card.go .pk-feat span.on{animation:pkPop .5s cubic-bezier(.2,.9,.25,1.3) both;animation-delay:.5s}
+.pk-card.go .pk-r .win{animation:pkWin .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pkUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pkPop{from{opacity:.3;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes pkWin{from{opacity:0;transform:perspective(1400px) rotateY(-14deg) translateX(40px) scale(.96)}to{opacity:1;transform:perspective(1400px) rotateY(-5deg)}}
+.pk-rows .tm{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:8px;background:var(--mint);justify-self:start}
+@media (prefers-reduced-motion:reduce){.pk-tiles button::after{display:none}}
+
+/* ─ 맨 아래: 바로 가입 — 업종을 누르면 그 업종으로 가입 화면 ─ */
+.c-go{border-radius:28px;background:radial-gradient(120% 140% at 0% 0%,#1D5E45 0%,var(--night) 60%);color:var(--on-night);padding:56px 56px 48px;box-shadow:0 60px 100px -60px rgba(11,27,20,.8);text-align:center}
+.c-go h2{font-size:clamp(30px,3.8vw,48px);font-weight:700;line-height:1.2;word-break:keep-all}
+.c-go .c-head p{color:var(--on-night-sub);margin:16px auto 0;max-width:620px;word-break:keep-all}
+.c-inds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:36px auto 0;max-width:880px}
+.c-inds a{display:flex;align-items:center;gap:10px;padding:16px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--on-night);text-decoration:none;font-weight:700;font-size:15px;transition:background .2s,transform .2s,border-color .2s;text-align:left;word-break:keep-all}
+.c-inds a .ic{width:20px;height:20px;color:#9FE0BB;flex:none}
+.c-inds a span{flex:1}
+.c-inds a .go{width:16px;height:16px;color:var(--on-night-dim);transition:transform .2s,color .2s}
+.c-inds a:hover{background:rgba(255,255,255,.12);border-color:rgba(159,224,187,.4);transform:translateY(-2px)}
+.c-inds a:hover .go{transform:translateX(3px);color:var(--gold)}
+.c-cta{margin-top:32px;display:grid;justify-items:center;gap:14px}
+.c-big{height:58px;padding:0 34px;font-size:17px}
+.c-fine{font-size:13.5px;color:var(--on-night-dim)}
+.c-fine b{color:var(--on-night-sub);font-weight:600}
+.c-fine a{color:var(--on-night-sub)}
+@media (max-width:900px){.c-go{padding:40px 22px 36px}.c-inds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:380px){.c-inds{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -536,7 +629,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <a href="#pick">우리 업종</a>
       <a href="#day">매장의 하루</a>
       <a href="#owner">사장님 화면</a>
-      <a href="#staff">직원 폰</a>
+      <a href="#staff">직원 화면</a>
       <a href="#fmap">기능</a>
       <a href="#start">시작하기</a>
     </nav>
@@ -564,13 +657,13 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <button class="replay" type="button" id="replay">여는 장면 다시 보기</button>
     </div>
 
-    <div class="stage" id="stage" aria-label="Dutyvo 실제 화면 — 컴퓨터 홈, 폰 홈, 알림, 매장 컨디션">
+    <div class="stage" id="stage" aria-label="Dutyvo 실제 화면 — 매장 컴퓨터 홈, 사장님 폰, 알림, 매장 컨디션">
       <div class="rig" id="rig">
         <div class="laptop">
-          <div class="lid"><div class="scr"><img src="/lp/desk_owner.webp" alt="Dutyvo 컴퓨터 홈 — 매장 컨디션 표와 오늘 할 일" width="1600" height="1000"></div></div>
+          <div class="lid"><div class="scr"><img src="/lp/desk_staff.webp" alt="Dutyvo 매장 컴퓨터 홈 — 인사, 시계, 확인할 것 · 청소 · 할 일" width="1600" height="1000"></div></div>
           <div class="deck"></div>
         </div>
-        <div class="phone"><div class="body"><div class="scr"><img src="/lp/phone_home.webp" alt="Dutyvo 직원 폰 홈" width="780" height="1688"></div></div></div>
+        <div class="phone"><div class="body"><div class="scr"><img src="/lp/owner_phone.webp" alt="Dutyvo 사장님 폰 — 매장 3개 중 확인 필요 1" width="780" height="1688"></div></div></div>
         <div class="chip c-toast"><div class="in"><div class="row"><div class="bell"><svg class="ic"><use href="#i-bell"/></svg></div><div><strong>인수인계 1건 · 2호점</strong><span>김철수 → 다음 근무자<br>포스 영수증 용지 교체</span></div></div></div></div>
         <div class="chip c-cond"><div class="in"><div class="top"><span>본점 컨디션</span><span>7일</span></div><div class="big"><b>95</b><span class="pill-good">좋음</span></div><div class="minibars" aria-hidden="true"><i style="height:100%"></i><i style="height:72%"></i><i style="height:100%"></i><i style="height:95%"></i><i style="height:100%"></i><i style="height:72%"></i><i style="height:90%"></i></div></div></div>
       </div>
@@ -626,7 +719,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <h2 id="pick-h">업종을 고르면, 우리 가게에서 어떻게 쓰는지 보여 드립니다</h2>
       <p>가입할 때도 똑같이 업종만 고르면 청소표 · 고정 업무 · 쓸 기능이 먼저 채워진 채로 시작합니다.</p>
     </div>
-    <div class="pk-tiles" role="tablist" aria-label="업종 고르기">
+    <div class="pk-tiles auto" role="tablist" aria-label="업종 고르기" data-pktiles>
       <button type="button" role="tab" data-pk="cafe" aria-selected="true"><svg class="ic"><use href="#i-cup"/></svg>카페</button>
       <button type="button" role="tab" data-pk="restaurant" aria-selected="false"><svg class="ic"><use href="#i-food"/></svg>음식점</button>
       <button type="button" role="tab" data-pk="convenience" aria-selected="false"><svg class="ic"><use href="#i-store"/></svg>편의점</button>
@@ -637,7 +730,7 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       <button type="button" role="tab" data-pk="etc" aria-selected="false"><svg class="ic"><use href="#i-check"/></svg>그 밖의 업종</button>
     </div>
     <div class="pk-card" role="tabpanel" aria-live="polite">
-      <div class="pk-l"><h3 data-pkt></h3><ol class="pk-rows" data-pkr></ol><div class="pk-feat" data-pkf></div><a class="btn btn-gold" data-pkgo href="/onboarding.html">이 업종으로 무료 시작 <svg class="ic"><use href="#i-arrow"/></svg></a></div>
+      <div class="pk-l"><div class="pk-eb" data-pkt></div><h3 class="pk-hook" data-pkh></h3><ol class="pk-rows" data-pkr></ol><div class="pk-feat" data-pkf></div><a class="btn btn-gold" data-pkgo href="/onboarding.html">이 업종으로 무료 시작 <svg class="ic"><use href="#i-arrow"/></svg></a></div>
       <div class="pk-r"><div class="win"><div class="bar"><i></i><i></i><i></i></div><img data-pki src="/lp/f_exp.webp" alt="" width="1600" height="1000" loading="lazy"></div><p class="pk-cap" data-pkc></p></div>
     </div>
   </div>
@@ -714,20 +807,36 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 
 <section class="owner" id="owner" aria-labelledby="owner-h">
   <div class="wrap">
-    <div class="sec-head">
-      <div class="eyebrow">사장님 화면</div>
-      <h2 id="owner-h">매장마다 전화 대신, 점수 한 줄</h2>
-      <p>청소 · 업무 · 인수인계가 매일 매장 컨디션 점수가 됩니다. 사람별 점수나 순위는 없습니다. 매장을 봅니다.</p>
+    <div class="owner-grid2">
+      <div class="o-copy">
+        <div class="sec-head">
+          <div class="eyebrow">사장님 화면</div>
+          <h2 id="owner-h">사장님은 폰으로,<br>확인할 매장만</h2>
+          <p>매장마다 전화하지 않아도 됩니다. 폰을 열면 매장 수 · 정상 · 확인 필요가 한 줄로, 확인이 필요한 매장만 카드로 올라옵니다. 급한 건 알림이 먼저 갑니다.</p>
+        </div>
+        <ol class="o-flow">
+          <li><span class="n">1</span><div><b>알림이 먼저</b><small>클레임 미확인 · 출근 없음 · 사흘 넘은 인수인계</small></div></li>
+          <li><span class="n">2</span><div><b>누르면 무슨 일인지</b><small>무슨 문제 · 언제부터 · 담당 · 지금 상태</small></div></li>
+          <li><span class="n">3</span><div><b>매니저에게 묻기 한 번</b><small>직원 → 매니저 → 사장님 순서 그대로</small></div></li>
+        </ol>
+        <p class="o-note">넓게 보고 싶을 땐 컴퓨터에서 같은 화면을 엽니다. 매장 컨디션 표 · 매장 방까지.</p>
+      </div>
+      <div class="o-stage2" id="ostage">
+        <div class="o-rig" id="orig">
+          <div class="phone o-ph"><div class="body"><div class="scr"><img src="/lp/owner_phone.webp" alt="사장님 폰 — 3개 매장 · 2 정상 · 1 확인 필요 · 2호점 클레임 미확인" width="780" height="1688" loading="lazy"></div></div></div>
+          <div class="o-push" aria-hidden="true"><span class="bell"><svg class="ic"><use href="#i-bell"/></svg></span><div><small>Dutyvo · 지금</small><b>긴급 · 2호점 클레임 미확인</b><span>손님 환불 요구 · 담당 김지원</span></div></div>
+          <div class="o-mini" aria-hidden="true"><b class="num">2</b>정상<i></i><b class="num r">1</b>확인 필요</div>
+        </div>
+      </div>
     </div>
     <div class="owner-grid">
-      <div>
-        <div class="o-stage"><div class="o-card" id="ocard"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="/lp/desk_owner_tall.webp" alt="사장님 컴퓨터 홈 — 매장별 오늘 점수, 7일 평균, 변화, 매장 확인할 것, 우선 확인" width="1600" height="1475" loading="lazy"></div></div></div>
-        <p class="o-note">화면 속 매장 이름과 사람 이름은 예시입니다.</p>
-      </div>
       <div class="score" id="score">
         <div class="top"><h3>본점 컨디션</h3><small>최근 15일 · 예시</small></div>
         <div class="hero-n"><b class="num" id="scoreN">95</b><span>점</span><span class="pill-good">좋음</span></div>
         <svg id="chart" viewBox="0 0 420 150" role="img" aria-label="최근 15일 매장 컨디션 막대 그래프, 기준선 80"></svg>
+      </div>
+      <div class="score rules-card">
+        <div class="top"><h3>점수는 매장 점수입니다</h3><small>사람별 점수 · 순위 없음</small></div>
         <div class="rules">
           <div class="rule"><span class="k num">80</span><p>청소 체크<br><small>항목을 다 체크하면 80점</small></p><span></span></div>
           <div class="rule"><span class="k num plus">+20</span><p>청소 사진<br><small>사진까지 붙여야 100점</small></p><span></span></div>
@@ -737,8 +846,8 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
       </div>
     </div>
     <div class="owner-points">
-      <div class="op"><span class="ico"><svg class="ic"><use href="#i-store"/></svg></span><h3>빠진 것부터 위로</h3><p>청소 안 된 매장, 사흘 넘게 아무도 안 본 인수인계가 사장님 홈 맨 위에 모입니다.</p></div>
-      <div class="op"><span class="ico"><svg class="ic"><use href="#i-hand"/></svg></span><h3>고장 · 클레임은 끝까지</h3><p>「내가 처리」를 누른 사람 이름이 붙고, 「끝남」을 누를 때까지 매장 방에 남습니다.</p></div>
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-store"/></svg></span><h3>빠진 것부터 위로</h3><p>확인이 필요한 매장만 카드로. 정상인 매장은 한 줄로 접혀 있습니다.</p></div>
+      <div class="op"><span class="ico"><svg class="ic"><use href="#i-hand"/></svg></span><h3>고장 · 클레임은 끝까지</h3><p>「내가 처리」를 누른 사람 이름이 붙고, 「끝남」을 누를 때까지 남습니다.</p></div>
       <div class="op"><span class="ico"><svg class="ic"><use href="#i-history"/></svg></span><h3>기록은 지워지지 않습니다</h3><p>인수인계를 지워도 매장 기록에는 남습니다. 누가 언제 쓰고 확인했는지까지.</p></div>
     </div>
   </div>
@@ -746,23 +855,23 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 
 <section class="staff" id="staff" aria-labelledby="staff-h">
   <div class="wrap staff-grid">
-    <div class="p-stage"><div class="p-rig" id="prig">
-      <div class="phone" style="position:relative;right:auto;top:auto;width:100%;transform:none"><div class="body"><div class="scr">
+    <div class="s-stage" id="sstage"><div class="s-rig" id="prig">
+      <div class="laptop s-lap"><div class="lid"><div class="scr"><img src="/lp/desk_staff.webp" alt="직원 매장 컴퓨터 홈" width="1600" height="1000" loading="lazy"></div></div><div class="deck"></div></div>
+      <div class="phone s-ph"><div class="body"><div class="scr">
         <img src="/lp/phone_home.webp" alt="직원 폰 홈" width="780" height="1688" loading="lazy">
         <img class="alt" src="/lp/phone_leave.webp" alt="직원 폰 남기기 창" width="780" height="1688" loading="lazy">
       </div></div></div>
-      <div class="p-shadow"></div>
     </div></div>
     <div>
       <div class="sec-head">
-        <div class="eyebrow">직원 폰</div>
-        <h2 id="staff-h">직원은 폰 하나면 됩니다</h2>
-        <p>누를 곳은 네 칸과 「남기기」뿐입니다. 교육은 한 장짜리 공지로 끝났습니다.</p>
+        <div class="eyebrow">직원 화면</div>
+        <h2 id="staff-h">직원은 매장 컴퓨터로도,<br>폰으로도</h2>
+        <p>매장에서는 매장 컴퓨터, 밖에서는 폰. 같은 화면이라 따로 배울 것이 없습니다. 누를 곳은 네 칸과 「남기기」뿐입니다.</p>
       </div>
       <div class="facts">
-        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-link"/></svg></span><div><b>설치 없이 주소로</b><p>dutyvo.kr에 들어가 홈 화면에 추가하면 앱처럼 씁니다. 업데이트도 알아서 됩니다.</p></div></div>
-        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-mic"/></svg></span><div><b>말로 남겨도 글로</b><p>「말하기」를 누르고 말하면 인수인계가 글로 적힙니다.</p></div></div>
-        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-text"/></svg></span><div><b>글자 크게 · 어둡게</b><p>기기마다 따로 정합니다. 밤 근무 매장은 어두운 화면으로.</p></div></div>
+        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-desk"/></svg></span><div><b>매장 컴퓨터는 켜면 출근</b><p>켜는 순간이 출근 시각으로 남고, 가만두면 오늘 남은 것이 크게 뜨는 대기 화면이 됩니다.</p></div></div>
+        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-link"/></svg></span><div><b>폰은 설치 없이 주소로</b><p>dutyvo.kr에 들어가 홈 화면에 추가하면 앱처럼 씁니다. 업데이트도 알아서 됩니다.</p></div></div>
+        <div class="fact"><span class="ico"><svg class="ic"><use href="#i-mic"/></svg></span><div><b>말로 남겨도 글로</b><p>「말하기」를 누르고 말하면 인수인계가 글로 적힙니다. 글자 크게 · 어둡게는 기기마다.</p></div></div>
       </div>
     </div>
   </div>
@@ -885,26 +994,24 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:18px}
 
 <section class="contact" id="contact" aria-labelledby="contact-h">
   <div class="wrap">
-    <div class="c-box">
-      <div class="c-left">
-        <h2 id="contact-h">우리 가게로<br>시작해 보세요</h2>
-        <p>가입은 5분이면 끝나고, 업종에 맞춰 먼저 채워진 채로 시작합니다. 도입 전에 궁금한 점은 이 번호로 받습니다.</p>
-        <a class="btn btn-gold" href="/onboarding.html" style="margin-top:22px">무료로 시작 <svg class="ic"><use href="#i-arrow"/></svg></a>
-        <div class="tel">
-          <small>전화 · 문자</small>
-          <div class="row"><b id="telno">010-4787-6928</b><button class="copy" type="button" id="copyTel"><svg class="ic"><use href="#i-copy"/></svg><span>번호 복사</span></button></div>
-        </div>
+    <div class="c-go">
+      <div class="c-head">
+        <h2 id="contact-h">우리 가게로 지금 시작하세요</h2>
+        <p>업종을 누르면 그 업종에 맞춰 채워진 채로 가입 화면이 열립니다. 이름 · 이메일 · 비밀번호만 넣으면 5분이면 끝납니다.</p>
       </div>
-      <div class="c-right">
-        <form class="f" id="form" novalidate>
-          <label for="f-store">매장 · 회사 이름<input id="f-store" name="store" autocomplete="organization" placeholder="예) 홍길동 마트"></label>
-          <label for="f-name">담당자 성함<input id="f-name" name="name" autocomplete="name"></label>
-          <label for="f-phone">연락처<input id="f-phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="전화 또는 이메일"></label>
-          <label for="f-memo">매장 수 · 궁금한 점 (선택)<textarea id="f-memo" name="memo"></textarea></label>
-          <button class="btn btn-gold" type="submit">문자로 문의 보내기</button>
-          <p class="note" id="sent" hidden></p>
-          <p class="note">누르면 문자 앱에 내용이 채워집니다. 전송은 직접 눌러주세요. 적어주신 내용은 도입 안내에만 쓰고 안내 후 지웁니다.</p>
-        </form>
+      <div class="c-inds" aria-label="업종 골라 가입">
+          <a href="/onboarding.html?ind=cafe"><svg class="ic"><use href="#i-cup"/></svg><span>카페</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=restaurant"><svg class="ic"><use href="#i-food"/></svg><span>음식점</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=convenience"><svg class="ic"><use href="#i-store"/></svg><span>편의점</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=beauty"><svg class="ic"><use href="#i-cut"/></svg><span>미용실 · 뷰티</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=clinic"><svg class="ic"><use href="#i-shield"/></svg><span>의원 · 치료</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=academy"><svg class="ic"><use href="#i-text"/></svg><span>학원</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=wholesale"><svg class="ic"><use href="#i-box"/></svg><span>도매 · 유통</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+          <a href="/onboarding.html?ind=etc"><svg class="ic"><use href="#i-check"/></svg><span>그 밖의 업종</span><svg class="ic go"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="c-cta">
+        <a class="btn btn-gold c-big" href="/onboarding.html">무료로 시작 <svg class="ic"><use href="#i-arrow"/></svg></a>
+        <p class="c-fine"><b>지금 무료 · 카드 등록 없음</b> · 설치 없이 주소로 · 궁금한 점 <a href="tel:01047876928">010-4787-6928</a></p>
       </div>
     </div>
   </div>
@@ -1011,11 +1118,13 @@ const lerp=(a,b,t)=>a+(b-a)*t;
   addEventListener('scroll',onScroll,{passive:true});onScroll();
 })();
 
-/* ── 사장님: 카드 기울기 · 그래프 ── */
+/* ── 사장님: 폰 기울기 · 알림이 먼저 · 그래프 ── */
 (function owner(){
-  const card=document.getElementById('ocard');const sec=document.getElementById('owner');
-  function onScroll(){const r=sec.getBoundingClientRect();const p=Math.min(1,Math.max(0,(innerHeight-r.top)/(innerHeight*1.1)));card.style.setProperty('--orx',(reduce?0:lerp(18,0,p))+'deg');card.style.setProperty('--ory',(reduce?0:lerp(-10,0,p))+'deg');}
+  const rig=document.getElementById('orig');const st=document.getElementById('ostage');const sec=document.getElementById('owner');const flow=sec.querySelector('.o-flow');
+  function onScroll(){const r=st.getBoundingClientRect();const p=Math.min(1,Math.max(0,(innerHeight-r.top)/(innerHeight+r.height)));rig.style.setProperty('--ory',(reduce?-8:lerp(-26,10,p))+'deg');rig.style.setProperty('--orx',(reduce?4:lerp(10,2,p))+'deg');}
   addEventListener('scroll',onScroll,{passive:true});onScroll();
+  if(reduce||!('IntersectionObserver' in window)){st.classList.add('in');flow.classList.add('in');}
+  else{const io2=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io2.unobserve(e.target);}}),{threshold:.35});io2.observe(st);io2.observe(flow);}
   // 최근 15일 예시 — 기준선 80
   const data=[88,92,100,82,95,100,78,90,100,98,100,82,96,94,95];
   const svg=document.getElementById('chart');const W=420,H=150,L=26,Rr=8,T=12,B=22;const y=v=>T+(H-T-B)*(1-(v-50)/50);
@@ -1072,21 +1181,6 @@ const lerp=(a,b,t)=>a+(b-a)*t;
   if(!seen){const go=()=>play();(document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,900))]):Promise.resolve()).then(go);}
 })();
 
-/* ── 문의 ── */
-(function contact(){
-  const btn=document.getElementById('copyTel');const tel=document.getElementById('telno').textContent;
-  btn.addEventListener('click',()=>{const done=()=>{btn.lastElementChild.textContent='복사됨';setTimeout(()=>btn.lastElementChild.textContent='번호 복사',1600);};
-    try{navigator.clipboard.writeText(tel).then(done,()=>{sel();});}catch(e){sel();}
-    function sel(){const r=document.createRange();r.selectNodeContents(document.getElementById('telno'));const s=getSelection();s.removeAllRanges();s.addRange(r);btn.lastElementChild.textContent='선택됨 — 복사하세요';}
-  });
-  const f=document.getElementById('form');const out=document.getElementById('sent');
-  f.addEventListener('submit',e=>{e.preventDefault();const v=id=>document.getElementById(id).value.trim();
-    if(!v('f-store')||!v('f-phone')){out.hidden=false;out.style.color='#C2463E';out.textContent='매장 이름과 연락처를 적어주세요.';return;}
-    const body=`[Dutyvo 도입 문의]\n매장: ${v('f-store')}\n담당: ${v('f-name')}\n연락처: ${v('f-phone')}\n${v('f-memo')}`;
-    const a=document.createElement('a');a.href='sms:01047876928?&body='+encodeURIComponent(body);a.click();
-    out.hidden=false;out.style.color='';out.textContent='문자 앱이 안 열리면 위 번호로 이 내용을 보내주세요.';
-  });
-})();
 })();
 </script>
 <script>
@@ -1100,14 +1194,22 @@ tabs.forEach(function(b,i){b.tabIndex=i?-1:0;b.addEventListener('click',function
 (function(){var D={"cafe": {"t": "카페에서는 이렇게 씁니다", "f": ["calendar", "expiry"], "shot": "f_exp", "cap": "보관기한 — 지난 것 · 오늘까지 · 내일까지", "rows": [["09:02", "출근하면 인수인계부터", "전날 마감 근무자가 남긴 말 · 누가 확인했는지까지"], ["14:00", "우유 · 생크림이 들어오면 품목만 누르기", "포장 날짜 칩 하나 — 기한 계산 · 전날 저녁 알림은 자동"], ["21:40", "근무 마감 한 장", "안 한 청소 · 오늘까지인 것 · 남은 업무가 모여서 그 자리로"]]}, "restaurant": {"t": "음식점에서는 이렇게 씁니다", "f": ["calendar", "expiry", "booking"], "shot": "f_exp", "cap": "보관기한 — 지난 것 · 오늘까지 · 내일까지", "rows": [["10:00", "식자재 입고 — 채소 · 고기 · 해산물", "품목마다 보관 일수를 한 번만 정해 두면 기한은 자동"], ["15:10", "단체석 예약 링크로 8명 요청", "1분 안에 사장님 폰으로 — 확정 · 다른 시간 제안"], ["22:00", "마감 — 지난 식자재 · 냉장고 온도", "버린 것은 이유 · 금액까지 이달 기록으로"]]}, "convenience": {"t": "편의점에서는 이렇게 씁니다", "f": ["calendar", "expiry"], "shot": "f_exp", "cap": "보관기한 — 지난 것 · 오늘까지 · 내일까지", "rows": [["06:00", "교대하면 인수인계 확인", "야간 근무자가 남긴 발주 · 고장 · 클레임"], ["13:00", "도시락 · 삼각김밥 오늘까지", "매장 컴퓨터 첫 화면 · 우선 확인에 먼저"], ["23:30", "마감 30분 전 알림", "남은 청소 · 업무 · 보관기한이 한 번에"]]}, "beauty": {"t": "미용실에서는 이렇게 씁니다", "f": ["calendar", "booking"], "shot": "f_rsv", "cap": "고객 예약 — 확인 필요 · 담당별 시간표", "rows": [["예약 링크", "인스타 · 카카오 채널 · 플레이스에 한 번 붙이기", "손님이 디자이너 · 시술 · 시간을 직접"], ["신청 즉시", "다녀간 손님은 바로 확정", "처음 오는 손님 · 노쇼 이력만 매장이 확인"], ["네이버", "스마트플레이스 알림 붙여넣기", "전화 · 링크 · 네이버 예약이 한 시간표에 — 겹치면 먼저 알림"]]}, "clinic": {"t": "의원 · 치료실에서는 이렇게 씁니다", "f": ["calendar", "booking"], "shot": "f_rsv", "cap": "고객 예약 — 확인 필요 · 담당별 시간표", "rows": [["예약표", "초진 상담 · 도수치료 · 물리치료", "치료사마다 칸 하나, 걸리는 시간이 곧 자리"], ["1시간 전", "담당 치료사 폰으로 알림", "손님 변경 · 취소 요청도 1분 안에"], ["마감", "베드 · 기구 소독 · 소모품 체크", "사진까지 남기면 지점 점수로"]]}, "academy": {"t": "학원에서는 이렇게 씁니다", "f": ["calendar", "booking"], "shot": "f_rsv", "cap": "고객 예약 — 체험 수업 · 상담", "rows": [["체험 수업", "예약 링크로 학부모가 직접 신청", "정해진 수업 시간에만 · 한 번에 몇 명까지"], ["상담", "입학 상담 · 미팅을 캘린더로", "담당 선생님 폰으로 전날 알림"], ["수업 끝", "전달 사항 한 줄", "다음 선생님이 확인했는지까지"]]}, "wholesale": {"t": "도매 · 유통에서는 이렇게 씁니다", "f": ["calendar", "clients"], "shot": "f_deal", "cap": "거래처 — 우리 차례 · 답 기다림 · 늦어짐", "rows": [["메일 보냄", "견적 · 단가를 보내면 「상대 차례」", "회신 확인일이 자동으로 잡힘"], ["7영업일", "답 없는 건을 먼저 알려 줌", "주말 · 공휴일은 빼고 셈 · 아침 9시 담당자에게"], ["미팅", "거래처 미팅은 캘린더로", "전날 알림 · 끝나면 한 줄 기록"]]}, "etc": {"t": "어떤 매장이든 기본은 같습니다", "f": ["calendar"], "shot": "f_cal", "cap": "캘린더 — 예약 · 미팅 · 보관기한 · 휴무", "rows": [["교대", "인수인계 한 줄", "받는 사람 · 확인 기록 · 말로 남겨도 글로"], ["매일", "청소 체크 · 사진", "매장 컨디션 점수로 — 사람 점수는 없음"], ["퇴근", "근무 마감 한 장", "남은 것이 모이고, 기록은 고칠 수 없음"]]}},FN={"calendar": "캘린더", "expiry": "보관기한", "booking": "고객 예약", "clients": "거래처"};
 var tabs=[].slice.call(document.querySelectorAll('[data-pk]'));if(!tabs.length)return;
 var q=function(a){return document.querySelector(a)};var esc=function(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;')};
+var HK={cafe:'우유 기한은 전날 저녁에 먼저',restaurant:'식자재 기한 · 단체 예약을 한 화면에',convenience:'교대 인수인계 · 폐기 시간을 놓치지 않게',beauty:'예약 링크 하나로 손님이 직접',clinic:'치료 예약 · 소독 체크를 담당자 폰으로',academy:'상담 예약은 학부모가 직접',wholesale:'지금 누구 차례인지, 답 없는 건 먼저',etc:'인수인계 · 청소 · 마감부터 한 곳에'};
+var card=q('.pk-card'),rail=q('[data-pktiles]'),reduceM=matchMedia('(prefers-reduced-motion: reduce)').matches,DUR=5200,timer=0,auto=!reduceM,seen=false,hold=false;
+function play(){if(reduceM)return;card.classList.remove('go');void card.offsetWidth;card.classList.add('go');}
+function arm(){clearTimeout(timer);if(!auto||!seen||hold)return;timer=setTimeout(function(){var i=tabs.findIndex(function(t){return t.getAttribute('aria-selected')==='true'});go(tabs[(i+1)%tabs.length]);},DUR);}
+function stopAuto(){auto=false;clearTimeout(timer);rail.classList.remove('auto');}
 function go(b,focus){var k=b.getAttribute('data-pk'),d=D[k];tabs.forEach(function(t){var on=t===b;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1});
- q('[data-pkt]').textContent=d.t;
- q('[data-pkr]').innerHTML=d.rows.map(function(r){return '<li><span class="tm">'+esc(r[0])+'</span><div><b>'+esc(r[1])+'</b><small>'+esc(r[2])+'</small></div></li>'}).join('');
+ q('[data-pkt]').textContent=b.textContent.trim();q('[data-pkh]').textContent=HK[k]||d.t;
+ q('[data-pkr]').innerHTML=d.rows.map(function(r,i){return '<li style="--i:'+i+'"><span class="tm">'+esc(r[0])+'</span><div><b>'+esc(r[1])+'</b><small>'+esc(r[2])+'</small></div></li>'}).join('');
  q('[data-pkf]').innerHTML=Object.keys(FN).map(function(f){return '<span class="'+(d.f.indexOf(f)>=0?'on':'')+'">'+FN[f]+(d.f.indexOf(f)>=0?' 켜짐':'')+'</span>'}).join('');
  var img=q('[data-pki]');if(img.getAttribute('src')!=='/lp/'+d.shot+'.webp'){img.style.opacity=0;img.src='/lp/'+d.shot+'.webp';img.onload=function(){img.style.opacity=1}}
  img.alt='Dutyvo 실제 화면 — '+d.cap;q('[data-pkc]').textContent='실제 Dutyvo 화면 · '+d.cap+' · 이름과 번호는 예시';
- q('[data-pkgo]').href='/onboarding.html?ind='+k;if(focus)b.focus();}
-tabs.forEach(function(b,i){b.tabIndex=i?-1:0;b.addEventListener('click',function(){go(b)});b.addEventListener('keydown',function(e){var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();go(tabs[(i+d+tabs.length)%tabs.length],true)}})});
+ q('[data-pkgo]').href='/onboarding.html?ind='+k;if(focus)b.focus();play();arm();}
+// 화면에 들어오면 저절로 넘어간다 · 마우스를 올리면 잠시 멈춤 · 직접 고르면 그 업종에 머문다
+if('IntersectionObserver' in window){new IntersectionObserver(function(es){seen=es[0].isIntersecting;if(seen){play();arm();}else clearTimeout(timer);},{threshold:.35}).observe(card);}
+[card,rail].forEach(function(el){el.addEventListener('mouseenter',function(){hold=true;rail.classList.add('hold');clearTimeout(timer);});el.addEventListener('mouseleave',function(){hold=false;rail.classList.remove('hold');if(auto){var a=tabs.find(function(t){return t.getAttribute('aria-selected')==='true'});rail.classList.remove('auto');void rail.offsetWidth;rail.classList.add('auto');arm();}});});
+tabs.forEach(function(b,i){b.tabIndex=i?-1:0;b.addEventListener('click',function(){stopAuto();go(b)});b.addEventListener('keydown',function(e){var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){e.preventDefault();stopAuto();go(tabs[(i+d+tabs.length)%tabs.length],true)}})});
 go(tabs[0]);
 /* 기능 한 장 → 업종별 기능 칸의 그 탭으로 */
 [].slice.call(document.querySelectorAll('.fm.go[data-tab]')).forEach(function(a){a.addEventListener('click',function(){var t=document.getElementById('it-'+a.getAttribute('data-tab'));if(t)t.click()})});

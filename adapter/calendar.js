@@ -30,8 +30,11 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .ro{font-size:12px;color:var(--mute)}
 #vcal .sacts button{display:grid;place-items:center;padding:0 10px}
 #vcal .app{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-@media(min-width:1100px){
-#vcal .app{grid-template-columns:minmax(0,1fr) 350px}
+@media(min-width:960px){
+#vcal .app{grid-template-columns:minmax(0,1fr) 320px}
+}
+@media(min-width:1280px){
+#vcal .app{grid-template-columns:minmax(0,1fr) 360px}
 }
 #vcal .main{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;min-width:0}
 #vcal .top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
@@ -100,6 +103,22 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .tag.k-fix{color:var(--fix)}
 #vcal .tag.k-off{color:var(--off)}
 #vcal .more{font-size:11.5px;color:var(--sub);font-weight:600;padding-left:4px}
+@media(min-width:721px){
+#vcal [data-dense=sum] .cell{min-height:92px}
+}
+#vcal .sums{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+#vcal .sm{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--ink);background:var(--soft);border-radius:999px;padding:2px 8px 2px 6px;white-space:nowrap;line-height:1.5}
+#vcal .sm i{width:7px;height:7px;border-radius:50%;flex:none;background:var(--kc,var(--sub))}
+#vcal .sm b{font-weight:800;font-variant-numeric:tabular-nums}
+#vcal .sm.k-rsv i{background:var(--rsv)}
+#vcal .sm.k-mtg i{background:var(--mtg)}
+#vcal .sm.k-exp i{background:var(--exp)}
+#vcal .sm.k-fix i{background:var(--fix)}
+#vcal .sm.k-off i{background:var(--off)}
+#vcal .sm.k-exp{background:var(--exp-bg)}
+#vcal .sm.imp{background:transparent;padding:2px 4px;color:var(--sub)}
+#vcal .sm.imp svg{width:11px;height:11px;color:var(--st-star)}
+#vcal .cell.sel .sm:not(.imp){background:var(--card)}
 #vcal .dots{display:none;gap:3px;flex-wrap:wrap;justify-content:center}
 #vcal .dots i{width:7px;height:7px;border-radius:50%}
 #vcal .dots i.k-rsv{background:var(--rsv)}
@@ -321,7 +340,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .top h1{font-size:19px}
 #vcal .cell{min-height:58px;padding:4px 2px;align-items:center}
 #vcal .dh{justify-content:center}
-#vcal .hn,#vcal .cell .chip,#vcal .cell .more{display:none}
+#vcal .hn,#vcal .cell .chip,#vcal .cell .more,#vcal .cell .sums{display:none}
 #vcal .dots{display:flex}
 #vcal .cell .dh{flex-direction:column;gap:1px;min-height:0}
 #vcal .cell .stk{font-size:0;padding:0;box-shadow:none;background:none;gap:0;max-width:none}
@@ -559,6 +578,20 @@ export async function openCalendar(host = {}) {
   const weekStart = (d) => { const w = new Date(d); w.setDate(d.getDate() - d.getDay()); return w }
   const closedWeekly = (d) => { if (fStore === 'all' || !host.hours) return false; try { return (host.hours(fStore).off || []).includes(d.getDay()) } catch (e) { return false } }
 
+  // 달력 칸 — 약식(종류별 개수, 기본) · 자세히(제목까지). 자세한 내용은 날짜를 누르면 오른쪽 「그날」에. 이 기기에만 저장
+  let dense = LS.get('dv_cal_dense', 'sum')
+  const SHORT = { rsv: '예약', mtg: '미팅', exp: '기한', fix: '고정', off: '휴무' }
+  const shortOf = (k) => (KN[k] !== KN0[k] ? KN[k] : SHORT[k])
+  function sumOf(list) {
+    const live = list.filter((e) => e.st !== 'cancel' && e.st !== 'noshow')
+    const ks = kinds().filter((k) => live.some((e) => e.k === k))
+    if (!ks.length) return ''
+    const imp = feat.stk && live.some((e) => e.imp)
+    return `<div class="sums">${ks.map((k) => `<span class="sm k-${k}"><i></i>${esc(shortOf(k))}<b>${live.filter((e) => e.k === k).length}</b></span>`).join('')}${imp ? `<span class="sm imp">${IC.star}중요</span>` : ''}</div>`
+  }
+  // 그날 칸이 달력 아래에 있는 좁은 화면 — 누르면 그날로 내려 준다
+  const showDay = () => { const D = $('[data-day]'); if (!D) return; const r = D.getBoundingClientRect(); if (r.top > innerHeight - 80 || r.bottom < 0) D.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+
   // ── 그리기 ──
   function render() {
     place(); renderLayers()
@@ -577,11 +610,11 @@ export async function openCalendar(host = {}) {
         const cls = ['cell', st && !out ? 'has-stk s-' + st.sticker : '', out ? 'out' : '', same(d, TODAY) ? 'today' : '', same(d, sel) ? 'sel' : '', d.getDay() === 0 ? 'su' : '', d.getDay() === 6 ? 'sa' : '', hol[k] ? 'hol' : ''].join(' ')
         const wk = closedWeekly(d) ? '정기 휴무' : ''
         h += `<button class="${cls}" data-d="${k}" aria-label="${d.getMonth() + 1}월 ${d.getDate()}일 일정 ${list.length}개"><div class="dh"><span class="dn">${d.getDate()}</span>${st && !out ? stk(st.sticker, st.label) : hol[k] ? `<span class="hn">${esc(hol[k])}</span>` : wk ? `<span class="hn" style="color:var(--mute)">${wk}</span>` : ''}</div>` +
-          list.slice(0, 3).map(chip).join('') + (list.length > 3 ? `<div class="more">+${list.length - 3}개 더</div>` : '') +
+          (dense === 'sum' ? sumOf(list) : list.slice(0, 3).map(chip).join('') + (list.length > 3 ? `<div class="more">+${list.length - 3}개 더</div>` : '')) +
           `<div class="dots">${list.slice(0, 4).map((e) => `<i class="k-${e.k}"></i>`).join('')}</div></button>`
       }
       B.innerHTML = `<div class="grid">${h}</div>`
-      $$('.cell').forEach((c) => c.onclick = () => { sel = new Date(c.dataset.d + 'T00:00'); if (sel.getMonth() !== cur.getMonth()) { cur = new Date(sel.getFullYear(), sel.getMonth(), 1); refresh() } else render() })
+      $$('.cell').forEach((c) => c.onclick = () => { sel = new Date(c.dataset.d + 'T00:00'); if (sel.getMonth() !== cur.getMonth()) { cur = new Date(sel.getFullYear(), sel.getMonth(), 1); refresh() } else render(); showDay() })
     } else if (view === 'week') {
       const ws = weekStart(sel); let h = ''
       for (let i = 0; i < 7; i++) {
@@ -932,7 +965,7 @@ export async function openCalendar(host = {}) {
   const hueOf = (v) => v === 'gray' ? null : v
   const similar = (k) => { const h = hueOf(kcol[k]); if (h == null) return null; return Object.keys(kcol).find((x) => x !== k && kinds().includes(x) && hueOf(kcol[x]) != null && Math.min(Math.abs(h - kcol[x]), 360 - Math.abs(h - kcol[x])) < 26) }
   function place() {
-    const W = $('[data-wrap]'); W.dataset.layout = feat.deco ? LS.get('dv_cal_layout', 'side') : 'side'; W.dataset.chip = feat.deco ? chipStyle : 'icon'
+    const W = $('[data-wrap]'); W.dataset.layout = feat.deco ? LS.get('dv_cal_layout', 'side') : 'side'; W.dataset.chip = feat.deco ? chipStyle : 'icon'; W.dataset.dense = dense
     const B = placeB()
     const mv = (el, slot) => { if (el && slot && el.parentNode !== slot) slot.appendChild(el) }
     mv($('[data-fstore]'), B ? $('[data-lp=store]') : $('[data-sl=store]'))
@@ -959,7 +992,8 @@ export async function openCalendar(host = {}) {
     const smp = { k: 'rsv', t: '11:00', title: '단체 예약', id: 'smp1' }
     const FL = [['rsv', KN.rsv], ['mtg', KN.mtg], ['exp', KN.exp], ['stk', '중요한 날 표시'], ['msg', '안내 문자'], ['rem', '일정 알림'], ['deco', '화면 꾸미기 · 배치 · 색']]
     const lay = LS.get('dv_cal_layout', 'side')
-    $('[data-pop]').innerHTML = `${isAdmin ? `<h3>기능 켜기/끄기<small>회사 전체 · 관리자</small></h3><div class="fsw">${FL.map(([k, n]) => `<label><span>${esc(n)}</span><input type="checkbox" class="swi" data-ft="${k}" ${feat[k] ? 'checked' : ''}><span class="sw2"></span></label>`).join('')}</div>` : ''}
+    const DN = `<h3>달력 칸<small>내 화면</small></h3><div class="opts">${[['sum', '약식 · 종류별 개수'], ['full', '자세히 · 제목까지']].map(([v, n]) => `<button class="opt" data-dn="${v}" aria-pressed="${dense === v}">${n}</button>`).join('')}</div><small style="margin:-6px 0 14px">어느 쪽이든 날짜를 누르면 오른쪽에 그날 일정이 자세히</small>`
+    $('[data-pop]').innerHTML = DN + `${isAdmin ? `<h3>기능 켜기/끄기<small>회사 전체 · 관리자</small></h3><div class="fsw">${FL.map(([k, n]) => `<label><span>${esc(n)}</span><input type="checkbox" class="swi" data-ft="${k}" ${feat[k] ? 'checked' : ''}><span class="sw2"></span></label>`).join('')}</div>` : ''}
       ${feat.deco ? `<h3>배치<small>내 화면</small></h3><div class="opts">${[['side', '오른쪽에 그날'], ['left', '왼쪽에 거르기']].map(([v, n]) => `<button class="opt" data-lay="${v}" aria-pressed="${lay === v}">${WF[v]}${n}</button>`).join('')}</div>
       <h3>일정 표시</h3><div class="opts">${[['icon', '아이콘'], ['dot', '점'], ['fill', '채움']].map(([v, n]) => `<button class="opt" data-cs="${v}" aria-pressed="${chipStyle === v}"><span data-chip="${v}" style="width:100%;display:grid;gap:3px">${chip(smp)}${chip({ k: 'exp', title: '우유', id: 'smp2' })}</span>${n}</button>`).join('')}</div>
       <small style="margin-bottom:14px">배치 · 표시 · 색은 이 기기에만 · 폰에서는 달력 아래로 그날이 펼쳐짐</small>
@@ -967,6 +1001,7 @@ export async function openCalendar(host = {}) {
       <div class="cpick"><button class="cbtn" data-pick="bg"><i style="background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)"></i>${esc(bgName())}<span>바꾸기</span></button></div>
       <h3>종류 색<small>내 화면</small></h3>
       <div class="cpick">${kinds().map((k) => `<button class="cbtn" data-pick="${k}"><i style="background:var(--${k})"></i>${esc(KN[k])}</button>`).join('')}</div>` : '<small>화면 꾸미기가 꺼져 있어 기본 배치 · 기본 색으로 봅니다</small>'}`
+    $$('[data-dn]').forEach((b) => b.onclick = () => { dense = b.dataset.dn; LS.set('dv_cal_dense', dense); render(); renderPop() })
     $$('[data-lay]').forEach((b) => b.onclick = () => { LS.set('dv_cal_layout', b.dataset.lay); stripOpen = false; render(); renderPop() })
     $$('[data-pick]').forEach((b) => b.onclick = () => renderPicker(b.dataset.pick))
     $$('[data-ft]').forEach((b) => b.onchange = async () => {
