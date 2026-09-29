@@ -23,12 +23,12 @@ ${S} .btn:disabled{opacity:.5;cursor:default}
 ${S} .tk{border-top:1px solid var(--border);padding:12px 0}
 ${S} .tk:first-child{border-top:0}
 ${S} .tk .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text-sub)}
-${S} .tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--soft);color:var(--text-sub)}
+${S} .tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--soft);color:var(--text-sub)}
 ${S} .tag.open{background:var(--orange-light);color:var(--orange)}
 ${S} .tag.done{background:var(--green-light);color:var(--green)}
 ${S} .tk .b{font-size:14px;margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
 ${S} .ans{margin-top:8px;background:var(--soft);border-radius:10px;padding:9px 12px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
-${S} .ans small{display:block;color:var(--text-sub);font-size:11.5px;margin-bottom:3px}
+${S} .ans small{display:block;color:var(--text-sub);font-size:12px;margin-bottom:3px}
 ${S} .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card);margin-bottom:12px}
 ${S} .seg button{border:0;background:transparent;padding:0 14px;height:36px;font:inherit;font-weight:700;font-size:13px;color:var(--text-sub);cursor:pointer}
 ${S} .seg button[aria-pressed=true]{background:var(--navy);color:#fff}

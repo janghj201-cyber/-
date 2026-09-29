@@ -72,7 +72,7 @@ html[data-bright=dark] #vdeal{--us:#7FB0F2;--us-bg:#1A2B42;--them:#B49CF4;--them
 #vdeal .cl b{font-size:14.5px}
 #vdeal .cl small{grid-column:1;color:var(--sub);font-size:12.5px}
 #vdeal .cl .r{grid-row:1 / span 2;grid-column:2;text-align:right;font-size:12.5px;color:var(--sub)}
-#vdeal .tg2{font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub);margin-left:4px}
+#vdeal .tg2{font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub);margin-left:4px}
 #vdeal .stale{color:var(--warn);font-weight:700}
 #vdeal .side{display:grid;gap:12px;align-content:start}
 #vdeal .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}

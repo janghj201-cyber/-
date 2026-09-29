@@ -65,7 +65,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .lay[aria-pressed=false] .ck{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 #vcal .lay[aria-pressed=false] .ck svg{opacity:0}
 #vcal .lay[aria-pressed=false]{color:var(--mute)}
-#vcal .lay .n{font-size:11.5px;color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
+#vcal .lay .n{font-size:12px;color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
 #vcal .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden}
 #vcal .dow{font-size:12px;font-weight:600;color:var(--mute);text-align:center;padding:8px 0;background:var(--soft);border-bottom:1px solid var(--line)}
 #vcal .dow.su{color:var(--hol)}
@@ -81,7 +81,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .cell.today .dn{background:var(--deep);color:var(--on-main)}
 #vcal .cell.su .dn,#vcal .cell.hol .dn{color:var(--hol)}
 #vcal .cell.today.su .dn,#vcal .cell.today.hol .dn{color:var(--on-main)}
-#vcal .hn{font-size:11px;color:var(--hol);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vcal .hn{font-size:12px;color:var(--hol);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vcal .chip{display:flex;align-items:center;gap:6px;border-radius:7px;padding:4px 7px;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #vcal .chip .t{font-variant-numeric:tabular-nums;font-weight:600}
 #vcal .chip svg{width:13px;height:13px;flex:none}
@@ -102,12 +102,12 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .tag.k-exp{color:var(--exp)}
 #vcal .tag.k-fix{color:var(--fix)}
 #vcal .tag.k-off{color:var(--off)}
-#vcal .more{font-size:11.5px;color:var(--sub);font-weight:600;padding-left:4px}
+#vcal .more{font-size:12px;color:var(--sub);font-weight:600;padding-left:4px}
 @media(min-width:721px){
 #vcal [data-dense=sum] .cell{min-height:92px}
 }
 #vcal .sums{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
-#vcal .sm{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--ink);background:var(--soft);border-radius:999px;padding:2px 8px 2px 6px;white-space:nowrap;line-height:1.5}
+#vcal .sm{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink);background:var(--soft);border-radius:999px;padding:2px 8px 2px 6px;white-space:nowrap;line-height:1.5}
 #vcal .sm i{width:7px;height:7px;border-radius:50%;flex:none;background:var(--kc,var(--sub))}
 #vcal .sm b{font-weight:800;font-variant-numeric:tabular-nums}
 #vcal .sm.k-rsv i{background:var(--rsv)}
@@ -141,7 +141,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .ph>.psub,#vcal .ph>#fold{margin-left:auto}
 #vcal #slStrip:empty{display:none}
 #vcal .ph h2{margin:0;font-size:18px;letter-spacing:-.01em}
-#vcal .pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--tint);color:var(--green)}
+#vcal .pill{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--tint);color:var(--green)}
 #vcal .psub{font-size:12.5px;color:var(--mute);margin:2px 0 10px}
 #vcal .alerts{display:grid;gap:8px;margin-bottom:10px}
 #vcal .al{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:center;background:var(--exp-bg);border-radius:12px;padding:10px 12px}
@@ -158,7 +158,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .ev .tm.all{font-size:12px;color:var(--mute);font-weight:600}
 #vcal .ev .bd{display:grid;gap:3px;min-width:0}
 #vcal .ev .tg{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-#vcal .tag{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+#vcal .tag{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
 #vcal .ev b{font-size:14.5px}
 #vcal .ev .meta{font-size:12.5px;color:var(--sub)}
 #vcal .ev .rm{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mute)}
@@ -179,7 +179,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .push .ic svg{width:16px;height:16px;color:var(--on-main)}
 #vcal .push b{font-size:12.5px}
 #vcal .push p{margin:1px 0 0;font-size:12.5px;color:var(--sub)}
-#vcal .push .from{font-size:11px;color:var(--mute)}
+#vcal .push .from{font-size:12px;color:var(--mute)}
 #vcal .scrim{position:fixed;inset:0;background:rgba(8,16,12,.45);display:grid;place-items:end center;z-index:20;padding:0}
 @media(min-width:700px){
 #vcal .scrim{place-items:center;padding:16px}
@@ -240,7 +240,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .stpick button i{width:30px;height:30px;border-radius:50%;background:var(--sc);display:grid;place-items:center}
 #vcal .stpick button i svg{width:16px;height:16px;color:#fff}
 #vcal .stpick button[aria-pressed=true]{border-color:var(--sc);color:var(--ink)}
-#vcal .ev .star{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--mute)}
+#vcal .ev .star{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--mute)}
 #vcal .ev .star svg{width:14px;height:14px}
 #vcal .ev .star[aria-pressed=true]{color:var(--st-star)}
 #vcal .dots i.stdot{width:auto;height:auto;background:none;border-radius:0}
@@ -253,7 +253,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .opt[aria-pressed=true]{border-color:var(--green);color:var(--ink);background:var(--tint)}
 #vcal .opt svg.wf{width:100%;height:auto;max-width:130px}
 #vcal .opt .chip{width:100%}
-#vcal .pop small{display:block;font-size:11.5px;color:var(--mute)}
+#vcal .pop small{display:block;font-size:12px;color:var(--mute)}
 @media(min-width:1100px){
 #vcal [data-layout=left] .frame{display:grid;grid-template-columns:260px minmax(0,1fr)!important;gap:16px}
 #vcal [data-layout=left] .lpanel{display:flex;flex-direction:column;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;align-self:start}

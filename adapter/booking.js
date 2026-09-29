@@ -60,7 +60,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .days{display:flex;gap:6px;overflow-x:auto;padding:14px 0 10px;scrollbar-width:thin}
 #vbook .days button{flex:none;min-width:62px;padding-inline:4px!important;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0 7px;display:grid;justify-items:center;gap:1px;font-size:12px;color:var(--sub)}
 #vbook .days button b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
-#vbook .days button .c{font-size:11px;font-weight:700;color:var(--ok)}
+#vbook .days button .c{font-size:12px;font-weight:700;color:var(--ok)}
 #vbook .days button .c.r{color:var(--req)}
 #vbook .days button.su b,#vbook .days button.hl b{color:var(--late)}
 #vbook .days button.cl{background:var(--soft);border-style:dashed}
@@ -75,10 +75,10 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .tg .tl{position:relative}
 #vbook .tg .tl span:first-child{transform:none}
 #vbook .tg .tl span:last-child{transform:translateY(-15px)}
-#vbook .tg .tl span{position:absolute;right:8px;font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums;transform:translateY(-7px)}
+#vbook .tg .tl span{position:absolute;right:8px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;transform:translateY(-7px)}
 #vbook .tg .ln{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
 #vbook .tg .ln.h{border-top-style:dashed;opacity:.6}
-#vbook .tg .brk{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,var(--soft) 0 6px,transparent 6px 12px);font-size:11px;color:var(--mute);display:grid;place-items:center}
+#vbook .tg .brk{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,var(--soft) 0 6px,transparent 6px 12px);font-size:12px;color:var(--mute);display:grid;place-items:center}
 #vbook .now{position:absolute;left:0;right:0;border-top:2px solid var(--late);z-index:3;pointer-events:none}
 #vbook .now::before{content:"";position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--late)}
 #vbook .bk{position:absolute;left:4px;right:4px;border-radius:8px;padding:3px 8px;text-align:left;border:1px solid transparent;overflow:hidden;font-size:12px;line-height:1.35;z-index:2;display:block}
@@ -92,7 +92,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .bk.done{background:var(--soft);color:var(--sub)}
 #vbook .bk.noshow{background:var(--late-bg);color:var(--late)}
 #vbook .bk.noshow b{text-decoration:line-through}
-#vbook .bk .flag{float:right;font-size:10.5px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:4px}
+#vbook .bk .flag{float:right;font-size:11.5px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:4px}
 #vbook .flag.q{background:var(--req-bg);color:var(--req)}
 #vbook .flag.n{background:var(--late-bg);color:var(--late)}
 #vbook .flag.d{background:var(--card);color:var(--sub)}
@@ -104,7 +104,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .panel h2 small{font-size:12px;color:var(--mute);font-weight:500}
 #vbook .todo{display:grid;gap:8px}
 #vbook .it{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
-#vbook .it .k{font-size:11.5px;font-weight:800}
+#vbook .it .k{font-size:12px;font-weight:800}
 #vbook .it .k.q{color:var(--req)}
 #vbook .it .k.n{color:var(--late)}
 #vbook .it .k.c{color:var(--pur)}
@@ -113,12 +113,12 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .it b{font-size:14px}
 #vbook .it .m{font-size:12.5px;color:var(--sub)}
 #vbook .it .tags{display:flex;gap:4px;flex-wrap:wrap}
-#vbook .tag{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--soft);color:var(--sub)}
+#vbook .tag{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--soft);color:var(--sub)}
 #vbook .tag.nvt{background:var(--off-bg);color:var(--off)}
 #vbook .nvt2{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;background:var(--card);resize:vertical}
 #vbook .nvl{display:grid;gap:6px;margin-top:10px}
 #vbook .nvr{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:3px;font-size:13px}
-#vbook .nvr .k{font-size:11.5px;font-weight:800}
+#vbook .nvr .k{font-size:12px;font-weight:800}
 #vbook .nvr .k.ka{color:var(--green)}
 #vbook .nvr .k.kx{color:var(--late)}
 #vbook .nvr .k.ks{color:var(--mute)}
@@ -148,7 +148,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .sr>b small{display:block;font-weight:500;font-size:12px;color:var(--mute);margin-top:2px}
 #vbook .opt{display:flex;flex-wrap:wrap;gap:6px}
 #vbook .opt button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--sub);text-align:left}
-#vbook .opt button small{display:block;font-weight:500;font-size:11.5px;color:var(--mute)}
+#vbook .opt button small{display:block;font-weight:500;font-size:12px;color:var(--mute)}
 #vbook .opt button[aria-pressed=true]{border-color:var(--green);background:var(--tint);color:var(--ink)}
 #vbook .svt{width:100%;border-collapse:collapse;font-size:13px}
 #vbook .svt th{white-space:nowrap;text-align:left;font-size:12px;color:var(--mute);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
@@ -195,7 +195,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .chp button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:7px 12px;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
 #vbook .chp button:disabled{opacity:.4;text-decoration:line-through}
 #vbook .cd{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-#vbook .cd button{flex:none;width:52px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:grid;justify-items:center;font-size:11.5px;color:var(--sub)}
+#vbook .cd button{flex:none;width:52px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:grid;justify-items:center;font-size:12px;color:var(--sub)}
 #vbook .cd button b{font-size:16px;color:var(--ink)}
 #vbook .cd button:disabled{background:var(--soft);border-style:dashed;opacity:.75}
 #vbook .cd button:disabled b{color:var(--mute)}
