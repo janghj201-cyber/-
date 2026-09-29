@@ -182,9 +182,9 @@ export async function briefCardInto(el, host = {}) {
   const { data, error } = await sb.from('ai_briefs').select('body,brief_date').eq('brief_date', kst()).maybeSingle()
   if (error || !data || !data.body || !Array.isArray(data.body.lines) || !data.body.lines.length) { el.remove(); return }
   const b = data.body
-  el.innerHTML = `<div class="vh-ct"><strong>아침 요약</strong><span class="vh-tiny">어제 ${esc(mdOf(b.day))} · AI</span></div>
-    <ul class="vai-bl">${b.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
-    <div class="vai-ba"><button type="button" class="vh-btn" data-more>AI에게 더 묻기</button></div>`
+  // 「더 묻기」는 머리 오른쪽 — 버튼 한 줄이 카드 아래를 따로 먹지 않게
+  el.innerHTML = `<div class="vh-ct"><strong>아침 요약</strong><span class="vh-tiny">어제 ${esc(mdOf(b.day))} · AI</span><button type="button" class="vai-more" data-more>더 묻기 ›</button></div>
+    <ul class="vai-bl">${b.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
   el.querySelector('[data-more]').onclick = () => openAssistant({ ...host, q: '아침 요약에 나온 것 중 오늘 먼저 할 일 알려 줘' })
 }
 

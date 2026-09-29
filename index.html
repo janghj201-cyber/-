@@ -744,6 +744,7 @@ button.vf-pj{cursor:pointer;}
 .vf-condrow .nm i.green{background:var(--green);}.vf-condrow .nm i.orange{background:var(--blue);}.vf-condrow .nm i.red{background:var(--red);}
 .vf-condhead{display:grid;grid-template-columns:minmax(0,1fr) 52px 58px 60px 14px;gap:6px;font-size:11.5px;color:var(--text-mute);font-weight:700;padding:4px 0;}
 .vf-condhead span{text-align:right;}.vf-condhead span:first-child{text-align:left;}
+.vf-condrow .br,.vf-condhead .br{display:none;}
 .vh-metrics.line{display:flex;gap:6px;}
 .vh-metrics.line .vh-metric{flex:1;min-height:0;padding:8px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:6px;}
 .vh-metrics.line .vh-metric b{font-size:16px;margin:0;}.vh-metrics.line .vh-metric span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
@@ -925,6 +926,7 @@ button.vf-pj{cursor:pointer;}
 .vf-condhead{font-size:12px;}
 .vf-condmore{display:block;width:100%;margin-top:8px;background:none;border:1px dashed var(--border);border-radius:var(--radius-ctl);padding:10px;font:inherit;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;}
 body.vf-has-orb .screen.active::after,body.vf-has-orb #room-overlay::after{content:'';display:block;flex:0 0 auto;height:76px;}
+@media(min-width:1024px){body.vf-has-orb .screen.active:has(>.app-footer)::after,body.vf-has-orb #room-overlay:has(>.app-footer)::after{display:none;}body.vf-has-orb .screen>.app-footer,body.vf-has-orb #room-overlay>.app-footer{padding-bottom:84px!important;}} /* 아래 발자국이 있으면 빈 띠 대신 발자국 안쪽 여백으로 */
 .vf-condmore:hover{background:var(--bg);color:var(--text);}
 /* 관리자 오늘 요약 네 칸(한 줄형) — 숫자가 먼저 보이게 */
 .vh-metrics.line{gap:8px;}
@@ -971,6 +973,8 @@ html[data-bright=dark] .vf-orb-body{background:radial-gradient(circle at 34% 28%
 .vai-brief .vai-bl{margin:8px 0 0;padding:0 0 0 18px;display:grid;gap:5px;font-size:13.5px;line-height:1.5;color:var(--text);}
 .vai-brief .vai-bl li::marker{color:var(--text-mute);}
 .vai-brief .vai-ba{margin-top:10px;display:flex;justify-content:flex-end;}
+.vai-brief .vai-more{margin-left:10px;background:none;border:0;padding:4px 6px;border-radius:7px;font:inherit;font-size:12.5px;font-weight:700;color:var(--text-sub);cursor:pointer;white-space:nowrap;}
+.vai-brief .vai-more:hover{background:var(--soft);color:var(--text);}
 .vai-brief .vai-ba .vh-btn{min-height:34px;padding:6px 12px;font-size:12.5px;}
 /* 내 메모 — 폰 홈은 두 줄 미리보기(누르면 메모장). 컴퓨터는 왼쪽 메뉴 「메모」 */
 .vh-memo{order:4;}
@@ -1768,6 +1772,24 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 .vh-priority .vh-item>.vh-btn.vh-btn-fb:hover,.vh-priority .vh-item>.vh-btn[style*="text-sub"]:hover{background:var(--soft);color:var(--text);}
 .vh-priority .vh-item>.vh-btn.primary{background:var(--navy);color:#fff;}
 .vh-priority .vh-item>.vh-btn:first-of-type{margin-left:auto;}
+/* v6.22 컴퓨터 — 빈 칸 줄이기: 컨디션 막대 · 우선 확인 버튼을 줄 오른쪽에 · 머리 사진 낮게 · 빈 할 일 안내 숨김 */
+@media(min-width:1024px){
+  .vf-condrow,.vf-condhead{grid-template-columns:minmax(84px,.9fr) minmax(90px,1.5fr) 44px 54px 62px 14px;gap:10px;}
+  .vf-condrow{padding:7px 0;}
+  .vf-condrow .br,.vf-condhead .br{display:block;}
+  .vf-condhead .br{text-align:left!important;}
+  .vf-condrow .br{position:relative;height:8px;border-radius:4px;background:var(--soft);}
+  .vf-condrow .br i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--green);opacity:.85;}
+  .vf-condrow .br i.orange{background:var(--blue);}.vf-condrow .br i.red{background:var(--red);}
+  .vf-condrow .br u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--text-sub);border-radius:1px;}
+  .vh-priority .vh-item:has(>.vh-btn){flex-wrap:nowrap;align-items:center;}
+  .vh-priority .vh-item:has(>.vh-btn)>.vh-dot{margin-top:0;}
+  .vh-priority .vh-item:has(>.vh-btn)>.vh-main{flex:1 1 0;}
+  .vh-priority .vh-item>.vh-btn{flex:none;}
+  .rm-body .vh-item>.rm-acts{flex:0 0 auto;padding-left:0;margin-top:0;} /* 줄바꿈은 두고(피드백 칸은 아래 줄) 버튼만 글 오른쪽에 */
+  .vh-hero .vh-head{padding-top:40px;min-height:140px;}
+  .vh-todo .hp-empty{display:none;}
+}
 /* 매장 방 배치: [상태 | 인수인계 · 요청 넓게], 1680px 이상만 세 칸 */
 @media(min-width:1024px){.rm-grid{grid-template-columns:minmax(300px,1fr) minmax(0,1.7fr);}}
 @media(min-width:1680px){.rm-grid{grid-template-columns:minmax(320px,1fr) minmax(0,1.6fr) minmax(300px,1fr);}}
@@ -3608,7 +3630,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.21';
+const GUIDE_VERSION = 'v6.22';
 const BUILD_DATE = '2026-09-29'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3727,6 +3749,16 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.22 — 빈 칸 줄이기: 캘린더 칸에 이름까지 · 컨디션 막대 · 한 줄 한 건',
+    items: [
+      '캘린더 칸에 누가 · 무엇까지 — 「휴무 5」 옆에 이름이, 고정업무 · 보관기한 옆에 할 일 · 품목이 보입니다. 칸 높이는 화면에 맞춰 늘고, 넘치면 오른쪽 그날에서 전부',
+      '캘린더 오른쪽 그날 — 휴무는 한 묶음으로 「휴무 5명」 아래 이름 · 매장 두 줄씩',
+      '매장 컨디션(컴퓨터) — 이름과 숫자 사이에 7일 평균 막대와 기준선 눈금. 어느 매장이 기준선 아래인지 한눈에',
+      '우선 확인(컴퓨터) — 피드백 · 확인 버튼을 글 오른쪽에 붙여 한 건이 한 줄 높이로. 매장 방 인수인계도 같게',
+      '홈 머리 사진을 조금 낮게, 아침 요약 「더 묻기」는 제목 옆으로, 1:1 상담 버튼은 가로로',
+    ]
+  },
   {
     title: 'v6.21 — 보기 쉽게: 진한 글씨 · 급한 것 먼저 · 메뉴 정리',
     items: [
@@ -5982,9 +6014,9 @@ async function renderHomeMeetingCard(wrap,beforeEl){
         <div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${m.meeting_date?`<b style="color:var(--green);">${wmFmt(m.meeting_date)}</b>`:range} · 화상 · 팀장 ${(av&&av.names.length)||2}명 참석${m.done?' · 완료':''}</div>
         ${!m.done&&!m.meeting_date?`<div style="font-size:11px;margin-top:3px;color:${av&&av.days.length?'var(--text)':'var(--red)'};">${av&&av.days.length?'팀장 전원 출근일: '+av.days.map(wmFmt).join(' · '):'이번 주엔 팀장 전원 출근하는 날이 없어요 — 다음 주로 넘겨주세요'}</div>`:''}
         ${m.note?`<div style="font-size:11.5px;margin-top:4px;color:var(--text);">${_wrEsc(m.note)}</div>`:''}</div>
-        <div style="display:flex;flex-direction:column;gap:5px;" data-wm-acts></div></div>`;
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:55%;" data-wm-acts></div></div>`;
       const acts=card.querySelector('[data-wm-acts]');
-      const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';b.onclick=fn;return b;};
+      const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';b.onclick=fn;return b;};
       if(!m.done)acts.appendChild(mk(m.meeting_date?'날짜 변경':'날짜 정하기',async()=>{
         const opts=(av&&av.days.length?av.days:[]);
         const pick=prompt('상담 날짜 (YYYY-MM-DD)'+(opts.length?'\n팀장 전원 출근일: '+opts.map(wmFmt).join(' · '):'\n이번 주 팀장 전원 출근일이 없어요 — 그래도 정하려면 입력'),m.meeting_date||opts[0]||'');
@@ -7873,10 +7905,12 @@ async function vfCondAllInto(card){
   const _lv={red:0,orange:1,green:2};const _td=(c)=>c.today&&!c.today.closed&&c.today.score!=null?c.today.score:999;
   rows.sort((a,b)=>(_lv[a.c.level]??3)-(_lv[b.c.level]??3)||_td(a.c)-_td(b.c)||(a.c.avg7??999)-(b.c.avg7??999));
   const warn=rows.filter(x=>x.c.level==='red').length;
+  // 컴퓨터 — 이름과 숫자 사이 빈 칸에 7일 평균 막대 + 기준선 눈금. 폰은 숨김(칸이 좁다)
+  const _bl=scoreRule().baseline;const _cbar=(c)=>`<span class="br" aria-hidden="true"><i class="${c.level}" style="width:${Math.max(0,Math.min(100,c.avg7??0))}%"></i><u style="left:${_bl}%"></u></span>`;
   let folded=false;try{folded=localStorage.getItem('vflow_fold_cond')==='1';}catch(e){}
   const paint=()=>{
     card.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">전 ${T('store')} 평균 ${C.__company??'—'} · 기준선 ${scoreRule().baseline}${warn?` · <b style="color:var(--red)">손볼 곳 ${warn}</b>`:''}</span><button type="button" class="vh-fold" data-fold>${folded?'펼치기':'접기'}</button></div>`+
-      (folded?'':`<div class="vf-condhead"><span>${T('store')}</span><span>오늘</span><span>7일 평균</span><span>전주 대비</span><span></span></div>`+(rows.length>6&&!card.__all?rows.slice(0,5):rows).map(({st,c})=>`<button type="button" class="vf-condrow" data-sid="${st.id}"><span class="nm"><i class="${c.level}"></i>${_wrEsc(storeShort(st.name))}</span><span class="n">${c.today.closed?'<span class="m">휴무</span>':c.today.score}</span><span class="m">${c.avg7??'—'}</span><span class="d ${c.prev7!=null&&c.avg7-c.prev7>0?'up':c.prev7!=null&&c.avg7-c.prev7<0?'dn':''}">${c.prev7==null?'':c.avg7-c.prev7>0?'▲'+(c.avg7-c.prev7):c.avg7-c.prev7<0?'▼'+(c.prev7-c.avg7):'—'}</span><span class="vh-arrow" aria-hidden="true">›</span></button>`).join(''));
+      (folded?'':`<div class="vf-condhead"><span>${T('store')}</span><span class="br">7일 평균 · 기준선</span><span>오늘</span><span>7일 평균</span><span>전주 대비</span><span></span></div>`+(rows.length>6&&!card.__all?rows.slice(0,5):rows).map(({st,c})=>`<button type="button" class="vf-condrow" data-sid="${st.id}"><span class="nm"><i class="${c.level}"></i>${_wrEsc(storeShort(st.name))}</span>${_cbar(c)}<span class="n">${c.today.closed?'<span class="m">휴무</span>':c.today.score}</span><span class="m">${c.avg7??'—'}</span><span class="d ${c.prev7!=null&&c.avg7-c.prev7>0?'up':c.prev7!=null&&c.avg7-c.prev7<0?'dn':''}">${c.prev7==null?'':c.avg7-c.prev7>0?'▲'+(c.avg7-c.prev7):c.avg7-c.prev7<0?'▼'+(c.prev7-c.avg7):'—'}</span><span class="vh-arrow" aria-hidden="true">›</span></button>`).join(''));
         if(!folded&&rows.length>6){const mb=document.createElement('button');mb.type='button';mb.className='vf-condmore';const rest=rows.slice(5);const bad=rest.filter(x=>x.c.level==='red').length;mb.textContent=card.__all?'접기':`나머지 ${rest.length}곳${bad?` · 손볼 곳 ${bad}`:' · 모두 기준선 위'}`;mb.onclick=()=>{card.__all=!card.__all;paint();};card.appendChild(mb);}
 card.querySelector('[data-fold]').onclick=()=>{folded=!folded;try{localStorage.setItem('vflow_fold_cond',folded?'1':'0');}catch(e){}paint();};
     card.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{const st=STORES.find(x=>x.id===b.dataset.sid);if(st)openStoreRoom(st);});
