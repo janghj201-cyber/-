@@ -3,7 +3,7 @@
 // 읽는 것: 앱 안내(_ai_guide, 캐시) + 회사 업무 노트(ai_notes) + 이 사람 권한 안의 최근 기록(로그인 토큰으로 읽어 RLS 그대로).
 // 손님 이름 · 전화번호는 읽지 않고, 기록 속 전화 · 이메일 모양은 가린 뒤 보낸다. 하루 한도: 한 사람 40번 · 회사 400번.
 // 필요 env: ANTHROPIC_API_KEY, SUPABASE_SERVICE_ROLE_KEY
-const { MODEL_FAST, svc, asUser, userOf, mask, kstDate, claude, pickJson, aiOn, notesOf, notesText } = require('./_ai');
+const { MODEL_FAST, svc, asUser, userOf, mask, maskKeep, kstDate, claude, pickJson, aiOn, notesOf, notesText } = require('./_ai');
 const GUIDE = require('./_ai_guide');
 
 const PER_PERSON = 40, PER_COMPANY = 400;
@@ -86,14 +86,44 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, ...r }); return;
     }
 
-    const q = String(body.q || '').trim().slice(0, 500);
-    if (!q) { res.status(400).json({ error: '질문 없음' }); return; }
     const dayStart = new Date(`${kstDate(0)}T00:00:00+09:00`).toISOString();
     const [mine, all] = await Promise.all([
-      sb.count(`ai_logs?select=id&feature=eq.ask&profile_id=eq.${uid}&created_at=gte.${encodeURIComponent(dayStart)}`),
-      sb.count(`ai_logs?select=id&feature=eq.ask&tenant_id=eq.${T}&created_at=gte.${encodeURIComponent(dayStart)}`),
+      sb.count(`ai_logs?select=id&feature=in.(ask,tidy)&profile_id=eq.${uid}&created_at=gte.${encodeURIComponent(dayStart)}`),
+      sb.count(`ai_logs?select=id&feature=in.(ask,tidy)&tenant_id=eq.${T}&created_at=gte.${encodeURIComponent(dayStart)}`),
     ]);
     if (mine >= PER_PERSON || all >= PER_COMPANY) { res.status(429).json({ error: 'limit', message: mine >= PER_PERSON ? `오늘 질문 ${PER_PERSON}번을 다 썼어요 — 내일 다시 쓸 수 있어요` : '오늘 회사 전체 질문 한도를 다 썼어요 — 내일 다시 쓸 수 있어요' }); return; }
+
+    // 인수인계 · 요청 다듬기(v6.20) — 글을 짧고 분명하게 · 종류 · 받는 사람 제안. 확정은 사람이, 바꾼 것은 기록돼 매주 배운다
+    if (body.action === 'tidy') {
+      const raw = String(body.text || '').trim().slice(0, 800);
+      if (raw.length < 4) { res.status(400).json({ error: '글이 너무 짧아요' }); return; }
+      const kind = body.kind === 'request' ? 'request' : 'handover';
+      const people = (Array.isArray(body.people) ? body.people : []).map((x) => String(x).slice(0, 20)).slice(0, 60);
+      const tags = ['고장', '클레임', '재고', '기타'];
+      const mk = maskKeep(raw);
+      const notes = await notesOf(sb, T);
+      const sys = `너는 매장 운영 앱 Dutyvo 에서 직원이 남기는 ${kind === 'request' ? '업무 요청' : '인수인계'} 한 줄을 다듬는다.
+- 사실은 그대로. 없는 내용을 더하지 않는다. 말로 한 것처럼 늘어진 문장 · 반복 · 군말(음, 그러니까)을 빼고 짧고 분명하게. 60자 안팎, 길어도 두 문장.
+- 다음 사람이 할 일이 있으면 끝에 분명히(예: "…확인 부탁"). 존댓말 짧게. 이모지 없이.
+- [[P1]] 같은 표시는 그대로 둔다(가려 둔 번호 · 주소).
+- tag: ${kind === 'handover' ? `${tags.join(' · ')} 중 하나 또는 null(일반 전달이면 null)` : '항상 null'}
+- to: 글에 받을 사람이 분명히 나오면 아래 명단의 이름 그대로, 아니면 null. 명단에 없는 이름을 만들지 않는다.
+- 회사 노트의 말 · 기준을 따른다.
+명단: ${people.join(', ') || '(없음)'}
+# 회사 업무 노트
+${notesText(notes)}
+JSON 하나만: {"text":"다듬은 글","tag":null,"to":null}`;
+      const r = await claude({ model: MODEL_FAST, system: sys, messages: [{ role: 'user', content: mk.text }], maxTokens: 300 });
+      const j = pickJson(r.text) || {};
+      const text = mk.back(String(j.text || '').trim()).slice(0, 400) || raw;
+      const tag = kind === 'handover' && tags.includes(j.tag) ? j.tag : null;
+      const to = people.includes(j.to) ? j.to : null;
+      let id = null;
+      try { const row = await sb.post('ai_logs', { tenant_id: T, profile_id: uid, feature: 'tidy', question: mask(raw), answer: `${mask(text)}${tag ? ` · 종류 ${tag}` : ''}${to ? ` · 받는 사람 ${to}` : ''}`, screen: kind, model: r.model, tokens_in: r.tin, tokens_out: r.tout }); id = row && row[0] && row[0].id; } catch (e) {}
+      res.status(200).json({ ok: true, id, text, tag, to, same: text === raw }); return;
+    }
+    const q = String(body.q || '').trim().slice(0, 500);
+    if (!q) { res.status(400).json({ error: '질문 없음' }); return; }
 
     const [tenant, settings, notes, snap] = await Promise.all([
       sb.get(`tenants?select=name,industry&id=eq.${T}`).then((r) => r[0] || {}).catch(() => ({})),

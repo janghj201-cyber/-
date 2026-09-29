@@ -7,6 +7,7 @@ const { MODEL_SMART, svc, mask, claude, pickJson, aiOn, notesOf } = require('./_
 
 const PROMPT = `너는 매장 운영 앱 Dutyvo 의 도우미가 이 회사에 맞춰 일하도록 「배운 것」 노트를 정리한다.
 받는 것: 지금 노트(우리 회사 규칙 · 지금까지 배운 것)와 지난 한 주의 질문 · 답 · 평가(맞아요 +1 / 아니에요 -1) · 고쳐 준 말.
+  「다듬기」는 직원이 쓴 인수인계 · 요청을 AI 가 다듬어 종류(고장 · 클레임 · 재고) · 받는 사람을 제안한 것. 사람이 바꾼 것이 「고쳐 준 말」로 온다 — 이 회사의 종류 · 받는 사람 기준을 배워라(예: "냉장고 온도 문제는 고장이 아니라 재고로 적는다").
 할 일: 다음 주 도우미가 읽을 「배운 것」을 새로 쓴다(지금 배운 것을 고치거나 합치거나 빼도 된다).
 - 고쳐 준 말 · 아니에요는 가장 중요하다. 틀렸던 답을 다음에 바르게 하도록 사실로 적는다(예: "휴무 승인은 관리자 › 휴무에서 한다").
 - 자주 묻는 것은 "직원들이 ○○를 자주 묻는다 — △△부터 안내" 식으로.
@@ -22,7 +23,7 @@ async function runTenant(T) {
   await sb.del(`ai_logs?tenant_id=eq.${T}&created_at=lt.${encodeURIComponent(cutoff90)}`);
   if (!(await aiOn(sb, T))) return { skip: 'off' };
   const since = new Date(Date.now() - 7 * 86400e3).toISOString();
-  const logs = await sb.get(`ai_logs?select=question,answer,feedback,correction,screen&tenant_id=eq.${T}&feature=eq.ask&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc&limit=300`).catch(() => []);
+  const logs = await sb.get(`ai_logs?select=feature,question,answer,feedback,correction,screen&tenant_id=eq.${T}&feature=in.(ask,tidy)&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc&limit=300`).catch(() => []);
   if (logs.length < 3 && !logs.some((l) => l.correction || l.feedback === -1)) return { skip: 'quiet', logs: logs.length };
   const notes = await notesOf(sb, T);
   // 고쳐 준 것 · 아니에요는 전부, 나머지는 질문만 최근 150개
@@ -35,7 +36,7 @@ ${notes.filter((n) => n.kind === 'rule').map((n) => `- ${n.body}`).join('\n') ||
 ${notes.filter((n) => n.kind === 'learned').map((n) => `- ${n.body}`).join('\n') || '- 없음'}
 
 # 틀렸다고 한 답 · 고쳐 준 말(${hard.length})
-${hard.map((l) => `- 질문: ${mask(l.question).slice(0, 150)}\n  답: ${mask(l.answer).slice(0, 200)}\n  평가: ${l.feedback === -1 ? '아니에요' : l.feedback === 1 ? '맞아요' : '-'}${l.correction ? `\n  고쳐 준 말: ${mask(l.correction).slice(0, 200)}` : ''}`).join('\n') || '- 없음'}
+${hard.map((l) => `- ${l.feature === 'tidy' ? '다듬기(원래 글)' : '질문'}: ${mask(l.question).slice(0, 150)}\n  답: ${mask(l.answer).slice(0, 200)}\n  평가: ${l.feedback === -1 ? '아니에요' : l.feedback === 1 ? '맞아요' : '-'}${l.correction ? `\n  고쳐 준 말: ${mask(l.correction).slice(0, 200)}` : ''}`).join('\n') || '- 없음'}
 
 # 그 밖의 질문(${rest.length}, 최신 먼저)
 ${rest.map((l) => `- ${mask(l.question).slice(0, 100)}${l.feedback === 1 ? ' (맞아요)' : ''}`).join('\n') || '- 없음'}`;

@@ -17,8 +17,17 @@ const CSS = `
 #vai{position:fixed;inset:0;z-index:960;display:flex;justify-content:flex-end;align-items:stretch;background:rgba(23,34,51,.28);animation:vai-f .2s ease}
 #vai .pn{background:var(--bg);width:100%;max-width:460px;display:flex;flex-direction:column;box-shadow:-12px 0 32px rgba(23,34,51,.14);animation:vai-in .22s cubic-bezier(.2,.8,.2,1);color:var(--text)}
 #vai .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--navy);color:#fff}
-#vai .hd .ic{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.12);display:grid;place-items:center}
-#vai .hd .ic svg{width:17px;height:17px}
+#vai .mini{width:34px;height:34px;display:grid;place-items:center;flex:none}
+#vai .mini .mb{width:30px;height:29px;background:radial-gradient(circle at 34% 28%,#7fa1c7 0%,#3d5a80 45%,#23344d 80%);border-radius:50% 50% 46% 54%/55% 48% 52% 45%;position:relative;box-shadow:inset 0 -3px 6px rgba(0,0,0,.25);animation:vai-float 3.6s ease-in-out infinite}
+#vai .mini .mey{position:absolute;left:0;right:0;top:11px;display:flex;justify-content:center;gap:5px;transition:transform .2s}
+#vai .mini .mey i{width:4px;height:6px;border-radius:2px;background:#fff}
+#vai .pn.think .mini .mb{animation:vai-think .9s ease-in-out infinite}
+#vai .pn.think .mini .mey{animation:vai-look 1.2s ease-in-out infinite}
+#vai .pn.happy .mini .mb{animation:vai-hop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes vai-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes vai-think{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes vai-look{0%,100%{transform:translateX(-2px)}50%{transform:translateX(2px)}}
+@keyframes vai-hop{0%{transform:translateY(0)}40%{transform:translateY(-6px) scale(.95,1.06)}100%{transform:translateY(0)}}
 #vai .hd b{font-size:15.5px}
 #vai .hd small{display:block;font-size:11.5px;opacity:.7;font-weight:500}
 #vai .hd .x{margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
@@ -58,7 +67,7 @@ html[data-bright=dark] #vai .an .go button{border-color:var(--text-sub);color:va
 @keyframes vai-in{from{transform:translateX(40px);opacity:0}}
 @keyframes vai-up{from{transform:translateY(40px);opacity:0}}
 @keyframes vai-d{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
-@media (prefers-reduced-motion:reduce){#vai,#vai .pn{animation:none}}
+@media (prefers-reduced-motion:reduce){#vai,#vai .pn,#vai .mini .mb,#vai .mini .mey{animation:none!important}}
 `
 
 // 이 창이 떠 있는 동안의 대화 — 닫았다 열어도 이어진다(새로고침하면 새로)
@@ -90,7 +99,7 @@ export async function openAssistant(host = {}) {
   const role = (ctx.profile && ctx.profile.role) || 'staff'
   const root = document.createElement('div'); root.id = 'vai'
   root.innerHTML = `<div class="pn" role="dialog" aria-modal="true" aria-labelledby="vai-h">
-    <div class="hd"><span class="ic">${IC.spark}</span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
+    <div class="hd"><span class="mini" data-mini aria-hidden="true"><span class="mb"><span class="mey"><i></i><i></i></span></span></span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
     <div class="bd" data-bd aria-live="polite"></div>
     <div class="note">AI 답은 틀릴 수 있어요. 기록을 바꾸지 않고, 필요한 화면을 열어 드려요.</div>
     <div class="ft"><textarea data-q rows="1" placeholder="무엇이든 물어보세요" aria-label="질문"></textarea><button type="button" class="snd" data-send aria-label="보내기">${IC.send}</button></div>
@@ -154,13 +163,13 @@ export async function openAssistant(host = {}) {
   async function ask(text) {
     const t = String(text || q.value).trim(); if (!t || busy) return
     busy = true; sendB.disabled = true; q.value = ''; q.style.height = ''
-    const m = { q: t, wait: true }; chat.push(m); paint()
+    const m = { q: t, wait: true }; chat.push(m); paint(); const pn = root.querySelector('.pn'); pn.classList.remove('happy'); pn.classList.add('think')
     try {
       const hist = chat.filter((x) => x !== m && x.a && !x.err).slice(-4).map((x) => ({ q: x.q, a: x.a }))
       const r = await api({ q: t, screen: host.screen || '', hist })
       Object.assign(m, { wait: false, a: r.answer, go: r.go || [], src: r.src || [], id: r.id }); left = r.left; paintLeft()
     } catch (e) { Object.assign(m, { wait: false, err: true, a: e.msg || '답을 받지 못했어요 — 다시 물어봐 주세요' }) }
-    busy = false; sendB.disabled = false; paint(); q.focus()
+    busy = false; sendB.disabled = false; paint(); q.focus(); pn.classList.remove('think'); if (!m.err) { void pn.offsetWidth; pn.classList.add('happy') }
   }
   sendB.onclick = () => ask()
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask() } })

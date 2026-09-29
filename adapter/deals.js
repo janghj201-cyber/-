@@ -230,7 +230,7 @@ export async function openDeals(host = {}) {
       sb.from('profiles').select('id,name,status').eq('tenant_id', T).order('name').limit(1000),
       sb.from('public_holidays').select('date').gte('date', addD(TK, -120)).lte('date', addD(TK, 120)),
       sb.from('tenants').select('industry').eq('id', T).maybeSingle(),
-      sb.from('mail_inbox').select('id,direction,from_addr,other_addr,subject,snippet,received_at,client_id,status').eq('tenant_id', T).eq('status', 'pending').order('received_at', { ascending: false }).limit(50),
+      sb.from('mail_inbox').select('*').eq('tenant_id', T).eq('status', 'pending').order('received_at', { ascending: false }).limit(50),
     ])
     const bad = q2.slice(0, 4).find((r) => r.error); if (bad) throw bad.error
     clients = q2[0].data || []; deals = q2[1].data || []; logs = q2[2].data || []; meets = (q2[3].data || []).filter((m) => m.status !== 'cancelled')
@@ -300,6 +300,7 @@ export async function openDeals(host = {}) {
     const O = open().sort((a, b) => (b.client_id === m.client_id) - (a.client_id === m.client_id))
     const sc = sheet(`<div class="sheet" role="dialog" aria-modal="true" aria-label="메일 분류"><div class="shead"><h2>${esc(m.subject || '(제목 없음)')}</h2><button class="x" type="button" data-x aria-label="닫기">×</button></div>
       <div class="hint" style="margin-bottom:8px">${md(dk(new Date(m.received_at)))} · ${m.direction === 'out' ? '우리가 보냄 → ' : '받음 ← '}${esc(m.other_addr || m.from_addr || '')}</div>
+      ${m.summary ? `<div class="mq"><b>AI 요약</b> · ${esc(String(m.summary).slice(0, 200))}</div>` : ''}
       ${m.snippet ? `<div class="mq">${esc(String(m.snippet).slice(0, 400))}</div>` : ''}
       <div class="sec">어느 건에 기록할까요</div>
       ${O.map((d) => `<button type="button" class="deal" data-to="${d.id}"><span class="c">${esc(cli(d.client_id).name)}</span><b>${esc(d.title)}</b><span class="rt"><span class="ball b-${info(d).cls}">${info(d).txt}</span></span></button>`).join('') || '<div class="hint">진행 중인 건이 없어요 — 「+ 진행 건」으로 먼저 만들어 주세요</div>'}

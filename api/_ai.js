@@ -39,9 +39,22 @@ function mask(t) {
   return String(t == null ? '' : t)
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[이메일]')
     .replace(/\b\d{6}\s*-\s*[1-4]\d{6}\b/g, '[주민번호]')
-    .replace(/\b(?:\d[ -]?){13,16}\b/g, '[번호]')
     .replace(/(?:\+?82[-\s]?)?0?1[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/g, '[전화]')
-    .replace(/\b0\d{1,2}[-\s.]\d{3,4}[-\s.]\d{4}\b/g, '[전화]');
+    .replace(/\b0\d{1,2}[-\s.]\d{3,4}[-\s.]\d{4}\b/g, '[전화]')
+    .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{1,4}\b/g, '[번호]');
+}
+
+// 가리되 나중에 되돌린다 — 다듬은 글에 직원이 적은 손님 번호가 그대로 남아야 할 때(AI 에는 [[P1]] 만 간다)
+function maskKeep(t) {
+  const map = []
+  const put = (m) => { map.push(m); return `[[P${map.length}]]` }
+  const out = String(t == null ? '' : t)
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, put)
+    .replace(/\b\d{6}\s*-\s*[1-4]\d{6}\b/g, put)
+    .replace(/(?:\+?82[-\s]?)?0?1[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/g, put)
+    .replace(/\b0\d{1,2}[-\s.]\d{3,4}[-\s.]\d{4}\b/g, put)
+    .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{1,4}\b/g, put)
+  return { text: out, back: (x) => String(x || '').replace(/\[\[P(\d+)\]\]/g, (m, i) => map[+i - 1] || m) }
 }
 
 // 한국 시각 날짜
@@ -98,4 +111,4 @@ function notesText(notes) {
   return [rule.length ? `우리 회사 규칙(대표 · 매니저가 적음 — 가장 우선):\n${rule.join('\n')}` : '', learned.length ? `지금까지 배운 것(지난 질문 · 고쳐 준 말에서):\n${learned.join('\n')}` : ''].filter(Boolean).join('\n\n') || '(아직 없음)';
 }
 
-module.exports = { SUPABASE_URL, MODEL_FAST, MODEL_SMART, svc, asUser, userOf, mask, kstDate, claude, pickJson, aiOn, notesOf, notesText };
+module.exports = { SUPABASE_URL, MODEL_FAST, MODEL_SMART, svc, asUser, userOf, mask, maskKeep, kstDate, claude, pickJson, aiOn, notesOf, notesText };

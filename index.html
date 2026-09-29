@@ -909,6 +909,42 @@ button.vf-pj{cursor:pointer;}
 .vh-bulk textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:10px 12px;font-size:13.5px;font-family:inherit;min-height:96px;resize:vertical;outline:none;line-height:1.5;color:var(--text);}
 .vh-bulk textarea:focus{border-color:var(--gold);}
 .vh-bulk .vh-row{display:flex;gap:6px;margin-top:6px;justify-content:flex-end;}
+/* 도우미 — 오른쪽 아래 작은 친구 */
+.vf-orb{position:fixed;right:22px;bottom:calc(22px + var(--orb-b,0px) + var(--safe-bot));z-index:945;width:60px;height:66px;border:0;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .25s,transform .25s;}
+.vf-orb:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:50%;}
+.vf-orb.away{opacity:0;transform:translateY(16px) scale(.8);pointer-events:none;}
+.vf-orb-body{position:absolute;left:4px;top:0;width:52px;height:50px;background:radial-gradient(circle at 34% 28%,#5b7ea6 0%,#2c4466 42%,var(--navy) 78%);border-radius:50% 50% 46% 54%/55% 48% 52% 45%;box-shadow:0 10px 22px -8px rgba(23,34,51,.55),inset 0 -4px 10px rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.08);animation:vf-orb-float 3.6s ease-in-out infinite,vf-orb-morph 7s ease-in-out infinite;transform-origin:50% 100%;}
+.vf-orb-shine{position:absolute;left:10px;top:7px;width:14px;height:8px;border-radius:50%;background:rgba(255,255,255,.28);filter:blur(1px);transform:rotate(-20deg);}
+.vf-orb-eyes{position:absolute;left:0;right:0;top:19px;display:flex;justify-content:center;gap:9px;transform:translate(var(--lx,0),var(--ly,0));transition:transform .18s ease-out;}
+.vf-orb-eyes i{display:block;width:7px;height:10px;border-radius:4px;background:#fff;transition:transform .09s;}
+.vf-orb-eyes.blink i{transform:scaleY(.12);}
+.vf-orb-spark{position:absolute;right:-3px;top:-3px;width:12px;height:12px;background:var(--gold);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:vf-orb-spark 4.8s ease-in-out infinite;}
+.vf-orb-shadow{position:absolute;left:14px;bottom:2px;width:32px;height:7px;border-radius:50%;background:rgba(23,34,51,.22);filter:blur(2px);animation:vf-orb-shadow 3.6s ease-in-out infinite;}
+.vf-orb:hover .vf-orb-body{animation:vf-orb-squish .5s ease-out,vf-orb-morph 7s ease-in-out infinite;}
+.vf-orb.hop .vf-orb-body{animation:vf-orb-hop .35s cubic-bezier(.3,1.6,.5,1);}
+.vf-orb.wiggle .vf-orb-body{animation:vf-orb-wiggle .7s ease-in-out,vf-orb-morph 7s ease-in-out infinite;}
+.vf-orb-tip{position:absolute;right:66px;bottom:28px;white-space:nowrap;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px 14px 4px 14px;padding:8px 12px;font-size:12.5px;font-weight:700;line-height:1.3;font-family:inherit;box-shadow:0 10px 24px -12px rgba(23,34,51,.4);animation:vf-orb-tip .3s ease-out;}
+body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
+@keyframes vf-orb-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes vf-orb-shadow{0%,100%{transform:scaleX(1);opacity:1}50%{transform:scaleX(.8);opacity:.6}}
+@keyframes vf-orb-morph{0%,100%{border-radius:50% 50% 46% 54%/55% 48% 52% 45%}33%{border-radius:54% 46% 52% 48%/48% 55% 45% 52%}66%{border-radius:47% 53% 49% 51%/52% 46% 54% 48%}}
+@keyframes vf-orb-squish{0%{transform:scale(1)}30%{transform:scale(1.12,.9)}60%{transform:scale(.94,1.08)}100%{transform:scale(1)}}
+@keyframes vf-orb-hop{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-12px) scale(.95,1.06)}100%{transform:translateY(0) scale(1)}}
+@keyframes vf-orb-wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
+@keyframes vf-orb-spark{0%,70%,100%{transform:scale(.6) rotate(0);opacity:.0}80%{transform:scale(1.1) rotate(45deg);opacity:1}90%{transform:scale(.9) rotate(90deg);opacity:.8}}
+@keyframes vf-orb-tip{from{opacity:0;transform:translateY(6px)}}
+@media(max-width:1023px){.vf-orb{right:14px;bottom:calc(14px + var(--orb-b,0px) + var(--safe-bot));transform:scale(.9);transform-origin:100% 100%;}.vf-orb.away{transform:translateY(16px) scale(.75);}}
+@media(prefers-reduced-motion:reduce){.vf-orb-body,.vf-orb-shadow,.vf-orb-spark{animation:none!important;}.vf-orb-spark{opacity:1;transform:scale(.8);}}
+html[data-bright=dark] .vf-orb-body{background:radial-gradient(circle at 34% 28%,#7fa1c7 0%,#3d5a80 42%,#23344d 78%);}
+/* AI로 다듬기 — 남기기 창 */
+.vh-voice .vh-tidy-btn{display:inline-flex;align-items:center;gap:5px;}
+.vh-aitidy{margin-top:8px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--soft);}
+.vh-aitidy-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;font-weight:800;color:var(--text-sub);}
+.vh-aitidy-t{margin-top:6px;font-size:14px;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+.vh-aitidy-c{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.vh-aitidy-c span{font-size:12px;font-weight:700;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:3px 10px;color:var(--text);}
+.vh-aitidy-b{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;}
+.vh-aitidy-b .vh-btn{min-height:34px;padding:6px 12px;font-size:12.5px;}
 /* AI 아침 요약 카드 — 대표 · 매니저 홈 */
 .vai-brief .vai-bl{margin:8px 0 0;padding:0 0 0 18px;display:grid;gap:5px;font-size:13.5px;line-height:1.5;color:var(--text);}
 .vai-brief .vai-bl li::marker{color:var(--text-mute);}
@@ -1837,6 +1873,7 @@ html[data-bright=dark] .vh-sub .vf-other{color:var(--text)}
 html[data-bright=dark] .vh-more-link:hover{color:var(--text)}
 html[data-bright=dark] .vh-quick .vh-mic{color:var(--text)}
 html[data-bright=dark] .vh-qa .vf-ic{color:var(--text)}
+html[data-bright=dark] .vf-orb-eyes i{background:var(--card)}
 html[data-bright=dark] .vh-tag{color:var(--text)}
 html[data-bright=dark] #vf-side .vs-brand{color:var(--text)}
 html[data-bright=dark] .dt-tile:hover{background:var(--soft)}
@@ -2055,7 +2092,6 @@ html[data-bright=dark] img{opacity:.92}html[data-bright=dark] input,html[data-br
   <div class="header">
     <div><div class="header-title" id="home-greeting">Dutyvo</div><div class="header-sub" id="dashboard-date-sub"></div></div>
     <div class="vh-head-btns" style="display:flex;gap:6px;">
-      <button type="button" class="hb vf-ai-btn" aria-label="AI 도우미" title="AI 도우미" onclick="vfOpenAI()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><span class="hb-t">AI</span></button>
       <button type="button" class="hb vf-memo-btn" aria-label="내 메모" title="내 메모" onclick="vfOpenMemo()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5z"/><path d="M15 3v6h6"/><path d="M7 13h8M7 17h5"/></svg><span class="hb-t">메모</span></button>
       <button type="button" class="vf-bell" data-bell onclick="vfGoPriority()" aria-label="알림 — 우선 확인" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
       <button class="hb" aria-label="가이드" title="가이드" onclick="openGuideModal()" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="hb-t">가이드</span></button>
@@ -3527,7 +3563,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.19';
+const GUIDE_VERSION = 'v6.20';
 const BUILD_DATE = '2026-09-29'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3573,9 +3609,10 @@ const GUIDE_START = {
 // ── 가이드: 기능별 ──
 const GUIDE_TOPICS = [
   { title:'AI 도우미', items:[
-    '컴퓨터는 왼쪽 메뉴 「AI 도우미」, 폰은 홈 위쪽 「AI」. 앱 쓰는 법이나 오늘 기록을 물어보세요',
+    '모든 화면 오른쪽 아래에 떠 있는 도우미를 누르세요. 앱 쓰는 법이나 오늘 기록을 물어보면 됩니다. 이 기기에서 숨기려면 내 계정 → 「AI 도우미 버튼」',
     '볼 수 있는 기록 안에서만 답하고, 할 일이 있으면 그 화면 여는 버튼을 줍니다. 기록을 대신 바꾸지는 않습니다',
     '답이 틀리면 「아니에요」와 바른 방법 — 매주 월요일 새벽 「배운 것」으로 정리돼 다음부터 반영됩니다',
+    '남기기 창의 「AI로 다듬기」 — 인수인계 · 요청을 짧게 고치고 종류 · 받는 사람을 제안. 거래처 메일은 들어올 때 한 줄 요약이 건 기록에 남습니다',
     '대표 · 매니저: 내 계정 → 「AI가 배운 것」에서 우리 회사 규칙을 적고, 배운 것을 보고 끌 수 있습니다. 매일 아침 8시 「아침 요약」',
   ]},
   { title:'캘린더', items:[
@@ -3646,7 +3683,16 @@ const GUIDE_TOPICS = [
 ];
 const GUIDE_SECTIONS = [
   {
-    title: '🆕 v6.19 — AI 도우미 · 아침 요약',
+    title: '🆕 v6.20 — AI 도우미가 오른쪽 아래에 · AI로 다듬기 · 거래처 메일 요약',
+    items: [
+      'AI 도우미는 이제 모든 화면 오른쪽 아래에 떠 있습니다 — 누르면 바로 물어볼 수 있어요. 창 · 시트가 열리면 잠시 숨고, 내 계정 → 「AI 도우미 버튼」으로 이 기기에서 끄고 켭니다',
+      '남기기 창 「AI로 다듬기」 — 인수인계 · 요청을 짧고 분명하게 고치고 종류(고장 · 클레임 · 재고) · 받는 사람을 제안합니다. 「이대로」를 눌러야 바뀌고, 말하기로 남기면 끝나자마자 제안이 뜹니다',
+      '제안을 고쳐서 저장하면(예: 종류 고장 → 재고) 그 차이가 기록돼 매주 「배운 것」으로 우리 회사 기준을 배웁니다',
+      '거래처 메일 자동 기록 — 메일이 들어오면 AI가 한 줄 요약 + 다음 할 일을 건 기록에 남깁니다(예: 11월부터 단가 5% 인상 요청 — 다음: 수용 여부 회신). 분류 필요 메일에도 요약이 보입니다'
+    ]
+  },
+  {
+    title: 'v6.19 — AI 도우미 · 아침 요약',
     items: [
       '「AI 도우미」 — 컴퓨터는 왼쪽 메뉴, 폰은 홈 위쪽 「AI」. 앱 쓰는 법이나 오늘 기록(인수인계 · 할 일 · 보관기한 · 예약 · 거래처)을 물으면 답하고, 할 일이 있으면 그 화면을 열어 줍니다. 기록을 대신 바꾸지는 않습니다',
       '답마다 「맞아요 / 아니에요」 — 아니에요에 바른 방법을 적어 주면 매주 월요일 새벽 AI가 「배운 것」으로 정리해 다음부터 반영합니다',
@@ -5698,6 +5744,7 @@ window.openAppMenu=function(){
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`,'머리 이미지 · 시계',`${(VF_COVERS.find(x=>x[0]===vfCoverKey())||['','내 사진'])[1]} · ${VF_CLOCK_L[vfClockStyle()]}`,()=>{ov.remove();openCoverSheet();});
   const _brL={light:'밝게',dark:'어둡게',auto:'기기 따라'};let _br='light';try{_br=localStorage.getItem('vflow_bright')||'light';}catch(e){}
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,'화면 밝기',`${_brL[_br]||'밝게'} · 이 기기`,()=>{const nx={light:'dark',dark:'auto',auto:'light'}[_br]||'dark';try{localStorage.setItem('vflow_bright',nx);}catch(e){}vfApplyBright();vfUse('bright_'+nx);ov.remove();openAppMenu();});
+  if(featOn('ai')){const _orb=vfOrbOn();mk(VF_ICONS.ai.replace('class="vf-ic" width="16" height="16" ',''),'AI 도우미 버튼',`${_orb?'켜짐':'꺼짐'} · 이 기기 · 오른쪽 아래에 떠 있는 도우미`,()=>{try{localStorage.setItem('vflow_orb',_orb?'0':'1');}catch(e){}vfOrbSync();vfUse(_orb?'orb_off':'orb_on');openAppMenu();});}
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h13"/><path d="m16 3 4 4-4 4"/><path d="M17 17H4"/><path d="m8 13-4 4 4 4"/></svg>`,'홈 좌우 바꾸기',_flip?'오늘 할 일이 왼쪽':'확인할 것이 왼쪽',()=>{vfUse('home_flip');try{localStorage.setItem('vflow_home_flip',_flip?'0':'1');}catch(e){}try{renderDashboardHome();}catch(e){}});
   // 알림 — 켜고 끄는 문은 여기 항상. 끄기는 이 기기 구독만 지운다
   try{
@@ -6508,7 +6555,8 @@ function openLeaveSheet(entry,tKey,preset){
     <div class="vh-until" data-stores-wrap style="display:none;"><label>날짜 <input type="date" data-sdate min="${tKey}" style="margin-left:6px;"></label><div class="vh-tagpick" data-spick style="margin-top:8px;"><button type="button" data-sid="all" class="on">전체</button>${STORES.map(st=>`<button type="button" data-sid="${st.id}">${_wrEsc(storeShort(st.name))}</button>`).join('')}</div><span class="vh-tiny">그날 그 ${T('store')}의 「${T('store')} 할 일」로 뜬다 · 그날 ${T('worker')}가 체크 · 휴무자는 안 보임</span></div>
     <div class="vh-kinds vh-reqkind" data-reqkind-wrap style="display:none;"><button class="vh-kind on" data-rk="todo">할 일로<small>오늘·내일 할 한 가지</small></button><button class="vh-kind" data-rk="project">프로젝트로<small>며칠 걸리는 일 · 수락하면 방이 열림</small></button></div>
     <textarea placeholder="한 줄로 적어주세요"></textarea>
-    <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button><span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
+    <div class="vh-voice"><button type="button" class="vh-btn" data-mic><span class="vh-mic-dot"></span>말하기</button>${featOn('ai')?'<button type="button" class="vh-btn vh-tidy-btn" data-tidy><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8z"/></svg>AI로 다듬기</button>':''}<span class="vh-tiny" data-vstat>버튼을 누르고 말하면 글로 바뀌어요 (테스트)</span></div>
+    <div class="vh-aitidy" data-tidy-box hidden></div>
     <select data-recip style="display:none;"><option value="">받는 사람: 다음 ${T('worker')} 누구나</option>${(staffList||[]).filter(n=>n!==me).map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
     <div class="vh-tagpick" data-tag-wrap style="display:none;">${['고장','클레임','재고','기타'].map(t=>`<button type="button" data-tag="${t}">${t}</button>`).join('')}</div>
     <div class="vh-until" data-until-wrap style="display:none;"><label><input type="checkbox" data-long> 장기 — 확인이 아니라 계속 알아둘 것 (휴가 기간 대행, AS 대기 등)</label><input type="date" data-until min="${tKey}" style="display:none;"></div>
@@ -6561,6 +6609,7 @@ function openLeaveSheet(entry,tKey,preset){
     dueWrap.style.display=(k==='request'&&reqKind==='project')?'':'none';
     ta.placeholder=k==='todo'?'오늘 할 일 한 줄':k==='handover'?'다음 근무자가 알아야 할 것 한 줄':k==='request'?(reqKind==='project'?'프로젝트 한 줄':'부탁할 일 한 줄'):k==='stores'?`그날 ${T('store')}마다 할 일 한 줄`:'나만 볼 메모';
     const sb=sh.querySelector('[data-save]');if(sb&&!sb.disabled)sb.textContent=k==='request'?'보내기':'저장';
+    const tb=sh.querySelector('[data-tidy]');if(tb)tb.style.display=(k==='handover'||k==='request')?'':'none';
   };
   kinds.forEach(b=>b.onclick=()=>{setKind(b.dataset.k);saveDraft();});
   setKind(kind);
@@ -6568,6 +6617,36 @@ function openLeaveSheet(entry,tKey,preset){
     const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
     if(d&&d.text&&Date.now()-(d.at||0)<3*86400000){ta.value=d.text;if(d.kind)setKind(d.kind);if(d.recip)recip.value=d.recip;showErr('저장 안 됐던 글');}
   }catch(e){}
+  // AI로 다듬기(v6.20) — 글을 짧고 분명하게 · 종류 · 받는 사람 제안. 「이대로」를 눌러야 바뀐다.
+  // 저장할 때 제안과 달라진 것(글 · 종류 · 받는 사람)을 기록 — 매주 월요일 「배운 것」으로 이 회사 기준을 배운다
+  const tidyBtn=sh.querySelector('[data-tidy]'), tidyBox=sh.querySelector('[data-tidy-box]');
+  let aiSug=null;
+  const aiFb=(good,fix)=>{if(!aiSug||!aiSug.id||aiSug.sent)return;aiSug.sent=true;wrApi().then(({sb})=>sb.rpc('vf_ai_feedback',{p_id:aiSug.id,p_good:good,p_fix:fix||null})).catch(()=>{});};
+  async function runTidy(auto){
+    if(!tidyBtn)return;
+    const t=ta.value.trim();if(t.length<6){if(!auto){tidyBox.hidden=false;tidyBox.innerHTML='<div class="vh-tiny">조금 더 적은 뒤에 눌러 주세요</div>';}return;}
+    tidyBtn.disabled=true;const lb=tidyBtn.lastChild.textContent;tidyBtn.lastChild.textContent='다듬는 중…';
+    try{
+      const {ctx}=await wrApi();const tok=ctx?.session?.access_token;if(!tok)throw new Error('로그인이 필요해요');
+      const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({action:'tidy',kind:kind==='request'?'request':'handover',text:t,people:(staffList||[]).filter(n=>n!==me)})});
+      const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||'다듬지 못했어요');
+      if(aiSug&&!aiSug.sent&&aiSug.shown&&!aiSug.used)aiFb(false,'제안을 쓰지 않고 다시 다듬기');
+      aiSug={id:j.id,text:j.text,tag:j.tag,to:j.to,shown:true,used:false};
+      if(j.same&&!j.tag&&!j.to){tidyBox.hidden=false;tidyBox.innerHTML='<div class="vh-tiny">이대로 충분해요 — 고칠 곳이 없어요</div>';return;}
+      const esc=(x)=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      tidyBox.hidden=false;
+      tidyBox.innerHTML=`<div class="vh-aitidy-h">AI 제안<span class="vh-tiny">누르기 전에는 안 바뀌어요</span></div><div class="vh-aitidy-t">${esc(j.text)}</div>${(j.tag&&kind==='handover')||j.to?`<div class="vh-aitidy-c">${j.tag&&kind==='handover'?`<span>종류 · ${esc(j.tag)}</span>`:''}${j.to?`<span>받는 사람 · ${esc(j.to)}</span>`:''}</div>`:''}<div class="vh-aitidy-b"><button type="button" class="vh-btn" data-keep>원래 글 그대로</button><button type="button" class="vh-btn primary" data-use>이대로</button></div>`;
+      tidyBox.querySelector('[data-use]').onclick=()=>{
+        ta.value=j.text;
+        if(j.tag&&kind==='handover'){hoTag=j.tag;tagWrap.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.tag===hoTag));}
+        if(j.to&&[...recip.options].some(o=>o.value===j.to))recip.value=j.to;
+        aiSug.used=true;tidyBox.hidden=true;saveDraft();vstat.textContent='AI 제안으로 바꿨어요 — 고칠 곳이 있으면 고쳐서 저장';
+      };
+      tidyBox.querySelector('[data-keep]').onclick=()=>{aiFb(false,'제안을 쓰지 않음');tidyBox.hidden=true;};
+    }catch(e){if(!auto){tidyBox.hidden=false;tidyBox.innerHTML=`<div class="vh-tiny">${String(e.message||e).replace(/</g,'&lt;')}</div>`;}}
+    finally{tidyBtn.disabled=false;tidyBtn.lastChild.textContent=lb;}
+  }
+  if(tidyBtn)tidyBtn.onclick=()=>runTidy(false);
   // 음성 → 글 (테스트 단계). 브라우저 내장 인식(Web Speech API) — 우리 서버에는 음성이 안 가고 저장도 안 한다.
   // 다만 크롬·사파리는 인식을 구글·애플 서비스에서 처리한다. 손님 목소리가 아니라 직원 본인이 누르고 말하는 것.
   // 결과 문장을 보고 종류(할 일/인수인계/메모)를 제안만 하고, 확정은 사람이 한다.
@@ -6585,7 +6664,7 @@ function openLeaveSheet(entry,tKey,preset){
   const finish=()=>{
     wantListening=false;listening=false;setMicUI(false);
     const t=ta.value.trim();
-    if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${KIND_LABEL[g]||g}」로 보여요 — 아니면 위에서 바꿔주세요`;}
+    if(t){const g=guessKind(t);setKind(g);vstat.textContent=`「${KIND_LABEL[g]||g}」로 보여요 — 아니면 위에서 바꿔주세요`;if(featOn('ai')&&t.length>=12)runTidy(true);} // 말로 남긴 글은 늘어지기 쉬워 AI 제안을 바로 띄운다
     else if(!/실패|권한/.test(vstat.textContent))vstat.textContent='들린 말이 없어요';
     try{console.log('[voice-test]',JSON.stringify({text:t,guess:t?guessKind(t):null,ms:Date.now()-startedAt,at:new Date().toISOString()}));}catch(e){}
   };
@@ -6665,6 +6744,12 @@ function openLeaveSheet(entry,tKey,preset){
         await setDoc(ref,{text:(prev?prev.replace(/\s+$/,'')+'\n':'')+`[${stamp}] ${text}`,updatedAt:Date.now()});
       }
       clearDraft();
+      if(aiSug&&aiSug.used&&(kind==='handover'||kind==='request')){
+        const d=[];if(text!==String(aiSug.text||'').trim())d.push('글을 고쳐 씀: '+text.slice(0,80));
+        if(kind==='handover'&&(hoTag||null)!==(aiSug.tag||null))d.push(`종류 ${aiSug.tag||'없음'} → ${hoTag||'없음'}`);
+        if((recip.value||'')!==(aiSug.to||''))d.push(`받는 사람 ${aiSug.to||'누구나'} → ${recip.value||'누구나'}`);
+        aiFb(!d.length,d.join(' · '));
+      }
       close();
       try{await renderDashboardHome();}catch(e2){}
       try{const ro=document.getElementById('room-overlay');if(ro&&ro.style.display!=='none')openStoreRoom(entry);}catch(e3){} // 매장 방에서 남겼으면 방도 새로
@@ -6694,7 +6779,8 @@ rsv:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" s
 board:`<svg class="vf-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>`};
 // 데스크탑 사이드바 — 폰의 하단 탭·홈 바로가기를 왼쪽에 모아둔 것 (≥1024px에서만 보임)
 function renderSideNav(active){
-  try{document.querySelectorAll('.vf-memo-btn').forEach(b=>{b.style.display=featOn('memo')?'':'none';});document.querySelectorAll('.vf-ai-btn').forEach(b=>{b.style.display=featOn('ai')?'':'none';});}catch(e){}
+  try{document.querySelectorAll('.vf-memo-btn').forEach(b=>{b.style.display=featOn('memo')?'':'none';});}catch(e){}
+  try{vfOrbSync();}catch(e){}
   const side=document.getElementById('vf-side');
   if(!side)return;
   const vp=window.__vflowProfile||{};
@@ -6706,7 +6792,6 @@ function renderSideNav(active){
     {k:'dashboard',lb:'홈',ic:IC.home,fn:()=>switchTab('dashboard')},
     {k:'my',lb:'내 업무',ic:IC.task,fn:()=>enterMyWork(me)},
     ...(featOn('memo')?[{k:'memo',lb:'메모',ic:IC.memo,fn:()=>vfOpenMemo()}]:[]), // 어느 화면에서든 한 번에 — 홈 카드를 찾으러 가지 않는다
-    ...(featOn('ai')?[{k:'ai',lb:'AI 도우미',ic:IC.ai,fn:()=>vfOpenAI()}]:[]), // 지금 화면 위에 서랍으로 — 답에서 그 화면을 연다
     {k:'room',lb:entry?`${storeShort(entry.name)} 방`:`${T('store')} 방`,ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
   ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
   if(featOn('calendar'))items.push({k:'cal',lb:'캘린더',ic:IC.cal,fn:()=>vfOpenCalendar()});
@@ -6937,6 +7022,39 @@ function vfAiGo(to){
 async function vfOpenAI(q){if(!featOn('ai'))return;vfUse('ai_open');try{const {openAssistant}=await import('./adapter/ai.js');await openAssistant({go:vfAiGo,screen:vfAiScreen(),q:typeof q==='string'?q:''});}catch(e){alert('AI 도우미를 열지 못했습니다. '+(e&&e.message||''));}}
 async function vfOpenAiNotes(){vfUse('ai_notes');try{const {openAiNotes}=await import('./adapter/ai.js');await openAiNotes({onBrief:()=>{try{renderDashboardHome();}catch(e){}}});}catch(e){alert('화면을 열지 못했습니다. '+(e&&e.message||''));}}
 window.vfOpenAI=vfOpenAI;window.vfOpenAiNotes=vfOpenAiNotes;
+// 도우미 — 오른쪽 아래에 떠 있는 작은 친구(v6.21). 숨 쉬듯 떠 있고, 눈을 깜빡이고, 컴퓨터에선 마우스를 따라 본다.
+// 누르면 AI 도우미. 시트 · 창이 열리면 숨어서 저장 버튼을 가리지 않는다. 내 계정 → 「AI 도우미 버튼」으로 이 기기에서 끄고 켠다
+let _vfOrb=null,_vfOrbMo=null,_vfOrbT=null;
+function vfOrbOn(){try{return localStorage.getItem('vflow_orb')!=='0';}catch(e){return true;}}
+function vfOrbSync(){
+  const want=featOn('ai')&&vfOrbOn()&&!!window.__vflowProfile;
+  if(!want){if(_vfOrb){_vfOrb.remove();_vfOrb=null;document.body.classList.remove('vf-has-orb');}return;}
+  if(_vfOrb)return vfOrbPlace();
+  const o=document.createElement('button');o.type='button';o.className='vf-orb';o.setAttribute('aria-label','AI 도우미에게 묻기');o.title='AI 도우미';
+  o.innerHTML='<span class="vf-orb-shadow" aria-hidden="true"></span><span class="vf-orb-body" aria-hidden="true"><span class="vf-orb-shine"></span><span class="vf-orb-eyes"><i></i><i></i></span><span class="vf-orb-spark"></span></span><span class="vf-orb-tip" hidden></span>';
+  o.onclick=()=>{o.classList.remove('hop');void o.offsetWidth;o.classList.add('hop');const tip=o.querySelector('.vf-orb-tip');tip.hidden=true;setTimeout(()=>vfOpenAI(),140);};
+  document.body.appendChild(o);_vfOrb=o;document.body.classList.add('vf-has-orb');
+  const eyes=o.querySelector('.vf-orb-eyes');
+  // 눈 깜빡임 — 3~6초마다, 가끔 두 번
+  const blink=()=>{if(!_vfOrb)return;eyes.classList.add('blink');setTimeout(()=>eyes.classList.remove('blink'),140);if(Math.random()<.25)setTimeout(()=>{eyes.classList.add('blink');setTimeout(()=>eyes.classList.remove('blink'),120);},260);_vfOrbT=setTimeout(blink,3000+Math.random()*3000);};
+  if(!vfReduced())_vfOrbT=setTimeout(blink,2000);
+  // 눈이 마우스를 따라 본다(컴퓨터) — 가만있으면 가끔 두리번
+  let lx=0,ly=0,raf=0,lastMove=0;
+  const look=(x,y)=>{eyes.style.setProperty('--lx',x.toFixed(2)+'px');eyes.style.setProperty('--ly',y.toFixed(2)+'px');};
+  addEventListener('pointermove',(e)=>{if(!_vfOrb||e.pointerType!=='mouse'||vfReduced())return;lastMove=Date.now();if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const r=o.getBoundingClientRect();const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const d=Math.hypot(dx,dy)||1;const k=Math.min(1,d/260);lx=dx/d*3.2*k;ly=dy/d*2.6*k;look(lx,ly);});},{passive:true});
+  const wander=()=>{if(!_vfOrb)return;if(!vfReduced()&&Date.now()-lastMove>4000&&!o.classList.contains('away')){const a=[[-3,0],[3,0],[0,-2],[-2,-2],[2,-2],[0,0]][Math.floor(Math.random()*6)];look(a[0],a[1]);if(Math.random()<.3){o.classList.remove('wiggle');void o.offsetWidth;o.classList.add('wiggle');}}setTimeout(wander,5000+Math.random()*6000);};
+  setTimeout(wander,4000);
+  // 처음 한 번만 말풍선
+  try{if(!localStorage.getItem('vflow_orb_hint')){const tip=o.querySelector('.vf-orb-tip');tip.textContent='궁금한 건 저한테 물어보세요';setTimeout(()=>{if(_vfOrb&&!o.classList.contains('away'))tip.hidden=false;},1500);setTimeout(()=>{tip.hidden=true;},9000);localStorage.setItem('vflow_orb_hint','1');}}catch(e){}
+  // 시트 · 창 · 대기 화면이 열리면 숨는다 — 폰의 저장 버튼이 오른쪽 아래에 있다
+  const check=()=>{if(!_vfOrb)return;const block=document.querySelector('.vh-sheet-bg,.scrim,#vai,.vf-memo-bg,[data-appmenu],.vf-idle,#vain');o.classList.toggle('away',!!block);vfOrbPlace();};
+  let q=0;_vfOrbMo=new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;check();});});_vfOrbMo.observe(document.body,{childList:true,subtree:true});
+  addEventListener('resize',vfOrbPlace,{passive:true});
+  check();
+}
+// 폰에서 아래 탭줄이 있으면 그 위로
+function vfOrbPlace(){if(!_vfOrb)return;const tb=document.getElementById('tab-bar');const h=(tb&&tb.offsetParent!==null&&getComputedStyle(tb).display!=='none')?tb.offsetHeight:0;_vfOrb.style.setProperty('--orb-b',h+'px');}
+window.vfOrbSync=vfOrbSync;
 async function vfOpenAsk(kind){vfUse('ask_open');try{const {openAsk}=await import('./adapter/ops.js');await openAsk({kind});}catch(e){alert('문의 화면을 열지 못했습니다. '+(e&&e.message||''));}}
 async function vfOpenOps(tab){try{const {openOps}=await import('./adapter/ops.js');await openOps({tab});}catch(e){alert('운영 화면을 열지 못했습니다. '+(e&&e.message||''));}}
 window.vfOpenAsk=vfOpenAsk;window.vfOpenOps=vfOpenOps;
@@ -8289,7 +8407,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={ai_open:'AI 도우미',ai_notes:'AI가 배운 것',memo_open:'내 메모',todo_check:'할 일 체크',ask_open:'Dutyvo 문의',rsv_open:'고객 예약',exp_open:'보관기한',deal_open:'거래처',cal_open:'캘린더',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={orb_off:'AI 도우미 버튼 끔',orb_on:'AI 도우미 버튼 켬',ai_open:'AI 도우미',ai_notes:'AI가 배운 것',memo_open:'내 메모',todo_check:'할 일 체크',ask_open:'Dutyvo 문의',rsv_open:'고객 예약',exp_open:'보관기한',deal_open:'거래처',cal_open:'캘린더',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
