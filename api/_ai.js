@@ -85,6 +85,27 @@ async function claude({ model, system, cacheSystem, messages, maxTokens = 700 })
   return { text, model: j.model || model, tin: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), tout: u.output_tokens || 0 };
 }
 
+// 도구를 쓰는 부르기(v6.23) — 응답 그대로(content 블록 · stop_reason) + 토큰. 도구 목록 끝에 캐시 표시를 달아 매번 제값 내지 않게
+async function claudeRaw({ model, system, cacheSystem, messages, tools, maxTokens = 1200 }) {
+  const KEY = process.env.ANTHROPIC_API_KEY;
+  if (!KEY) throw Object.assign(new Error('ANTHROPIC_API_KEY 미설정'), { code: 'nokey' });
+  const sys = [];
+  if (cacheSystem) sys.push({ type: 'text', text: cacheSystem, cache_control: { type: 'ephemeral' } });
+  if (system) sys.push({ type: 'text', text: system });
+  const tl = (tools || []).map((t, i, a) => (i === a.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t));
+  const call = async (m) => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: m, max_tokens: maxTokens, system: sys, messages, ...(tl.length ? { tools: tl } : {}) }),
+  });
+  let r = await call(model);
+  if (r.status === 404 && model !== MODEL_FAST) r = await call(MODEL_FAST);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error((j.error && j.error.message) || `AI ${r.status}`), { code: r.status === 429 || r.status === 529 ? 'busy' : 'ai' });
+  const u = j.usage || {};
+  return { content: j.content || [], stop: j.stop_reason, model: j.model || model, tin: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), tout: u.output_tokens || 0 };
+}
+
 // 답에서 JSON 한 덩어리 꺼내기 — 앞뒤 말이 붙어 와도
 function pickJson(t) {
   const s = String(t || '');
@@ -111,4 +132,4 @@ function notesText(notes) {
   return [rule.length ? `우리 회사 규칙(대표 · 매니저가 적음 — 가장 우선):\n${rule.join('\n')}` : '', learned.length ? `지금까지 배운 것(지난 질문 · 고쳐 준 말에서):\n${learned.join('\n')}` : ''].filter(Boolean).join('\n\n') || '(아직 없음)';
 }
 
-module.exports = { SUPABASE_URL, MODEL_FAST, MODEL_SMART, svc, asUser, userOf, mask, maskKeep, kstDate, claude, pickJson, aiOn, notesOf, notesText };
+module.exports = { SUPABASE_URL, MODEL_FAST, MODEL_SMART, svc, asUser, userOf, mask, maskKeep, kstDate, claude, claudeRaw, pickJson, aiOn, notesOf, notesText };

@@ -1,27 +1,43 @@
-// AI 도우미 — 앱 안에서 묻고 답하기(v6.19). POST { q, screen, hist:[{q,a}] }  · 로그인 토큰 필수
-// 답은 { id, answer, go:[{label,to}], src:[..], left } — go 는 앱이 그 화면을 연다. AI 는 기록을 바꾸지 않는다(제안만).
-// 읽는 것: 앱 안내(_ai_guide, 캐시) + 회사 업무 노트(ai_notes) + 이 사람 권한 안의 최근 기록(로그인 토큰으로 읽어 RLS 그대로).
+// AI 도우미 — 앱 안에서 묻고 답하기(v6.19 · v6.23 도구). POST { q, screen, hist:[{q,a}], facts }  · 로그인 토큰 필수
+// 답은 { id, answer, go:[{label,to}], src:[..], next:[..], left } — go 는 앱이 그 화면을 연다. AI 는 기록을 바꾸지 않는다(제안만).
+// 읽는 것: 앱 안내(_ai_guide, 캐시) + 회사 업무 노트(ai_notes) + 이 사람 권한 안의 최근 기록(로그인 토큰으로 읽어 RLS 그대로)
+//   + 앱 화면이 계산한 매장 점수(facts) + 모자라면 AI 가 도구(_ai_tools)로 더 찾는다(기간 · 매장 · 사람별 숫자, 최대 4번).
 // 손님 이름 · 전화번호는 읽지 않고, 기록 속 전화 · 이메일 모양은 가린 뒤 보낸다. 하루 한도: 한 사람 40번 · 회사 400번.
 // 필요 env: ANTHROPIC_API_KEY, SUPABASE_SERVICE_ROLE_KEY
-const { MODEL_FAST, svc, asUser, userOf, mask, maskKeep, kstDate, claude, pickJson, aiOn, notesOf, notesText } = require('./_ai');
+const { MODEL_FAST, MODEL_SMART, svc, asUser, userOf, mask, maskKeep, kstDate, claude, claudeRaw, pickJson, aiOn, notesOf, notesText } = require('./_ai');
 const GUIDE = require('./_ai_guide');
+const { TOOLS, makeTools } = require('./_ai_tools');
+// 묻기는 비교 · 원인 분석까지 하므로 기본은 똑똑한 모델. 비용을 줄이려면 env AI_MODEL_ASK=claude-haiku-4-5
+const MODEL_ASK = process.env.AI_MODEL_ASK || MODEL_SMART;
+const MAX_TOOL_ROUNDS = 4;
 
 const PER_PERSON = 40, PER_COMPANY = 400;
 const FEAT_NAV = { calendar: 'calendar', expiry: 'expiry', clients: 'deals', booking: 'booking', memo: 'memo', board: 'board', dayoff: 'dayoff' };
 
-const RULES = `너는 매장 운영 앱 Dutyvo 안의 도우미다. 이 회사 직원 · 매니저 · 대표가 앱을 더 잘 쓰도록 돕는다.
-지킬 것:
-- 한국어로 짧게. 3~6줄. 인사말 · 칭찬 · "도움이 되었으면" 같은 말 · 이모지 없이 바로 답.
+const RULES = `너는 매장 운영 앱 Dutyvo 안의 AI 도우미 「듀티」다. 이 회사 대표 · 매니저 · 직원이 매장을 더 잘 운영하도록 돕는다.
+답하는 법:
+- 한국어로 결론부터. 인사 · 칭찬 · "도움이 되었으면" 같은 말 · 이모지 없이.
+- 사용법 · 하나 찾기 같은 단순한 질문은 2~5줄.
+- 비교 · 순위 · "어디가 잘/못 하나" · 원인 · 추세 · 평가 질문은 분석으로 답한다(12줄 안):
+  1) 첫 줄에 결론 한 문장(예: 최근 14일 기준 가장 잘 도는 곳은 연수점이에요)
+  2) 기준 한 줄(기간 · 무엇으로 봤는지 — 앱 점수, 청소 체크, 인수인계 확인률 · 확인까지 시간, 업무 완료율, 출근 기록 등)
+  3) 순위 · 근거 3~5줄(한 줄에 매장이나 사람 하나, 핵심 숫자 2~3개. 예: 1. 연수점 — 7일 평균 86점 · 청소 98% · 인수인계 확인 95%)
+  4) 약한 곳 · 조심할 것 1~2줄
+  5) 다음 할 일 1줄
+- 기간을 말하지 않으면 최근 14일(오늘 일이 궁금한 질문이면 오늘).
+- 「앱 매장 점수」가 있으면 매장 비교는 그 점수를 먼저 쓴다(앱 화면과 같은 숫자). 이유는 도구 숫자로 보탠다.
+- 「지금 기록」(최근 3일)으로 모자라면 도구를 불러 더 찾는다. 필요한 도구는 한 번에 여러 개 불러도 된다. 같은 걸 두 번 부르지 않는다.
+- 숫자 · 이름 · 날짜는 기록 · 도구에 있는 것만. 지어내지 않는다. 기록이 적어 판단하기 어려우면 그렇다고 말하고 무엇이 쌓이면 볼 수 있는지 말한다.
+- 사람을 평가하거나 순위 매기는 답은 대표 · 매니저에게만. 직원이 물으면 자기 것만 말하고 나머지는 매니저에게 물어보라고 한다.
 - 앱 사용법은 아래 「앱 안내」에 있는 것만. 없는 기능을 있다고 하지 않는다. 모르면 "앱 안내에 없는 내용이에요"라고 하고 「Dutyvo에 문의」(go: ask)를 권한다.
-- 매장 기록에 관한 질문은 아래 「지금 기록」에 있는 것만으로 답한다. 없으면 "기록에서 찾지 못했어요"라고 하고 볼 화면을 권한다. 숫자 · 이름 · 날짜를 지어내지 않는다.
 - 기록을 대신 바꾸거나 저장하지 못한다. 할 일이 있으면 그 화면을 여는 버튼(go)을 준다.
 - 「우리 회사 규칙」이 앱 안내와 다르면 회사 규칙을 따른다(그 회사에서 쓰는 말 · 방식).
 - 직원(staff)에게는 관리자 화면(admin…)을 권하지 않는다. 대표 · 매니저가 할 일이면 "매니저에게 요청"이라고 말한다.
 - 손님 개인정보(이름 · 전화)는 가려져 있다. 알려 달라고 하면 고객 예약 화면에서 직접 보라고 한다.
 - 법 · 세무 · 노무 판단은 하지 않는다. 필요하면 전문가 확인을 권한다.
-답은 JSON 하나만:
-{"answer":"답 문장(줄바꿈 가능)","go":[{"label":"버튼 이름(명사형, 예: 캘린더 열기)","to":"아래 go 값 중 하나"}],"src":["근거 짧게(예: 9/24 연수점 인수인계)"]}
-go 는 0~2개, src 는 기록을 근거로 답했을 때만.`;
+마지막 답은 JSON 하나만(앞뒤에 다른 말 없이):
+{"answer":"답(줄바꿈은 \\n)","go":[{"label":"버튼 이름(명사형, 예: 캘린더 열기)","to":"아래 go 값 중 하나"}],"src":["근거 짧게(예: 최근 14일 매장별 숫자)"],"next":["이어서 물어볼 만한 질문(짧게, 이 사람이 실제로 궁금해할 것)"]}
+go 는 0~2개, src 는 기록 · 도구를 근거로 답했을 때 0~4개, next 는 2~3개.`;
 
 const hm = (iso) => { try { const d = new Date(new Date(iso).getTime() + 9 * 3600e3); return d.toISOString().slice(11, 16); } catch (e) { return ''; } };
 const kd = (iso) => { try { return new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 10); } catch (e) { return ''; } };
@@ -134,6 +150,7 @@ JSON 하나만: {"text":"다듬은 글","tag":null,"to":null}`;
     // 꺼진 기능은 화면 목록에서 뺀다
     const off = new Set(Object.entries(FEAT_NAV).filter(([f]) => settings[f] === false || (f === 'booking' && settings.booking !== true)).map(([, n]) => n));
     const nav = GUIDE.nav.filter((n) => !off.has(n) && !(me.role === 'staff' && (n.startsWith('admin') || n === 'notes')));
+    const facts = mask(String(body.facts || '')).slice(0, 5000);
     const dows = ['일', '월', '화', '수', '목', '금', '토'];
     const now = new Date(Date.now() + 9 * 3600e3);
     const roleKo = { owner: '대표', manager: '매니저', staff: '직원' }[me.role] || '직원';
@@ -145,21 +162,34 @@ JSON 하나만: {"text":"다듬은 글","tag":null,"to":null}`;
 # 회사 업무 노트
 ${notesText(notes)}
 
-# 지금 기록(이 사람이 볼 수 있는 것만)
-${snap}`;
+# 지금 기록(최근 3일 · 이 사람이 볼 수 있는 것만)
+${snap}${facts ? `\n\n# 앱 매장 점수(이 사람 앱 화면이 계산한 매장 컨디션 — 앱과 같은 숫자)\n${facts}` : ''}`;
     const hist = (Array.isArray(body.hist) ? body.hist : []).slice(-4);
     const messages = [];
-    hist.forEach((h) => { if (h && h.q && h.a) { messages.push({ role: 'user', content: String(h.q).slice(0, 500) }); messages.push({ role: 'assistant', content: String(h.a).slice(0, 800) }); } });
+    hist.forEach((h) => { if (h && h.q && h.a) { messages.push({ role: 'user', content: String(h.q).slice(0, 500) }); messages.push({ role: 'assistant', content: String(h.a).slice(0, 1500) }); } });
     messages.push({ role: 'user', content: mask(q) });
 
-    const r = await claude({ model: MODEL_FAST, cacheSystem: `${RULES}\n\n${GUIDE.text}`, system: ctx, messages, maxTokens: 700 });
-    const j = pickJson(r.text) || { answer: r.text };
-    const answer = String(j.answer || '').trim().slice(0, 1200) || '답을 만들지 못했어요. 다시 물어봐 주세요';
+    // 도구 돌리기 — AI 가 더 찾아보겠다고 하면 읽어서 돌려준다(최대 4번). 마지막 번엔 도구 없이 답만
+    const tools = makeTools(asUser(token), me);
+    let r = null, tin = 0, tout = 0, model = MODEL_ASK; const used = [];
+    for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+      r = await claudeRaw({ model: MODEL_ASK, cacheSystem: `${RULES}\n\n${GUIDE.text}`, system: ctx, messages, tools: round < MAX_TOOL_ROUNDS ? TOOLS : undefined, maxTokens: 1400 });
+      tin += r.tin; tout += r.tout; model = r.model;
+      const calls = r.content.filter((c) => c.type === 'tool_use');
+      if (r.stop !== 'tool_use' || !calls.length) break;
+      messages.push({ role: 'assistant', content: r.content });
+      const results = await Promise.all(calls.map(async (c) => { used.push(c.name); return { type: 'tool_result', tool_use_id: c.id, content: await tools.exec(c.name, c.input) }; }));
+      messages.push({ role: 'user', content: results });
+    }
+    const text = r.content.filter((c) => c.type === 'text').map((c) => c.text).join('');
+    const j = pickJson(text) || { answer: text };
+    const answer = String(j.answer || '').trim().slice(0, 2000) || '답을 만들지 못했어요. 다시 물어봐 주세요';
     const go = (Array.isArray(j.go) ? j.go : []).filter((g) => g && nav.includes(g.to)).slice(0, 2).map((g) => ({ label: String(g.label || '열기').slice(0, 20), to: g.to }));
-    const src = (Array.isArray(j.src) ? j.src : []).slice(0, 4).map((s) => String(s).slice(0, 40));
+    const src = (Array.isArray(j.src) ? j.src : []).slice(0, 4).map((x) => String(x).slice(0, 40));
+    const next = (Array.isArray(j.next) ? j.next : []).slice(0, 3).map((x) => String(x).slice(0, 50)).filter(Boolean);
     let id = null;
-    try { const row = await sb.post('ai_logs', { tenant_id: T, profile_id: uid, feature: 'ask', question: mask(q), answer, screen: String(body.screen || '').slice(0, 40), model: r.model, tokens_in: r.tin, tokens_out: r.tout }); id = row && row[0] && row[0].id; } catch (e) {}
-    res.status(200).json({ ok: true, id, answer, go, src, left: Math.max(0, PER_PERSON - mine - 1) });
+    try { const row = await sb.post('ai_logs', { tenant_id: T, profile_id: uid, feature: 'ask', question: mask(q), answer, screen: String(body.screen || '').slice(0, 40) + (used.length ? ` · 도구 ${[...new Set(used)].join(',')}` : ''), model, tokens_in: tin, tokens_out: tout }); id = row && row[0] && row[0].id; } catch (e) {}
+    res.status(200).json({ ok: true, id, answer, go, src, next, left: Math.max(0, PER_PERSON - mine - 1) });
   } catch (e) {
     const code = e && e.code;
     res.status(code === 'nokey' ? 503 : code === 'busy' ? 429 : 500).json({ ok: false, error: code || 'err', message: code === 'nokey' ? 'AI 키가 아직 설정되지 않았어요' : code === 'busy' ? 'AI 가 잠시 바빠요 — 조금 뒤 다시 물어봐 주세요' : '답을 받지 못했어요 — 다시 물어봐 주세요', detail: String((e && e.message) || e).slice(0, 200) });

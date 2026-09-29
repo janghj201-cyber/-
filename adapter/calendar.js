@@ -335,19 +335,8 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .ev .acts .xtra{display:contents}
 #vcal .ev .acts .xtra[hidden]{display:none}
 #vcal .ev .acts .more3{min-width:34px}
-#vcal .sls{display:flex;flex-direction:column;gap:2px;min-height:0;overflow:hidden;margin-top:1px}
-#vcal .sl{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;font-size:12px;line-height:1.45;border-radius:6px;padding:1px 6px 1px 5px;overflow:hidden;min-width:0;color:var(--ink);flex:none;word-break:keep-all;overflow-wrap:anywhere}
-#vcal .sl i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--off);vertical-align:middle;margin:-2px 5px 0 0}
-#vcal .sl.k-rsv i{background:var(--rsv)}
-#vcal .sl.k-mtg i{background:var(--mtg)}
-#vcal .sl.k-exp i{background:var(--exp)}
-#vcal .sl.k-fix i{background:var(--fix)}
-#vcal .sl b{font-weight:700;font-variant-numeric:tabular-nums;margin-right:5px}
-#vcal .sl span{color:var(--sub)}
-#vcal .cell.sel .sl{background:var(--card)}
-#vcal .cell{overflow:hidden}
 @media(min-width:721px){
-#vcal .grid{grid-template-rows:auto;grid-auto-rows:minmax(104px,1fr);min-height:calc(100vh / var(--vf-zoom,1) - 290px)}
+#vcal .grid{grid-template-rows:auto;grid-auto-rows:minmax(96px,1fr);min-height:calc(100vh / var(--vf-zoom,1) - 290px)}
 #vcal [data-dense=sum] .cell{min-height:0}
 }
 #vcal .offg{padding:10px 0;border-top:1px solid var(--line)}
@@ -363,7 +352,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .top h1{font-size:19px}
 #vcal .cell{min-height:58px;padding:4px 2px;align-items:center}
 #vcal .dh{justify-content:center}
-#vcal .hn,#vcal .cell .chip,#vcal .cell .more,#vcal .cell .sums,#vcal .cell .sls{display:none}
+#vcal .hn,#vcal .cell .chip,#vcal .cell .more,#vcal .cell .sums{display:none}
 #vcal .dots{display:flex}
 #vcal .cell .dh{flex-direction:column;gap:1px;min-height:0}
 #vcal .cell .stk{font-size:0;padding:0;box-shadow:none;background:none;gap:0;max-width:none}
@@ -605,14 +594,12 @@ export async function openCalendar(host = {}) {
   let dense = LS.get('dv_cal_dense', 'sum')
   const SHORT = { rsv: '예약', mtg: '미팅', exp: '기한', fix: '고정', off: '휴무' }
   const shortOf = (k) => (KN[k] !== KN0[k] ? KN[k] : SHORT[k])
-  // 칸마다 종류별 한 줄 — 「휴무 5 김형진 · 정유진 …」처럼 개수 옆에 누구 · 무엇까지. 칸 높이만큼 보이고 넘치면 잘린다(자세한 건 오른쪽 그날)
-  const nameOf = (e) => e.k === 'off' ? (e.who || e.title) : e.k === 'exp' ? e.title : (e.t ? e.t + ' ' : '') + e.title
   function sumOf(list) {
     const live = list.filter((e) => e.st !== 'cancel' && e.st !== 'noshow')
     const ks = kinds().filter((k) => live.some((e) => e.k === k))
     if (!ks.length) return ''
     const imp = feat.stk && live.some((e) => e.imp)
-    return `<div class="sls">${ks.map((k) => { const L = live.filter((e) => e.k === k); return `<div class="sl k-${k}"><i></i><b>${esc(shortOf(k))}${L.length > 1 ? ' ' + L.length : ''}</b><span>${L.map((e) => esc(nameOf(e))).join(' · ')}</span></div>` }).join('')}${imp ? `<span class="sm imp">${IC.star}중요</span>` : ''}</div>`
+    return `<div class="sums">${ks.map((k) => `<span class="sm k-${k}"><i></i>${esc(shortOf(k))}<b>${live.filter((e) => e.k === k).length}</b></span>`).join('')}${imp ? `<span class="sm imp">${IC.star}중요</span>` : ''}</div>`
   }
   // 그날 칸이 달력 아래에 있는 좁은 화면 — 누르면 그날로 내려 준다
   const showDay = () => { const D = $('[data-day]'); if (!D) return; const r = D.getBoundingClientRect(); if (r.top > innerHeight - 80 || r.bottom < 0) D.scrollIntoView({ behavior: 'smooth', block: 'start' }) }

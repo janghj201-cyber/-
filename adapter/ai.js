@@ -17,16 +17,17 @@ const CSS = `
 #vai{position:fixed;inset:0;z-index:960;display:flex;justify-content:flex-end;align-items:stretch;background:rgba(23,34,51,.28);animation:vai-f .2s ease}
 #vai .pn{background:var(--bg);width:100%;max-width:460px;display:flex;flex-direction:column;box-shadow:-12px 0 32px rgba(23,34,51,.14);animation:vai-in .22s cubic-bezier(.2,.8,.2,1);color:var(--text)}
 #vai .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--navy);color:#fff}
-#vai .mini{width:34px;height:34px;display:grid;place-items:center;flex:none}
-#vai .mini .mb{width:30px;height:29px;background:radial-gradient(circle at 34% 28%,#7fa1c7 0%,#3d5a80 45%,#23344d 80%);border-radius:50% 50% 46% 54%/55% 48% 52% 45%;position:relative;box-shadow:inset 0 -3px 6px rgba(0,0,0,.25);animation:vai-float 3.6s ease-in-out infinite}
-#vai .mini .mey{position:absolute;left:0;right:0;top:11px;display:flex;justify-content:center;gap:5px;transition:transform .2s}
-#vai .mini .mey i{width:4px;height:6px;border-radius:2px;background:#fff}
-#vai .pn.think .mini .mb{animation:vai-think .9s ease-in-out infinite}
-#vai .pn.think .mini .mey{animation:vai-look 1.2s ease-in-out infinite}
+#vai .mini{width:40px;height:40px;display:grid;place-items:center;flex:none}
+#vai .mini .mb{width:38px;height:38px;animation:vai-float 3.6s ease-in-out infinite}
+#vai .mini .vf-mascot .ta,#vai .mini .vf-mascot .tb{transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+#vai .pn.think .mini .vf-mascot .ta{animation:vai-ta .9s ease-in-out infinite}
+#vai .pn.think .mini .vf-mascot .tb{animation:vai-tb .9s ease-in-out infinite}
+#vai .pn.think .mini .vf-mascot .ep{animation:vai-look 1.2s ease-in-out infinite}
 #vai .pn.happy .mini .mb{animation:vai-hop .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes vai-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes vai-think{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
-@keyframes vai-look{0%,100%{transform:translateX(-2px)}50%{transform:translateX(2px)}}
+@keyframes vai-ta{0%,100%{transform:translate(0,0)}50%{transform:translate(-16px,-14px)}}
+@keyframes vai-tb{0%,100%{transform:translate(0,0)}50%{transform:translate(16px,14px)}}
+@keyframes vai-look{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
 @keyframes vai-hop{0%{transform:translateY(0)}40%{transform:translateY(-6px) scale(.95,1.06)}100%{transform:translateY(0)}}
 #vai .hd b{font-size:15.5px}
 #vai .hd small{display:block;font-size:11.5px;opacity:.7;font-weight:500}
@@ -44,7 +45,13 @@ const CSS = `
 #vai .an .go{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 #vai .an .go button{border:1px solid var(--navy);background:transparent;color:var(--navy);border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 html[data-bright=dark] #vai .an .go button{border-color:var(--text-sub);color:var(--text)}
-#vai .an .src{margin-top:8px;font-size:11.5px;color:var(--text-mute)}
+#vai .an .src{margin-top:8px;font-size:12px;color:var(--text-mute)}
+#vai .an .t .l1{font-weight:800;color:var(--text)}
+#vai .an .nx{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+#vai .an .nx button{border:1px dashed var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer;text-align:left}
+#vai .an .nx button:hover{border-style:solid;border-color:var(--text-mute)}
+#vai .an .t .cur{display:inline-block;width:7px;height:1em;vertical-align:-2px;background:var(--text-mute);margin-left:1px;animation:vai-cur .8s steps(2) infinite}
+@keyframes vai-cur{50%{opacity:0}}
 #vai .an .fb{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:12px;color:var(--text-mute)}
 #vai .an .fb button{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:8px;padding:4px 9px;font:inherit;font-size:12px;cursor:pointer}
 #vai .an .fb button svg{width:13px;height:13px}
@@ -67,7 +74,7 @@ html[data-bright=dark] #vai .an .go button{border-color:var(--text-sub);color:va
 @keyframes vai-in{from{transform:translateX(40px);opacity:0}}
 @keyframes vai-up{from{transform:translateY(40px);opacity:0}}
 @keyframes vai-d{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
-@media (prefers-reduced-motion:reduce){#vai,#vai .pn,#vai .mini .mb,#vai .mini .mey{animation:none!important}}
+@media (prefers-reduced-motion:reduce){#vai,#vai .pn,#vai .mini .mb,#vai .mini .vf-mascot *{animation:none!important}}
 `
 
 // 이 창이 떠 있는 동안의 대화 — 닫았다 열어도 이어진다(새로고침하면 새로)
@@ -88,9 +95,13 @@ async function api(body) {
 }
 
 const SUG = {
-  staff: ['오늘 내가 할 일 정리해 줘', '인수인계 남기는 법', '휴무 신청은 어디서 해?', '보관기한 넣는 법'],
-  admin: ['어제 매장에서 확인할 것', '3일 넘게 안 본 인수인계 있어?', '직원 초대하는 법', '청소 항목 바꾸는 법'],
+  staff: ['오늘 내가 할 일 정리해 줘', '우리 매장 점수 올리려면 뭐부터?', '인수인계 남기는 법', '휴무 신청은 어디서 해?'],
+  admin: ['현재 가장 잘 운영되는 매장 어디야?', '이번 주 손볼 매장과 이유', '인수인계 확인이 늦는 매장은?', '직원별 이번 주 업무 정리', '어제 매장에서 확인할 것', '지난주보다 좋아진 매장은?'],
 }
+const WAIT = ['질문 읽는 중', '기록 찾는 중', '매장 숫자 모으는 중', '비교해 정리하는 중', '거의 다 됐어요']
+const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches } catch (e) { return false } }
+// 답 글 — 줄이 셋 이상이면 첫 줄(결론)을 굵게
+const fmt = (t) => { const L = String(t || '').split('\n'); return L.length >= 3 ? `<span class="l1">${esc(L[0])}</span>\n${esc(L.slice(1).join('\n'))}` : esc(t) }
 
 export async function openAssistant(host = {}) {
   if (document.getElementById('vai')) return
@@ -99,7 +110,7 @@ export async function openAssistant(host = {}) {
   const role = (ctx.profile && ctx.profile.role) || 'staff'
   const root = document.createElement('div'); root.id = 'vai'
   root.innerHTML = `<div class="pn" role="dialog" aria-modal="true" aria-labelledby="vai-h">
-    <div class="hd"><span class="mini" data-mini aria-hidden="true"><span class="mb"><span class="mey"><i></i><i></i></span></span></span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
+    <div class="hd"><span class="mini" data-mini aria-hidden="true"><span class="mb">${typeof window.vfMascotSVG === 'function' ? window.vfMascotSVG('vai') : ''}</span></span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
     <div class="bd" data-bd aria-live="polite"></div>
     <div class="note">AI 답은 틀릴 수 있어요. 기록을 바꾸지 않고, 필요한 화면을 열어 드려요.</div>
     <div class="ft"><textarea data-q rows="1" placeholder="무엇이든 물어보세요" aria-label="질문"></textarea><button type="button" class="snd" data-send aria-label="보내기">${IC.send}</button></div>
@@ -117,58 +128,84 @@ export async function openAssistant(host = {}) {
   const scrollEnd = () => { bd.scrollTop = bd.scrollHeight }
   const intro = () => {
     const box = document.createElement('div'); box.className = 'intro'
-    box.innerHTML = `<b>앱 쓰는 법</b>이나 <b>오늘 기록</b>을 물어보세요. 볼 수 있는 기록 안에서만 답하고, 할 일이 있으면 그 화면을 열어 드려요.`
+    box.innerHTML = `<b>앱 쓰는 법</b>부터 <b>매장 비교 · 원인</b>까지 물어보세요. 최근 기록을 기간 · 매장 · 사람별로 찾아 숫자로 답하고, 할 일이 있으면 그 화면을 열어 드려요.`
     const sug = document.createElement('div'); sug.className = 'sug'
     ;(role === 'staff' ? SUG.staff : SUG.admin).forEach((t) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = () => ask(t); sug.appendChild(b) })
     bd.appendChild(box); bd.appendChild(sug)
   }
-  const bubble = (m) => {
-    const me = document.createElement('div'); me.className = 'me'; me.textContent = m.q; bd.appendChild(me)
-    const an = document.createElement('div'); an.className = 'an' + (m.wait ? ' wait' : '') + (m.err ? ' err' : '')
-    an.innerHTML = `<div class="t">${esc(m.wait ? '찾는 중' : m.a)}</div>`
-    if (!m.wait && !m.err) {
-      if (m.go && m.go.length) {
-        const g = document.createElement('div'); g.className = 'go'
-        m.go.forEach((x) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = x.label; b.onclick = () => { close(); try { host.go && host.go(x.to) } catch (e) {} }; g.appendChild(b) })
-        an.appendChild(g)
+  const extras = (an, m) => {
+    if (m.go && m.go.length) {
+      const g = document.createElement('div'); g.className = 'go'
+      m.go.forEach((x) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = x.label; b.onclick = () => { close(); try { host.go && host.go(x.to) } catch (e) {} }; g.appendChild(b) })
+      an.appendChild(g)
+    }
+    if (m.src && m.src.length) { const s = document.createElement('div'); s.className = 'src'; s.textContent = '근거 · ' + m.src.join(' · '); an.appendChild(s) }
+    if (m.next && m.next.length && m === chat[chat.length - 1]) {
+      const nx = document.createElement('div'); nx.className = 'nx'
+      m.next.forEach((t) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = () => ask(t); nx.appendChild(b) })
+      an.appendChild(nx)
+    }
+    if (m.id) {
+      const fb = document.createElement('div'); fb.className = 'fb'
+      fb.innerHTML = `<button type="button" data-g aria-pressed="${m.fb === 1}">${IC.up}맞아요</button><button type="button" class="no" data-b aria-pressed="${m.fb === -1}">${IC.down}아니에요</button><span data-s></span>`
+      an.appendChild(fb)
+      const s = fb.querySelector('[data-s]')
+      fb.querySelector('[data-g]').onclick = async () => {
+        try { await sb.rpc('vf_ai_feedback', { p_id: m.id, p_good: true, p_fix: null }); m.fb = 1; fb.querySelector('[data-g]').setAttribute('aria-pressed', 'true'); fb.querySelector('[data-b]').setAttribute('aria-pressed', 'false'); s.textContent = '고마워요' } catch (e) { s.textContent = '저장 실패' }
       }
-      if (m.src && m.src.length) { const s = document.createElement('div'); s.className = 'src'; s.textContent = '근거 · ' + m.src.join(' · '); an.appendChild(s) }
-      if (m.id) {
-        const fb = document.createElement('div'); fb.className = 'fb'
-        fb.innerHTML = `<button type="button" data-g aria-pressed="${m.fb === 1}">${IC.up}맞아요</button><button type="button" class="no" data-b aria-pressed="${m.fb === -1}">${IC.down}아니에요</button><span data-s></span>`
-        an.appendChild(fb)
-        const s = fb.querySelector('[data-s]')
-        fb.querySelector('[data-g]').onclick = async () => {
-          try { await sb.rpc('vf_ai_feedback', { p_id: m.id, p_good: true, p_fix: null }); m.fb = 1; fb.querySelector('[data-g]').setAttribute('aria-pressed', 'true'); fb.querySelector('[data-b]').setAttribute('aria-pressed', 'false'); s.textContent = '고마워요' } catch (e) { s.textContent = '저장 실패' }
-        }
-        fb.querySelector('[data-b]').onclick = () => {
-          if (an.querySelector('.fix')) return
-          const fx = document.createElement('div'); fx.className = 'fix'
-          fx.innerHTML = `<textarea maxlength="400" placeholder="무엇이 틀렸나요? 바른 방법 · 우리 회사에서 쓰는 말을 알려 주시면 다음부터 반영해요"></textarea><button type="button">보내기</button>`
-          an.appendChild(fx); scrollEnd(); fx.querySelector('textarea').focus()
-          fx.querySelector('button').onclick = async () => {
-            const t = fx.querySelector('textarea').value.trim()
-            try { await sb.rpc('vf_ai_feedback', { p_id: m.id, p_good: false, p_fix: t || null }); m.fb = -1; fb.querySelector('[data-b]').setAttribute('aria-pressed', 'true'); fb.querySelector('[data-g]').setAttribute('aria-pressed', 'false'); fx.remove(); s.textContent = t ? '받았어요 — 이번 주 정리 때 배워요' : '받았어요' } catch (e) { s.textContent = '저장 실패' }
-          }
+      fb.querySelector('[data-b]').onclick = () => {
+        if (an.querySelector('.fix')) return
+        const fx = document.createElement('div'); fx.className = 'fix'
+        fx.innerHTML = `<textarea maxlength="400" placeholder="무엇이 틀렸나요? 바른 방법 · 우리 회사에서 쓰는 말을 알려 주시면 다음부터 반영해요"></textarea><button type="button">보내기</button>`
+        an.appendChild(fx); scrollEnd(); fx.querySelector('textarea').focus()
+        fx.querySelector('button').onclick = async () => {
+          const t = fx.querySelector('textarea').value.trim()
+          try { await sb.rpc('vf_ai_feedback', { p_id: m.id, p_good: false, p_fix: t || null }); m.fb = -1; fb.querySelector('[data-b]').setAttribute('aria-pressed', 'true'); fb.querySelector('[data-g]').setAttribute('aria-pressed', 'false'); fx.remove(); s.textContent = t ? '받았어요 — 이번 주 정리 때 배워요' : '받았어요' } catch (e) { s.textContent = '저장 실패' }
         }
       }
     }
+  }
+  const bubble = (m) => {
+    const me = document.createElement('div'); me.className = 'me'; me.textContent = m.q; bd.appendChild(me)
+    const an = document.createElement('div'); an.className = 'an' + (m.wait ? ' wait' : '') + (m.err ? ' err' : '')
+    an.innerHTML = `<div class="t">${m.wait ? esc(m.step || WAIT[0]) : m.err ? esc(m.a) : fmt(m.a)}</div>`
     bd.appendChild(an)
+    if (m.wait || m.err) return an
+    // 방금 온 답은 말하듯 한 글자씩 — 끝나면 버튼 · 이어 묻기
+    if (m.fresh && !reduced()) {
+      m.fresh = false
+      const t = an.querySelector('.t'), full = String(m.a || ''), step = Math.max(2, Math.ceil(full.length / 70))
+      let i = 0
+      const tick = () => {
+        if (!document.body.contains(an)) return
+        i = Math.min(full.length, i + step)
+        const part = full.slice(0, i), L = part.split('\n'), lines = full.split('\n').length
+        t.innerHTML = (lines >= 3 ? `<span class="l1">${esc(L[0])}</span>${L.length > 1 ? '\n' + esc(L.slice(1).join('\n')) : ''}` : esc(part)) + (i < full.length ? '<span class="cur"></span>' : '')
+        scrollEnd()
+        if (i < full.length) setTimeout(tick, 16); else { extras(an, m); scrollEnd() }
+      }
+      t.innerHTML = '<span class="cur"></span>'; setTimeout(tick, 60)
+    } else { m.fresh = false; extras(an, m) }
     return an
   }
   const paint = () => { bd.innerHTML = ''; if (!chat.length) intro(); chat.forEach(bubble); scrollEnd() }
   paint()
 
-  let busy = false
+  let busy = false, factsP = null
   async function ask(text) {
     const t = String(text || q.value).trim(); if (!t || busy) return
     busy = true; sendB.disabled = true; q.value = ''; q.style.height = ''
-    const m = { q: t, wait: true }; chat.push(m); paint(); const pn = root.querySelector('.pn'); pn.classList.remove('happy'); pn.classList.add('think')
+    const m = { q: t, wait: true, step: WAIT[0] }; chat.push(m); paint(); const pn = root.querySelector('.pn'); pn.classList.remove('happy'); pn.classList.add('think')
+    // 기다리는 동안 무엇을 하는지 한 줄씩(도구로 더 찾으면 10~20초 걸린다)
+    let si = 0; const stepT = setInterval(() => { si = Math.min(WAIT.length - 1, si + 1); m.step = WAIT[si]; const w = bd.querySelector('.an.wait .t'); if (w) w.textContent = m.step }, 2600)
     try {
+      if (!factsP) factsP = typeof host.facts === 'function' ? Promise.resolve(host.facts()).catch(() => '') : Promise.resolve('')
+      const facts = await factsP
       const hist = chat.filter((x) => x !== m && x.a && !x.err).slice(-4).map((x) => ({ q: x.q, a: x.a }))
-      const r = await api({ q: t, screen: host.screen || '', hist })
-      Object.assign(m, { wait: false, a: r.answer, go: r.go || [], src: r.src || [], id: r.id }); left = r.left; paintLeft()
+      const r = await api({ q: t, screen: host.screen || '', hist, facts })
+      Object.assign(m, { wait: false, fresh: true, a: r.answer, go: r.go || [], src: r.src || [], next: r.next || [], id: r.id }); left = r.left; paintLeft()
     } catch (e) { Object.assign(m, { wait: false, err: true, a: e.msg || '답을 받지 못했어요 — 다시 물어봐 주세요' }) }
+    clearInterval(stepT)
     busy = false; sendB.disabled = false; paint(); q.focus(); pn.classList.remove('think'); if (!m.err) { void pn.offsetWidth; pn.classList.add('happy') }
   }
   sendB.onclick = () => ask()
@@ -182,6 +219,7 @@ export async function briefCardInto(el, host = {}) {
   const { data, error } = await sb.from('ai_briefs').select('body,brief_date').eq('brief_date', kst()).maybeSingle()
   if (error || !data || !data.body || !Array.isArray(data.body.lines) || !data.body.lines.length) { el.remove(); return }
   const b = data.body
+  try { window.__vfBriefLines = b.lines } catch (e) {}
   // 「더 묻기」는 머리 오른쪽 — 버튼 한 줄이 카드 아래를 따로 먹지 않게
   el.innerHTML = `<div class="vh-ct"><strong>아침 요약</strong><span class="vh-tiny">어제 ${esc(mdOf(b.day))} · AI</span><button type="button" class="vai-more" data-more>더 묻기 ›</button></div>
     <ul class="vai-bl">${b.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
