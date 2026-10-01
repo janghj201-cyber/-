@@ -589,6 +589,22 @@ button.vf-pj{cursor:pointer;}
 .vh-briefline b{flex:none;font-weight:800;color:var(--navy);}
 .vh-briefline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .vh-briefline i{font-style:normal;color:var(--text-mute);}
+.vh-newfeat b{color:var(--green);}
+/* v6.33 설정 「기능」 */
+.st-feat .sf-sub{font-size:14px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;}
+.st-feat .sf-base{font-size:14px;color:var(--text-sub);background:var(--bg);border-radius:10px;padding:10px 12px;line-height:1.6;}
+.st-feat .sf-base b{color:var(--text);margin-right:6px;}
+.st-feat .sf-h{font-size:15px;font-weight:800;margin:18px 0 4px;}
+.st-feat .sf-h span{color:var(--text-mute);font-weight:700;margin-left:4px;}
+.st-feat .sf-row{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--border);min-height:56px;}
+.st-feat .sf-row .t{flex:1;min-width:0;}
+.st-feat .sf-row .t b{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px;}
+.st-feat .sf-row .t small{display:block;font-size:13px;color:var(--text-sub);margin-top:2px;line-height:1.5;}
+.st-feat .sf-row .vh-btn{flex:none;min-height:44px;min-width:64px;font-size:14px;}
+.st-feat .sf-new,.st-feat .sf-fit{font-style:normal;font-size:12px;font-weight:800;padding:1px 7px;border-radius:999px;}
+.st-feat .sf-new{background:var(--green-light);color:var(--green);}
+.st-feat .sf-fit{background:var(--gold-light);color:var(--orange);}
+.st-feat .sf-empty{font-size:14px;color:var(--text-mute);padding:10px 2px;}
 .vf-hero-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
 .vf-hero-mode button{font:inherit;font-size:15px;font-weight:800;text-align:left;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;min-height:56px;}
 .vf-hero-mode button small{display:block;font-size:13px;font-weight:600;color:var(--text-sub);margin-top:2px;}
@@ -2651,24 +2667,30 @@ const db = getFirestore(app);
 // role(owner/manager)로. 진짜 경계는 RLS가 지키고, 프론트 판별은 화면 진입 편의용.
 
 // 커스터마이징: 기능 On/Off + 컬러테마 (config/settings → 어댑터가 tenant_settings로 저장)
+// 기능 — 회사가 골라 쓰는 것(v6.33). 기본 기능(할 일 · 출근 · 근무 마감 · 매장 방 · 우선 확인)은 여기 없고 끌 수 없다.
+// fit: 잘 맞는 업종(onboarding 의 업종 키). 비면 모든 업종.
+// ⚠ 새 기능은 여기에 넣고 FEAT_LEGACY 에는 넣지 않는다. 그러면 이미 쓰는 회사에 저절로 켜지지 않고, 설정 「기능」 → 「미적용 기능」에 「새로」로 보이며 대표 홈에 한 줄
 const FEATURE_DEFS=[
-  {key:'cleaning',label:'청소 체크리스트'},
-  {key:'projects',label:'진행중 프로젝트'},
-  {key:'collab',label:'협업 프로젝트'},
-  {key:'memo',label:'개인 메모'},
-  {key:'board',label:'게시판'},
-  {key:'dayoff',label:'휴무 관리'},
-  {key:'handover',label:'인수인계'},
-  {key:'hofeedback',label:'인수인계 피드백'},
-  {key:'workreq',label:'업무 요청'},
-  {key:'meeting',label:'주간 1:1 상담'},
-  {key:'storeinfo',label:'매장 고정 정보'},
-  {key:'calendar',label:'캘린더'},
-  {key:'expiry',label:'보관기한'},
-  {key:'clients',label:'거래처'},
-  {key:'booking',label:'고객 예약 (예약 받는 업종)'},
-  {key:'ai',label:'AI 도우미 · 아침 요약'},
+  {key:'handover',label:'인수인계',desc:'다음 근무자에게 한 줄 남기기 · 확인 기록',term:'handover'},
+  {key:'hofeedback',label:'인수인계 답글',desc:'남긴 말에 한 줄 답',term:'handover',termSuffix:' 답글'},
+  {key:'cleaning',label:'청소 체크',desc:'매일 점검 항목 · 사진 · 매장 점수와 컨디션',term:'clean',termSuffix:' 체크',fit:['cafe','restaurant','convenience','beauty','clinic','academy','etc']},
+  {key:'workreq',label:'업무 요청',desc:'동료에게 부탁하고 수락 · 완료까지'},
+  {key:'dayoff',label:'휴무',desc:'휴무 신청 · 승인 · 월간 스케줄'},
+  {key:'memo',label:'개인 메모',desc:'나만 보는 메모'},
+  {key:'board',label:'게시판',desc:'공지 · 업무 공유 · 건의'},
+  {key:'storeinfo',label:'매장 고정 정보',desc:'와이파이 · 도어락처럼 늘 필요한 것'},
+  {key:'calendar',label:'캘린더',desc:'예약 · 미팅 · 보관기한 · 휴무를 한 달력에'},
+  {key:'expiry',label:'보관기한',desc:'들어온 재료 · 상품의 기한 알림 · 마감 때 확인',fit:['cafe','restaurant','convenience']},
+  {key:'clients',label:'거래처',desc:'주고받는 건 · 지금 누구 차례 · 다음 할 일',fit:['wholesale']},
+  {key:'booking',label:'고객 예약',desc:'예약 링크 · 전화 예약을 한 시간표에',fit:['restaurant','beauty','clinic','academy']},
+  {key:'projects',label:'프로젝트',desc:'며칠 걸리는 일 · 어디까지 했나'},
+  {key:'collab',label:'함께 하는 프로젝트',desc:'다른 매장 · 사람에게 도움 요청'},
+  {key:'meeting',label:'주간 1:1 상담',desc:'매주 한 명씩 자동 배정'},
+  {key:'ai',label:'AI 도우미 · 아침 요약',desc:'앱 기록을 보고 묻는 말에 답 · 아침 세 줄 요약'},
 ];
+const FEAT_IND_L={cafe:'카페',restaurant:'음식점',convenience:'편의점',beauty:'뷰티',clinic:'의원',academy:'학원',wholesale:'도매 · 유통',etc:'기타'};
+// v6.32 까지 있던 기능 — 정하지 않았으면 예전처럼 켜짐(이미 쓰는 회사 화면에서 갑자기 사라지지 않게). 그 뒤에 들어온 기능은 켜기 전엔 꺼짐
+const FEAT_LEGACY=['cleaning','projects','collab','memo','board','dayoff','handover','hofeedback','workreq','meeting','storeinfo','calendar','expiry','clients','booking','ai'];
 const THEME_DEFS=[
   {key:'default',label:'클래식 네이비',navy:'#172233',gold:'#d6a246'},
   {key:'blue',label:'오션 블루',navy:'#143a5c',gold:'#38a1f0'},
@@ -2711,7 +2733,11 @@ function scoreChip(sc,extraCss=''){
   return `<span class="score-chip" style="background:${bg};color:${col};${extraCss}" title="청소 ${sc.base} + 업무 ${sc.bonus}${sc.penalty?` − 인수인계 ${sc.penalty}`:''}">${sc.score}점</span>`;
 }
 const FEAT_DEFAULT_OFF=['booking']; // 업종에 따라 쓰는 기능은 켜야 보인다
-function featOn(key){const v=(appSettings.features||{})[key];return v===undefined?!FEAT_DEFAULT_OFF.includes(key):v!==false;} // 미설정=켜짐(예약만 꺼짐)
+// 정한 값이 있으면 그대로. 없으면 — 예전 기능은 켜짐(예약만 꺼짐), 새 기능은 꺼짐(회사가 켜야 들어온다)
+function featOn(key){const v=(appSettings.features||{})[key];if(v!==undefined)return v!==false;return FEAT_LEGACY.includes(key)&&!FEAT_DEFAULT_OFF.includes(key);}
+const featLabel=(fd)=>fd.term?`${T(fd.term)}${fd.termSuffix||''}`:fd.label;
+// 아직 켤지 정하지 않은 새 기능 — 대표 홈 한 줄 · 설정 「새로」 표시
+function featUndecided(){const f=appSettings.features||{};return FEATURE_DEFS.filter(d=>!FEAT_LEGACY.includes(d.key)&&f[d.key]===undefined);}
 // 우리 회사 말 — 화면의 뼈대 말(메뉴·카드 제목·칸 이름·안내문)에만 쓴다. 직원이 적은 내용·안내 본문은 손대지 않는다
 const TERM_DEFAULT={store:'매장',worker:'근무자',clean:'청소',handover:'인수인계'};
 const TERM_LABEL={store:'매장 (일하는 곳 하나)',worker:'근무자 (그날 그곳에서 일하는 사람)',clean:'청소 (매일 체크하는 점검)',handover:'인수인계 (다음 사람에게 남기는 말)'};
@@ -3869,7 +3895,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.32';
+const GUIDE_VERSION = 'v6.33';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3980,17 +4006,26 @@ const GUIDE_TOPICS = [
     '오늘 현황 — 빠진 것만 위에 모으고, 매장별 신호등과 직원 현황을 한 화면에 보여줍니다',
     '주간 리포트 · 월간 통계 — 실제 기록으로 자동 생성됩니다',
     '고정업무 — 매달 반복되는 규칙과 청소 항목을 직접 만들고 고칩니다',
-    '설정 — 기능 켜기/끄기, 컬러 테마, 직원 초대, 매장 관리, 근무지 설정이 모여 있습니다',
+    '설정 — 기능, 색, 직원 초대, 매장, 근무지가 모여 있습니다',
   ]},
   { title:'내 계정 · 설정', items:[
     '홈 오른쪽 위 — 앱 설치, 직원 목록, 월간 스케줄, 내 동의, 가이드, 비밀번호 변경, 로그아웃',
     '관리자 → 설정 맨 위 내 계정 — 내 이름·직함·회사를 확인하고 이름을 고칠 수 있습니다',
     '비밀번호를 잊었으면 로그인 화면에서 "비밀번호를 잊으셨나요?" — 메일로 재설정 링크가 옵니다',
-    '기능 켜기/끄기 — 안 쓰는 기능을 끄면 전 직원 화면에서 숨겨집니다. 데이터는 지워지지 않습니다',
+    '기능 — 설정 → 기능·화면. 「현재 적용 기능」은 끄고, 「미적용 기능」은 켜서 씁니다. 끄면 전 직원 화면에서 숨겨지고 기록은 남습니다. 새로 생긴 기능은 켜기 전엔 미적용입니다',
     '앱으로 설치 — 홈 화면·바탕화면에 추가하면 앱처럼 열립니다',
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.33 — 기능: 회사가 골라 적용 · 새 기능은 미적용으로',
+    items: [
+      '관리자 → 설정 → 기능·화면 → 「기능」 — 기본 기능(할 일 · 출근 · 근무 마감 · 매장 방 · 우선 확인)은 늘 있고, 나머지는 「현재 적용 기능」 · 「미적용 기능」 두 칸에서 켜고 끕니다. 기능마다 한 줄 설명 · 맞는 업종',
+      '앞으로 생기는 기능은 미적용으로 들어옵니다 — 이미 쓰는 회사 화면에 저절로 생기지 않고, 대표 · 매니저 홈에 「새 기능 — 적용할지 고르기」 한 줄만. 지금까지 쓰던 기능은 그대로',
+      '청소를 끄면 청소에서 나오는 것이 모두 같이 빠집니다 — 점수 · 「내 청소」 칸 · 「청소 사진」 · 매장 방 청소 줄 · 매장 컨디션 · 「청소 미체크」 · 마감 때 남은 청소. AI도 청소 · 점수 이야기를 하지 않습니다',
+      '새로 가입하는 도매 · 유통 회사는 청소를 끈 채 시작합니다(나중에 켤 수 있음)',
+    ]
+  },
   {
     title: 'v6.32 — 「매장 확인할 것」 머리 말',
     items: [
@@ -6246,7 +6281,7 @@ async function loadTodayGaps(pre){
     const goStore=(s)=>{try{openStoreRoom(s);}catch(e){}};
     const items=[];
     // 청소 미체크 — 매장마다 한 줄이면 아침엔 전 매장이 줄줄이 뜬다. 근무자가 있는 매장(진짜 누락)과 없는 매장(아직 출근 전)을 나눠 한 줄씩
-    const noClean=rows.filter(r=>totalCl>0&&r.cleanDone===0&&!vfStoreClosed(r.s.id));
+    const noClean=rows.filter(r=>featOn('cleaning')&&totalCl>0&&r.cleanDone===0&&!vfStoreClosed(r.s.id));
     const ncW=noClean.filter(r=>r.workers.length),ncN=noClean.filter(r=>!r.workers.length);
     if(ncW.length)items.push({dot:'danger',text:`${T('clean')} 미체크 ${ncW.length}곳 — ${T('worker')} 있음`,sub:ncW.map(r=>`${esc(shortN(r.s.name))}(${r.workers.map(esc).join('·')})`).join(' · '),fn:()=>goStore(ncW[0].s)});
     if(ncN.length)items.push({dot:'warn',text:`${T('clean')} 미체크 ${ncN.length}곳 — 아직 ${T('worker')} 없음`,sub:ncN.map(r=>esc(shortN(r.s.name))).join(' · '),fn:()=>goStore(ncN[0].s)});
@@ -6521,8 +6556,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     sel.onchange=()=>{localStorage.setItem(_lsKey,sel.value);_recordWorkday(sel.value).catch(()=>{});renderHomePersonal(tKey,todosByName,hoByStore);};
     acts.appendChild(sel);
   }
+  // v6.33 청소를 안 쓰는 회사(도매 · 유통 등)엔 점수 자체가 없다 — 점수는 청소 100점 만점이 바탕
   // 매장 점수 — 예전엔 오른쪽 「상태」 카드에 있었는데 그 카드는 요약 4칸과 같은 숫자라 뺐다. 점수만 여기로.
-  if(entry){
+  if(entry&&featOn('cleaning')){
     try{
       const _cs0=window.__dashClean?window.__dashClean.get(entry.id):null;
       const _sc0=calcStoreScore({cleanData:(_cs0&&_cs0.exists())?_cs0.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?hoOverdue(sn.data().items||[],tKey):0;})()});
@@ -6551,6 +6587,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   } else wrap.appendChild(head);
   window.__briefCtx={tKey,todosByName,hoByStore}; // 사이드바의 「오늘의 브리핑」이 쓴다
   if(!_vp.monitorOnly){const bl=el('button','vh-briefline');bl.type='button';bl.hidden=true;wrap.appendChild(bl);vfBriefLineInto(bl,entry).catch(()=>bl.remove());}
+  // v6.33 새로 생긴 기능은 저절로 켜지지 않는다 — 대표 · 매니저 홈에 한 줄만(팝업 없음). 누르면 설정 「기능」. 켜거나 끄면(정하면) 사라짐
+  if(isAdmin&&!_vp.monitorOnly){const nf=featUndecided();if(nf.length){const nl=el('button','vh-briefline vh-newfeat',`<b>새 기능</b><span>${nf.map(d=>_wrEsc(featLabel(d))).join(' · ')} — 적용할지 고르기</span><i aria-hidden="true">›</i>`);nl.type='button';nl.onclick=()=>{vfUse('newfeat_open');vfJumpSetting('screen','기능');};wrap.appendChild(nl);}}
 
   const grid=el('div','vh-grid');
   try{if(localStorage.getItem('vflow_home_flip')==='1')grid.classList.add('flip');}catch(e){} // 좌우 반전 — 내 계정에서 고른다
@@ -6580,7 +6618,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // 「확인할 것」 칸 = 아래 우선 확인 줄 수(v6.28) — 전엔 인수인계만 세어 칸 0 · 목록 1줄처럼 서로 달랐다. 줄이 그려진 뒤 refreshPri 가 고쳐 쓴다
   const m1=mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{const p=wrap.querySelector('.vh-priority:not(.vh-storegaps)');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});else if(entry)openStoreRoom(entry);});met.appendChild(m1);
   const _ownerOnly=(window.__vflowProfile?.role==='owner');
-  met.appendChild(mk(`내 ${T('clean')}`,(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
+  if(featOn('cleaning'))met.appendChild(mk(`내 ${T('clean')}`,(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':'',()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
   const m4=mk(featOn('workreq')?'요청':'프로젝트','…','',()=>{if(featOn('workreq')){const p=wrap.querySelector('.vh-priority');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}else enterMyWork(me);});
   met.appendChild(m4);
@@ -6787,9 +6825,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // 즉시 실행 — 한 번 눌러 바로 하는 것만 (승인: 청소 사진 · 요청 보내기). 휴무·예외출근은 월간 스케줄에 그대로.
   const qrow=el('div','vh-quickrow');
   const mkQa=(ic,lb,fn,aria)=>{const b=el('button','vh-qa',`${ic}<span>${lb}</span>`);b.type='button';b.setAttribute('aria-label',aria||lb);b.onclick=fn;return b;};
-  qrow.appendChild(mkQa(VF_ICONS.camera,`${T('clean')} 사진`,()=>{if(entry)openQuickClean(entry,{photo:true});},'청소 사진: 오늘 체크리스트를 열고 첫 미완료 항목의 사진 버튼으로'));
+  if(featOn('cleaning'))qrow.appendChild(mkQa(VF_ICONS.camera,`${T('clean')} 사진`,()=>{if(entry)openQuickClean(entry,{photo:true});},'청소 사진: 오늘 체크리스트를 열고 첫 미완료 항목의 사진 버튼으로'));
   if(featOn('workreq'))qrow.appendChild(mkQa(VF_ICONS.send,'요청 보내기',()=>openLeaveSheet(entry,tKey,'request'),'요청 보내기: 다른 직원에게 업무 요청'));
-  col1.appendChild(qrow);
+  if(qrow.children.length)col1.appendChild(qrow);
 
   // ── 2열: 오늘 할 일 (홈에서 바로 체크 · 폰은 접힘) ──
   const todo=el('div','vh-card vh-todo'+(mine.length>0?' folded':''));
@@ -7619,9 +7657,10 @@ async function vfAiFacts(){
     const vp=window.__vflowProfile||{};const adm=vp.role==='owner'||vp.role==='manager';
     const mine=vp.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||'';
     const ids=adm?STORES.map(x=>x.id):STORES.filter(x=>x.id===mine).map(x=>x.id);if(!ids.length)return '';
-    const C=(window.__vfCondLast&&ids.every(id=>window.__vfCondLast[id]))?window.__vfCondLast:await vfConditions(ids);
+    const useScore=featOn('cleaning'); // v6.33 점수는 청소 바탕 — 청소를 안 쓰는 회사엔 점수 줄을 보내지 않는다
+    const C=!useScore?{}:(window.__vfCondLast&&ids.every(id=>window.__vfCondLast[id]))?window.__vfCondLast:await vfConditions(ids);
     const r=scoreRule();
-    const L=[`점수 = 청소(체크 ${r.checkPct}% + 사진 ${r.photoPct}%, 100 만점) + 업무 1건당 ${r.taskBonus}점(최대 ${r.taskBonusMax}) − 하루 넘긴 미확인 인수인계 1건당 ${r.hoPenalty}점(최대 ${r.hoPenaltyMax}) · 좋음 ${r.goodAt} · 기준선 ${r.baseline}`];
+    const L=!useScore?['(이 회사는 청소 · 점수를 쓰지 않음)']:[`점수 = 청소(체크 ${r.checkPct}% + 사진 ${r.photoPct}%, 100 만점) + 업무 1건당 ${r.taskBonus}점(최대 ${r.taskBonusMax}) − 하루 넘긴 미확인 인수인계 1건당 ${r.hoPenalty}점(최대 ${r.hoPenaltyMax}) · 좋음 ${r.goodAt} · 기준선 ${r.baseline}`];
     ids.forEach(id=>{const c=C[id];if(!c)return;const st=STORES.find(x=>x.id===id);const d7=c.days.slice(-8,-1).filter(x=>!x.closed);const sum=k=>d7.reduce((a,x)=>a+(x[k]||0),0);
       L.push(`- ${st?st.name:id}: 오늘 ${c.today.closed?'휴무':(c.today.score??'기록 없음')} · 7일 평균 ${c.avg7??'—'} · 그 전 7일 ${c.prev7??'—'} · 기준선 위 ${c.streak}일째 · 최근 7일 ${d7.map(x=>`${x.d.getMonth()+1}/${x.d.getDate()} ${x.score}`).join(', ')} · 7일 합계 청소 ${sum('checked')}/${sum('total')} 사진 ${sum('photos')} 업무 ${sum('tasks')}건 하루 넘긴 미확인 ${sum('overdue')}건`);});
     if(adm&&C.__company!=null)L.push(`회사 평균(7일) ${C.__company}`);
@@ -7687,7 +7726,7 @@ function vfSayEnabled(){try{return localStorage.getItem('vflow_orb_talk')!=='0';
 function vfSayDay(){const k='vflow_say_'+todayKey();let d={n:0,x:0,seen:[]};try{d={...d,...JSON.parse(localStorage.getItem(k)||'{}')};}catch(e){}return {k,d,save:()=>{try{localStorage.setItem(k,JSON.stringify(d));}catch(e){}}};}
 function vfSayLines(){
   const vp=window.__vflowProfile||{};const adm=vp.role==='owner'||vp.role==='manager';const out=[];
-  const C=window.__vfCondLast;const bl=(()=>{try{return scoreRule().baseline;}catch(e){return 80;}})();
+  const C=featOn('cleaning')?window.__vfCondLast:null;const bl=(()=>{try{return scoreRule().baseline;}catch(e){return 80;}})();
   const nm=(id)=>{const st=STORES.find(x=>x.id===id);return st?storeShort(st.name):'';};
   const rows=C?Object.keys(C).filter(k=>k!=='__company'&&C[k]&&C[k].avg7!=null).map(id=>({id,c:C[id]})):[];
   if(adm&&rows.length>1){
@@ -8133,7 +8172,7 @@ async function vfLeftovers(entry){
   ]);
   const tasks=(todos||[]).filter(i=>!i.done);
   let clean=[];
-  try{
+  if(featOn('cleaning'))try{
     const evs=getEvs(ty,tm,td);const cleanEv=evs.find(e=>e.t==='clean');
     const list=cleanEv?[...CLEAN_BASE,...CSECTIONS[cleanEv.sec-1].items]:[...CLEAN_BASE];
     const data=(cs&&cs.exists())?(cs.data()||{}):{};
@@ -9608,7 +9647,7 @@ function openStoreRoom(store){
   try{totalCl=getCleanItemCount(ty,tm,td);const cs=window.__dashClean?window.__dashClean.get(store.id):null;dnCl=(cs&&cs.exists())?Object.values(cs.data()).filter(ckVal).length:0;}catch(e){}
   const clRow=el('div','rm-row link',`<div class="rm-main">청소<small>${totalCl?'누르면 체크리스트 · 사진':'오늘 청소 항목 없음'}</small></div><span class="rm-val ${totalCl===0?'':dnCl>=totalCl?'ok':dnCl>0?'warn':'danger'}">${totalCl?`${dnCl} / ${totalCl}`:'—'}</span><span class="vh-arrow" aria-hidden="true">›</span>`);
   clRow.onclick=()=>openQuickClean(store);
-  tl.appendChild(clRow);
+  if(featOn('cleaning'))tl.appendChild(clRow);
   // 매장 할 일 (고정업무 자동 추가) — 비동기
   const fxWrap=el('div','');
   tl.appendChild(fxWrap);
@@ -12523,21 +12562,32 @@ async function renderSettingsTab(content){
     content.appendChild(secMe);
   }
 
-  const secF=document.createElement('div');secF.className='dash-card';secF.style.marginBottom='12px';
-  secF.innerHTML='<div class="dash-store-name">기능 켜기 / 끄기</div><div style="font-size:13px;color:var(--text-sub);margin:4px 0 8px;">끈 기능은 전 직원 화면에서 숨겨집니다. 데이터는 지워지지 않아요 — 다시 켜면 그대로 돌아옵니다.</div>';
-  FEATURE_DEFS.forEach(f=>{
-    const row=document.createElement('label');
-    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;';
-    row.innerHTML=`<span>${f.label}</span><input type="checkbox" ${featOn(f.key)?'checked':''} style="accent-color:var(--gold);width:18px;height:18px;">`;
-    row.querySelector('input').onchange=async(e)=>{
-      const prev=appSettings.features[f.key];
-      appSettings.features={...appSettings.features,[f.key]:e.target.checked};
-      savedEl.textContent='저장 중...';
-      try{await saveSettings();savedEl.textContent='✓ 저장됨';setTimeout(()=>savedEl.textContent='',1500);}
-      catch(err){appSettings.features={...appSettings.features,[f.key]:prev};e.target.checked=featOn(f.key);applySettings();savedEl.textContent='저장 실패 (권한/네트워크 확인)';}
-    };
-    secF.appendChild(row);
-  });
+  // ── v6.33 기능 — 「현재 적용 기능」과 「미적용 기능」 두 칸. 회사가 골라 쓴다(기본 기능은 늘 있음) ──
+  const secF=document.createElement('div');secF.className='dash-card st-feat';secF.style.marginBottom='12px';
+  // 업종 — 「우리 업종」 표시 · 정렬용. 처음 한 번 읽어 둔다(없어도 목록은 그대로)
+  let indKey=(window.__vflowTenant&&window.__vflowTenant.industry)||'';
+  if(!indKey&&window.__vflowTenant){wrApi().then(({sb,ctx})=>sb.from('tenants').select('industry').eq('id',ctx.tenantId).maybeSingle()).then(({data})=>{if(data&&data.industry){window.__vflowTenant.industry=indKey=data.industry;if(secF.isConnected)paintF();}}).catch(()=>{});}
+  const paintF=()=>{
+    const on=FEATURE_DEFS.filter(d=>featOn(d.key)),off=FEATURE_DEFS.filter(d=>!featOn(d.key));
+    const und=new Set(featUndecided().map(d=>d.key));
+    // 미적용 기능 — 새 기능 · 우리 업종에 맞는 것 먼저
+    off.sort((a,b)=>(und.has(b.key)-und.has(a.key))||((b.fit||[]).includes(indKey)-(a.fit||[]).includes(indKey)));
+    const fitTxt=(d)=>{if(!d.fit||!d.fit.length)return '';const all=Object.keys(FEAT_IND_L),miss=all.filter(k=>!d.fit.includes(k));return miss.length&&miss.length<=2?`맞는 곳: ${miss.map(k=>FEAT_IND_L[k]).join(' · ')} 말고 모두`:`맞는 곳: ${d.fit.map(k=>FEAT_IND_L[k]).join(' · ')}`;};
+    const row=(d,isOn)=>`<div class="sf-row"><span class="t"><b>${_wrEsc(featLabel(d))}${und.has(d.key)?'<em class="sf-new">새로</em>':''}${!isOn&&d.fit&&d.fit.includes(indKey)?'<em class="sf-fit">우리 업종</em>':''}</b><small>${_wrEsc(d.desc)}${!isOn&&fitTxt(d)?`<br>${fitTxt(d)}`:''}</small></span><button type="button" class="vh-btn${isOn?'':' primary'}" data-fk="${d.key}" data-on="${isOn?1:0}">${isOn?'끄기':'켜기'}</button></div>`;
+    secF.innerHTML=`<div class="dash-store-name">기능</div><div class="sf-sub">회사 전체에 적용. 꺼도 기록은 남고, 다시 켜면 그대로 돌아옵니다.</div>
+      <div class="sf-base"><b>기본 기능</b> 할 일 · 출근 · 근무 마감 · ${T('store')} 방 · 우선 확인 — 끌 수 없음</div>
+      <div class="sf-h">현재 적용 기능 <span>${on.length}</span></div>${on.map(d=>row(d,true)).join('')||'<div class="sf-empty">없음</div>'}
+      <div class="sf-h">미적용 기능 <span>${off.length}</span></div>${off.map(d=>row(d,false)).join('')||'<div class="sf-empty">모두 적용 중</div>'}`;
+    secF.querySelectorAll('[data-fk]').forEach(b=>b.onclick=async()=>{
+      const k=b.dataset.fk,d=FEATURE_DEFS.find(x=>x.key===k),turnOn=b.dataset.on!=='1';
+      if(!turnOn&&!await vfConfirm(`「${featLabel(d)}」을 끌까요?\n전 직원 화면에서 숨겨집니다. 기록은 남아 다시 켜면 그대로`,{ok:'끄기'}))return;
+      const prev=appSettings.features[k];appSettings.features={...appSettings.features,[k]:turnOn};savedEl.textContent='저장 중';
+      try{await saveSettings();vfUse(turnOn?'feat_on_'+k:'feat_off_'+k);savedEl.textContent=turnOn?`「${featLabel(d)}」 켬`:`「${featLabel(d)}」 끔`;setTimeout(()=>savedEl.textContent='',2000);try{renderSideNav('admin');}catch(e){}}
+      catch(err){appSettings.features={...appSettings.features,[k]:prev};applySettings();savedEl.textContent='저장 실패 · '+vfErrText(err);}
+      paintF();
+    });
+  };
+  paintF();
   content.appendChild(secF);
 
   // ── 운영 시간 — 매장마다 열고 닫는 시각. 마감 30분 전 알림의 기준, 이력의 지각 기준 ──
@@ -13283,7 +13333,7 @@ async function renderSettingsTab(content){
     ['company','회사·매장',['회사 이름',`${T('store')} · 운영 시간`,'가맹 초대 코드'],'이름 · 매장 · 운영 시간'],
     ['people','사람',['직원 초대','근무지·직함','퇴사','휴무 가져오기','주간 1:1 상담'],'초대 · 근무지 · 퇴사 · 1:1'],
     ['work','일하는 규칙',['청소 항목','대청소 규칙','청소 사진 보관','고정 업무','인수인계 규칙','점수 규칙','올라오는 기준'],'청소 · 고정 업무 · 인수인계 · 점수'],
-    ['screen','화면·말',['기능 켜기/끄기','우리 회사 말','색'],'기능 · 우리 회사 말 · 색'],
+    ['screen','기능·화면',['기능','우리 회사 말','색'],'기능 · 우리 회사 말 · 색'],
   ];
   const layout=document.createElement('div');layout.className='st-layout';
   const tabs=document.createElement('div');tabs.className='st-tabs';tabs.setAttribute('role','tablist');
@@ -13630,8 +13680,8 @@ async function renderCompanyTab(content){
   // v6.30 지금 확인할 것 · 직원 오늘 — 예전 「현황·보고」 맨 위에 있던 것. 확인할 곳은 이 화면 하나
   const gw=document.createElement('div');gw.className='vc-gaps';wrap.appendChild(gw);renderTodayGaps(gw).catch(()=>{});
   // 매장 컨디션 — 관리자 홈과 같은 한 장(점수 규칙 그대로). 확인 필요 아래에
-  const cc=document.createElement('div');cc.className='vh-card vc-cc';wrap.appendChild(cc);
-  vfCondAllInto(cc).catch(()=>cc.remove());
+  if(featOn('cleaning')){const cc=document.createElement('div');cc.className='vh-card vc-cc';wrap.appendChild(cc);
+  vfCondAllInto(cc).catch(()=>cc.remove());} // 컨디션 점수는 청소 바탕 — 청소를 안 쓰면 표 없음(v6.33)
   const day=document.createElement('button');day.type='button';day.className='vh-card vc-daylink';day.innerHTML=`<span><b>${T('store')}별 하루</b><small>${T('store')} 타일 · 지난 날짜 기록</small></span><span class="vh-arrow" aria-hidden="true">›</span>`;day.onclick=()=>goDashTab('today');wrap.appendChild(day);
 }
 // 누르면 — 무슨 문제 · 언제부터 · 담당 · 지금. 행동은 매장 방 열기 · 매니저에게 묻기 둘뿐(직원에게 직접 가지 않는다)

@@ -24,7 +24,7 @@ async function collect(sb, T, J) {
   const y = kstDate(-1), t = kstDate(0);
   const yS = new Date(`${y}T00:00:00+09:00`).toISOString(), tS = new Date(`${t}T00:00:00+09:00`).toISOString(), d3 = new Date(Date.now() - 3 * 86400e3).toISOString();
   const safe = (p) => p.catch(() => []);
-  const [stores, people, ho, stale, tasks, clean, ws, lots, appts, deals] = await Promise.all([
+  const [stores, people, ho, stale, tasks, clean, ws, lots, appts, deals, feats] = await Promise.all([
     safe(sb.get(`stores?select=id,name&tenant_id=eq.${T}&limit=100`)),
     safe(sb.get(`profiles?select=id,name,role,status&tenant_id=eq.${T}&limit=300`)),
     safe(sb.get(`handovers?select=store_id,content,tag,confirmed,closed,working_at&tenant_id=eq.${T}&deleted_at=is.null&created_at=gte.${encodeURIComponent(yS)}&created_at=lt.${encodeURIComponent(tS)}&limit=300`)),
@@ -35,7 +35,9 @@ async function collect(sb, T, J) {
     safe(sb.get(`expiry_lots?select=store_id,due_on,status&tenant_id=eq.${T}&status=eq.active&due_on=lte.${t}&limit=500`)),
     safe(sb.get(`appointments?select=store_id,kind,status&tenant_id=eq.${T}&starts_at=gte.${encodeURIComponent(tS)}&starts_at=lt.${encodeURIComponent(new Date(`${kstDate(1)}T00:00:00+09:00`).toISOString())}&limit=500`)),
     safe(sb.get(`deals?select=ball,next_date&tenant_id=eq.${T}&ball=eq.us&next_date=lte.${t}&limit=500`)),
+    sb.get(`tenant_settings?select=features&tenant_id=eq.${T}`).then((r) => (r[0] && r[0].features) || {}).catch(() => ({})),
   ]);
+  const cleaningOn = feats.cleaning !== false; // v6.33 청소를 안 쓰는 회사(도매 · 유통 등)엔 「청소 기록 없음」을 쓰지 않는다
   const act = ho.length + tasks.length + clean.length + ws.length;
   const sN = new Map(stores.map((s) => [s.id, short(s.name)]));
   const lines = stores.map((s) => {
@@ -47,7 +49,7 @@ async function collect(sb, T, J) {
     }
     const st = stale.filter((x) => x.store_id === id).length; if (st) L.push(`3일 넘게 안 본 인수인계 ${st}건`);
     const tk = tasks.filter((x) => x.store_id === id); if (tk.length) L.push(`할 일 ${tk.length}건 중 완료 ${tk.filter((x) => x.status === 'done').length} · 이월 ${tk.filter((x) => x.status === 'carried_over' || x.status === 'pending').length}`);
-    const cl = clean.filter((x) => x.store_id === id); if (cl.length) L.push(`청소 ${cl.filter((x) => x.done).length}/${cl.length}`); else L.push('청소 기록 없음');
+    if (cleaningOn) { const cl = clean.filter((x) => x.store_id === id); L.push(cl.length ? `청소 ${cl.filter((x) => x.done).length}/${cl.length}` : '청소 기록 없음'); }
     const w = ws.filter((x) => x.store_id === id); L.push(w.length ? `출근 ${new Set(w.map((x) => x.profile_id)).size}명 · 마감 누른 사람 ${w.filter((x) => x.ended_at).length}` : '출근 기록 없음(쉬는 날일 수 있음)');
     const lt = lots.filter((x) => x.store_id === id); if (lt.length) L.push(`보관기한 오늘까지 · 지난 것 ${lt.length}건`);
     const ap = appts.filter((x) => x.store_id === id && x.status !== 'cancelled'); if (ap.length) L.push(`오늘 예약 · 미팅 ${ap.length}건`);
