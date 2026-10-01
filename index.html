@@ -582,6 +582,17 @@ button.vf-pj{cursor:pointer;}
 .vh-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:2px 0 14px;flex-wrap:wrap;}
 .vh-head h1{font-size:19px;font-weight:800;margin:0 0 3px;color:var(--text);letter-spacing:-.2px;}
 .vh-head .vh-sub{font-size:13px;color:var(--text-sub);}
+/* v6.29 한 줄 머리 — 사진 · 큰 시계 대신 */
+.vh-head-line{align-items:center;padding:4px 2px 0;}
+.vh-head-line .vh-hmin{font-size:14px;font-weight:700;color:var(--text-sub);margin-top:2px;font-variant-numeric:tabular-nums;}
+.vh-briefline{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 12px;padding:12px 14px;min-height:48px;border:1px solid var(--border);border-radius:12px;background:var(--card);font:inherit;font-size:14px;color:var(--text);text-align:left;cursor:pointer;}
+.vh-briefline b{flex:none;font-weight:800;color:var(--navy);}
+.vh-briefline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vh-briefline i{font-style:normal;color:var(--text-mute);}
+.vf-hero-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.vf-hero-mode button{font:inherit;font-size:15px;font-weight:800;text-align:left;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;min-height:56px;}
+.vf-hero-mode button small{display:block;font-size:13px;font-weight:600;color:var(--text-sub);margin-top:2px;}
+.vf-hero-mode button[aria-pressed=true]{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy);}
 .vh-actions{display:flex;gap:8px;align-items:center;}
 .vh-btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:var(--radius-ctl);padding:9px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;min-height:38px;}
 .vh-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
@@ -1951,7 +1962,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 .vh-allhead .c{font-size:13px;font-weight:700;color:var(--text-sub);white-space:nowrap;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;}
 .vh-allgrid{margin-top:6px;}
 .vh-allgrid[hidden]{display:none!important;}
-@media(max-width:600px){.vh-allhead .n{display:none;}}
+@media(max-width:600px){.vh-allhead .n{display:none;}.vh-allhead{flex-wrap:wrap;row-gap:4px;}.vh-allzone:not(.open) .vh-allhead .n:not(:empty){display:block;order:3;flex-basis:100%;font-size:14px;}} /* 폰에서 접혀 있으면 건수를 아래 줄에 — 펼치지 않아도 급한 게 있는지 보이게(v6.29) */
 .vh-more-row{display:block;width:100%;margin-top:6px;border:1px dashed var(--border);background:transparent;color:var(--text-sub);border-radius:10px;padding:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;}
 .vh-more-row:hover{border-style:solid;color:var(--text);}
 .my-todo-moved{font-size:13px;font-weight:700;color:var(--text-sub);background:var(--soft);border-radius:5px;padding:1px 6px;margin-left:5px;white-space:nowrap;}
@@ -2063,6 +2074,8 @@ html[data-bright=dark] /* 지난달 미완료 알림 배너 */
 html[data-bright=dark] .carry-move-btn{color:var(--text)}
 html[data-bright=dark] .update-modal-version{color:var(--text)}
 html[data-bright=dark] .update-confirm-btn:active{color:var(--text)}
+html[data-bright=dark] .vh-briefline b{color:var(--text)}
+html[data-bright=dark] .vf-hero-mode button[aria-pressed=true]{border-color:var(--text-sub)}
 html[data-bright=dark] .vf-wp.sel{border-color:var(--text-sub)}
 html[data-bright=dark] .vh-metric.danger{background:var(--soft)}
 html[data-bright=dark] .vh-metric.ok{background:var(--soft)}
@@ -3806,7 +3819,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.28';
+const GUIDE_VERSION = 'v6.29';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3847,7 +3860,7 @@ const GUIDE_START = {
     '⑤ 인수인계는 한 줄이면 충분합니다 — 다음 근무자가 알아야 할 것만. 상대가 확인하면 확인 표시가 뜹니다',
     '⑥ 휴무는 「내 업무」 → 「휴무 설정」에서 날짜를 눌러 신청합니다. 나만 보는 메모는 위쪽 「메모」 버튼',
     '⑦ 앱으로 설치 — 홈 화면에 깔아두면 매번 주소를 치지 않아도 됩니다',
-    '⑧ 하루 첫 접속에 뜨는 오늘의 브리핑만 읽어도 그날 할 일이 다 정리됩니다',
+    '⑧ 홈 머리 아래 「오늘」 한 줄 — 오늘 고정업무와 새 공지. 사진 · 큰 시계로 보고 싶으면 내 계정 → 「홈 머리 · 시계」',
   ]},
 };
 // ── 가이드: 기능별 ──
@@ -3928,6 +3941,16 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.29 — 홈 첫 화면: 한 줄 머리 · 숫자 하나 · 브리핑 팝업 없음',
+    items: [
+      '홈 머리는 한 줄 — 인사 · 매장 · 「17:37 · 마감까지 4시간 23분」. 사진과 초 단위 큰 시계는 첫 화면 1/4을 써서 기본에서 뺐습니다',
+      '사진 · 큰 시계로 다시 보기: 내 계정 → 「홈 머리 · 시계」 → 「사진 · 큰 시계」. 그림을 고르면 저절로 켜집니다. 이 기기에만 저장',
+      '하루 첫 접속 「오늘의 브리핑」 팝업 없음 — 홈 머리 아래 「오늘」 한 줄에 홈 다른 칸에 없는 것(오늘 고정업무 · 새 공지)만. 둘 다 없으면 줄도 없음. 전체 브리핑은 메뉴 「오늘의 브리핑」',
+      '대표 · 매니저 홈: 위쪽 숫자 칸 4개를 빼고 「우선 확인」 건수 하나로. 직원 홈의 숫자 4칸은 그대로',
+      '대표 · 매니저 폰: 「전체 현황」이 우선 확인 바로 아래로. 접힌 한 줄에 「급한 것 · 손볼 곳 · 다른 사람 앞」 건수, 누르면 펼침(이 기기에서 기억)',
+    ]
+  },
   {
     title: 'v6.28 — 화면 점검: 큰 글자 · 앱 안 확인 창 · 고장 수정',
     items: [
@@ -5896,7 +5919,7 @@ async function renderDashboardHome(){
   // v3 홈: 개인 우선 섹션 + 관리자란
   try{renderHomePersonal(tKey,dashTodosByName,dashHoByStore);}catch(e){console.warn('[home] personal',e);}
   try{renderHomeAdmin(dashTodosByName);}catch(e){console.warn('[home] admin',e);}
-  maybeShowDailyBriefing(tKey,dashTodosByName,dashHoByStore).catch(e=>console.warn('[brief]',e));
+  // v6.29 하루 첫 접속 팝업은 없앰 — 홈을 막고, 내용은 홈 숫자와 같았다. 홈에 없는 것만 맨 위 한 줄(vfBriefLineInto)
   setTimeout(()=>{maybeCleanupOldPhotos(false).catch(()=>{});},4000); // 홈이 다 그려진 뒤 조용히
 
   for(const store of STORES){
@@ -6084,7 +6107,7 @@ window.openAppMenu=function(){
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
   let _big=false;try{_big=localStorage.getItem('vflow_big')==='1';}catch(e){}
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 9 6l5 14"/><path d="M6 15h6"/><path d="M15 20l3-8 3 8"/><path d="M16.2 17h3.6"/></svg>`,'글자 크게',_big?'크게 · 이 기기':'보통 · 이 기기',()=>{vfUse('font_big');try{localStorage.setItem('vflow_big',_big?'0':'1');}catch(e){}document.body.classList.toggle('vf-big',!_big);});
-  mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`,'머리 이미지 · 시계',`${(VF_COVERS.find(x=>x[0]===vfCoverKey())||['','내 사진'])[1]} · ${VF_CLOCK_L[vfClockStyle()]}`,()=>{ov.remove();openCoverSheet();});
+  mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`,'홈 머리 · 시계',vfHeroBig()?`사진 · 큰 시계 · ${(VF_COVERS.find(x=>x[0]===vfCoverKey())||['','내 사진'])[1]} · ${VF_CLOCK_L[vfClockStyle()]}`:'한 줄 · 사진 · 큰 시계는 꺼짐',()=>{ov.remove();openCoverSheet();});
   const _brL={light:'밝게',dark:'어둡게',auto:'기기 따라'};let _br='light';try{_br=localStorage.getItem('vflow_bright')||'light';}catch(e){}
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,'화면 밝기',`${_brL[_br]||'밝게'} · 이 기기`,()=>{const nx={light:'dark',dark:'auto',auto:'light'}[_br]||'dark';try{localStorage.setItem('vflow_bright',nx);}catch(e){}vfApplyBright();vfUse('bright_'+nx);ov.remove();openAppMenu();});
   if(featOn('ai')){const _orb=vfOrbOn();mk(VF_ICONS.ai.replace('class="vf-ic" width="16" height="16" ',''),'AI 도우미 버튼',`${_orb?'켜짐':'꺼짐'} · 이 기기 · 오른쪽 아래에 떠 있는 도우미`,()=>{try{localStorage.setItem('vflow_orb',_orb?'0':'1');}catch(e){}vfOrbSync();vfUse(_orb?'orb_off':'orb_on');openAppMenu();});}
@@ -6427,12 +6450,22 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     try{
       const _cs0=window.__dashClean?window.__dashClean.get(entry.id):null;
       const _sc0=calcStoreScore({cleanData:(_cs0&&_cs0.exists())?_cs0.data():{},cleanTotal:totalCl,todoDone:(()=>{let n=0;(todosByName||[]).forEach(pp=>{if(pp)n+=pp[1].filter(i=>i.storeId===entry.id&&i.done).length;});return n;})(),hoUnconfirmed:(()=>{const sn=hoByStore.get(entry.id);return (sn&&sn.exists())?hoOverdue(sn.data().items||[],tKey):0;})()});
-      const chip=el('span','',scoreChip(_sc0));chip.title='오늘 점수 · 청소·업무·인수인계';
+      const chip=el('span','vh-scorewrap',scoreChip(_sc0));chip.title='오늘 점수 · 청소·업무·인수인계';
       acts.appendChild(chip);
     }catch(e){}
   }
   head.appendChild(acts);
-  if(!_vp.monitorOnly){
+  const _big=vfHeroBig();
+  if(!_vp.monitorOnly&&!_big){
+    // v6.29 기본 머리는 한 줄 — 사진 + 초 단위 큰 시계가 첫 화면 1/4을 쓰고 날짜가 세 번 나오던 것. 시각은 분까지 + 마감까지
+    head.classList.add('vh-head-line');
+    {const sb0=hl.querySelector('.vh-sub');if(sb0&&!sb0.textContent.startsWith('출근'))sb0.textContent=entry?shortStore(entry.name):'';} // 날짜는 맨 위 줄에 이미 있다
+    const hm=el('div','vh-hmin');hl.appendChild(hm);
+    const tick=(chk)=>{if(chk&&!hm.isConnected)return clearInterval(_t);const P=vfDayPos(entry?entry.id:null);const p2=n=>String(n).padStart(2,'0');hm.textContent=`${p2(P.n.getHours())}:${p2(P.n.getMinutes())}${entry?' · '+vfLeftTxt(P):''}`;};
+    const _t=setInterval(()=>tick(true),30000);tick(false);
+    if(isAdmin){const ch=acts.querySelector('.vh-scorewrap');if(ch)ch.remove();}
+    wrap.appendChild(head);
+  } else if(!_vp.monitorOnly){
     // 머리 이미지 위에 인사·출근·어제 마감을 얹고 오른쪽에 시계 — 한 장이라 세로 자리를 덜 쓴다
     const hero=el('div','vh-hero '+vfCoverTone());hero.style.backgroundImage=`url("${vfCoverUrl()}")`;
     hero.appendChild(el('div','vh-veil'));
@@ -6441,6 +6474,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     hero.appendChild(head);wrap.appendChild(hero);
   } else wrap.appendChild(head);
   window.__briefCtx={tKey,todosByName,hoByStore}; // 사이드바의 「오늘의 브리핑」이 쓴다
+  if(!_vp.monitorOnly){const bl=el('button','vh-briefline');bl.type='button';bl.hidden=true;wrap.appendChild(bl);vfBriefLineInto(bl,entry).catch(()=>bl.remove());}
 
   const grid=el('div','vh-grid');
   try{if(localStorage.getItem('vflow_home_flip')==='1')grid.classList.add('flip');}catch(e){} // 좌우 반전 — 내 계정에서 고른다
@@ -6453,10 +6487,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const allHead=el('button','vh-allhead',`<span class="t"><b>전체 현황</b><small>${isAdmin?`전 ${T('store')} · 진행 중인 것 · 아침 요약`:`우리 ${T('store')} 컨디션 · 다른 사람 앞 ${T('handover')}`}</small></span><span class="n" data-alln></span><span class="c" aria-hidden="true"></span>`);allHead.type='button';
   const allGrid=el('div','vh-grid vh-allgrid');const ac1=el('section','vh-col'),ac2=el('section','vh-col');allGrid.appendChild(ac1);allGrid.appendChild(ac2);
   allZone.appendChild(allHead);allZone.appendChild(allGrid);wrap.appendChild(allZone);
-  let allOpen=isAdmin;try{const v=localStorage.getItem('vflow_home_all');if(v==='1'||v==='0')allOpen=v==='1';}catch(e){}
+  // v6.29 대표 · 매니저 폰은 접힌 한 줄이 기본(새 키로 다시 시작). 직원 · 컴퓨터는 예전에 고른 상태를 그대로 이어 쓴다
+  const _adPhone=isAdmin&&window.innerWidth<1024;
+  let allOpen=isAdmin&&!_adPhone;try{const v=localStorage.getItem('vflow_home_all2')??(_adPhone?null:localStorage.getItem('vflow_home_all'));if(v==='1'||v==='0')allOpen=v==='1';}catch(e){}
   const allN={};const paintAllN=()=>{const t=[allN.gaps?`급한 것 ${allN.gaps}`:'',allN.red?`손볼 곳 ${allN.red}`:'',allN.other?`다른 사람 앞 ${allN.other}`:''].filter(Boolean).join(' · ');const n=allHead.querySelector('[data-alln]');n.textContent=t;n.classList.toggle('warn',!!t);};
   const paintAll=()=>{allZone.classList.toggle('open',allOpen);allHead.setAttribute('aria-expanded',allOpen?'true':'false');allHead.querySelector('.c').textContent=allOpen?'접기 ▴':'펼치기 ▾';allGrid.hidden=!allOpen;};
-  allHead.onclick=()=>{allOpen=!allOpen;try{localStorage.setItem('vflow_home_all',allOpen?'1':'0');}catch(e){}vfUse(allOpen?'home_all_open':'home_all_close');paintAll();};
+  allHead.onclick=()=>{allOpen=!allOpen;try{localStorage.setItem('vflow_home_all2',allOpen?'1':'0');}catch(e){}vfUse(allOpen?'home_all_open':'home_all_close');paintAll();};
   paintAll();
 
   // 시작 체크리스트 (관리자·미완료 시) — 1열 맨 위
@@ -6479,7 +6515,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     window.__vfPrevMet=cur;
   }catch(e){}
   if(isAdmin)met.classList.add('line');
-  col1.appendChild(met);
+  // v6.29 대표 · 매니저는 숫자 칸을 두지 않는다 — 같은 인수인계가 칸 · 우선 확인 · 종에 따로 세어져 숫자가 여럿. 우선 확인 머리의 건수 하나
+  if(!isAdmin)col1.appendChild(met);
   // AI 아침 요약(v6.19) — 대표 · 매니저. 오늘 것이 없으면 카드를 그리지 않는다
   if(isAdmin&&featOn('ai')&&!_vp.monitorOnly){const ab=el('div','vh-card vai-brief');ac1.appendChild(ab);import('./adapter/ai.js').then(m=>m.briefCardInto(ab,{go:vfAiGo,screen:'홈'})).catch(()=>ab.remove());}
   // v6.21: 컨디션은 확인할 것 · 할 일 다음 — 매장이 많아지면 표가 길어져 급한 목록을 밀어내던 것. 컴퓨터는 오른쪽 칸 아래, 폰은 할 일 뒤
@@ -6928,6 +6965,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   renderHomeMeetingCard(extra,null);
   renderHomeInstallCard(extra);
   renderHomePushCard(extra);
+  // v6.29 대표 · 매니저 폰: 전체 현황이 2~4화면 아래에 있던 것 → 우선 확인 바로 아래, 접힌 한 줄(급한 것 · 손볼 곳 건수)이 기본. 컴퓨터는 그대로
+  if(isAdmin&&window.innerWidth<1024&&allZone.isConnected){pri.after(allZone);try{allZone.style.order=getComputedStyle(pri).order;}catch(e){}}
 }
 
 // 남기기 — 한 곳에 적으면 종류에 따라 제자리(오늘 할 일 / 인수인계 / 개인 메모)로 간다.
@@ -8238,11 +8277,24 @@ function vfShrinkImage(file){
     img.onerror=rej;img.src=url;
   });
 }
+function vfHeroBig(){try{return localStorage.getItem('vflow_hero_big')==='1';}catch(e){return false;}}
+// 홈 맨 위 한 줄 — 오늘 고정업무 · 24시간 안 새 공지. 홈 다른 칸에 이미 있는 것(인수인계 · 할 일 · 요청 · 보관기한)은 넣지 않는다. 없으면 줄도 없음
+async function vfBriefLineInto(bl,entry){
+  const ty=today.getFullYear(),tm=today.getMonth(),td=today.getDate();const parts=[];
+  try{getEvs(ty,tm,td).forEach(e=>{if(e.t==='clean')parts.push('대청소 '+e.sec+'구역');else if(e.t==='holiday')parts.push(e.label||'공휴일');else if(SPECIALS[e.t])parts.push(SPECIALS[e.t].task);});}catch(e){}
+  let nn=[];try{const bs=await getDoc(doc(db,'board/posts'));if(bs.exists())nn=(bs.data().items||[]).filter(p=>p.cat==='notice'&&(p.ts||0)>Date.now()-86400000);}catch(e){}
+  if(nn.length)parts.push(`새 공지 ${nn.length}`);
+  if(!parts.length||!bl.isConnected){bl.remove();return;}
+  bl.innerHTML=`<b>오늘</b><span>${parts.map(_wrEsc).join(' · ')}</span><i aria-hidden="true">›</i>`;bl.hidden=false;
+  bl.onclick=()=>{if(nn.length)openBoardOverlay();else vfOpenCalendar();};
+}
 function openCoverSheet(){
   const ov=document.createElement('div');ov.className='vh-sheet-bg';
   const sh=document.createElement('div');sh.className='vh-sheet';sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-label','머리 이미지와 시계');
   const cur=vfCoverKey();
-  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>머리 이미지</h3><span class="vh-tiny">내 것만 · 이 기기</span>
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3>홈 머리</h3><span class="vh-tiny">내 것만 · 이 기기</span>
+    <div class="vf-hero-mode" role="radiogroup" aria-label="홈 머리"><button type="button" data-hm="0" aria-pressed="${!vfHeroBig()}">한 줄<small>인사 · 시각 · 마감까지</small></button><button type="button" data-hm="1" aria-pressed="${vfHeroBig()}">사진 · 큰 시계<small>아래에서 고르기</small></button></div>
+    <h3 style="margin-top:16px;">머리 이미지</h3>
     <div class="vf-cvgrid" style="margin-top:10px;">${VF_COVERS.map(([k,lb])=>`<button type="button" data-cv="${k}" class="${k===cur?'on':''}"><i style="background-image:url(&quot;${vfCoverUrl(k)}&quot;)"></i>${lb}</button>`).join('')}<button type="button" data-up class="${cur==='photo'?'on':''}"><i ${cur==='photo'?`style="background-image:url(&quot;${vfCoverUrl('photo')}&quot;)"`:''}>${cur==='photo'?'':'+'}</i>내 사진</button></div>
     <input type="file" accept="image/*" data-file hidden>
     <h3 style="margin-top:16px;">시계</h3><span class="vh-tiny">대기 화면 · 컴퓨터 홈 머리</span>
@@ -8259,11 +8311,13 @@ function openCoverSheet(){
     grid.after(more);
   });
   sh.querySelectorAll('[data-face]').forEach(f=>{if(!f.closest('[hidden]'))vfClockMount(f,f.dataset.face,null,'sm');});
+  sh.querySelectorAll('[data-hm]').forEach(b=>b.onclick=()=>{try{localStorage.setItem('vflow_hero_big',b.dataset.hm);}catch(e){}sh.querySelectorAll('[data-hm]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));vfUse(b.dataset.hm==='1'?'hero_big':'hero_line');try{renderDashboardHome();}catch(e){}});
   sh.querySelectorAll('.vf-cv-more').forEach(m=>m.addEventListener('click',()=>sh.querySelectorAll('[data-face]').forEach(f=>{if(!f.firstChild)vfClockMount(f,f.dataset.face,null,'sm');})));
   const close=()=>vfSheetClose(ov);
   sh.querySelector('[data-cancel]').onclick=close;ov.onclick=(e)=>{if(e.target===ov)close();};
   const mark=(sel)=>{sh.querySelectorAll('.vf-cvgrid button').forEach(b=>b.classList.toggle('on',b===sel));};
-  sh.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{if(vfCoverSet(b.dataset.cv))mark(b);});
+  const bigOn=()=>{if(vfHeroBig())return;try{localStorage.setItem('vflow_hero_big','1');}catch(e){}sh.querySelectorAll('[data-hm]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.hm==='1')));try{renderDashboardHome();}catch(e){}};
+  sh.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{if(vfCoverSet(b.dataset.cv)){mark(b);bigOn();}});
   const fi=sh.querySelector('[data-file]');const up=sh.querySelector('[data-up]');
   up.onclick=()=>fi.click();
   fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;try{const d=await vfShrinkImage(f);if(vfCoverSet('photo',d)){mark(up);const i=up.querySelector('i');i.textContent='';i.style.backgroundImage=`url("${d}")`;}}catch(e){alert('사진을 읽지 못했습니다.');}};
