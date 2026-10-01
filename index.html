@@ -889,6 +889,7 @@ button.vf-pj{cursor:pointer;}
 .vh-fb-wrap input:focus{border-color:var(--gold);}
 .vh-fb-wrap .vh-btn{min-height:36px;padding:6px 12px;}
 .vh-priority .vh-item.vh-hide-m{display:none;}
+.vh-priority .vh-item.vh-pri-fold{display:none;}
 .vh-more{margin-top:6px;background:none;border:1px dashed var(--border);border-radius:var(--radius-ctl);width:100%;padding:9px;font-size:12px;color:var(--text-sub);font-weight:700;cursor:pointer;font-family:inherit;}
 .vh-quick{order:3;background:var(--navy);border-color:var(--navy);color:#fff;display:flex;align-items:center;gap:13px;cursor:pointer;}
 .vh-quick .vh-mic{width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
@@ -1243,6 +1244,8 @@ body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
   .vh-proj{order:0;}
   .vh-priority .vh-item.vh-hide-m{display:flex;}
   .vh-more{display:none;}
+  .vh-priority .vh-more{display:block;}
+  .vh-priority .vh-item.vh-pri-fold{display:none;}
   .vh-todo.folded .vh-todo-body{display:block;}
   .vh-todo .vh-fold{display:none;}
   .vh-extra{gap:14px;}
@@ -3735,7 +3738,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.26';
+const GUIDE_VERSION = 'v6.27';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3856,6 +3859,13 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.27 — 우선 확인은 몇 줄만, 나머지는 펼쳐서',
+    items: [
+      '홈 「우선 확인」은 중요한 순서로 컴퓨터 4줄 · 폰 2줄까지만 보이고, 나머지는 아래 「나머지 N건 보기」로 펼칩니다. 다 보면 「접기」',
+      '인수인계가 많은 매장에서 목록이 길어져 아래 「전체 현황」(아침 요약 · 매장 컨디션)이 화면 밖으로 밀리던 것을 고쳤습니다',
+    ]
+  },
   {
     title: 'v6.26 — 메모장: 목록 · 추가 · 고정',
     items: [
@@ -6441,15 +6451,20 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   pri.appendChild(priHead);
   const priList=el('div','vh-list');
   pri.appendChild(priList);
-  const MOBILE_MAX=2;
+  // 보이는 줄 수를 정해 둔다(폰 2 · 컴퓨터 4) — 인수인계가 많은 매장에서 목록이 길어져 아래 「전체 현황」이 화면 밖으로 밀리던 것.
+  // 나머지는 「나머지 N건 보기」로 펼치고 「접기」로 되돌린다. 칸 안 스크롤은 쓰지 않는다(화면 스크롤과 겹쳐 손이 헷갈림)
+  const MOBILE_MAX=2,DESK_MAX=4;let priOpen=false;
+  const priMax=()=>window.matchMedia&&matchMedia('(min-width:1024px)').matches?DESK_MAX:MOBILE_MAX;
   const refreshPri=()=>{
     // 비어 있을 때 넣은 안내 줄은 진짜 줄이 생기면 치운다 (요청·제안은 나중에 도착한다)
     const ph=priList.querySelector('.vh-empty-row');
     if(ph&&priList.querySelectorAll('.vh-item:not(.vh-empty-row)').length)ph.remove();
     const rows=[...priList.querySelectorAll('.vh-item:not(.vf-out):not(.vh-empty-row)')];
-    rows.forEach((r,i)=>r.classList.toggle('vh-hide-m',i>=MOBILE_MAX));
+    const mx=priMax();
+    try{const tn=priHead.querySelector('.vh-tiny');if(tn)tn.textContent=rows.length>1?`${rows.length}건 · 중요도순`:'';}catch(e){}
+    rows.forEach((r,i)=>r.classList.toggle('vh-pri-fold',!priOpen&&i>=mx));
     const more=pri.querySelector('.vh-more');
-    if(more){const hid=rows.length-MOBILE_MAX;more.style.display=hid>0?'':'none';more.textContent=`${hid}건 더 보기`;}
+    if(more){const hid=rows.length-mx;more.style.display=hid>0?'':'none';more.textContent=priOpen?'접기 ▴':`나머지 ${hid}건 보기 ▾`;more.setAttribute('aria-expanded',priOpen?'true':'false');}
     window.__vfPri=rows.length;try{vfBellPaint();}catch(e){}
     if(rows.length===0&&!priList.querySelector('.vf-out')&&!ph){priList.innerHTML='<div class="vh-item vh-empty-row"><span class="vh-dot"></span><div class="vh-main">확인할 것 없음<small></small></div></div>';}
   };
@@ -6487,9 +6502,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     priList.appendChild(row);
   });
   const more=el('button','vh-more','');
-  more.onclick=()=>{priList.querySelectorAll('.vh-item').forEach(r=>r.classList.remove('vh-hide-m'));more.style.display='none';};
+  more.type='button';
+  more.onclick=()=>{priOpen=!priOpen;refreshPri();if(!priOpen){try{pri.scrollIntoView({block:'nearest'});}catch(e){}}};
   pri.appendChild(more);
   refreshPri();
+  try{if(window.__vfPriMQ)window.__vfPriMQ.mq.removeEventListener('change',window.__vfPriMQ.fn);const mq=matchMedia('(min-width:1024px)');const fn=()=>{if(pri.isConnected)refreshPri();};mq.addEventListener('change',fn);window.__vfPriMQ={mq,fn};}catch(e){}
   col1.appendChild(pri);
   // 4번째 칸 — 요청(나에게 온 업무 요청, 비동기) / 요청 기능이 꺼져 있으면 진행 중 프로젝트 수
   (async()=>{
