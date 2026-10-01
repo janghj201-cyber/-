@@ -915,7 +915,7 @@ button.vf-pj{cursor:pointer;}
 /* v6.21 홈 — 급한 것부터 · 글자 · 칸 구분 */
 @media(max-width:1023px){
   .vh-grid .vh-metrics{order:1;}.vh-grid .vai-brief{order:2;}.vh-grid .vh-storegaps{order:3;}.vh-grid .vh-priority:not(.vh-storegaps){order:4;}.vh-grid .vh-quick,.vh-grid .vh-quickrow{order:5;}
-  .vh-grid .vh-todo{order:6;}.vh-grid .vh-memo{order:7;}.vh-grid .vf-condall,.vh-grid .vf-condwrap,.vh-grid .vf-condline{order:8;}.vh-grid .vh-proj,.vh-grid .vh-pline{order:9;}.vh-grid .vh-links{order:10;}.vh-grid .vh-extra{order:11;}
+  .vh-grid .vh-todo,.vh-grid .vh-sentreq{order:6;}.vh-grid .vh-memo{order:7;}.vh-grid .vf-condall,.vh-grid .vf-condwrap,.vh-grid .vf-condline{order:8;}.vh-grid .vh-proj,.vh-grid .vh-pline{order:9;}.vh-grid .vh-links{order:10;}.vh-grid .vh-extra{order:11;}
 }
 .vh-ct strong{font-size:15.5px;letter-spacing:-.2px;}
 .vh-item{font-size:14px;}
@@ -1001,12 +1001,50 @@ body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
 .vf-memo-sh textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:12px 13px;font-size:14px;font-family:inherit;min-height:46vh;resize:vertical;outline:none;line-height:1.6;color:var(--text);background:var(--card);}
 .vf-memo-sh textarea:focus{border-color:var(--gold);}
 .vf-memo-sh .vf-memo-ft{margin-top:8px;}
+/* 메모장(v6.26) — 머리 버튼(목록 · 추가 | 고정 · 지우기) · 지금 장 이름 · 목록(적는 칸 자리를 덮음) · 적는 칸 */
+.vf-memo-box{display:flex;flex-direction:column;gap:8px;min-height:0;}
+.vf-memo-tools{display:flex;align-items:center;gap:6px;}
+.vf-memo-sp{flex:1;}
+.vf-memo-tb{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:9px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.vf-memo-tb:hover{background:var(--soft);}
+.vf-memo-tb.ic{width:34px;padding:0;justify-content:center;}
+.vf-memo-tb.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+.vf-memo-tb.ic.on{background:var(--gold-light);border-color:var(--gold);color:var(--gold);}
+.vf-memo-tb[hidden]{display:none;}
+.vf-memo-cur{display:flex;align-items:center;gap:5px;min-height:20px;font-size:13px;color:var(--text);}
+.vf-memo-cur[hidden]{display:none;}
+.vf-memo-cur b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vf-memo-pin{display:inline-flex;color:var(--gold);flex:none;}
+.vf-memo-pin svg{width:14px;height:14px;}
+.vf-memo-pin[hidden]{display:none;}
+.vf-memo-list{border:1.5px solid var(--border);border-radius:var(--radius-ctl);background:var(--card);padding:5px;overflow-y:auto;min-height:150px;max-height:320px;}
+.vf-memo-list.tall{min-height:46vh;max-height:none;}
+.vf-memo-list[hidden],.vf-memo-box textarea[hidden]{display:none;}
+.vf-memo-it{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:9px 10px;font:inherit;color:var(--text);cursor:pointer;}
+.vf-memo-it:hover{background:var(--soft);}
+.vf-memo-it.on{background:var(--soft);box-shadow:inset 0 0 0 1px var(--border);}
+.vf-memo-tt{flex:1;min-width:0;display:flex;flex-direction:column;}
+.vf-memo-tt .t{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vf-memo-tt .p{font-size:12.5px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vf-memo-tt .p:empty{display:none;}
+.vf-memo-it time{flex:none;font-size:12.5px;color:var(--text-sub);}
+.vf-memo-none{padding:22px 10px;text-align:center;font-size:13px;color:var(--text-sub);}
+.vf-memo-gap{height:1px;background:var(--border);margin:4px 8px;}
+.vf-memo-box textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius-ctl);padding:11px 12px;font-size:14px;font-family:inherit;min-height:150px;resize:vertical;outline:none;background:var(--card);color:var(--text);line-height:1.55;}
+.vf-memo-box textarea.tall{min-height:46vh;}
+.vf-memo-box textarea:focus{border-color:var(--gold);}
+.vf-memo-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;}
+.vf-memo-undo{background:none;border:0;color:var(--gold);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;padding:2px 4px;border-radius:6px;text-decoration:underline;}
+.vf-memo-sh [data-memo]{flex:1;min-height:0;display:flex;flex-direction:column;}
+.vf-memo-sh [data-memo] .vf-memo-box{flex:1;}
+.vf-memo-sh .vf-memo-list.tall{flex:1;}
 @media(min-width:1024px){
   .vh-sheet-bg.vf-memo-bg{justify-content:flex-end;align-items:stretch;background:rgba(23,34,51,.28);}
   .vf-memo-bg .vf-memo-sh{max-width:440px;border-radius:0;display:flex;flex-direction:column;padding:22px 22px 18px;animation:vf-memo-in .22s cubic-bezier(.2,.8,.2,1);box-shadow:-12px 0 32px rgba(23,34,51,.12);}
   .vf-memo-bg.vf-closing .vf-memo-sh{animation:vf-memo-in .18s ease reverse forwards;}
   .vf-memo-bg .vh-sheet-handle{display:none;}
   .vf-memo-sh textarea{flex:1;min-height:0;resize:none;}
+  .vf-memo-sh .vf-memo-list.tall{min-height:0;}
 }
 @keyframes vf-memo-in{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 .vh-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;margin-left:6px;vertical-align:1px;}
@@ -1708,7 +1746,7 @@ body.vf-big{zoom:1.1;--vf-zoom:1.1;}
 #screen-my-work.view-only button[onclick="openMyDayoffModal()"],
 #screen-my-work.view-only button[onclick="toggleMyDayoff()"],
 #screen-my-work.view-only button[onclick="toggleMyBulk()"],
-#screen-my-work.view-only .my-section:has(#my-memo-textarea){display:none!important}
+#screen-my-work.view-only .my-section:has(#my-memo-textarea),#screen-my-work.view-only #mw-memo{display:none!important}
 #screen-my-work.view-only .my-todo-list input[type=checkbox]{pointer-events:none;opacity:.55}
 /* 인수인계 입력줄은 예외로 다시 살림 */
 #screen-my-work.view-only .my-section:has(#my-handover-input) .my-input-row{display:flex!important}
@@ -1722,7 +1760,7 @@ body.feat-off-board .board-section{display:none!important}
 body.feat-off-workreq .feat-workreq{display:none!important}
 body.feat-off-storeinfo .feat-storeinfo{display:none!important}
 body.feat-off-hofeedback .ho-btn-fb{display:none!important}
-body.feat-off-memo .my-section:has(#my-memo-textarea){display:none!important}
+body.feat-off-memo .my-section:has(#my-memo-textarea),body.feat-off-memo #mw-memo{display:none!important}
 body.feat-off-projects .my-section:has(#my-project-banner-wrap){display:none!important}
 body.feat-off-projects #type-project{display:none!important}
 body.feat-off-dayoff button[onclick="openMyDayoffModal()"],body.feat-off-dayoff #my-dayoff-banner{display:none!important}
@@ -1839,6 +1877,25 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 .vh-head-btns .hb{display:inline-flex;align-items:center;gap:5px;}
 .vh-head-btns .hb svg{width:16px;height:16px;flex:none;}
 .vf-mi{display:inline-flex;width:22px;justify-content:center;color:var(--text-sub);flex:none;}
+.wh-edit{flex:1;min-width:0;display:flex;gap:6px;align-items:center;}
+.wh-edit input{flex:1;min-width:0;border:1.5px solid var(--gold);border-radius:8px;padding:7px 10px;font:inherit;font-size:13.5px;background:var(--card);color:var(--text);outline:none;}
+/* 홈 전체 현황(v6.25) — 내 것 아래 한 판. 접으면 머리 한 줄만 */
+.vh-allzone{margin-top:18px;border:1px solid var(--border);border-radius:16px;background:var(--soft);padding:8px;}
+.vh-allhead{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:0;border-radius:11px;padding:10px 10px;font:inherit;color:var(--text);cursor:pointer;text-align:left;}
+.vh-allhead:hover{background:var(--card);}
+.vh-allhead .t{flex:1;min-width:0;}
+.vh-allhead .t b{display:block;font-size:15px;font-weight:800;}
+.vh-allhead .t small{display:block;font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+.vh-allhead .n{font-size:12.5px;font-weight:800;color:var(--text-sub);white-space:nowrap;}
+.vh-allhead .n.warn{color:var(--red);}
+.vh-allhead .c{font-size:12.5px;font-weight:700;color:var(--text-sub);white-space:nowrap;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;}
+.vh-allgrid{margin-top:6px;}
+.vh-allgrid[hidden]{display:none!important;}
+@media(max-width:600px){.vh-allhead .n{display:none;}}
+.vh-more-row{display:block;width:100%;margin-top:6px;border:1px dashed var(--border);background:transparent;color:var(--text-sub);border-radius:10px;padding:8px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+.vh-more-row:hover{border-style:solid;color:var(--text);}
+.my-todo-moved{font-size:11.5px;font-weight:700;color:var(--text-sub);background:var(--soft);border-radius:5px;padding:1px 6px;margin-left:5px;white-space:nowrap;}
+.my-todo-item:has(.my-todo-moved) .my-todo-text,.my-history-item:has(.my-todo-moved) .my-history-text{color:var(--text-mute);}
 /* 내 계정 — 묶음별 한 줄 목록. 화면보다 길면 카드 안에서 스크롤(머리는 고정) */
 [data-appmenu]{align-items:flex-end;}
 .vf-am{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,0.28);}
@@ -2366,6 +2423,11 @@ html[data-bright=dark] img{opacity:.92}html[data-bright=dark] input,html[data-br
           </div>
           <div class="wh-list" id="mw-wh-list"></div>
         </div>
+        <!-- 내 메모(v6.25) — 서랍과 같은 메모를 이 화면에서도. 여러 장 · 본인만 -->
+        <div class="vh-card my-section mw-card" id="mw-memo">
+          <div class="vh-ct"><strong>내 메모</strong><span class="vh-tiny">나만 보기</span></div>
+          <div id="mw-memo-box"></div>
+        </div>
       </section>
 
       <section class="mw-col">
@@ -2447,7 +2509,7 @@ html[data-bright=dark] img{opacity:.92}html[data-bright=dark] input,html[data-br
 <script type="module">
 import { initializeApp } from "./adapter/firebase-shim.js";
 import { pcBat, pcMacCmd, pcOS, pcCopy } from "./adapter/pcsetup.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, monthKpi, storeHistory, storeConditionRaw, getCleanThumbUrl, staffHistory } from "./adapter/firebase-shim.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, createInvitation, listPendingInvitations, cancelInvitation, uploadCleanPhoto, getCleanPhotoUrl, deleteOldCleanPhotos, listStoreFixedTodos, ensureStoreFixedTodos, setStoreFixedTodoDone, listBacklog, addBacklog, scheduleBacklog, unscheduleTodo, deleteBacklog, editBacklog, notesList, notesSave, notesDelete, monthKpi, storeHistory, storeConditionRaw, getCleanThumbUrl, staffHistory } from "./adapter/firebase-shim.js";
 
 // ══════════════════════════════════════
 // 데이터 연결
@@ -2928,7 +2990,7 @@ function updateMyMetrics(){
   const set=(id,v,cls)=>{const b=document.getElementById(id);if(!b)return;b.textContent=v;const m=b.closest('.vh-metric');if(m){m.classList.remove('danger','ok');if(cls)m.classList.add(cls);}};
   // 매장 할 일(고정업무 자동 추가)도 같이 센다 — 홈의 「할 일」 칸과 같은 셈법
   const fxAll=q('#mw-fixed-list .hp-todo'),fxDone=q('#mw-fixed-list .hp-todo.done');
-  const todoAll=q('#my-todo-list .my-todo-item')+fxAll,todoDone=q('#my-todo-list .my-todo-item.done')+fxDone,left=todoAll-todoDone;
+  const todoAll=q('#my-todo-list .my-todo-item:not(.moved)')+fxAll,todoDone=q('#my-todo-list .my-todo-item.done')+fxDone,left=todoAll-todoDone; // 오늘로 옮긴 원본은 세지 않는다
   set('mw-m-todo',todoAll?left:'—',todoAll?(left===0?'ok':''):'');
   const sub=document.getElementById('mw-todo-sub');if(sub)sub.textContent=todoAll?`${todoDone}/${todoAll} 완료`:'';
   const carry=q('#my-todo-list .my-todo-carry, #my-todo-list .carry-3day');
@@ -3014,7 +3076,7 @@ async function renderMyWeekStrip(){
     if(seq!==_mwStripSeq)return;
     const key=dk(d.getFullYear(),d.getMonth(),d.getDate());
     try{
-      const its=await loadStaffTodos(myStaff,key);
+      const its=(await loadStaffTodos(myStaff,key)).filter(i=>!i.moved); // 오늘로 옮긴 원본은 그 날 몫이 아니다
       const el=strip.querySelector(`.mw-cnt[data-k="${key}"]`);if(!el)continue;
       if(!its.length){el.textContent='';continue;}
       const dn=its.filter(i=>i.done).length;
@@ -3060,6 +3122,8 @@ function renderMyWorkScreen(){
 
   renderMyTodoList();
   renderMyBacklog().catch(()=>{});
+  // 내 메모 칸 — 내 카드일 때만(남의 카드는 view-only 로 숨김). 메모 기능이 꺼졌으면 CSS 가 숨긴다
+  try{const mb=document.getElementById('mw-memo-box');if(mb){const self=window.__vflowProfile&&window.__vflowProfile.name===myStaff;if(self&&!mb.dataset.on){mb.dataset.on='1';vfMemoInto(mb);}else if(!self){mb.innerHTML='';delete mb.dataset.on;}}}catch(e){}
   loadMyStats();
   checkLastMonthCarry();
   checkPrevDayStoreIncomplete();
@@ -3122,8 +3186,10 @@ async function renderMyTodoList(){
         bar.style.cssText='display:flex;justify-content:flex-end;padding:0 0 6px;';
         bar.innerHTML=`<button id="del-all-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;">전체 삭제</button>`;
         bar.querySelector('#del-all-btn').onclick=async()=>{
-          if(!confirm('오늘 업무를 전체 삭제하시겠습니까?'))return;
-          await setDoc(staffTodoRef(myStaff,dateKey),{items:[]});
+          if(!confirm(`이 날짜 목록 ${allItems.length}건을 모두 삭제하시겠습니까?`))return;
+          // 지울 id 를 꼭 넘긴다 — 빈 목록만 보내면 저장소가 아무것도 지우지 않는다(예전 「전체 삭제」가 안 되던 이유)
+          try{await setDoc(staffTodoRef(myStaff,dateKey),{items:[],deletedIds:allItems.map(i=>i.id)});}catch(err){alert('삭제에 실패했습니다. '+(err&&err.message||''));renderMyTodoList();return;}
+          try{loadMyStats();loadMyHistory();}catch(e){}
           listEl.innerHTML='<div class="my-empty" style="text-align:center;padding:10px 6px;"><button type="button" class="vf-empty-act" onclick="var i=document.getElementById(\'my-todo-input\');if(i){i.focus();}">오늘 할 일 적기 →</button></div>';
         };
         listEl.appendChild(bar);
@@ -3142,7 +3208,7 @@ async function renderMyTodoList(){
         }
 
         const row=document.createElement('div');
-        row.className='my-todo-item'+(item.done?' done':'');
+        row.className='my-todo-item'+(item.done?' done':'')+(item.moved?' moved':'');
 
         // 이전 매장 미완료면 흐리게
         if(isDiffStore&&!item.done){
@@ -3175,6 +3241,7 @@ async function renderMyTodoList(){
               tags+=`<span class="my-todo-carry">[${item.fromDate.slice(5)} 이월]</span>`;
             }
           }
+          if(item.moved)tags+='<span class="my-todo-moved">오늘로 옮김</span>';
           if(isDiffStore&&store){
             tags+=`<span class="carry-old-store">${storeShort(store.name)}</span>`;
           } else if(store&&!isDiffStore){
@@ -3192,20 +3259,20 @@ async function renderMyTodoList(){
           const _subs=item.subs||[];
           const _subBadge=`<span data-subbadge style="font-size:11.5px;background:var(--purple-light);color:var(--purple);padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:800;${_subs.length?'':'display:none;'}">${_subs.length?`${_subs.filter(s=>s.done).length}/${_subs.length}`:''}</span>`;
           row.innerHTML=`
-            <input type="checkbox" ${item.done?'checked':''}>
+            <input type="checkbox" ${item.done?'checked':''} ${item.moved?'disabled title="오늘로 옮긴 일 — 오늘 목록에서 체크"':''}>
             <div style="flex:1">
               <div class="my-todo-text">${item.text}${tags}${_subBadge}</div>
               ${actionBtns}
               <div data-subhost></div>
             </div>
-            <div class="todo-actions">
+            <div class="todo-actions">${item.moved?'<button class="todo-action-btn" data-act="del">삭제</button>':`
               ${(!item.done&&/^[0-9a-f-]{36}$/i.test(String(item.id))&&window.__vflowProfile&&window.__vflowProfile.name===myStaff)?'<button class="todo-action-btn" data-act="wh" title="창고로">창고로</button>':''}
               <button class="todo-action-btn" data-act="subs" title="세부 체크리스트">세부</button>
               <button class="todo-action-btn" data-act="up" title="위로">↑</button>
               <button class="todo-action-btn" data-act="down" title="아래로">↓</button>
               ${!carryDays||item.done?`
               <button class="todo-action-btn" data-act="edit">수정</button>
-              <button class="todo-action-btn" data-act="del">삭제</button>`:''}
+              <button class="todo-action-btn" data-act="del">삭제</button>`:''}`}
             </div>`;
 
           // ── 세부 체크리스트 (하위 항목) ──
@@ -3300,8 +3367,8 @@ async function renderMyTodoList(){
           row.querySelector('[data-act="edit"]')?.addEventListener('click',()=>{editingId=item.id;render();});
           row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
             if(!confirm('삭제하시겠습니까?'))return;
-            await deleteTodoItem(myStaff,dateKey,item.id);
-            allItems.splice(allItems.indexOf(item),1);render();
+            try{await deleteTodoItem(myStaff,dateKey,item.id);}catch(err){alert('삭제에 실패했습니다. '+(err&&err.message||''));return;}
+            allItems.splice(allItems.indexOf(item),1);render();try{loadMyStats();}catch(e){}
           });
 
           // 3일 이상 이월 액션
@@ -3320,7 +3387,7 @@ async function renderMyTodoList(){
           });
           row.querySelector('[data-act="delete"]')?.addEventListener('click',async()=>{
             if(!confirm('이 미완료 업무를 삭제하시겠습니까?'))return;
-            await deleteTodoItem(myStaff,dateKey,item.id);
+            try{await deleteTodoItem(myStaff,dateKey,item.id);}catch(err){alert('삭제에 실패했습니다. '+(err&&err.message||''));return;}
             allItems.splice(allItems.indexOf(item),1);render();
           });
         }
@@ -3360,7 +3427,24 @@ function backlogRow(it,opts){
     try{await deleteBacklog(it.id);}catch(err){alert('삭제에 실패했습니다. '+(err.message||'네트워크를 확인해주세요'));return;}
     vfRowOut(row).then(()=>{if(opts.onDeleted)opts.onDeleted();});
   };
-  row.appendChild(t);row.appendChild(todayBtn);row.appendChild(cal);row.appendChild(del);
+  // 고치기(v6.25) — 글을 누르거나 「수정」 → 그 자리에서 한 줄 고쳐 쓰기. 엔터 저장 · Esc 취소
+  const ed=document.createElement('button');ed.type='button';ed.className='todo-action-btn';ed.textContent='수정';
+  const startEdit=()=>{
+    if(row.querySelector('.wh-edit'))return;
+    const box=document.createElement('div');box.className='wh-edit';
+    box.innerHTML=`<input type="text" maxlength="300" aria-label="창고 글 고치기"><button type="button" class="vh-btn primary">저장</button><button type="button" class="vh-btn">취소</button>`;
+    const inp=box.querySelector('input');inp.value=it.text;
+    const [sv,cc]=box.querySelectorAll('button');
+    const done=()=>{box.remove();t.hidden=false;[todayBtn,cal,ed,del].forEach(x=>x.hidden=false);};
+    const commit=async()=>{const v=inp.value.trim();if(!v||v===it.text){done();return;}sv.disabled=true;
+      try{await editBacklog(it.id,v);}catch(err){sv.disabled=false;alert('고치지 못했습니다. '+(err.message||'네트워크를 확인해주세요'));return;}
+      it.text=v;const sm=t.querySelector('small');t.innerHTML=_wrEsc(v);if(sm)t.appendChild(sm);done();};
+    sv.onclick=commit;cc.onclick=done;
+    inp.onkeydown=(e)=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();commit();}else if(e.key==='Escape')done();};
+    t.hidden=true;[todayBtn,cal,ed,del].forEach(x=>x.hidden=true);row.insertBefore(box,t);setTimeout(()=>{inp.focus();inp.select();},0);
+  };
+  ed.onclick=startEdit;t.style.cursor='text';t.title='눌러서 고치기';t.onclick=startEdit;
+  row.appendChild(t);row.appendChild(todayBtn);row.appendChild(cal);row.appendChild(ed);row.appendChild(del);
   return row;
 }
 async function renderMyBacklog(){
@@ -3574,9 +3658,11 @@ async function loadMyStats(){
   for(let d=1;d<=lastDay;d++){
     try{
       const items=await loadStaffTodos(name,dk(y,m,d));
-      total+=items.length;
-      done+=items.filter(i=>i.done).length;
-      carry+=items.filter(i=>i.fromDate&&i.fromDate!==dk(y,m,d)).length;
+      // 오늘 목록엔 밀린 미완료가 함께 오므로(자동 이월) 그 날짜 자기 것만 센다. 오늘로 옮긴 원본은 새 줄로 한 번만
+      const key=dk(y,m,d),own=items.filter(i=>!(i.fromDate&&i.fromDate!==key));
+      total+=own.filter(i=>!i.moved).length;
+      done+=own.filter(i=>i.done).length;
+      carry+=own.filter(i=>i.moved).length+(key===todayKey()?items.length-own.length:0);
     }catch(e){}
   }
   const t=document.getElementById('my-stat-total');
@@ -3649,8 +3735,8 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.24';
-const BUILD_DATE = '2026-09-29'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
+const GUIDE_VERSION = 'v6.26';
+const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
 (function(){
@@ -3770,6 +3856,29 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.26 — 메모장: 목록 · 추가 · 고정',
+    items: [
+      '메모 서랍(컴퓨터 오른쪽 · 폰 아래)은 그대로, 위에 「목록 · 추가 · 고정 · 지우기」 버튼',
+      '「목록」 — 적는 칸 자리에 메모 목록(제목 · 둘째 줄 · 고친 시각). 고르면 바로 그 메모로',
+      '「추가」 — 빈 메모가 열리고 바로 적기. 첫 줄이 제목, 적으면 저절로 저장. 장 수 제한 없음',
+      '「고정」(핀) — 고정한 메모는 목록 맨 위, 서랍을 열면 이 메모부터. 홈 메모 미리보기도 이 메모',
+      '「지우기」(휴지통) — 확인 창 없이 지우고 아래 「되돌리기」',
+      '메모를 한 장씩 저장 — 폰과 매장 컴퓨터에서 서로 다른 메모를 고쳐도 덮어쓰지 않습니다. 쓰던 메모는 그대로 옮겨집니다',
+    ]
+  },
+  {
+    title: 'v6.25 — 홈 「내 것 / 전체 현황」 · 내 것만 브리핑 · 보낸 요청 · 메모 여러 장',
+    items: [
+      '홈을 「내 것」과 「전체 현황」으로 — 위에는 나에게 온 인수인계 · 받는 사람 없는 우리 매장 것 · 받은 요청 · 오늘 할 일 · 내가 보낸 요청. 아래 「전체 현황」에 전 매장 · 다른 사람 앞 인수인계 · 매장 컨디션 · 진행 중인 것(직원은 처음에 접힘, 대표 · 매니저는 펼침 · 기기마다 기억)',
+      '오늘의 브리핑은 내 것만 — 나에게 온 인수인계 · 받는 사람 없는 우리 매장 인수인계 · 나에게 온 요청 · 내 미완료 업무 · 오늘 고정업무 · 새 공지. 다른 사람 앞으로 온 인수인계는 빠집니다',
+      '「내가 보낸 요청」 — 홈에서 보낸 요청이 보냄 › 받음 › 완료 어디까지 갔는지 봅니다(최근 30일)',
+      '지난 날짜 할 일 「오늘로」 — 옮기면 원래 날짜엔 「오늘로 옮김」으로 남고 오늘 목록에 들어갑니다. 이번 달 목록에 같은 일이 두 번 보이던 것도 고쳤습니다',
+      '전날 할 일 삭제 · 「전체 삭제」가 안 되던 문제를 고쳤습니다(오늘로 옮긴 적 있는 일도 지워집니다)',
+      '내 업무 화면 가운데에도 메모 칸 — 서랍과 같은 메모(메모장은 v6.26)',
+      '업무 창고 글 고치기 — 글을 누르거나 「수정」',
+    ]
+  },
   {
     title: 'v6.24 — 홈 머리 시계 겹침 고침',
     items: [
@@ -5289,6 +5398,7 @@ async function loadMyHistory(){
     try{
       const items=await loadStaffTodos(myStaff,dateKey);
       items.forEach(item=>{
+        if(item.fromDate&&item.fromDate!==dateKey)return; // 오늘 목록에 함께 온 밀린 일 — 원래 날짜에 이미 있다(두 번 보이던 것)
         const store=STORES.find(s=>s.id===item.storeId)||STORES[0];
         allItems.push({...item,storeId:item.storeId,storeName:store.name,storeIcon:store.icon,dateKey});
       });
@@ -5296,7 +5406,7 @@ async function loadMyHistory(){
   }
 
   const filtered=myHistoryFilter==='done'?allItems.filter(i=>i.done)
-    :myHistoryFilter==='undone'?allItems.filter(i=>!i.done)
+    :myHistoryFilter==='undone'?allItems.filter(i=>!i.done&&!i.moved)
     :allItems;
 
   filtered.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
@@ -5324,27 +5434,28 @@ async function loadMyHistory(){
     const row=document.createElement('div');
     row.className='my-history-item'+(item.done?' my-history-done':'');
     row.style.borderLeftColor=item.done?'var(--green)':item.fromDate&&item.fromDate!==item.dateKey?'var(--orange)':'var(--navy)';
-    const carryTag=item.fromDate&&item.fromDate!==item.dateKey?` <span style="font-size:11.5px;color:var(--orange);">[이월]</span>`:'';
-    const canCarry=!item.done&&item.dateKey!==todayKey;
+    const carryTag=item.moved?' <span class="my-todo-moved">오늘로 옮김</span>':item.fromDate&&item.fromDate!==item.dateKey?` <span style="font-size:11.5px;color:var(--orange);">[이월]</span>`:'';
+    const canCarry=!item.done&&!item.moved&&item.dateKey!==todayKey;
+    if(item.moved)row.style.borderLeftColor='var(--border)';
 
     const renderRow=()=>{
       row.innerHTML=`
         <div style="display:flex;align-items:flex-start;gap:8px;">
-          <input type="checkbox" ${item.done?'checked':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
+          <input type="checkbox" ${item.done?'checked':''} ${item.moved?'disabled title="오늘로 옮긴 일 — 오늘 목록에서 체크"':''} style="width:16px;height:16px;accent-color:var(--gold);margin-top:2px;flex-shrink:0;cursor:pointer;">
           <div style="flex:1;">
             <div class="my-history-store">${item.storeIcon} ${storeShort(item.storeName)}</div>
             <div class="my-history-text">${item.text}${carryTag}</div>
           </div>
           <div style="display:flex;gap:2px;flex-shrink:0;margin-top:2px;">
             ${canCarry?`<button class="carry-move-btn">오늘로↑</button>`:''}
-            <button data-act="edit" class="todo-action-btn" title="수정">✏️</button>
+            ${item.moved?'':'<button data-act="edit" class="todo-action-btn" title="수정">✏️</button>'}
             <button data-act="del" class="todo-action-btn" title="삭제">🗑️</button>
           </div>
         </div>`;
 
       // 체크박스
       row.querySelector('input').onchange=async(e)=>{
-        await toggleTodoItem(item.storeId,item.dateKey,item.id,e.target.checked);
+        try{await toggleTodoItem(myStaff,item.dateKey,item.id,e.target.checked);}catch(err){e.target.checked=!e.target.checked;alert('저장에 실패했습니다. '+(err&&err.message||''));return;}
         item.done=e.target.checked;
         row.className='my-history-item'+(item.done?' my-history-done':'');
         row.style.borderLeftColor=item.done?'var(--green)':'var(--navy)';
@@ -5353,9 +5464,11 @@ async function loadMyHistory(){
 
       // 이월
       if(canCarry){
-        row.querySelector('.carry-move-btn')?.addEventListener('click',async()=>{
-          await carryItemToToday(item);
-          await loadMyHistory();
+        row.querySelector('.carry-move-btn')?.addEventListener('click',async(ev)=>{
+          const b=ev.currentTarget;b.disabled=true;b.textContent='옮기는 중';
+          try{await carryItemToToday(item);}catch(err){b.disabled=false;b.textContent='오늘로↑';alert('옮기지 못했습니다. '+(err&&err.message||''));return;}
+          vfToast('오늘 할 일로 옮겼어요',`${item.text.slice(0,30)} — 원래 날짜엔 「오늘로 옮김」으로 남아요`,null,{soft:true});
+          await loadMyHistory();try{renderMyTodoList();loadMyStats();}catch(e){}
         });
       }
 
@@ -5371,7 +5484,7 @@ async function loadMyHistory(){
         setTimeout(()=>inp.focus(),0);
         row.querySelector('[data-save]').onclick=async()=>{
           const t=inp.value.trim();if(!t)return;
-          await editTodoItem(item.storeId,item.dateKey,item.id,t);
+          try{await editTodoItem(myStaff,item.dateKey,item.id,t);}catch(err){alert('저장에 실패했습니다. '+(err&&err.message||''));return;}
           item.text=t;renderRow();
         };
         row.querySelector('[data-cancel]').onclick=()=>renderRow();
@@ -5380,8 +5493,8 @@ async function loadMyHistory(){
       // 삭제
       row.querySelector('[data-act="del"]')?.addEventListener('click',async()=>{
         if(!confirm('이 업무를 삭제하시겠습니까?'))return;
-        await deleteTodoItem(item.storeId,item.dateKey,item.id);
-        row.remove();
+        try{await deleteTodoItem(myStaff,item.dateKey,item.id);}catch(err){alert('삭제에 실패했습니다. '+(err&&err.message||''));return;}
+        row.remove();try{loadMyStats();}catch(e){}
       });
     };
 
@@ -6135,6 +6248,9 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     }
   }catch(e){}
   hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
+  // v6.25 「내 것」과 「전체」 나누기 — 다른 사람 앞으로 온 인수인계(받는 사람이 며칠 비어 누구나 확인 가능해진 것)는
+  // 내 확인할 것 · 브리핑에서 빼고 아래 「전체 현황」으로. 나에게 온 것 · 받는 사람 없는 우리 매장 것만 위에
+  const otherHo=[];for(let i=hoRows.length-1;i>=0;i--)if(hoRows[i].fallback)otherHo.unshift(...hoRows.splice(i,1));
   let totalCl=0,dnCl=0;
   try{
     totalCl=getCleanItemCount(ty,tm,td);
@@ -6228,6 +6344,17 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   const col1=el('section','vh-col'),col2=el('section','vh-col');
   grid.appendChild(col1);grid.appendChild(col2);
   wrap.appendChild(grid);
+  // ── 전체 현황(v6.25) — 위는 「내가 오늘 확인 · 처리할 것」, 여기는 전 매장 · 다른 사람 것. 접고 펼치기는 기기마다 기억
+  // (처음엔 직원 접힘 · 대표 · 매니저 펼침). 안의 카드는 아래에서 각자 채워 넣는다
+  const allZone=el('section','vh-allzone');
+  const allHead=el('button','vh-allhead',`<span class="t"><b>전체 현황</b><small>${isAdmin?`전 ${T('store')} · 진행 중인 것 · 아침 요약`:`우리 ${T('store')} 컨디션 · 다른 사람 앞 ${T('handover')}`}</small></span><span class="n" data-alln></span><span class="c" aria-hidden="true"></span>`);allHead.type='button';
+  const allGrid=el('div','vh-grid vh-allgrid');const ac1=el('section','vh-col'),ac2=el('section','vh-col');allGrid.appendChild(ac1);allGrid.appendChild(ac2);
+  allZone.appendChild(allHead);allZone.appendChild(allGrid);wrap.appendChild(allZone);
+  let allOpen=isAdmin;try{const v=localStorage.getItem('vflow_home_all');if(v==='1'||v==='0')allOpen=v==='1';}catch(e){}
+  const allN={};const paintAllN=()=>{const t=[allN.gaps?`급한 것 ${allN.gaps}`:'',allN.red?`손볼 곳 ${allN.red}`:'',allN.other?`다른 사람 앞 ${allN.other}`:''].filter(Boolean).join(' · ');const n=allHead.querySelector('[data-alln]');n.textContent=t;n.classList.toggle('warn',!!t);};
+  const paintAll=()=>{allZone.classList.toggle('open',allOpen);allHead.setAttribute('aria-expanded',allOpen?'true':'false');allHead.querySelector('.c').textContent=allOpen?'접기 ▴':'펼치기 ▾';allGrid.hidden=!allOpen;};
+  allHead.onclick=()=>{allOpen=!allOpen;try{localStorage.setItem('vflow_home_all',allOpen?'1':'0');}catch(e){}vfUse(allOpen?'home_all_open':'home_all_close');paintAll();};
+  paintAll();
 
   // 시작 체크리스트 (관리자·미완료 시) — 1열 맨 위
   renderSetupChecklist(col1);
@@ -6235,7 +6362,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // ── 1열: 오늘 요약 4칸 ──
   const met=el('div','vh-metrics');
   const mk=(lb,val,cls,fn)=>{const m=el('button','vh-metric'+(cls?' '+cls:''),`<span>${lb}</span><b>${val}</b>`);m.type='button';m.setAttribute('aria-label',`${lb} ${val}`);m.onclick=fn;return m;};
-  met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{if(entry)openStoreRoom(entry);}));
+  met.appendChild(mk('확인할 것',hoRows.length,hoRows.length>0?'danger':'ok',()=>{const p=wrap.querySelector('.vh-priority:not(.vh-storegaps)');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});else if(entry)openStoreRoom(entry);}));
   const _ownerOnly=(window.__vflowProfile?.role==='owner');
   met.appendChild(mk(`내 ${T('clean')}`,(!_ownerOnly&&totalCl>0)?`${dnCl}/${totalCl}`:'—',(!_ownerOnly&&totalCl>0&&leftCl===0)?'ok':(!_ownerOnly&&dnCl===0&&totalCl>0?'danger':''),()=>{if(entry)openQuickClean(entry);}));
   met.appendChild(mk('할 일',mine.length?todoLeft:'—',mine.length&&todoLeft===0?'ok':(mine.length===0?'danger':''),()=>{const c=wrap.querySelector('.vh-todo');if(!c)return;c.classList.remove('folded');const f=c.querySelector('.vh-fold');if(f)f.textContent='접기';c.scrollIntoView({behavior:'smooth',block:'start'});const inp=c.querySelector('.vh-add input');if(inp&&window.innerWidth>=1024)inp.focus({preventScroll:true});}));
@@ -6250,12 +6377,12 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   if(isAdmin)met.classList.add('line');
   col1.appendChild(met);
   // AI 아침 요약(v6.19) — 대표 · 매니저. 오늘 것이 없으면 카드를 그리지 않는다
-  if(isAdmin&&featOn('ai')&&!_vp.monitorOnly){const ab=el('div','vh-card vai-brief');col1.appendChild(ab);import('./adapter/ai.js').then(m=>m.briefCardInto(ab,{go:vfAiGo,screen:'홈'})).catch(()=>ab.remove());}
+  if(isAdmin&&featOn('ai')&&!_vp.monitorOnly){const ab=el('div','vh-card vai-brief');ac1.appendChild(ab);import('./adapter/ai.js').then(m=>m.briefCardInto(ab,{go:vfAiGo,screen:'홈'})).catch(()=>ab.remove());}
   // v6.21: 컨디션은 확인할 것 · 할 일 다음 — 매장이 많아지면 표가 길어져 급한 목록을 밀어내던 것. 컴퓨터는 오른쪽 칸 아래, 폰은 할 일 뒤
   let condHold=null;
   // 매장 컨디션 — 직원은 내 매장 한 줄(누르면 매장 방), 관리자는 전 매장 한 장
   if(featOn('cleaning')!==false&&!_vp.monitorOnly){
-    if(isAdmin){const cc=el('div','vh-card vf-condall');cc.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">계산 중</span></div>`;condHold=cc;vfCondAllInto(cc).catch(e=>{console.warn('[cond all]',e);cc.remove();});}
+    if(isAdmin){const cc=el('div','vh-card vf-condall');cc.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">계산 중</span></div>`;condHold=cc;vfCondAllInto(cc).then(()=>{try{const C=window.__vfCondLast||{};allN.red=Object.keys(C).filter(k=>C[k]&&C[k].level==='red').length;paintAllN();}catch(e){}}).catch(e=>{console.warn('[cond all]',e);cc.remove();});}
     else if(entry){const ph=el('div','vf-condwrap');condHold=ph;vfCondLineInto(ph,entry);}
   }
 
@@ -6266,7 +6393,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const sl=el('div','vh-list');sc.appendChild(sl);
     sl.appendChild(el('div','vh-item vh-empty-row',`<span class="vh-dot"></span><div class="vh-main">확인 중<small></small></div>`));
     const smore=el('button','vh-more','');smore.type='button';smore.style.display='none';sc.appendChild(smore);
-    col1.appendChild(sc);
+    ac1.appendChild(sc);
     loadTodayGaps({cleanByStore:window.__dashClean,hoByStore,todosByName}).then(({items})=>{
       sl.innerHTML='';sc.querySelector('.vh-tiny').textContent=items.length?`${items.length}건${items.length>1?' · 중요도순':''}`:'';
       if(!items.length){sl.appendChild(el('div','vh-item',`<span class="vh-dot"></span><div class="vh-main">누락 없음<small>${T('clean')} · ${T('handover')} · 업무 등록 · 이월</small></div>`));return;}
@@ -6275,6 +6402,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       let gapOpen=false;try{gapOpen=localStorage.getItem('vflow_fold_gaps')==='1';}catch(e){}
       const urgent=items.filter(o=>o.dot==='danger').length;
       sc.querySelector('.vh-tiny').textContent=`급한 것 ${urgent} · 전체 ${items.length}`;
+      allN.gaps=urgent;paintAllN();
       items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(o.dot!=='danger'&&!gapOpen?' vh-gapfold':'')+(o.dot==='danger'&&i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
       const rest=items.length-urgent;
       const paintMore=()=>{if(rest<=0&&urgent<=MAX_M){smore.style.display='none';return;}smore.style.display='';smore.textContent=gapOpen?'접기 ▴':`나머지 ${Math.max(rest,0)+Math.max(0,urgent-MAX_M)}건 ▾`;};
@@ -6551,11 +6679,13 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   todo.appendChild(addRow); // 접혀 있어도 보인다 — 적는 데 펼치기부터 누르게 하지 않는다
   todo.appendChild(bulk);
   col2.appendChild(todo);
+  // 내가 보낸 요청(v6.25) — 보냄 › 받음 › 완료. 전엔 관리자 「진행 중인 것」에만 있어 직원은 보낸 뒤 확인할 곳이 없었다
+  if(featOn('workreq')&&!_vp.monitorOnly){const sr=el('div','vh-card vh-sentreq');col2.appendChild(sr);vfSentReqInto(sr).catch(()=>sr.remove());}
 
   // ── 2열: 내 메모 — 폰에서만 두 줄 미리보기. 누르면 메모장(vfOpenMemo)이 열린다. 컴퓨터는 왼쪽 메뉴 「메모」라 홈 카드 없음 ──
   if(featOn('memo')){
     const memo=el('div','vh-card vh-memo');
-    const mHead=el('div','vh-ct',`<strong>내 메모</strong>`);
+    const mHead=el('div','vh-ct',`<strong>내 메모</strong><span class="vh-tiny vh-memo-n"></span>`);
     const mOpen=el('button','vh-fold','적기');mOpen.type='button';mOpen.onclick=()=>vfOpenMemo();
     mHead.appendChild(mOpen);memo.appendChild(mHead);
     const peek=el('div','vh-memo-peek empty','나만 보는 메모');
@@ -6563,10 +6693,11 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     peek.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();vfOpenMemo();}};
     memo.appendChild(peek);
     col2.appendChild(memo);
-    const paintPeek=(t)=>{t=String(t||'').trim();peek.textContent=t||'나만 보는 메모';peek.classList.toggle('empty',!t);};
-    (async()=>{try{const sn=await getDoc(doc(db,`staff_memo/${me}`));if(sn.exists())paintPeek(sn.data().text);}catch(e){}})();
+    // 미리보기 = 서랍을 열면 먼저 열리는 장(고정 → 최근 고친 것)
+    const paintPeek=(ns)=>{ns=(ns||[]).filter(n=>String(n.text||'').trim());const f=vfNotesSort(ns)[0];const t=f?String(f.text).trim():'';peek.textContent=t||'나만 보는 메모';peek.classList.toggle('empty',!t);const tn=memo.querySelector('.vh-memo-n');if(tn)tn.textContent=ns.length>1?`${ns.length}장`:'';};
+    (async()=>{try{const r=await notesList();paintPeek(r.notes);}catch(e){}})();
     if(window.__vfMemoL)window.removeEventListener('vf-memo',window.__vfMemoL);
-    window.__vfMemoL=(e)=>{if(peek.isConnected)paintPeek(e.detail);};window.addEventListener('vf-memo',window.__vfMemoL);
+    window.__vfMemoL=(e)=>{if(peek.isConnected&&e.detail&&Array.isArray(e.detail.notes))paintPeek(e.detail.notes);};window.addEventListener('vf-memo',window.__vfMemoL);
   }
   // ── 2열: 프로젝트 타일 — 내가 하는 것 + 도움 요청 온 것. 없으면 카드 자체를 안 그린다 ──
   if(featOn('collab')){
@@ -6574,7 +6705,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const pHead=el('div','vh-ct',`<strong>프로젝트</strong><span class="vh-tiny"></span>`);pHead.querySelector('.vh-tiny').after(vfMore('조용'));
     const tiles=el('div','vh-ptiles');
     pj.appendChild(pHead);pj.appendChild(tiles);
-    col2.appendChild(pj);
+    (isAdmin?ac2:col2).appendChild(pj);
     (async()=>{
       try{
         const rows=await loadCollabListCached();
@@ -6652,7 +6783,17 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     refreshPri();
   })();
 
-  if(condHold)col2.appendChild(condHold);
+  if(condHold)ac2.appendChild(condHold);
+  // 다른 사람 앞 인수인계 — 받는 사람이 며칠째 확인 안 해 누구나 확인할 수 있게 된 것(fallbackDays). 누르면 매장 방(거기서 확인)
+  if(otherHo.length){
+    const oc=el('div','vh-card vh-otherho');
+    oc.innerHTML=`<div class="vh-ct"><strong>다른 사람 앞 ${T('handover')}</strong><span class="vh-tiny">받는 사람이 며칠째 확인 안 해 누구나 확인 가능 · ${otherHo.length}건</span></div>`;
+    otherHo.forEach(({store,it})=>{const r=el('button','vh-item link',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(it.text)}<small>${_wrEsc(it.recipient||'')} 앞 · ${hoAgeDays(it,tKey)}일째 미확인 · ${_wrEsc(shortStore(store.name))} · ${fmtD(it.fromDate||tKey)}</small></div><span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.onclick=()=>openStoreRoom(store);oc.appendChild(r);});
+    ac1.appendChild(oc);allN.other=otherHo.length;
+  }
+  paintAllN();
+  // 전체 현황이 비면(기능 꺼짐 등) 칸째 숨김
+  setTimeout(()=>{if(!allGrid.querySelector('.vh-card,.vf-condwrap,.vh-pline,.vf-condline'))allZone.remove();},2500);
   // ── 2열: 바로가기 목록 ──
   const links=el('div','vh-card vh-links');
   const ll=el('div','vh-list');
@@ -6873,11 +7014,13 @@ function openLeaveSheet(entry,tKey,preset){
         else await wrCreate(null,text,recip.value);
       }
       else{
-        const ref=doc(db,`staff_memo/${me}`);
-        const snap=await getDoc(ref);
-        const prev=snap.exists()?(snap.data().text||''):'';
-        const stamp=`${today.getMonth()+1}/${today.getDate()}`;
-        await setDoc(ref,{text:(prev?prev.replace(/\s+$/,'')+'\n':'')+`[${stamp}] ${text}`,updatedAt:Date.now()});
+        // 메모 — 서랍을 열면 먼저 열리는 장(고정 → 최근 고친 것) 끝에 붙인다. 장이 없으면 새 장
+        const ns=(await notesList()).notes;
+        const stamp=`${today.getMonth()+1}/${today.getDate()}`,line=`[${stamp}] ${text}`;
+        let tgt=vfNotesSort(ns.filter(n=>String(n.text||'').trim()))[0];
+        if(tgt){const prev=String(tgt.text||'').replace(/\s+$/,'');tgt.text=(prev?prev+'\n':'')+line;}
+        else{tgt={id:vfNoteId(),text:line,pinned:false,updated:Date.now()};ns.push(tgt);}
+        tgt.updated=await notesSave(tgt,ns);vfNotesBus(ns,'leave');
       }
       clearDraft();
       if(aiSug&&aiSug.used&&(kind==='handover'||kind==='request')){
@@ -7109,6 +7252,91 @@ async function vfOpenBooking(tab){
 window.vfOpenBooking=vfOpenBooking;
 // Dutyvo 문의 · 운영자 화면(v6.14) — 자동 가입을 열면서 같이 생긴 두 창구. 모듈은 처음 열 때만 받는다
 // 내 메모 — 어느 화면에서든 한 번에 연다(컴퓨터: 왼쪽 메뉴 「메모」 · 폰: 홈 · 내 업무 머리). 컴퓨터는 오른쪽 서랍, 폰은 아래 시트. 적으면 자동 저장
+// 메모장(v6.26) — 서랍 · 내 업무 칸 · 홈 미리보기가 같은 장 목록을 쓴다. 저장은 한 장씩(notesSave), 표가 없으면 adapter 가 예전 한 줄로.
+// 머리 버튼: 목록(이 칸 자리에 장 목록) · 추가 · 고정(목록 맨 위 · 열면 이 장부터) · 지우기(되돌리기)
+const vfNoteId=()=>{try{if(crypto.randomUUID)return crypto.randomUUID();}catch(e){}return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});};
+const vfNoteTitle=n=>String(n&&n.text||'').split('\n').map(x=>x.trim()).find(Boolean)||'새 메모';
+const vfNoteLine2=n=>String(n&&n.text||'').split('\n').map(x=>x.trim()).filter(Boolean)[1]||'';
+const vfNotesSort=ns=>(ns||[]).slice().sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.updated||0)-(a.updated||0)));
+function vfNoteWhen(t){if(!t)return '';const d=new Date(t),n=new Date(),p=x=>String(x).padStart(2,'0');if(d.toDateString()===n.toDateString())return `${p(d.getHours())}:${p(d.getMinutes())}`;const y=new Date(n);y.setDate(y.getDate()-1);if(d.toDateString()===y.toDateString())return '어제';return `${d.getMonth()+1}/${d.getDate()}`;}
+const vfNotesBus=(ns,from)=>{try{window.dispatchEvent(new CustomEvent('vf-memo',{detail:{notes:ns,from}}));}catch(e){}};
+const VF_NOTE_IC={list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',add:'<path d="M12 5v14M5 12h14"/>',pin:'<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',del:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'};
+const vfNoteIc=k=>`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${VF_NOTE_IC[k]}</svg>`;
+
+function vfMemoInto(host,opt){
+  opt=opt||{};const me=window.__vflowProfile?.name;if(!me||!host)return {save:()=>{}};
+  const uid='m'+Math.random().toString(36).slice(2,7);
+  host.classList.add('vf-memo-box');
+  host.innerHTML=`<div class="vf-memo-tools">
+      <button type="button" class="vf-memo-tb" data-list aria-pressed="false" aria-controls="${uid}-l">${vfNoteIc('list')}목록</button>
+      <button type="button" class="vf-memo-tb" data-add>${vfNoteIc('add')}추가</button>
+      <span class="vf-memo-sp"></span>
+      <button type="button" class="vf-memo-tb ic" data-pin aria-pressed="false" aria-label="고정" title="고정 — 목록 맨 위 · 열면 이 메모부터">${vfNoteIc('pin')}</button>
+      <button type="button" class="vf-memo-tb ic" data-del aria-label="이 메모 지우기" title="이 메모 지우기">${vfNoteIc('del')}</button></div>
+    <div class="vf-memo-cur"><span class="vf-memo-pin" hidden>${vfNoteIc('pin')}</span><b data-curt></b></div>
+    <div class="vf-memo-list" id="${uid}-l" role="list" aria-label="메모 목록" hidden></div>
+    <textarea aria-label="메모" placeholder="나만 보는 메모 · 적으면 바로 저장 · 첫 줄이 제목" disabled></textarea>
+    <div class="vf-memo-row"><span class="vh-tiny" data-st aria-live="polite"></span></div>`;
+  const q=s=>host.querySelector(s);
+  const ta=q('textarea'),st=q('[data-st]'),list=q('.vf-memo-list'),bList=q('[data-list]'),bAdd=q('[data-add]'),bPin=q('[data-pin]'),bDel=q('[data-del]'),curT=q('[data-curt]'),curPin=q('.vf-memo-pin');
+  if(opt.tall){ta.classList.add('tall');list.classList.add('tall');}
+  let notes=[],cur=null,listOpen=false,timer=null,ready=false,undoT=null;
+  const byId=id=>notes.find(n=>n.id===id);
+  const blank=()=>({id:vfNoteId(),text:'',pinned:false,updated:Date.now(),fresh:true});
+  const setSt=(t)=>{clearTimeout(undoT);st.textContent=t;};
+  const save=async(n,o)=>{
+    n=n||byId(cur);if(!n||!ready)return;
+    if(n.fresh&&!String(n.text).trim()&&!n.pinned)return; // 아직 아무것도 안 적은 새 장은 저장하지 않는다
+    setSt('저장 중…');
+    try{const at=await notesSave(n,notes,o);n.updated=at;n.fresh=false;setSt(`저장됨 · ${vfNoteWhen(at)}`);vfNotesBus(notes,uid);}
+    catch(e){setSt('저장 실패 · 적은 글은 그대로');}
+  };
+  const flush=()=>{if(timer){clearTimeout(timer);timer=null;return save();}return Promise.resolve();};
+  const paintCur=()=>{const n=byId(cur);curT.textContent=n?vfNoteTitle(n):'';curPin.hidden=!(n&&n.pinned);
+    bPin.setAttribute('aria-pressed',n&&n.pinned?'true':'false');bPin.classList.toggle('on',!!(n&&n.pinned));bPin.setAttribute('aria-label',n&&n.pinned?'고정 풀기':'고정');};
+  const paintList=()=>{
+    list.innerHTML='';const L=vfNotesSort(notes.filter(n=>!(n.fresh&&!String(n.text).trim())));let gap=false;
+    if(!L.length){const e=document.createElement('div');e.className='vf-memo-none';e.textContent='메모 없음 · 「추가」로 첫 메모';list.appendChild(e);return;}
+    L.forEach((n,i)=>{if(!n.pinned&&i>0&&!gap&&L[i-1].pinned){const s=document.createElement('div');s.className='vf-memo-gap';list.appendChild(s);gap=true;}
+      const b=document.createElement('button');b.type='button';b.className='vf-memo-it'+(n.id===cur?' on':'');b.setAttribute('role','listitem');
+      b.innerHTML=`${n.pinned?`<span class="vf-memo-pin">${vfNoteIc('pin')}</span>`:''}<span class="vf-memo-tt"><span class="t"></span><span class="p"></span></span><time></time>`;
+      b.querySelector('.t').textContent=vfNoteTitle(n);b.querySelector('.p').textContent=vfNoteLine2(n);b.querySelector('time').textContent=vfNoteWhen(n.updated);
+      b.onclick=()=>{cur=n.id;setList(false);ta.focus();};list.appendChild(b);});
+  };
+  const setList=(on)=>{listOpen=on;list.hidden=!on;ta.hidden=on;q('.vf-memo-cur').hidden=on;bList.classList.toggle('on',on);bList.setAttribute('aria-pressed',on?'true':'false');bPin.hidden=on;bDel.hidden=on;
+    if(on){paintList();const c=notes.filter(n=>!n.fresh||String(n.text).trim()).length;setSt(c?`${c}장 · 고정한 메모가 위, 나머지는 최근 고친 순`:'');}else{const n=byId(cur);ta.value=n?n.text:'';paintCur();setSt(n&&n.updated&&!n.fresh?`고친 시각 ${vfNoteWhen(n.updated)}`:'');}};
+  const firstId=()=>{const L=vfNotesSort(notes);return L.length?L[0].id:null;};
+  bList.onclick=async()=>{await flush();setList(!listOpen);if(listOpen)vfUse('memo_list');if(!listOpen)ta.focus();};
+  bAdd.onclick=async()=>{await flush();const c=byId(cur);if(c&&c.fresh&&!String(c.text).trim()){setList(false);ta.focus();return;}
+    const n=blank();notes.push(n);cur=n.id;setList(false);ta.focus();vfUse('memo_add');};
+  bPin.onclick=async()=>{const n=byId(cur);if(!n)return;await flush();n.pinned=!n.pinned;paintCur();if(n.pinned)vfUse('memo_pin');
+    if(n.fresh&&!String(n.text).trim()){setSt(n.pinned?'고정 · 적으면 저장':'');return;}
+    await save(n,{touch:false});if(st.textContent.startsWith('저장됨'))setSt(n.pinned?'고정됨 · 열면 이 메모부터':'고정 풀림');};
+  bDel.onclick=async()=>{const n=byId(cur);if(!n)return;clearTimeout(timer);timer=null;
+    const i=notes.indexOf(n);notes.splice(i,1);vfUse('memo_del');
+    const wasSaved=!n.fresh;
+    if(!notes.length)notes.push(blank());
+    cur=firstId();setList(false);
+    if(!wasSaved){setSt('');return;}
+    try{await notesDelete(n.id,notes.filter(x=>!x.fresh));vfNotesBus(notes,uid);}catch(e){notes.splice(i,0,n);cur=n.id;setList(false);setSt('지우기 실패 · 다시 누르기');return;}
+    st.innerHTML='';const sp=document.createElement('span');sp.textContent='지움 · ';const u=document.createElement('button');u.type='button';u.className='vf-memo-undo';u.textContent='되돌리기';
+    u.onclick=async()=>{clearTimeout(undoT);notes=notes.filter(x=>!(x.fresh&&!String(x.text).trim()));notes.push(n);cur=n.id;setList(false);await save(n,{touch:false});};
+    st.appendChild(sp);st.appendChild(u);clearTimeout(undoT);undoT=setTimeout(()=>{if(st.contains(u))st.textContent='';},8000);};
+  ta.addEventListener('input',()=>{const n=byId(cur);if(!n)return;n.text=ta.value;n.updated=Date.now();curT.textContent=vfNoteTitle(n);setSt('');clearTimeout(timer);timer=setTimeout(()=>{timer=null;save(n);},700);});
+  // 다른 곳(서랍 · 내 업무 · 남기기)에서 바꾸면 여기도 새로 — 지금 이 칸에 적는 중이면 건드리지 않는다
+  const onOther=(e)=>{if(!host.isConnected){window.removeEventListener('vf-memo',onOther);return;}const d=e.detail||{};if(d.from===uid||!Array.isArray(d.notes))return;
+    if(document.activeElement===ta||timer)return;
+    const keep=notes.filter(x=>x.fresh&&!String(x.text).trim());notes=d.notes.map(x=>({...x})).concat(keep.filter(k=>!d.notes.some(x=>x.id===k.id)));
+    if(!byId(cur))cur=firstId();if(listOpen)paintList();else{const n=byId(cur);ta.value=n?n.text:'';paintCur();}};
+  window.addEventListener('vf-memo',onOther);
+  (async()=>{
+    try{const r=await notesList();notes=r.notes.map(x=>({...x}));}catch(e){setSt('메모 불러오기 실패 · 다시 열기');return;}
+    if(!notes.length)notes.push(blank());
+    cur=firstId();ready=true;ta.disabled=false;setList(false);
+    if(opt.focus){ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);ta.scrollTop=ta.scrollHeight;}catch(e){}}
+  })();
+  return {save:()=>flush()};
+}
 function vfOpenMemo(){
   const me=window.__vflowProfile?.name;if(!me)return;
   if(document.querySelector('.vf-memo-bg'))return;
@@ -7116,27 +7344,16 @@ function vfOpenMemo(){
   const ov=document.createElement('div');ov.className='vh-sheet-bg vf-memo-bg';
   const sh=document.createElement('div');sh.className='vh-sheet vf-memo-sh';
   sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-labelledby','vf-memo-h');
-  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct"><h3 id="vf-memo-h" style="margin:0;">내 메모</h3><span class="vh-tiny" data-st>불러오는 중</span><button type="button" class="vh-btn" data-x aria-label="닫기">닫기</button></div>
-    <textarea aria-label="내 메모" placeholder="나만 보는 메모 · 적으면 바로 저장" disabled></textarea>
+  sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><div class="vh-ct"><h3 id="vf-memo-h" style="margin:0;">내 메모</h3><span class="vh-tiny"></span><button type="button" class="vh-btn" data-x aria-label="닫기">닫기</button></div>
+    <div data-memo></div>
     <div class="vh-tiny vf-memo-ft">다른 직원 · 관리자에게 안 보입니다</div>`;
-  const ta=sh.querySelector('textarea'),st=sh.querySelector('[data-st]');
-  const ref=doc(db,`staff_memo/${me}`);
-  let loaded='',timer=null;
-  const save=async()=>{
-    const t=ta.value;if(t===loaded||ta.disabled)return;
-    st.textContent='저장 중…';
-    try{await setDoc(ref,{text:t,updatedAt:Date.now()});loaded=t;st.textContent='저장됨';try{window.dispatchEvent(new CustomEvent('vf-memo',{detail:t}));}catch(e){}}
-    catch(e){st.textContent='저장 실패 · 적은 글은 그대로';}
-  };
-  ta.addEventListener('input',()=>{st.textContent='';clearTimeout(timer);timer=setTimeout(save,700);});
+  const m=vfMemoInto(sh.querySelector('[data-memo]'),{tall:true,focus:true});
   const onKey=(e)=>{if(e.key==='Escape')close();};
-  const close=()=>{clearTimeout(timer);save();document.removeEventListener('keydown',onKey);vfSheetClose(ov);};
+  const close=()=>{m.save();document.removeEventListener('keydown',onKey);vfSheetClose(ov);};
   document.addEventListener('keydown',onKey);
   sh.querySelector('[data-x]').onclick=close;
   ov.onclick=(e)=>{if(e.target===ov)close();};
   ov.appendChild(sh);document.body.appendChild(ov);
-  (async()=>{try{const sn=await getDoc(ref);ta.value=sn.exists()?(sn.data().text||''):'';loaded=ta.value;st.textContent='';}catch(e){st.textContent='불러오기 실패';}
-    ta.disabled=false;ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);ta.scrollTop=ta.scrollHeight;}catch(e){}})();
 }
 window.vfOpenMemo=vfOpenMemo;
 // AI 도우미(v6.19) — 서랍으로 열고, 답의 「○○ 열기」는 여기서 그 화면으로 보낸다. 모듈은 처음 열 때만 받는다
@@ -8628,7 +8845,7 @@ const vfNet={
   }
 };
 // ── 사용 기록 — 무엇이 쓰이는지 숫자로. 기능 이름·누가·언제만, 내용은 없다. 모아뒀다가 15초마다 · 화면을 떠날 때 저장 ──
-const VF_USE_LABELS={orb_off:'AI 도우미 버튼 끔',orb_on:'AI 도우미 버튼 켬',orb_say_tap:'듀티 말풍선 누름',say_off:'듀티 말풍선 끔',say_on:'듀티 말풍선 켬',ai_open:'AI 도우미',ai_notes:'AI가 배운 것',memo_open:'내 메모',todo_check:'할 일 체크',ask_open:'Dutyvo 문의',rsv_open:'고객 예약',exp_open:'보관기한',deal_open:'거래처',cal_open:'캘린더',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
+const VF_USE_LABELS={memo_list:'메모 목록',memo_add:'메모 추가',memo_pin:'메모 고정',memo_del:'메모 지우기',home_all_open:'홈 전체 현황 펼침',home_all_close:'홈 전체 현황 접음',orb_off:'AI 도우미 버튼 끔',orb_on:'AI 도우미 버튼 켬',orb_say_tap:'듀티 말풍선 누름',say_off:'듀티 말풍선 끔',say_on:'듀티 말풍선 켬',ai_open:'AI 도우미',ai_notes:'AI가 배운 것',memo_open:'내 메모',todo_check:'할 일 체크',ask_open:'Dutyvo 문의',rsv_open:'고객 예약',exp_open:'보관기한',deal_open:'거래처',cal_open:'캘린더',store_todo_check:'매장 할 일 체크',todo_add:'할 일 추가',backlog_open:'업무 창고 열기',backlog_add:'업무 창고 넣기',backlog_schedule:'창고에서 꺼내기',backlog_unschedule:'창고로 보내기',handover_leave:'인수인계 남기기',handover_confirm:'인수인계 확인',request_send:'요청 보내기',request_accept:'요청 수락',request_decline:'요청 거절',project_propose:'프로젝트 제안',project_accept:'제안 수락',project_decline:'제안 거절',project_help:'프로젝트 도움 요청',accept_undo:'수락 되돌리기',room_open:'매장 방 열기',clean_open:'청소 열기',mywork_open:'내 업무 열기',board_open:'게시판 열기',board_post:'게시판 글쓰기',brief_open:'오늘의 브리핑',row_tap:'줄 눌러 체크',kb_shortcut:'키보드 지름길',home_flip:'홈 좌우 바꾸기',font_big:'글자 크게',push_on:'알림 켜기',offline_queued:'오프라인 저장 대기',clock_in:'출근',clock_out:'근무 마감',company_open:'회사 화면',ask_manager:'매니저에게 묻기',stores_todo:'전 매장 할 일',cover_set:'머리 이미지 바꾸기',clock_classic:'시계 클래식',clock_simple:'시계 심플',clock_digital:'시계 숫자',ho_working:'인수인계 내가 처리',ho_unworking:'인수인계 처리 취소',ho_done:'인수인계 끝남',bright_dark:'화면 어둡게',bright_auto:'화면 기기 따라',bright_light:'화면 밝게',ongoing_open:'진행 중인 것',idle_show:'대기 화면',close_alarm:'마감 30분 전 알림',pc_install:'매장 컴퓨터 설치 파일',pc_install_mac:'매장 컴퓨터 맥 명령',setup_open:'기본 설정 열기',boot_2s:'켜서 홈까지 2초 안',boot_5s:'켜서 홈까지 2~5초',boot_10s:'켜서 홈까지 5~10초',boot_slow:'켜서 홈까지 10초 넘음'};
 const vfUse=(()=>{
   let buf=[],last={},timer=null,flushing=false;
   const flush=async()=>{
@@ -8826,6 +9043,32 @@ function buildHandoverHistorySection(store){
 
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
 // 나에게 온 대기 중 요청 — 나에게 지정된 것 + 오늘 매장의 공용 요청 (내가 낸 것 제외)
+// 내가 보낸 요청 카드 — 최근 30일 · 거절 빼고 · 끝나고 7일 지난 것 빼고. 다섯 줄 넘으면 「더 보기」
+async function vfSentReqInto(card){
+  const {sb,ctx}=await wrApi();
+  const since30=new Date(Date.now()-30*86400000).toISOString();
+  const sel='id,content,status,created_at,responded_at,done_at,recipient:profiles!recipient_id(name),responder:profiles!responded_by(name)';
+  let q=await sb.from('work_requests').select(sel).eq('tenant_id',ctx.tenantId).eq('requester_id',ctx.profileId).gte('created_at',since30).order('created_at',{ascending:false}).limit(40);
+  if(q.error&&/done_at/.test(String(q.error.message||'')))q=await sb.from('work_requests').select(sel.replace('done_at,','')).eq('tenant_id',ctx.tenantId).eq('requester_id',ctx.profileId).gte('created_at',since30).order('created_at',{ascending:false}).limit(40);
+  if(q.error)throw q.error;
+  const days=(ts)=>ts?Math.floor((Date.now()-new Date(ts).getTime())/86400000):0;
+  const rows=(q.data||[]).filter(r=>r.status!=='declined'&&!(r.done_at&&days(r.done_at)>7));
+  const declined=(q.data||[]).filter(r=>r.status==='declined'&&days(r.responded_at||r.created_at)<=7);
+  if(!rows.length&&!declined.length){card.remove();return;}
+  const open=rows.filter(r=>!r.done_at).length;
+  const MAX=5;let all=false;
+  const line=(r)=>{const dn=!!r.done_at,acc=r.status==='accepted';const step=dn?3:acc?1:0;const who=r.recipient?.name||r.responder?.name||'누구나';const d=days(r.created_at);
+    return `<div class="vf-pj"><span class="t">${_wrEsc(r.content)}<small>${_wrEsc(who)}에게 · ${fmtD(String(r.created_at).slice(0,10))}${!dn&&d>=3?` · <b style="color:var(--orange)">${d}일째</b>`:''}</small></span>${vfSt3(step)}</div>`;};
+  const paint=()=>{
+    const shown=all?rows:rows.slice(0,MAX);
+    card.innerHTML=`<div class="vh-ct"><strong>내가 보낸 요청</strong><span class="vh-tiny">${open?`진행 ${open}건`:'모두 끝남'} · 보냄 › 받음 › 완료</span></div>`
+      +shown.map(line).join('')
+      +(declined.length?declined.map(r=>`<div class="vf-pj"><span class="t">${_wrEsc(r.content)}<small>${_wrEsc(r.recipient?.name||r.responder?.name||'')} · 거절됨 · ${fmtD(String(r.responded_at||r.created_at).slice(0,10))}</small></span></div>`).join(''):'')
+      +(rows.length>MAX?`<button type="button" class="vh-more-row" data-more>${all?'접기':`나머지 ${rows.length-MAX}건`}</button>`:'');
+    const mb=card.querySelector('[data-more]');if(mb)mb.onclick=()=>{all=!all;paint();};
+  };
+  paint();
+}
 async function loadMyPendingRequests(me){
   const {sb}=await wrApi();
   const myStoreId=window.__vflowProfile?.storeId||localStorage.getItem('vflow_todaystore_'+todayKey())||STAFF_DEFAULT_STORE[me]||null;
@@ -8888,7 +9131,8 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
     (snap.data().items||[]).forEach(it=>{
       if(!hoNeedsConfirm(it))return;
       const toMe=it.recipient===me;
-      if(toMe||(myStoreId&&store.id===myStoreId&&hoOpenToAll(it,tKey)))hoRows.push({store,it,toMe});
+      // v6.25 — 내 것만: 나에게 온 것 + 받는 사람 없는 우리 매장 것. 다른 사람 앞(부재로 누구나 열린 것)은 홈 「전체 현황」에서
+      if(toMe||(myStoreId&&store.id===myStoreId&&!it.recipient&&hoOpenToAll(it,tKey)))hoRows.push({store,it,toMe});
     });
   }
   hoRows.sort((a,b)=>(b.toMe?1:0)-(a.toMe?1:0));
@@ -8920,10 +9164,13 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
     });
   }catch(e){}
 
+  // 5) 나에게 온 요청(아직 수락 · 거절 전) — v6.25
+  let reqs=[];try{if(featOn('workreq'))reqs=await loadMyPendingRequests(me);}catch(e){}
+
   // 오늘 브리핑은 봤음으로 기록 (내용이 없으면 조용히 패스)
   localStorage.setItem(key,'1');
   localStorage.setItem(`vflow_brief_ts_${uid}`,String(Date.now()));
-  if(hoRows.length===0&&undone.length===0&&newNotices.length===0&&fixedLabels.length===0)return false;
+  if(hoRows.length===0&&undone.length===0&&newNotices.length===0&&fixedLabels.length===0&&reqs.length===0)return false;
 
   const dows=['일','월','화','수','목','금','토'];
   const ov=document.createElement('div');
@@ -8938,6 +9185,13 @@ async function maybeShowDailyBriefing(tKey,todosByName,hoByStore){
       <div style="font-size:12.5px;font-weight:800;">확인할 인수인계 <span style="color:var(--red);">${hoRows.length}건</span></div>
       ${hoRows.slice(0,3).map(({store,it,toMe})=>`<div style="font-size:12px;margin-top:5px;line-height:1.4;">${toMe?'<b style="color:var(--orange);">[나에게]</b> ':''}${it.text} <span style="color:var(--text-mute);font-size:11.5px;">· ${storeShort(store.name)}</span></div>`).join('')}
       ${hoRows.length>3?`<div style="font-size:11.5px;color:var(--text-mute);margin-top:4px;">외 ${hoRows.length-3}건</div>`:''}
+    </div>`);
+  }
+  if(reqs.length>0){
+    sec(`<div style="margin-top:9px;background:var(--bg);border-radius:10px;padding:9px 11px;">
+      <div style="font-size:12.5px;font-weight:800;">나에게 온 요청 <span style="color:var(--orange);">${reqs.length}건</span> <span style="font-size:11.5px;color:var(--text-sub);font-weight:600;">· 홈 우선 확인에서 수락 · 거절</span></div>
+      ${reqs.slice(0,3).map(r=>`<div style="font-size:12px;margin-top:5px;">• ${_wrEsc(r.content)} <span style="color:var(--text-mute);font-size:11.5px;">· ${_wrEsc(r.requester?.name||'')}</span></div>`).join('')}
+      ${reqs.length>3?`<div style="font-size:11.5px;color:var(--text-mute);margin-top:4px;">외 ${reqs.length-3}건</div>`:''}
     </div>`);
   }
   if(undone.length>0){

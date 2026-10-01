@@ -175,6 +175,86 @@ async function writeStaffMemo(ctx, { text }) {
   if (error) throw error
 }
 
+// ── 메모장(v6.26) — staff_notes 에 한 장씩 ──
+// v6.25 는 모든 장을 staff_memos 한 줄({"v":2,"notes":[…]})에 묶어 저장해, 폰과 매장 컴퓨터에서 서로 다른 장을
+// 고치면 나중에 저장한 쪽이 다른 장까지 덮었다. 한 장씩 저장하면 그 장만 바뀐다.
+// 표가 아직 없으면(SQL 전) 예전처럼 staff_memos 한 줄로 저장한다 — 배포와 SQL 순서가 바뀌어도 메모가 안 멈춘다.
+// 처음 한 번 예전 메모를 장으로 옮기고, 예전 줄은 그대로 둔다(기록을 고치지 않는다). 지운 장은 deleted_at 만 찍는다.
+let _notesTable = true
+const notesMissing = (e) => !!e && (e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(String(e.message || '')))
+const NOTES_BLOB_MAX = 30
+export function notesParse(t) {
+  t = String(t ?? '')
+  if (t.startsWith('{"v":2')) {
+    try {
+      const j = JSON.parse(t)
+      if (Array.isArray(j.notes)) return j.notes.map((n, i) => ({ id: String(n.id || ('m' + i)), text: String(n.text ?? ''), pinned: !!n.pinned, updated: +n.updated || 0 }))
+    } catch (e) { /* 글 그대로 */ }
+  }
+  return t.trim() ? [{ id: 'm1', text: t, pinned: false, updated: 0 }] : []
+}
+function notesPack(notes) {
+  const ns = (notes || []).filter((n) => String(n.text ?? '').trim() !== '')
+  if (!ns.length) return ''
+  if (ns.length === 1 && !ns[0].pinned) return ns[0].text
+  return JSON.stringify({ v: 2, notes: ns.slice(0, NOTES_BLOB_MAX).map((n) => ({ id: n.id, text: n.text, pinned: n.pinned ? true : undefined, updated: n.updated || undefined })) })
+}
+const noteRow = (r) => ({ id: r.id, text: r.body ?? '', pinned: !!r.pinned, updated: Date.parse(r.updated_at) || 0 })
+export async function notesList() {
+  const ctx = await getContext()
+  if (_notesTable) {
+    const { data, error } = await supabase.from('staff_notes')
+      .select('id, body, pinned, updated_at, deleted_at').eq('profile_id', ctx.profileId)
+      .order('updated_at', { ascending: false }).limit(1000)
+    if (error && !notesMissing(error)) throw error
+    if (!error) {
+      if (!data.length) {
+        const old = await readStaffMemo(ctx).catch(() => null)
+        const ns = notesParse(old && old.text).filter((n) => n.text.trim())
+        if (ns.length) {
+          const base = (old && old.updatedAt) || Date.now()
+          const rows = ns.map((n, i) => ({ id: crypto.randomUUID(), profile_id: ctx.profileId, tenant_id: ctx.tenantId, body: n.text, pinned: !!n.pinned, updated_at: new Date(n.updated || (base - i * 1000)).toISOString() }))
+          const { error: e2 } = await supabase.from('staff_notes').insert(rows)
+          if (e2) throw e2
+          return { mode: 'table', notes: rows.map(noteRow) }
+        }
+      }
+      return { mode: 'table', notes: data.filter((r) => !r.deleted_at).map(noteRow) }
+    }
+    _notesTable = false
+  }
+  const old = await readStaffMemo(ctx)
+  return { mode: 'blob', notes: notesParse(old && old.text) }
+}
+// 한 장 저장. all = 지금 장 목록 전체(표가 없을 때 한 줄로 묶어 쓰려고). touch=false 면 고친 시각을 그대로(고정만 바꿀 때)
+export async function notesSave(note, all, opt) {
+  const ctx = await getContext()
+  const at = (opt && opt.touch === false && note.updated) ? new Date(note.updated) : new Date()
+  if (_notesTable) {
+    const { error } = await supabase.from('staff_notes').upsert({
+      id: note.id, profile_id: ctx.profileId, tenant_id: ctx.tenantId,
+      body: String(note.text ?? ''), pinned: !!note.pinned, updated_at: at.toISOString(), deleted_at: null,
+    }, { onConflict: 'id' })
+    if (!error) return at.getTime()
+    if (!notesMissing(error)) throw error
+    _notesTable = false
+  }
+  await writeStaffMemo(ctx, { text: notesPack(all || [note]) })
+  return at.getTime()
+}
+// 지우기 — 표에선 deleted_at 만(되돌리기 = notesSave 로 다시 저장). rest = 지운 뒤 남은 장 목록
+export async function notesDelete(id, rest) {
+  const ctx = await getContext()
+  if (_notesTable) {
+    const { error } = await supabase.from('staff_notes').update({ deleted_at: new Date().toISOString() })
+      .eq('id', id).eq('profile_id', ctx.profileId)
+    if (!error) return
+    if (!notesMissing(error)) throw error
+    _notesTable = false
+  }
+  await writeStaffMemo(ctx, { text: notesPack(rest || []) })
+}
+
 // ── handover/{storeId}_{dateKey}의 feedbacks 배열 (신규 handover_feedbacks 테이블) ──
 // 원본은 피드백에 id가 없고 배열 인덱스로만 삭제하므로, (작성자명, 내용) 쌍으로 DB 행과
 // 매칭해 diff한다. 같은 사람이 같은 문구를 두 번 남기는 드문 경우엔 먼저 생긴(오래된)
@@ -420,6 +500,7 @@ async function readStaffTodos(ctx, dateKey, target) {
     storeId: reverseResolveStoreId(r.store_id, ctx) ?? undefined,
     done: r.status === 'done',
     status: r.status,
+    moved: r.status === 'carried_over', // 오늘로 옮긴 원본 — 화면은 「옮김」으로 보이고 체크 · 옮기기 버튼을 숨긴다
     author: targetName,
     fromDate: r.task_date !== dateKey ? r.task_date : null,
     subs: r.subs || [],
@@ -444,9 +525,21 @@ async function writeStaffTodos(ctx, dateKey, { items, deletedIds }) {
   // 인수인계와 같은 이유로 암묵적 삭제를 걷어냈다 — 이쪽은 물리 삭제라 더 위험했다.
   // 대표적으로 업무 요청을 수락하면 daily_tasks에 행이 바로 꽂히는데(wrRespond),
   // 그 전에 열어둔 내 업무 화면에서 뭔가를 저장하면 방금 꽂힌 그 업무가 사라졌다.
+  // 「오늘로」 옮긴 원본은 새 줄이 carried_over_from 으로 가리키고 있어(외래키) 그대로 지우면 DB가 막는다 —
+  // 전엔 그 오류가 조용히 묻혀 「전날 할 일은 삭제가 안 된다」로 보였다(v6.25). 가리키던 줄을 원본의 앞 고리로 이어 준 뒤 지운다
+  // (요청 완료 표시는 carried_over_from 을 거슬러 올라가 request_id 를 찾으므로, 원본에 붙은 request_id 는 새 줄로 옮긴다).
   for (const id of (deletedIds ?? []).filter((x) => UUID_RE.test(x))) {
-    const { error } = await supabase.from('daily_tasks').delete().eq('id', id)
+    const { data: row } = await supabase.from('daily_tasks').select('*').eq('id', id).maybeSingle()
+    if (row) {
+      const relink = { carried_over_from: row.carried_over_from ?? null }
+      if (row.request_id) relink.request_id = row.request_id
+      let r = await supabase.from('daily_tasks').update(relink).eq('carried_over_from', id)
+      if (r.error && relink.request_id) r = await supabase.from('daily_tasks').update({ carried_over_from: relink.carried_over_from }).eq('carried_over_from', id)
+      if (r.error) throw r.error
+    }
+    const { error, count } = await supabase.from('daily_tasks').delete({ count: 'exact' }).eq('id', id)
     if (error) throw error
+    assertAffected(count, '업무 삭제')
   }
 
   for (let i = 0; i < items.length; i++) {
@@ -495,7 +588,9 @@ async function writeStaffTodos(ctx, dateKey, { items, deletedIds }) {
     if (!current) continue // 방어적: 조회 범위 밖 id는 건드리지 않음
     const patch = { sort_order: i }
     if (current.content !== item.text) patch.content = item.text
-    const wantStatus = item.kept ? 'kept' : item.done ? 'done' : 'pending'
+    let wantStatus = item.kept ? 'kept' : item.done ? 'done' : 'pending'
+    // 오늘로 옮긴 원본(carried_over)은 그날 다른 걸 저장해도 「미완료」로 되돌리지 않는다 — 전엔 옮긴 일이 다시 살아났다
+    if (current.status === 'carried_over' && wantStatus === 'pending') wantStatus = 'carried_over'
     if (current.status !== wantStatus) patch.status = wantStatus
     if (JSON.stringify(current.subs ?? []) !== JSON.stringify(item.subs ?? [])) patch.subs = item.subs ?? []
     const { error, count } = await supabase.from('daily_tasks').update(patch, { count: 'exact' }).eq('id', item.id)
@@ -1202,6 +1297,17 @@ export async function deleteBacklog(id) {
     .eq('id', id).eq('employee_id', ctx.profileId).is('task_date', null)
   if (error) throw error
   assertAffected(count, '창고 삭제')
+}
+
+// 창고 글 고치기(v6.25) — 본인 것 · 아직 날짜 없는 것만
+export async function editBacklog(id, text) {
+  const ctx = await getContext()
+  const t = String(text || '').trim()
+  if (!t) throw new Error('내용이 비었습니다')
+  const { error, count } = await supabase.from('daily_tasks').update({ content: t }, { count: 'exact' })
+    .eq('id', id).eq('employee_id', ctx.profileId).is('task_date', null)
+  if (error) throw error
+  assertAffected(count, '창고 수정')
 }
 
 // ── 관리자 첫 줄 — 이번 달 숫자 (인수인계 확인률 · 남은 기록 건수) ──
