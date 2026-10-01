@@ -3869,7 +3869,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.31';
+const GUIDE_VERSION = 'v6.32';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3991,6 +3991,12 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.32 — 「매장 확인할 것」 머리 말',
+    items: [
+      '홈 전체 현황 「매장 확인할 것」 머리의 「급한 것 1 · 전체 3」을 「먼저 볼 것 1 · 전체 3」으로 — 매장 판정 「긴급」과 다른 숫자(빨간 줄 개수)라 이름을 나눴습니다',
+    ]
+  },
   {
     title: 'v6.31 — AI도 앱과 같은 판정',
     items: [
@@ -6612,7 +6618,8 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       // 관리자 홈 접기 — 빨간 것만 펼치고 나머지는 「나머지 N건」. 펼친 상태는 기기마다 기억
       let gapOpen=false;try{gapOpen=localStorage.getItem('vflow_fold_gaps')==='1';}catch(e){}
       const urgent=items.filter(o=>o.dot==='danger').length;
-      sc.querySelector('.vh-tiny').textContent=`급한 것 ${urgent} · 전체 ${items.length}`;
+      // v6.32 「급한 것」은 매장 판정 「긴급」과 헷갈려 — 빨간 줄(먼저 볼 줄) 개수라는 뜻 그대로
+      sc.querySelector('.vh-tiny').textContent=urgent?`먼저 볼 것 ${urgent} · 전체 ${items.length}`:`전체 ${items.length}`;
       paintAllN();
       items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(o.dot!=='danger'&&!gapOpen?' vh-gapfold':'')+(o.dot==='danger'&&i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
       const rest=items.length-urgent;
