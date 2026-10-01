@@ -29,7 +29,7 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .setup button{border:0;background:var(--deep);color:var(--on-main);border-radius:10px;padding:9px 14px;font-weight:700}
 #vbook .sr input.tx,#vbook .sr select.tx{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--card);font-size:13px;min-width:0}
 #vbook .rrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-#vbook .mini{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700}
+#vbook .mini{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700}
 #vbook .msgbox{white-space:pre-wrap;background:var(--soft);border-radius:12px;padding:12px;font-size:13.5px;line-height:1.6;margin-top:10px}
 #vbook .svt input[type=number]{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--card);font-size:13px;width:54px}
 #vbook .svtw{overflow-x:auto;max-width:100%}
@@ -39,9 +39,9 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
 #vbook .seg button{border:0;background:transparent;padding:0 14px;height:36px;font-weight:700;font-size:13px;color:var(--sub);display:inline-flex;gap:6px;align-items:center}
 #vbook .seg button[aria-pressed=true]{background:var(--deep);color:var(--on-main)}
-#vbook .badge{min-width:18px;height:18px;border-radius:9px;background:var(--late);color:#fff;font-size:11px;display:inline-grid;place-items:center;padding:0 5px}
+#vbook .badge{min-width:18px;height:18px;border-radius:9px;background:var(--late);color:#fff;font-size:13px;display:inline-grid;place-items:center;padding:0 5px}
 #vbook .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
-#vbook .hint{font-size:12px;color:var(--mute)}
+#vbook .hint{font-size:13px;color:var(--mute)}
 #vbook .store{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
 @media(min-width:1080px){
 #vbook .store{grid-template-columns:minmax(0,1fr) 360px;grid-template-rows:auto auto auto 1fr}
@@ -58,9 +58,9 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .btn svg{width:15px;height:15px}
 #vbook .btn.main{border:0;background:var(--deep);color:var(--on-main)}
 #vbook .days{display:flex;gap:6px;overflow-x:auto;padding:14px 0 10px;scrollbar-width:thin}
-#vbook .days button{flex:none;min-width:62px;padding-inline:4px!important;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0 7px;display:grid;justify-items:center;gap:1px;font-size:12px;color:var(--sub)}
+#vbook .days button{flex:none;min-width:62px;padding-inline:4px!important;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0 7px;display:grid;justify-items:center;gap:1px;font-size:13px;color:var(--sub)}
 #vbook .days button b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
-#vbook .days button .c{font-size:12px;font-weight:700;color:var(--ok)}
+#vbook .days button .c{font-size:13px;font-weight:700;color:var(--ok)}
 #vbook .days button .c.r{color:var(--req)}
 #vbook .days button.su b,#vbook .days button.hl b{color:var(--late)}
 #vbook .days button.cl{background:var(--soft);border-style:dashed}
@@ -69,20 +69,20 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .closed b{color:var(--ink)}
 #vbook .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
 #vbook .tg{display:grid;min-width:max-content}
-#vbook .tg .hd{position:sticky;top:0;background:var(--soft);font-size:12.5px;font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+#vbook .tg .hd{position:sticky;top:0;background:var(--soft);font-size:13px;font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 #vbook .tg .hd small{font-weight:500;color:var(--mute);margin-left:4px}
 #vbook .tg .tc{position:relative;border-left:1px solid var(--line)}
 #vbook .tg .tl{position:relative}
 #vbook .tg .tl span:first-child{transform:none}
 #vbook .tg .tl span:last-child{transform:translateY(-15px)}
-#vbook .tg .tl span{position:absolute;right:8px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;transform:translateY(-7px)}
+#vbook .tg .tl span{position:absolute;right:8px;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;transform:translateY(-7px)}
 #vbook .tg .ln{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
 #vbook .tg .ln.h{border-top-style:dashed;opacity:.6}
-#vbook .tg .brk{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,var(--soft) 0 6px,transparent 6px 12px);font-size:12px;color:var(--mute);display:grid;place-items:center}
+#vbook .tg .brk{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,var(--soft) 0 6px,transparent 6px 12px);font-size:13px;color:var(--mute);display:grid;place-items:center}
 #vbook .now{position:absolute;left:0;right:0;border-top:2px solid var(--late);z-index:3;pointer-events:none}
 #vbook .now::before{content:"";position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--late)}
-#vbook .bk{position:absolute;left:4px;right:4px;border-radius:8px;padding:3px 8px;text-align:left;border:1px solid transparent;overflow:hidden;font-size:12px;line-height:1.35;z-index:2;display:block}
-#vbook .bk b{font-size:12.5px}
+#vbook .bk{position:absolute;left:4px;right:4px;border-radius:8px;padding:3px 8px;text-align:left;border:1px solid transparent;overflow:hidden;font-size:13px;line-height:1.35;z-index:2;display:block}
+#vbook .bk b{font-size:13px}
 #vbook .bk .t{font-variant-numeric:tabular-nums;font-weight:700;margin-right:4px}
 #vbook .bk small{display:block;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vbook .bk.ok{background:var(--ok-bg);color:var(--ink)}
@@ -92,52 +92,52 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .bk.done{background:var(--soft);color:var(--sub)}
 #vbook .bk.noshow{background:var(--late-bg);color:var(--late)}
 #vbook .bk.noshow b{text-decoration:line-through}
-#vbook .bk .flag{float:right;font-size:11.5px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:4px}
+#vbook .bk .flag{float:right;font-size:13px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:4px}
 #vbook .flag.q{background:var(--req-bg);color:var(--req)}
 #vbook .flag.n{background:var(--late-bg);color:var(--late)}
 #vbook .flag.d{background:var(--card);color:var(--sub)}
 #vbook .bk.half{left:4px;right:auto;width:calc(50% - 6px)}
 #vbook .bk.half2{left:calc(50% + 2px);right:4px}
-#vbook .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--sub);margin-top:10px}
+#vbook .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--sub);margin-top:10px}
 #vbook .legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-2px;margin-right:4px}
 #vbook .panel h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-#vbook .panel h2 small{font-size:12px;color:var(--mute);font-weight:500}
+#vbook .panel h2 small{font-size:13px;color:var(--mute);font-weight:500}
 #vbook .todo{display:grid;gap:8px}
 #vbook .it{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
-#vbook .it .k{font-size:12px;font-weight:800}
+#vbook .it .k{font-size:13px;font-weight:800}
 #vbook .it .k.q{color:var(--req)}
 #vbook .it .k.n{color:var(--late)}
 #vbook .it .k.c{color:var(--pur)}
 #vbook .it .k.o{color:var(--green)}
 #vbook .it .k.w{color:var(--sub)}
 #vbook .it b{font-size:14px}
-#vbook .it .m{font-size:12.5px;color:var(--sub)}
+#vbook .it .m{font-size:13px;color:var(--sub)}
 #vbook .it .tags{display:flex;gap:4px;flex-wrap:wrap}
-#vbook .tag{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--soft);color:var(--sub)}
+#vbook .tag{font-size:13px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--soft);color:var(--sub)}
 #vbook .tag.nvt{background:var(--off-bg);color:var(--off)}
 #vbook .nvt2{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;background:var(--card);resize:vertical}
 #vbook .nvl{display:grid;gap:6px;margin-top:10px}
 #vbook .nvr{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:3px;font-size:13px}
-#vbook .nvr .k{font-size:12px;font-weight:800}
+#vbook .nvr .k{font-size:13px;font-weight:800}
 #vbook .nvr .k.ka{color:var(--green)}
 #vbook .nvr .k.kx{color:var(--late)}
 #vbook .nvr .k.ks{color:var(--mute)}
 #vbook .nvr.skip{opacity:.65}
 #vbook .nvr select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--card);font-size:13px}
-#vbook .nvr .w{color:var(--late);font-weight:700;font-size:12.5px}
-#vbook .nvr label{font-size:12px;color:var(--sub);display:flex;gap:5px;align-items:center}
+#vbook .nvr .w{color:var(--late);font-weight:700;font-size:13px}
+#vbook .nvr label{font-size:13px;color:var(--sub);display:flex;gap:5px;align-items:center}
 #vbook .tag.new{background:var(--req-bg);color:var(--req)}
 #vbook .tag.ns{background:var(--late-bg);color:var(--late)}
 #vbook .tag.vip{background:var(--tint);color:var(--green)}
 #vbook .it .ac{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-#vbook .it .ac button,#vbook .it .ac a{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--ink)}
+#vbook .it .ac button,#vbook .it .ac a{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700;text-decoration:none;color:var(--ink)}
 #vbook .it .ac .p{background:var(--deep);border-color:var(--deep);color:var(--on-main)}
 #vbook .it .rs{display:flex;gap:5px;flex-wrap:wrap}
-#vbook .it .rs button{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600}
+#vbook .it .rs button{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:3px 9px;font-size:13px;font-weight:600}
 #vbook .empty{font-size:13px;color:var(--mute);padding:6px 0}
 #vbook .link{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 10px;font-size:13px;font-variant-numeric:tabular-nums}
 #vbook .link span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#vbook .link button{border:0;background:var(--soft);border-radius:8px;padding:5px 10px;font-weight:700;font-size:12.5px}
+#vbook .link button{border:0;background:var(--soft);border-radius:8px;padding:5px 10px;font-weight:700;font-size:13px}
 #vbook .wl{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px}
 #vbook .wl li{display:flex;justify-content:space-between;gap:8px}
 #vbook .wl small{color:var(--mute)}
@@ -145,13 +145,13 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .sr{display:grid;grid-template-columns:200px minmax(0,1fr);gap:6px 16px;padding:14px 0;border-top:1px solid var(--line)}
 #vbook .sr:first-of-type{border-top:0}
 #vbook .sr>b{font-size:14px}
-#vbook .sr>b small{display:block;font-weight:500;font-size:12px;color:var(--mute);margin-top:2px}
+#vbook .sr>b small{display:block;font-weight:500;font-size:13px;color:var(--mute);margin-top:2px}
 #vbook .opt{display:flex;flex-wrap:wrap;gap:6px}
 #vbook .opt button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--sub);text-align:left}
-#vbook .opt button small{display:block;font-weight:500;font-size:12px;color:var(--mute)}
+#vbook .opt button small{display:block;font-weight:500;font-size:13px;color:var(--mute)}
 #vbook .opt button[aria-pressed=true]{border-color:var(--green);background:var(--tint);color:var(--ink)}
 #vbook .svt{width:100%;border-collapse:collapse;font-size:13px}
-#vbook .svt th{white-space:nowrap;text-align:left;font-size:12px;color:var(--mute);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
+#vbook .svt th{white-space:nowrap;text-align:left;font-size:13px;color:var(--mute);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
 #vbook .svt td{white-space:nowrap;padding:6px;border-bottom:1px solid var(--line)}
 #vbook .svt select,#vbook .svt input[type=text]{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--card);font-size:13px;width:100%}
 #vbook .svt input[type=checkbox]{width:17px;height:17px;accent-color:var(--green)}
@@ -174,8 +174,8 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .kv dt{color:var(--mute)}
 #vbook .kv dd{margin:0}
 #vbook .kv a{color:var(--ok);font-weight:700;text-decoration:none;font-variant-numeric:tabular-nums}
-#vbook .sec{font-size:12.5px;font-weight:700;color:var(--sub);margin:14px 0 6px}
-#vbook .log{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:12.5px;color:var(--sub)}
+#vbook .sec{font-size:13px;font-weight:700;color:var(--sub);margin:14px 0 6px}
+#vbook .log{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px;color:var(--sub)}
 #vbook .log b{color:var(--ink);font-weight:600}
 #vbook .sacts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 #vbook .sacts button{flex:1;min-width:90px;height:44px;border-radius:12px;font-weight:700;border:1px solid var(--line);background:var(--card)}
@@ -195,17 +195,17 @@ html[data-bright=dark] #vbook{--ok:#7FB0F2;--ok-bg:#1A2B42;--req:#EDB25A;--req-b
 #vbook .chp button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:7px 12px;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
 #vbook .chp button:disabled{opacity:.4;text-decoration:line-through}
 #vbook .cd{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-#vbook .cd button{flex:none;width:52px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:grid;justify-items:center;font-size:12px;color:var(--sub)}
+#vbook .cd button{flex:none;width:52px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:grid;justify-items:center;font-size:13px;color:var(--sub)}
 #vbook .cd button b{font-size:16px;color:var(--ink)}
 #vbook .cd button:disabled{background:var(--soft);border-style:dashed;opacity:.75}
 #vbook .cd button:disabled b{color:var(--mute)}
 #vbook .cd button[aria-pressed=true]{border-color:var(--green);background:var(--tint)}
 #vbook .cd button.su b{color:var(--late)}
-#vbook .fl{display:grid;gap:5px;margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--sub)}
+#vbook .fl{display:grid;gap:5px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--sub)}
 #vbook .fl input,#vbook .fl select,#vbook .fl textarea{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 11px;font-size:15px;width:100%;min-width:0;color:var(--ink);font-weight:400}
 #vbook .nope{font-size:13px;color:var(--sub);background:var(--soft);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
-#vbook .nope button{justify-self:start;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-weight:700;font-size:12.5px}
-#vbook .sms{width:100%;background:var(--soft);border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:12.5px;line-height:1.5;color:var(--ink)}
+#vbook .nope button{justify-self:start;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-weight:700;font-size:13px}
+#vbook .sms{width:100%;background:var(--soft);border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.5;color:var(--ink)}
 #vbook .sms small{display:block;color:var(--mute);margin-bottom:2px}
 #vbook .sms .lk{color:var(--ok);font-weight:700}`
 
@@ -633,7 +633,7 @@ export async function openBooking(host = {}) {
           if (r.kind === 'mv') return `<div class="nvr"><span class="k ka">시간 변경</span><span>${esc(r.name)} · ${md(dayOf(r.x))} ${hm(minOf(r.x.starts_at))} → ${hd}</span></div>`
           const c = clash(r), gl = guests.filter((x) => x.name === r.name)
           return `<div class="nvr"><span class="k ka">새 예약${S.nvConf === 'manual' ? ' · 네이버에서 확정 전' : ''}</span><span>${hd} · <span class="hint">네이버 상품</span> ${esc(r.item)}</span>
-            ${!r.pick ? `<span>${esc((services.find((s) => s.id === r.svc) || {}).name || '')} · ${esc(resName(r.res))} <span class="hint">${r.mem ? '기억한 연결' : '이름으로 연결'}</span> <a href="#" data-ch="${i}" style="font-size:12px;color:var(--green)">바꾸기</a></span>`
+            ${!r.pick ? `<span>${esc((services.find((s) => s.id === r.svc) || {}).name || '')} · ${esc(resName(r.res))} <span class="hint">${r.mem ? '기억한 연결' : '이름으로 연결'}</span> <a href="#" data-ch="${i}" style="font-size:13px;color:var(--green)">바꾸기</a></span>`
               : `<span style="display:flex;gap:6px;flex-wrap:wrap"><select data-ms="${i}" aria-label="시술"><option value="">시술 고르기</option>${SVCS().map((s) => `<option value="${s.id}"${r.svc === s.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select><select data-mc="${i}" aria-label="칸"><option value="">칸 고르기</option>${RES().map((x) => `<option value="${x.id}"${r.res === x.id ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></span>
               <label><input type="checkbox" data-mk="${i}" ${r.keep ? 'checked' : ''}>다음부터 '${esc(r.item)}' 상품은 자동</label>`}
             ${!openHours(r.date, hoursOf(store), closedSet(store)) ? '<span class="w">매장 쉬는 날이에요 · 네이버 예약 설정의 휴무일도 확인</span>' : ''}
@@ -744,7 +744,7 @@ export async function openBooking(host = {}) {
 
   $$('[data-tab] button').forEach((b) => b.onclick = () => { tab = b.dataset.t; render() })
   const ss = $('[data-store]'); if (ss) ss.onchange = (e) => { store = e.target.value; day = TK; render() }
-  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[book] load', e); $('[data-err]').innerHTML = `<div class="st-err">예약을 불러오지 못했어요 — ${esc(e.message || e)}. 잠시 뒤 다시 열어 주세요</div>` }
+  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[book] load', e); $('[data-err]').innerHTML = `<div class="st-err">예약을 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))}. 잠시 뒤 다시 열어 주세요</div>` }
   if (!STORES.length) { $('[data-view]').innerHTML = '<div class="setup"><b>매장이 없어요</b></div>'; return { close } }
   if (host.tab) tab = host.tab
   render()

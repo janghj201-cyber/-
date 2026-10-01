@@ -23,8 +23,8 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .starter{border:1.5px dashed var(--line);border-radius:14px;padding:16px;display:grid;gap:8px;justify-items:start;font-size:13.5px;color:var(--sub)}
 #vexp .starter b{color:var(--ink);font-size:15px}
 #vexp .starter button{border:0;background:var(--deep);color:var(--on-main);border-radius:10px;padding:9px 14px;font-weight:700}
-#vexp .tbl .hide{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--sub);white-space:nowrap}
-#vexp .note2{font-size:12.5px;color:var(--mute);margin-top:10px}
+#vexp .tbl .hide{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--sub);white-space:nowrap}
+#vexp .note2{font-size:13px;color:var(--mute);margin-top:10px}
 #vexp .app{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 @media(min-width:1060px){
 #vexp .app{grid-template-columns:minmax(0,1fr) 340px}
@@ -50,7 +50,7 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .grp h3 b{color:var(--ink)}
 #vexp .lot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:6px}
 #vexp .lot .dd{grid-row:1 / span 2;width:64px;text-align:center;border-radius:10px;padding:6px 0;font-weight:700;font-size:13px;line-height:1.2;font-variant-numeric:tabular-nums}
-#vexp .lot .dd small{display:block;font-size:12px;font-weight:600}
+#vexp .lot .dd small{display:block;font-size:13px;font-weight:600}
 #vexp .st-over .dd{background:var(--over-bg);color:var(--over)}
 #vexp .st-today .dd{background:var(--today-bg);color:var(--today)}
 #vexp .st-tmr .dd{background:var(--soon-bg);color:var(--soon)}
@@ -59,49 +59,49 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .st-over{border-color:var(--over)}
 #vexp .lot .nm{font-weight:700;font-size:14.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 #vexp .lot .nm .q{font-weight:600;color:var(--sub);font-size:13px}
-#vexp .lot .mt{grid-column:2;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+#vexp .lot .mt{grid-column:2;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
 #vexp .lot .acts{grid-row:1 / span 2;grid-column:3;display:flex;gap:6px}
-#vexp .lot .acts button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+#vexp .lot .acts button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap}
 #vexp .lot .acts button:hover{background:var(--hover)}
 #vexp .lot .acts .bin{color:var(--over)}
-#vexp .tagk{font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px}
+#vexp .tagk{font-size:13px;font-weight:700;border-radius:999px;padding:1px 7px}
 #vexp .k-cold{background:var(--cold-bg);color:var(--cold)}
 #vexp .k-frz{background:var(--frz-bg);color:var(--frz)}
 #vexp .k-room{background:var(--room-bg);color:var(--room)}
-#vexp .tago{font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub)}
+#vexp .tago{font-size:13px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub)}
 #vexp .empty{font-size:13px;color:var(--mute);padding:16px 0}
 #vexp .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 #vexp .tblw{overflow-x:auto}
-#vexp .tbl th{font-size:12px;color:var(--mute);font-weight:600;text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+#vexp .tbl th{font-size:13px;color:var(--mute);font-weight:600;text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
 #vexp .tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 #vexp .tbl input,#vexp .tbl select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;font-size:13.5px;width:100%;min-width:0}
 #vexp .tbl input.n{width:70px;text-align:right;font-variant-numeric:tabular-nums}
-#vexp .tbl .u{color:var(--mute);font-size:12px;white-space:nowrap}
+#vexp .tbl .u{color:var(--mute);font-size:13px;white-space:nowrap}
 #vexp .addrow{margin-top:10px;border:1px dashed var(--line);background:transparent;border-radius:10px;padding:9px;width:100%;font-weight:700;color:var(--sub)}
-#vexp .hint{font-size:12px;color:var(--mute)}
+#vexp .hint{font-size:13px;color:var(--mute)}
 #vexp .wtot{display:flex;gap:18px;flex-wrap:wrap;background:var(--soft);border-radius:12px;padding:12px 14px;margin-bottom:12px}
-#vexp .wtot div{font-size:12.5px;color:var(--sub)}
+#vexp .wtot div{font-size:13px;color:var(--sub)}
 #vexp .wtot b{display:block;font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
 #vexp .wl{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:2px 10px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
 #vexp .wl .d{color:var(--mute);font-variant-numeric:tabular-nums}
 #vexp .wl .w{text-align:right;font-variant-numeric:tabular-nums;color:var(--sub)}
-#vexp .wl small{grid-column:2;color:var(--sub);font-size:12px}
+#vexp .wl small{grid-column:2;color:var(--sub);font-size:13px}
 #vexp .side{display:grid;gap:12px;align-content:start}
 #vexp .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 #vexp .panel h2{font-size:15px;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-#vexp .panel h2 small{font-size:12px;color:var(--mute);font-weight:500}
+#vexp .panel h2 small{font-size:13px;color:var(--mute);font-weight:500}
 #vexp .al{list-style:none;margin:0;padding:0;display:grid;gap:9px}
 #vexp .al li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 10px;font-size:13px}
 #vexp .al .w{font-weight:700;color:var(--green);white-space:nowrap;font-variant-numeric:tabular-nums}
-#vexp .al small{grid-column:2;color:var(--mute);font-size:12px}
+#vexp .al small{grid-column:2;color:var(--mute);font-size:13px}
 #vexp .push{margin-top:10px;background:var(--soft);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:0 10px}
 #vexp .push .ic{width:28px;height:28px;border-radius:7px;background:var(--deep);display:grid;place-items:center}
 #vexp .push .ic svg{width:16px;height:16px;color:var(--on-main)}
-#vexp .push b{font-size:12.5px}
-#vexp .push p{margin:1px 0 0;font-size:12.5px;color:var(--sub)}
-#vexp .push .from{font-size:12px;color:var(--mute)}
+#vexp .push b{font-size:13px}
+#vexp .push p{margin:1px 0 0;font-size:13px;color:var(--sub)}
+#vexp .push .from{font-size:13px;color:var(--mute)}
 #vexp .bars{display:grid;gap:6px;margin-top:4px}
-#vexp .bar{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:12.5px}
+#vexp .bar{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:13px}
 #vexp .bar .t{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
 #vexp .bar .t i{display:block;height:100%;background:var(--over);opacity:.75}
 #vexp .bar .v{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
@@ -117,23 +117,23 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .sheet .sub{font-size:13px;color:var(--sub);margin:0 0 12px}
 #vexp .srch{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;font-size:15px}
 #vexp .kf{display:flex;gap:6px;margin:10px 0}
-#vexp .kf button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vexp .kf button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;color:var(--sub)}
 #vexp .kf button[aria-pressed=true]{border-color:var(--ink);color:var(--ink)}
 #vexp .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px}
 #vexp .pick button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;text-align:left;display:grid;gap:1px;position:relative}
 #vexp .pick button b{font-size:13.5px}
-#vexp .pick button small{font-size:12px;color:var(--mute)}
-#vexp .pick button .cnt{position:absolute;top:6px;right:8px;min-width:20px;height:20px;border-radius:999px;background:var(--deep);color:var(--on-main);font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+#vexp .pick button small{font-size:13px;color:var(--mute)}
+#vexp .pick button .cnt{position:absolute;top:6px;right:8px;min-width:20px;height:20px;border-radius:999px;background:var(--deep);color:var(--on-main);font-size:13px;font-weight:700;display:grid;place-items:center;padding:0 5px}
 #vexp .pick button.on{border-color:var(--green);background:var(--tint)}
 #vexp .cart{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
 #vexp .ci{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;font-size:13.5px}
 #vexp .ci b{font-weight:700}
-#vexp .ci small{grid-column:1;color:var(--sub);font-size:12px}
+#vexp .ci small{grid-column:1;color:var(--sub);font-size:13px}
 #vexp .stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 #vexp .stp button{border:0;background:var(--card);width:30px;height:30px;font-weight:700}
 #vexp .stp span{min-width:26px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
-#vexp .lbl{grid-row:1 / span 2;grid-column:3;font-size:12px;color:var(--sub);display:flex;gap:4px;align-items:center}
-#vexp .lbl input[type=date]{border:1px solid var(--line);border-radius:7px;padding:3px 6px;font-size:12px;background:var(--card)}
+#vexp .lbl{grid-row:1 / span 2;grid-column:3;font-size:13px;color:var(--sub);display:flex;gap:4px;align-items:center}
+#vexp .lbl input[type=date]{border:1px solid var(--line);border-radius:7px;padding:3px 6px;font-size:13px;background:var(--card)}
 #vexp .sacts{display:flex;gap:8px;margin-top:14px}
 #vexp .sacts button{flex:1;height:46px;border-radius:12px;font-weight:700;border:1px solid var(--line);background:var(--card)}
 #vexp .sacts .main{background:var(--deep);border-color:var(--deep);color:var(--on-main);flex:2}
@@ -144,7 +144,7 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;z-index:30;max-width:calc(100% - 32px)}
 #vexp .due{border:1.5px solid var(--green);background:var(--tint);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
 #vexp .due b{font-size:14.5px}
-#vexp .due small{grid-column:1;color:var(--sub);font-size:12.5px}
+#vexp .due small{grid-column:1;color:var(--sub);font-size:13px}
 #vexp .due .acts{grid-row:1 / span 2;grid-column:2;display:flex;gap:6px}
 #vexp .due .acts button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;font-weight:700;font-size:13px;white-space:nowrap}
 #vexp .due .acts .go{background:var(--deep);border-color:var(--deep);color:var(--on-main)}
@@ -153,20 +153,20 @@ html[data-bright=dark] #vexp{--over:#F08A80;--over-bg:#3A1D1A;--today:#F2B35A;--
 #vexp .lot .who{color:var(--mute)}
 #vexp .fold{width:100%;border:1px dashed var(--line);background:transparent;border-radius:10px;padding:9px;font-weight:700;color:var(--sub);margin-top:6px}
 #vexp .quiet .lot{padding:8px 12px}
-#vexp .quiet .lot .acts button{padding:5px 9px;font-size:12px}
+#vexp .quiet .lot .acts button{padding:5px 9px;font-size:13px}
 #vexp .chips{display:flex;flex-wrap:wrap;gap:4px;grid-column:1 / -1;align-items:center}
-#vexp .chips .cl{font-size:12px;color:var(--sub);margin-right:2px}
-#vexp .chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
+#vexp .chips .cl{font-size:13px;color:var(--sub);margin-right:2px}
+#vexp .chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 9px;font-size:13px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
 #vexp .chips button[aria-pressed=true]{border-color:var(--green);background:var(--tint);color:var(--ink)}
-#vexp .chips input[type=date]{border:1px solid var(--line);border-radius:7px;padding:2px 6px;font-size:12px;background:var(--card)}
+#vexp .chips input[type=date]{border:1px solid var(--line);border-radius:7px;padding:2px 6px;font-size:13px;background:var(--card)}
 #vexp .again{display:grid;gap:6px;margin-bottom:10px}
 #vexp .again button{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:9px 12px;text-align:left;font-size:13px}
 #vexp .again button b{white-space:nowrap}
 #vexp .again button span{color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#vexp .storeln{font-size:12.5px;color:var(--sub);margin-bottom:8px}
+#vexp .storeln{font-size:13px;color:var(--sub);margin-bottom:8px}
 #vexp .storeln button{border:0;background:none;color:var(--green);font-weight:700;padding:0;text-decoration:underline}
 #vexp .push .pa{display:flex;gap:6px;margin-top:8px}
-#vexp .push .pa button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+#vexp .push .pa button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700}
 @media(max-width:640px){
 #vexp .main{padding:14px 12px}
 #vexp .lot{grid-template-columns:auto minmax(0,1fr)}
@@ -358,7 +358,7 @@ export async function openExpiry(host = {}) {
   }
   function lotRow(l, act) {
     const it = item(l.itemId), s = stat(l), snz = snoozed(l)
-    const btns = act ? (s === 'over' ? `<button class="bin" data-bin="${l.id}">버림</button><button data-used="${l.id}">다 씀</button>`
+    const btns = act ? (s === 'over' ? `<button data-used="${l.id}">다 씀</button><button class="bin" data-bin="${l.id}">버림</button>`
       : `<button data-used="${l.id}">다 씀</button>${snz ? '' : `<button class="snz" data-snz="${l.id}">아직 있음</button>`}<button class="bin" data-bin="${l.id}">버림</button>`)
       : `${it.o && !l.opened ? `<button data-open="${l.id}">개봉</button>` : ''}<button data-used="${l.id}">다 씀</button>`
     const openDue = l.opened && it.o ? addD(l.opened, it.o) : null
@@ -510,7 +510,7 @@ export async function openExpiry(host = {}) {
   $('[data-store]').onchange = (e) => { store = e.target.value; if (store !== 'all') here = store; render() }
   $$('[data-tab] button').forEach((b) => b.onclick = () => { tab = b.dataset.t; render() })
   $('[data-in]').onclick = () => openIn()
-  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[exp] load', e); $('[data-err]').innerHTML = `<div class="st-err">보관기한을 불러오지 못했어요 — ${esc(e.message || e)}. 잠시 뒤 다시 열어 주세요</div>` }
+  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[exp] load', e); $('[data-err]').innerHTML = `<div class="st-err">보관기한을 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))}. 잠시 뒤 다시 열어 주세요</div>` }
   if (host.tab) tab = host.tab
   render()
   return { close }

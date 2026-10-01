@@ -22,12 +22,13 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .wrap{max-width:1560px;margin:0 auto;padding:14px 16px calc(48px + var(--safe-bot,0px))}
 #vcal .frame{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 #vcal .lpanel{display:none}
+#vcal .st-retry{margin-left:8px;border:1px solid currentColor;background:#fff;color:inherit;border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 #vcal .st-err{background:var(--hol-bg);color:var(--hol);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;margin-bottom:10px}
 #vcal .loading{font-size:13px;color:var(--mute);padding:40px 0;text-align:center}
 #vcal .rec{width:100%;margin-top:8px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px;font-weight:600;font-size:13px;color:var(--sub)}
 #vcal .tag.s-req{background:var(--exp-bg);color:var(--expT)}
 #vcal .fixnote{margin-top:12px;font-size:13px;color:var(--sub);background:var(--soft);border-radius:10px;padding:10px 12px}
-#vcal .ro{font-size:12px;color:var(--mute)}
+#vcal .ro{font-size:13px;color:var(--mute)}
 #vcal .sacts button{display:grid;place-items:center;padding:0 10px}
 #vcal .app{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 @media(min-width:960px){
@@ -51,6 +52,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .add{height:36px;border:0;background:var(--deep);color:var(--on-main);border-radius:10px;padding:0 14px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
 #vcal .add svg{width:15px;height:15px}
 #vcal .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 12px}
+#vcal .lays-tg{display:none}
 #vcal .bar select{height:34px;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:0 10px;font-size:13px}
 #vcal .lays{display:flex;flex-wrap:wrap;gap:8px}
 #vcal .lay{display:inline-flex;flex:none;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border:1px solid var(--line);background:var(--card);border-radius:9px;font-size:13px;font-weight:600;color:var(--sub)}
@@ -65,9 +67,9 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .lay[aria-pressed=false] .ck{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 #vcal .lay[aria-pressed=false] .ck svg{opacity:0}
 #vcal .lay[aria-pressed=false]{color:var(--mute)}
-#vcal .lay .n{font-size:12px;color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
+#vcal .lay .n{font-size:13px;color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
 #vcal .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden}
-#vcal .dow{font-size:12px;font-weight:600;color:var(--mute);text-align:center;padding:8px 0;background:var(--soft);border-bottom:1px solid var(--line)}
+#vcal .dow{font-size:13px;font-weight:600;color:var(--mute);text-align:center;padding:8px 0;background:var(--soft);border-bottom:1px solid var(--line)}
 #vcal .dow.su{color:var(--hol)}
 #vcal .dow.sa{color:var(--sub)}
 #vcal .cell{min-height:112px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 6px 6px;display:flex;flex-direction:column;gap:3px;background:var(--card);text-align:left;border-top:0;border-left:0;min-width:0}
@@ -81,8 +83,8 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .cell.today .dn{background:var(--deep);color:var(--on-main)}
 #vcal .cell.su .dn,#vcal .cell.hol .dn{color:var(--hol)}
 #vcal .cell.today.su .dn,#vcal .cell.today.hol .dn{color:var(--on-main)}
-#vcal .hn{font-size:12px;color:var(--hol);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#vcal .chip{display:flex;align-items:center;gap:6px;border-radius:7px;padding:4px 7px;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#vcal .hn{font-size:13px;color:var(--hol);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vcal .chip{display:flex;align-items:center;gap:6px;border-radius:7px;padding:4px 7px;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #vcal .chip .t{font-variant-numeric:tabular-nums;font-weight:600}
 #vcal .chip svg{width:13px;height:13px;flex:none}
 #vcal .chip span:last-child{overflow:hidden;text-overflow:ellipsis}
@@ -102,12 +104,12 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .tag.k-exp{color:var(--exp)}
 #vcal .tag.k-fix{color:var(--fix)}
 #vcal .tag.k-off{color:var(--off)}
-#vcal .more{font-size:12px;color:var(--sub);font-weight:600;padding-left:4px}
+#vcal .more{font-size:13px;color:var(--sub);font-weight:600;padding-left:4px}
 @media(min-width:721px){
 #vcal [data-dense=sum] .cell{min-height:92px}
 }
 #vcal .sums{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
-#vcal .sm{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink);background:var(--soft);border-radius:999px;padding:2px 8px 2px 6px;white-space:nowrap;line-height:1.5}
+#vcal .sm{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--ink);background:var(--soft);border-radius:999px;padding:2px 8px 2px 6px;white-space:nowrap;line-height:1.5}
 #vcal .sm i{width:7px;height:7px;border-radius:50%;flex:none;background:var(--kc,var(--sub))}
 #vcal .sm b{font-weight:800;font-variant-numeric:tabular-nums}
 #vcal .sm.k-rsv i{background:var(--rsv)}
@@ -129,7 +131,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
 #vcal .wdy{border:1px solid var(--line);border-radius:12px;padding:8px;min-height:280px;display:flex;flex-direction:column;gap:5px;background:var(--card);text-align:left;min-width:0}
 #vcal .wdy.sel{box-shadow:inset 0 0 0 2px var(--green)}
-#vcal .wdy h3{margin:0 0 4px;font-size:12.5px;color:var(--sub);font-weight:600;display:flex;gap:6px;align-items:baseline}
+#vcal .wdy h3{margin:0 0 4px;font-size:13px;color:var(--sub);font-weight:600;display:flex;gap:6px;align-items:baseline}
 #vcal .wdy h3 b{font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
 #vcal .wdy .chip{white-space:normal}
 #vcal .list{display:grid;gap:14px}
@@ -141,31 +143,31 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .ph>.psub,#vcal .ph>#fold{margin-left:auto}
 #vcal #slStrip:empty{display:none}
 #vcal .ph h2{margin:0;font-size:18px;letter-spacing:-.01em}
-#vcal .pill{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--tint);color:var(--green)}
-#vcal .psub{font-size:12.5px;color:var(--mute);margin:2px 0 10px}
+#vcal .pill{font-size:13px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--tint);color:var(--green)}
+#vcal .psub{font-size:13px;color:var(--mute);margin:2px 0 10px}
 #vcal .alerts{display:grid;gap:8px;margin-bottom:10px}
 #vcal .al{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:center;background:var(--exp-bg);border-radius:12px;padding:10px 12px}
 #vcal .al svg{width:18px;height:18px;color:var(--exp);grid-row:1 / span 2}
 #vcal .al b{font-size:13.5px}
-#vcal .al small{grid-column:2;color:var(--sub);font-size:12px}
-#vcal .al button{grid-row:1 / span 2;grid-column:3;border:1px solid var(--exp);background:transparent;color:var(--exp);border-radius:8px;padding:5px 10px;font-weight:700;font-size:12.5px}
+#vcal .al small{grid-column:2;color:var(--sub);font-size:13px}
+#vcal .al button{grid-row:1 / span 2;grid-column:3;border:1px solid var(--exp);background:transparent;color:var(--exp);border-radius:8px;padding:5px 10px;font-weight:700;font-size:13px}
 #vcal .al.done{opacity:.55}
 #vcal .al.done b{text-decoration:line-through}
 #vcal .tl{display:grid}
 #vcal .ev{display:grid;grid-template-columns:52px minmax(0,1fr);gap:2px 12px;padding:12px 0;border-top:1px solid var(--line)}
 #vcal .ev:first-child{border-top:0}
 #vcal .ev .tm{font-weight:700;font-variant-numeric:tabular-nums;font-size:14px;padding-top:1px}
-#vcal .ev .tm.all{font-size:12px;color:var(--mute);font-weight:600}
+#vcal .ev .tm.all{font-size:13px;color:var(--mute);font-weight:600}
 #vcal .ev .bd{display:grid;gap:3px;min-width:0}
 #vcal .ev .tg{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-#vcal .tag{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
+#vcal .tag{font-size:13px;font-weight:700;border-radius:999px;padding:1px 8px}
 #vcal .ev b{font-size:14.5px}
-#vcal .ev .meta{font-size:12.5px;color:var(--sub)}
-#vcal .ev .rm{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mute)}
+#vcal .ev .meta{font-size:13px;color:var(--sub)}
+#vcal .ev .rm{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--mute)}
 #vcal .ev .rm svg{width:13px;height:13px}
 #vcal .ev .rm.on{color:var(--green)}
 #vcal .ev .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-#vcal .ev .acts button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;font-size:12.5px;font-weight:600}
+#vcal .ev .acts button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600}
 #vcal .ev .acts button:hover{background:var(--hover)}
 #vcal .empty{font-size:13px;color:var(--mute);padding:14px 0}
 #vcal .addday{width:100%;margin-top:6px;border:1px dashed var(--line);background:transparent;border-radius:10px;padding:10px;font-weight:700;color:var(--sub)}
@@ -173,13 +175,13 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .remind ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 #vcal .remind li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 10px;font-size:13px}
 #vcal .remind li .w{font-weight:700;font-variant-numeric:tabular-nums;color:var(--green);white-space:nowrap}
-#vcal .remind li small{grid-column:2;color:var(--mute);font-size:12px}
+#vcal .remind li small{grid-column:2;color:var(--mute);font-size:13px}
 #vcal .push{margin-top:10px;background:var(--soft);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:0 10px;align-items:start}
 #vcal .push .ic{width:28px;height:28px;border-radius:7px;background:var(--deep);display:grid;place-items:center}
 #vcal .push .ic svg{width:16px;height:16px;color:var(--on-main)}
-#vcal .push b{font-size:12.5px}
-#vcal .push p{margin:1px 0 0;font-size:12.5px;color:var(--sub)}
-#vcal .push .from{font-size:12px;color:var(--mute)}
+#vcal .push b{font-size:13px}
+#vcal .push p{margin:1px 0 0;font-size:13px;color:var(--sub)}
+#vcal .push .from{font-size:13px;color:var(--mute)}
 #vcal .scrim{position:fixed;inset:0;background:rgba(8,16,12,.45);display:grid;place-items:end center;z-index:20;padding:0}
 @media(min-width:700px){
 #vcal .scrim{place-items:center;padding:16px}
@@ -193,13 +195,13 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .kinds button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 6px;font-weight:700;font-size:13px;display:flex;gap:6px;justify-content:center;align-items:center}
 #vcal .kinds button .sw{margin-right:2px}
 #vcal .kinds button[aria-pressed=true]{border-color:var(--ink)}
-#vcal .fld{display:grid;gap:5px;margin-top:12px;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vcal .fld{display:grid;gap:5px;margin-top:12px;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .fld input,#vcal .fld select,#vcal .fld textarea{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px;font-size:14.5px;color:var(--ink);width:100%;min-width:0}
 #vcal .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #vcal .rms{display:flex;flex-wrap:wrap;gap:6px}
 #vcal .rms button{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .rms button[aria-pressed=true]{border-color:var(--green);color:var(--green);background:var(--tint)}
-#vcal .hint{font-size:12px;color:var(--mute);font-weight:400}
+#vcal .hint{font-size:13px;color:var(--mute);font-weight:400}
 #vcal .sacts{display:flex;gap:8px;margin-top:16px}
 #vcal .sacts button{flex:1;height:44px;border-radius:12px;font-weight:700;border:1px solid var(--line);background:var(--card)}
 #vcal .sacts .main{background:var(--deep);border-color:var(--deep);color:var(--on-main);flex:2}
@@ -219,7 +221,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal [data-chip=fill] .chip.k-fix{background:transparent;color:var(--fix);font-weight:600;padding-left:2px}
 #vcal [data-chip=fill] .chip.k-off{background:repeating-linear-gradient(135deg,var(--off-bg) 0 4px,transparent 4px 8px);color:var(--sub)}
 #vcal .chip .imp{width:11px!important;height:11px!important;color:var(--st-star)!important;display:inline-block!important;margin-left:-2px}
-#vcal .stk{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px 1px 3px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--sc);color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#vcal .stk{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;border-radius:999px;padding:1px 7px 1px 3px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--sc);color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #vcal .stk i{width:16px;height:16px;border-radius:50%;background:var(--sc);display:grid;place-items:center;flex:none}
 #vcal .stk i svg{width:10px;height:10px;color:#fff}
 #vcal .stk.only{padding:1px}
@@ -231,16 +233,16 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .s-heart{--sc:var(--st-heart)}
 #vcal .s-party{--sc:var(--st-party)}
 #vcal .dayst{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 10px}
-#vcal .dayst .stk{font-size:12.5px;padding:3px 10px 3px 4px}
+#vcal .dayst .stk{font-size:13px;padding:3px 10px 3px 4px}
 #vcal .dayst .stk i{width:20px;height:20px}
 #vcal .dayst .stk i svg{width:12px;height:12px}
-#vcal .stbtn{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vcal .stbtn{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .stpick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
-#vcal .stpick button{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 4px;display:grid;justify-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vcal .stpick button{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 4px;display:grid;justify-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .stpick button i{width:30px;height:30px;border-radius:50%;background:var(--sc);display:grid;place-items:center}
 #vcal .stpick button i svg{width:16px;height:16px;color:#fff}
 #vcal .stpick button[aria-pressed=true]{border-color:var(--sc);color:var(--ink)}
-#vcal .ev .star{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--mute)}
+#vcal .ev .star{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:var(--mute)}
 #vcal .ev .star svg{width:14px;height:14px}
 #vcal .ev .star[aria-pressed=true]{color:var(--st-star)}
 #vcal .dots i.stdot{width:auto;height:auto;background:none;border-radius:0}
@@ -249,25 +251,25 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .pop h3{margin:0 0 8px;font-size:13px;color:var(--sub);font-weight:700}
 #vcal .pop h3+.opts{margin-bottom:14px}
 #vcal .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
-#vcal .opt{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px;display:grid;gap:6px;justify-items:center;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vcal .opt{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px;display:grid;gap:6px;justify-items:center;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .opt[aria-pressed=true]{border-color:var(--green);color:var(--ink);background:var(--tint)}
 #vcal .opt svg.wf{width:100%;height:auto;max-width:130px}
 #vcal .opt .chip{width:100%}
-#vcal .pop small{display:block;font-size:12px;color:var(--mute)}
+#vcal .pop small{display:block;font-size:13px;color:var(--mute)}
 @media(min-width:1100px){
 #vcal [data-layout=left] .frame{display:grid;grid-template-columns:260px minmax(0,1fr)!important;gap:16px}
 #vcal [data-layout=left] .lpanel{display:flex;flex-direction:column;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;align-self:start}
 #vcal [data-layout=left] .app{grid-template-columns:minmax(0,1fr)!important}
 #vcal [data-layout=left] .side{display:none}
 }
-#vcal .lpanel .lbl{font-size:12.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+#vcal .lpanel .lbl{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px}
 #vcal .lpanel select{width:100%;height:38px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 10px}
 #vcal .lpanel .lays{flex-direction:column;gap:2px}
 #vcal .lpanel .lay{border:0;background:transparent;height:32px;padding:0 4px}
 #vcal .lpanel .remind{border:0;padding:0}
-#vcal .mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
-#vcal .mini .mh{color:var(--mute);font-size:11px;padding:2px 0}
-#vcal .mini button{border:0;background:transparent;height:28px;border-radius:50%;font-size:12px;position:relative}
+#vcal .mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
+#vcal .mini .mh{color:var(--mute);font-size:13px;padding:2px 0}
+#vcal .mini button{border:0;background:transparent;height:28px;border-radius:50%;font-size:13px;position:relative}
 #vcal .mini button.o{color:var(--mute);opacity:.5}
 #vcal .mini button.t{background:var(--deep);color:var(--on-main);font-weight:700}
 #vcal .mini button.s:not(.t){box-shadow:inset 0 0 0 1.5px var(--green)}
@@ -282,17 +284,17 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal #day.strip .sc{flex:none;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 8px;align-items:center;border:0;border-radius:12px;padding:10px 14px;min-width:210px;max-width:260px;text-align:left}
 #vcal #day.strip .sc svg{width:15px;height:15px;color:var(--kc)}
 #vcal #day.strip .sc b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#vcal #day.strip .sc small{grid-column:2;color:var(--sub);font-size:12px}
+#vcal #day.strip .sc small{grid-column:2;color:var(--sub);font-size:13px}
 #vcal #day.strip .more2{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card)}
 #vcal .kc{display:grid;gap:8px;margin-bottom:12px}
-#vcal .kc-row{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+#vcal .kc-row{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:8px;font-size:13px;font-weight:600}
 #vcal .kc-sw{display:flex;flex-wrap:wrap;gap:5px}
 #vcal .kc-sw button{width:19px;height:19px;border-radius:50%;border:0;padding:0;background:var(--c)}
 #vcal .kc-sw button[aria-pressed=true]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
 #vcal .pop h3 small{display:inline;font-weight:500;color:var(--mute);margin-left:6px}
-#vcal .reset{border:0;background:none;color:var(--sub);text-decoration:underline;font-size:12px;padding:0;margin-bottom:12px}
+#vcal .reset{border:0;background:none;color:var(--sub);text-decoration:underline;font-size:13px;padding:0;margin-bottom:12px}
 #vcal .cpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-#vcal .cbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px 5px 6px;font-size:12.5px;font-weight:600}
+#vcal .cbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px 5px 6px;font-size:13px;font-weight:600}
 #vcal .cbtn i{width:18px;height:18px;border-radius:50%}
 #vcal .cbtn span{color:var(--mute);font-weight:500}
 #vcal .pk-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -300,15 +302,15 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .pk-prev{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:12px}
 #vcal .bgprev{grid-column:1 / -1;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
 #vcal .bgprev .c{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;display:grid;gap:4px}
-#vcal .pk-lbl{font-size:12px;color:var(--sub);font-weight:600}
+#vcal .pk-lbl{font-size:13px;color:var(--sub);font-weight:600}
 #vcal input.hue{-webkit-appearance:none;appearance:none;width:100%;height:26px;border-radius:999px;margin:6px 0 12px;background:linear-gradient(90deg,hsl(0 70% 50%),hsl(60 70% 50%),hsl(120 70% 45%),hsl(180 70% 45%),hsl(240 70% 55%),hsl(300 70% 50%),hsl(359 70% 50%));cursor:pointer}
 #vcal input.hue.soft{background:linear-gradient(90deg,hsl(0 45% 88%),hsl(60 45% 86%),hsl(120 40% 86%),hsl(180 40% 86%),hsl(240 45% 90%),hsl(300 40% 90%),hsl(359 45% 88%))}
 #vcal input.hue::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.3)}
 #vcal input.hue::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
 #vcal .pk-pre{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-#vcal .pre{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 9px 3px 4px;font-size:12px;font-weight:600;color:var(--sub)}
+#vcal .pre{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 9px 3px 4px;font-size:13px;font-weight:600;color:var(--sub)}
 #vcal .pre i{width:16px;height:16px;border-radius:50%}
-#vcal .pk-warn{font-size:12.5px;font-weight:600;color:var(--hol);margin-bottom:8px}
+#vcal .pk-warn{font-size:13px;font-weight:600;color:var(--hol);margin-bottom:8px}
 #vcal .fsw{display:grid;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:2px 10px}
 #vcal .fsw label{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;font-weight:600;cursor:pointer;position:relative}
 #vcal .fsw label:first-child{border-top:0}
@@ -324,9 +326,9 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .tag.s-cancel{background:var(--soft);color:var(--mute)}
 #vcal .tag.s-rep{background:var(--soft);color:var(--sub)}
 #vcal .ev b.cx{text-decoration:line-through;color:var(--mute)}
-#vcal .wn{font-size:12.5px;font-weight:600;color:var(--hol);background:var(--hol-bg);border-radius:8px;padding:4px 8px;margin-top:2px}
+#vcal .wn{font-size:13px;font-weight:600;color:var(--hol);background:var(--hol-bg);border-radius:8px;padding:4px 8px;margin-top:2px}
 #vcal .sheet .wn{margin-top:8px}
-#vcal .pcl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12.5px;color:var(--sub);background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0 4px}
+#vcal .pcl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--sub);background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0 4px}
 #vcal .pcl b{color:var(--ink);width:100%}
 #vcal .pcl span{font-variant-numeric:tabular-nums}
 #vcal .chip.s-cancel{text-decoration:line-through;opacity:.5}
@@ -345,7 +347,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .og-h b{font-size:14px}
 #vcal .og-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px}
 #vcal .og-l span{display:flex;align-items:baseline;gap:6px;min-width:0;font-size:13px;padding:3px 0}
-#vcal .og-l small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vcal .og-l small{color:var(--sub);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vcal .ev{padding:9px 0}
 @media(max-width:720px){
 #vcal .main{padding:14px 12px 12px}
@@ -358,7 +360,9 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .cell .stk{font-size:0;padding:0;box-shadow:none;background:none;gap:0;max-width:none}
 #vcal .cell .stk i{width:14px;height:14px}
 #vcal .cell .stk i svg{width:8px;height:8px}
-#vcal .lays{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:2px;scrollbar-width:none}
+#vcal .lays-tg{display:inline-flex;align-items:center;justify-content:center;flex:1 1 100%;min-height:44px;font-size:15px}
+#vcal .bar .lays{width:100%}
+#vcal .bar:not(.lays-open) .lays{display:none}
 #vcal .bar select{flex:1}
 #vcal .week{grid-template-columns:1fr}
 #vcal .wdy{min-height:0}
@@ -458,6 +462,7 @@ export async function openCalendar(host = {}) {
       <div class="bar">
         <span data-sl="store"><select data-fstore aria-label="매장"></select></span>
         <span data-sl="who"><select data-fwho aria-label="담당자"></select></span>
+        <button type="button" class="tbtn lays-tg" data-laytg aria-expanded="false"></button>
         <span data-sl="layers" style="display:contents"><div data-layers class="lays"></div></span>
       </div>
       <div data-body><div class="loading">불러오는 중…</div></div>
@@ -586,6 +591,14 @@ export async function openCalendar(host = {}) {
     const mk = dk(cur).slice(0, 7), v = events.filter((e) => e.date.startsWith(mk))
     $('[data-layers]').innerHTML = kinds().map((k) => `<button class="lay" data-k="${k}" aria-pressed="${!!on[k]}"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span><span class="sw k-${k}"></span>${esc(KN[k])}<span class="n">${v.filter((e) => e.k === k).length}</span></button>`).join('')
     $$('.lay').forEach((b) => b.onclick = () => { on[b.dataset.k] = on[b.dataset.k] ? 0 : 1; render() })
+    // 폰: 종류 칩이 가로로 넘쳐 잘리던 것 → 한 줄 버튼으로 접고, 누르면 칩이 줄바꿈해서 다 보인다(v6.28)
+    const tg = $('[data-laytg]')
+    if (tg) {
+      const ks = kinds(), n = ks.filter((k) => on[k]).length, open = tg.parentNode.classList.contains('lays-open')
+      tg.textContent = `일정 종류 · ${n === ks.length ? '전체' : n + '개 보는 중'} ${open ? '▴' : '▾'}`
+      tg.setAttribute('aria-expanded', String(open))
+      tg.onclick = () => { tg.parentNode.classList.toggle('lays-open'); renderLayers() }
+    }
   }
   const weekStart = (d) => { const w = new Date(d); w.setDate(d.getDate() - d.getDay()); return w }
   const closedWeekly = (d) => { if (fStore === 'all' || !host.hours) return false; try { return (host.hours(fStore).off || []).includes(d.getDay()) } catch (e) { return false } }
@@ -724,7 +737,7 @@ export async function openCalendar(host = {}) {
       <div class="psub">${hol[k] ? esc(hol[k]) + ' · ' : ''}일정 ${list.length}개</div>
       ${feat.stk && (st || isAdmin) ? `<div class="dayst">${st ? stk(st.sticker, st.label) : ''}${isAdmin ? `<button class="stbtn" data-stbtn>${st ? '표시 바꾸기' : '+ 중요한 날 표시'}</button>` : ''}</div>` : ''}
       ${exp.length ? `<div class="alerts">${exp.map((e) => `<div class="al${e.st === 'done' ? ' done' : ''}">${IC.exp}<b>${isT ? '오늘까지' : `${sel.getMonth() + 1}/${sel.getDate()}까지`} · ${esc(e.title)}</b><small>${esc(KN.exp)} · ${esc(e.store)}</small><button data-ex="${e.id}">${e.st === 'done' ? '되돌리기' : '다 씀'}</button></div>`).join('')}</div>` : ''}
-      <div class="tl">${rest.filter((e) => !(e.k === 'off' && e.whoId)).map(evRow).join('')}${offG(rest.filter((e) => e.k === 'off' && e.whoId))}${rest.length || exp.length ? '' : '<div class="empty">이 날은 일정 없음</div>'}</div>
+      <div class="tl">${rest.filter((e) => !(e.k === 'off' && e.whoId)).map(evRow).join('')}${offG(rest.filter((e) => e.k === 'off' && e.whoId))}${rest.length || exp.length || loadFailed ? '' : '<div class="empty">이 날은 일정 없음</div>'}</div>
       <button class="addday" data-addday>+ 이 날짜에 일정</button>
       ${host.openDayRecord ? '<button class="rec" data-rec>그날 업무 · 인수인계 기록</button>' : ''}`
     D.querySelectorAll('[data-ex]').forEach((b) => b.onclick = async () => {
@@ -1052,8 +1065,10 @@ export async function openCalendar(host = {}) {
   }
 
   // ── 움직이기 ──
+  let loadFailed = false
   async function refresh(force) {
-    try { await loadRange(force); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[cal] load', e); $('[data-err]').innerHTML = `<div class="st-err">일정을 불러오지 못했어요 — ${esc(e.message || e)}. 잠시 뒤 다시 열어 주세요</div>` }
+    loadFailed = false
+    try { await loadRange(force); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[cal] load', e); loadFailed = true; $('[data-err]').innerHTML = `<div class="st-err">일정을 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))} <button type="button" class="st-retry" data-retry>다시 불러오기</button></div>`; const rb = $('[data-retry]'); if (rb) rb.onclick = () => refresh(true) }
     build(); render()
   }
   $('[data-prev]').onclick = () => { if (view === 'week') { sel.setDate(sel.getDate() - 7); cur = new Date(sel.getFullYear(), sel.getMonth(), 1) } else cur = new Date(cur.getFullYear(), cur.getMonth() - 1, 1); refresh() }
@@ -1071,7 +1086,7 @@ export async function openCalendar(host = {}) {
   addEventListener('resize', onResize)
 
   applyPal()
-  try { await loadStatic() } catch (e) { console.warn('[cal] static', e); $('[data-err]').innerHTML = `<div class="st-err">캘린더를 준비하지 못했어요 — ${esc(e.message || e)}</div>` }
+  try { await loadStatic() } catch (e) { console.warn('[cal] static', e); $('[data-err]').innerHTML = `<div class="st-err">캘린더를 준비하지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))}</div>` }
   renderFilters()
   await refresh(true)
   return { close }

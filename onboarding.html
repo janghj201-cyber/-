@@ -19,12 +19,14 @@
 details.words{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 details.words summary{cursor:pointer;font-size:13.5px;font-weight:800;list-style:none;display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 8px}
 details.words summary::-webkit-details-marker{display:none}
-details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
+details.words summary span{font-weight:600;color:var(--sub);font-size:13px}
 .words-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-.words-grid label{font-size:12px;color:var(--sub);font-weight:700;display:grid;gap:4px}
+.words-grid label{font-size:13px;color:var(--sub);font-weight:700;display:grid;gap:4px}
 .words-grid input{padding:9px 10px;font-size:14px}
-.lbl{font-size:12.5px;font-weight:800;color:var(--sub);margin:12px 0 6px;display:flex;justify-content:space-between;gap:8px}
+.lbl{font-size:13px;font-weight:800;color:var(--sub);margin:12px 0 6px;display:flex;justify-content:space-between;gap:8px}
 .lbl span{font-weight:600;color:var(--mute)}
+.why-off{font-size:13px;color:var(--sub);text-align:center;margin:8px 0 0}
+.why-off[hidden]{display:none}
 .store{margin-top:8px}
 .store .nm{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:6px;align-items:center}
 .store.own{border:1px solid var(--line);border-radius:12px;padding:10px 10px 12px}
@@ -43,18 +45,18 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
 .feat{display:grid;margin-top:4px}
 .feat label{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 2px;border-top:1px solid var(--line);cursor:pointer;position:relative}
 .feat label:first-child{border-top:none}
-.feat b{font-size:14.5px}.feat small{grid-column:1;color:var(--sub);font-size:12.5px}
+.feat b{font-size:14.5px}.feat small{grid-column:1;color:var(--sub);font-size:13px}
 .feat input.swi{position:absolute;opacity:0;width:1px;height:1px}
 .sw{grid-row:1 / span 2;grid-column:2;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
 .swi:checked+.sw{background:var(--green)}.swi:checked+.sw::after{left:21px}
 .swi:focus-visible+.sw{box-shadow:0 0 0 3px var(--tint)}
-.grp{font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.02em;margin:18px 0 2px}
+.grp{font-size:13px;font-weight:800;color:var(--mute);letter-spacing:.02em;margin:18px 0 2px}
 .clean{margin-top:18px;background:var(--soft);border-radius:12px;padding:12px 14px}
 .clean b{font-size:13.5px}.clean ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--sub);display:grid;gap:2px}
 .inv{display:grid;grid-template-columns:1fr 1.4fr 1fr auto;gap:6px;margin-top:8px;align-items:center}
 .inv select{padding:10px 8px;font-size:14px}
-.inv-head{display:grid;grid-template-columns:1fr 1.4fr 1fr 34px;gap:6px;font-size:12px;color:var(--mute);font-weight:700;margin-top:4px}
+.inv-head{display:grid;grid-template-columns:1fr 1.4fr 1fr 34px;gap:6px;font-size:13px;color:var(--mute);font-weight:700;margin-top:4px}
 .next3{display:grid;gap:10px;margin-top:6px}
 .nx{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:14px}
 .nx .ic{grid-row:1 / span 2;width:38px;height:38px;border-radius:11px;background:var(--tint);color:var(--green);display:grid;place-items:center}
@@ -63,11 +65,11 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
 .nx .do{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .nx .do button{font:inherit;font-size:13px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;white-space:nowrap}
 .nx .do button.pri{border-color:var(--green);color:var(--green)}
-.nx .how{grid-column:2;margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--sub);display:grid;gap:2px}
+.nx .how{grid-column:2;margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--sub);display:grid;gap:2px}
 .nx textarea{grid-column:2;width:100%;margin-top:8px;height:84px;font:11px/1.45 ui-monospace,Menlo,monospace;border:1.5px solid var(--line);border-radius:8px;padding:8px;background:var(--soft);color:var(--ink)}
 .invl{grid-column:2;display:grid;gap:6px;margin-top:8px}
 .invl div{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px}
-.invl button{font:inherit;font-size:12.5px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.invl button{font:inherit;font-size:13px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 10px;cursor:pointer;white-space:nowrap}
 .done-mark{width:52px;height:52px;border-radius:16px;background:var(--tint);color:var(--green);display:grid;place-items:center;margin-bottom:12px}
 .done-mark svg{width:28px;height:28px}
 .eyebrow{font-size:13px;font-weight:800;color:var(--green);margin:0 0 4px}
@@ -99,12 +101,12 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
   .s-steps li i{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(233,244,236,.25);display:grid;place-items:center;font-style:normal;font-size:13px}
   .s-steps li.on{color:#fff}.s-steps li.on i{background:#fff;color:#174C38;border-color:#fff}
   .s-steps li.done{color:#CFE3D7}.s-steps li.done i{background:#59BA8B;border-color:#59BA8B;color:#0B1B14}
-  .s-steps li small{display:block;font-weight:500;font-size:12.5px;color:#7F9C8C}
+  .s-steps li small{display:block;font-weight:500;font-size:13px;color:#7F9C8C}
   .s-prev{margin-top:auto;padding-top:28px;position:relative;z-index:1}
   .s-win{border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 40px 80px -40px rgba(0,0,0,.7);transform:perspective(1200px) rotateY(-6deg) rotateX(3deg);transform-origin:left center}
   .s-win .bar{display:flex;gap:5px;padding:8px 11px;background:#EEF2EE}.s-win .bar i{width:8px;height:8px;border-radius:50%;background:#CBD5CE}
   .s-win img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left}
-  .s-cap{font-size:12.5px;color:#9FB8AA;margin-top:12px}
+  .s-cap{font-size:13px;color:#9FB8AA;margin-top:12px}
   .s-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
   .s-chips span{font-size:13px;font-weight:700;border-radius:999px;padding:5px 12px;background:rgba(255,255,255,.1);color:#DDEBE3;border:1px solid rgba(233,244,236,.16)}
   .s-chips span.on{background:#59BA8B;border-color:#59BA8B;color:#0B1B14}
@@ -114,8 +116,8 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
   .s-ben{display:grid;gap:10px}
   .s-ben div{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:center;font-size:14.5px;font-weight:700}
   .s-ben svg{width:34px;height:34px;padding:8px;border-radius:10px;background:rgba(255,255,255,.1);color:#9FD9BC}
-  .s-ben small{display:block;font-weight:500;color:#9FB8AA;font-size:12.5px}
-  .s-foot{font-size:12.5px;color:#7F9C8C;margin-top:22px;position:relative;z-index:1}
+  .s-ben small{display:block;font-weight:500;color:#9FB8AA;font-size:13px}
+  .s-foot{font-size:13px;color:#7F9C8C;margin-top:22px;position:relative;z-index:1}
   .s-foot a{color:#CFE3D7}
   .ob .shell{max-width:660px;padding:64px 48px 80px;width:100%}
   .ob .shell > .brand,.ob .shell > #steps{display:none}
@@ -157,6 +159,7 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
       <div id="su-consent"></div>
       <p class="err" id="su-err" hidden></p>
       <div class="acts"><button type="submit" class="btn main" id="su-btn" disabled>계정 만들기</button></div>
+      <p class="why-off" id="su-why">필수 동의에 체크하면 버튼이 눌립니다</p>
     </form>
     <span class="link">이미 계정이 있으면 <a href="login.html">로그인</a> · 직원은 받은 초대 링크로</span>
   </section>
@@ -240,7 +243,7 @@ details.words summary span{font-weight:600;color:var(--sub);font-size:12.5px}
       <label><b>협업 프로젝트</b><small>여러 사람이 함께 하는 일 · 도움 요청</small><input type="checkbox" class="swi" data-f="collab"><span class="sw"></span></label>
       <label><b>주간 1:1 상담</b><small>매주 한 명씩 자동 배정</small><input type="checkbox" class="swi" data-f="meeting"><span class="sw"></span></label>
     </div>
-    <div class="clean"><b><span class="w-clean">청소</span> 항목 미리보기</b> <span style="font-size:12.5px;color:var(--sub)">· 업종 기본값 · 나중에 수정</span>
+    <div class="clean"><b><span class="w-clean">청소</span> 항목 미리보기</b> <span style="font-size:13px;color:var(--sub)">· 업종 기본값 · 나중에 수정</span>
       <ol id="clean-list"></ol></div>
     <div class="acts"><button type="button" class="btn quiet" data-prev>이전</button><button type="button" class="btn main" data-next>다음</button></div>
   </section>
@@ -332,7 +335,8 @@ function validate(n) {
 
 // ── 1 계정 ──
 const suBtn = $('#su-btn')
-const consentBox = renderConsentBox($('#su-consent'), TENANT_KEYS, (ok) => { suBtn.disabled = !ok }, { cls: true })
+// 버튼이 흐린 이유를 바로 아래 한 줄로 — 이유 없이 흐리면 고장으로 읽힌다(v6.28)
+const consentBox = renderConsentBox($('#su-consent'), TENANT_KEYS, (ok) => { suBtn.disabled = !ok; $('#su-why').hidden = ok }, { cls: true })
 if (userId) show(2) // 가입만 하고 나갔던 계정 — 회사부터
 $('#f1').addEventListener('submit', async (e) => {
   e.preventDefault()

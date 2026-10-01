@@ -11,7 +11,7 @@ ${S}{position:fixed;inset:0;z-index:900;background:var(--bg);overflow:auto;color
 ${S} .wrap{max-width:900px;margin:0 auto;padding:14px 16px 60px}
 ${S} .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 ${S} h2{font-size:15px;margin:0 0 4px}
-${S} .hint{font-size:12px;color:var(--text-sub);line-height:1.55}
+${S} .hint{font-size:13px;color:var(--text-sub);line-height:1.55}
 ${S} .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 ${S} .chips button{border:1px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 ${S} .chips button[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -22,22 +22,22 @@ ${S} .btn.main{background:var(--gold);border-color:var(--gold);color:#1b1b1b}
 ${S} .btn:disabled{opacity:.5;cursor:default}
 ${S} .tk{border-top:1px solid var(--border);padding:12px 0}
 ${S} .tk:first-child{border-top:0}
-${S} .tk .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text-sub)}
-${S} .tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--soft);color:var(--text-sub)}
+${S} .tk .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text-sub)}
+${S} .tag{display:inline-block;font-size:13px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--soft);color:var(--text-sub)}
 ${S} .tag.open{background:var(--orange-light);color:var(--orange)}
 ${S} .tag.done{background:var(--green-light);color:var(--green)}
 ${S} .tk .b{font-size:14px;margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
 ${S} .ans{margin-top:8px;background:var(--soft);border-radius:10px;padding:9px 12px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
-${S} .ans small{display:block;color:var(--text-sub);font-size:12px;margin-bottom:3px}
+${S} .ans small{display:block;color:var(--text-sub);font-size:13px;margin-bottom:3px}
 ${S} .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card);margin-bottom:12px}
 ${S} .seg button{border:0;background:transparent;padding:0 14px;height:36px;font:inherit;font-weight:700;font-size:13px;color:var(--text-sub);cursor:pointer}
 ${S} .seg button[aria-pressed=true]{background:var(--navy);color:#fff}
 ${S} .co{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;border-top:1px solid var(--border);padding:11px 0}
 ${S} .co:first-child{border-top:0}
 ${S} .co b{font-size:14.5px}
-${S} .co .n{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--text-sub);grid-column:1 / -1}
+${S} .co .n{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--text-sub);grid-column:1 / -1}
 ${S} .co .n em{font-style:normal;color:var(--text);font-weight:700}
-${S} .co .r{font-size:12px;color:var(--text-sub);text-align:right}
+${S} .co .r{font-size:13px;color:var(--text-sub);text-align:right}
 ${S} .warn{color:var(--red)}
 ${S} .empty{font-size:13px;color:var(--text-mute);padding:14px 0}
 ${S} .err{background:var(--red-light);color:var(--red);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px}

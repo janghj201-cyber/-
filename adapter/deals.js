@@ -52,40 +52,40 @@ html[data-bright=dark] #vdeal{--us:#7FB0F2;--us-bg:#1A2B42;--them:#B49CF4;--them
 #vdeal .grp h3 b{color:var(--ink)}
 #vdeal .deal{width:100%;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:6px}
 #vdeal .deal:hover{background:var(--hover)}
-#vdeal .deal .c{font-size:12.5px;color:var(--sub);font-weight:600}
+#vdeal .deal .c{font-size:13px;color:var(--sub);font-weight:600}
 #vdeal .deal b{font-size:14.5px}
-#vdeal .deal .mt{grid-column:1;font-size:12.5px;color:var(--sub)}
+#vdeal .deal .mt{grid-column:1;font-size:13px;color:var(--sub)}
 #vdeal .deal .rt{grid-row:1 / span 3;grid-column:2;display:grid;justify-items:end;gap:4px;align-content:center}
 #vdeal .deal .amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-#vdeal .ball{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+#vdeal .ball{font-size:13px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
 #vdeal .b-us{background:var(--us-bg);color:var(--us)}
 #vdeal .b-them{background:var(--them-bg);color:var(--them)}
 #vdeal .b-late{background:var(--late-bg);color:var(--late)}
 #vdeal .b-done{background:var(--soft);color:var(--sub)}
-#vdeal .age{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+#vdeal .age{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
 #vdeal .age.late{color:var(--late);font-weight:700}
-#vdeal .nx{grid-column:1;font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#vdeal .nx{grid-column:1;font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 #vdeal .nx .d{font-weight:700;font-variant-numeric:tabular-nums}
 #vdeal .nx .d.over{color:var(--late)}
 #vdeal .empty{font-size:13px;color:var(--mute);padding:16px 0}
 #vdeal .cl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;width:100%;text-align:left;background:var(--card)}
 #vdeal .cl b{font-size:14.5px}
-#vdeal .cl small{grid-column:1;color:var(--sub);font-size:12.5px}
-#vdeal .cl .r{grid-row:1 / span 2;grid-column:2;text-align:right;font-size:12.5px;color:var(--sub)}
-#vdeal .tg2{font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub);margin-left:4px}
+#vdeal .cl small{grid-column:1;color:var(--sub);font-size:13px}
+#vdeal .cl .r{grid-row:1 / span 2;grid-column:2;text-align:right;font-size:13px;color:var(--sub)}
+#vdeal .tg2{font-size:13px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--soft);color:var(--sub);margin-left:4px}
 #vdeal .stale{color:var(--warn);font-weight:700}
 #vdeal .side{display:grid;gap:12px;align-content:start}
 #vdeal .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 #vdeal .panel h2{font-size:15px;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-#vdeal .panel h2 small{font-size:12px;color:var(--mute);font-weight:500}
+#vdeal .panel h2 small{font-size:13px;color:var(--mute);font-weight:500}
 #vdeal .tl2{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 #vdeal .tl2 li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 10px;font-size:13px}
 #vdeal .tl2 .w{font-weight:700;color:var(--green);white-space:nowrap;font-variant-numeric:tabular-nums}
 #vdeal .tl2 .w.l{color:var(--late)}
-#vdeal .tl2 small{grid-column:2;color:var(--mute);font-size:12px}
-#vdeal .tl2 button{grid-column:2;justify-self:start;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;margin-top:2px}
+#vdeal .tl2 small{grid-column:2;color:var(--mute);font-size:13px}
+#vdeal .tl2 button{grid-column:2;justify-self:start;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 9px;font-size:13px;font-weight:700;margin-top:2px}
 #vdeal .money{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0 4px}
-#vdeal .hint{font-size:12px;color:var(--mute)}
+#vdeal .hint{font-size:13px;color:var(--mute)}
 #vdeal .scrim{position:fixed;inset:0;background:rgba(8,16,12,.45);display:grid;place-items:end center;z-index:20}
 @media(min-width:900px){
 #vdeal .scrim.drawer{place-items:stretch end}
@@ -109,21 +109,21 @@ html[data-bright=dark] #vdeal{--us:#7FB0F2;--us-bg:#1A2B42;--them:#B49CF4;--them
 #vdeal .state.done{background:var(--soft)}
 #vdeal .state b{font-size:15px}
 #vdeal .state .sw{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card);justify-self:start}
-#vdeal .state .sw button{border:0;background:transparent;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--sub)}
+#vdeal .state .sw button{border:0;background:transparent;padding:5px 12px;font-size:13px;font-weight:700;color:var(--sub)}
 #vdeal .state .sw button[aria-pressed=true]{background:var(--ink);color:var(--card)}
 #vdeal .logs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:10px}
-#vdeal .logs button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 4px;display:grid;justify-items:center;gap:4px;font-size:12.5px;font-weight:700}
+#vdeal .logs button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 4px;display:grid;justify-items:center;gap:4px;font-size:13px;font-weight:700}
 #vdeal .logs svg{width:18px;height:18px;color:var(--sub)}
 #vdeal .lf{display:grid;gap:6px;background:var(--soft);border-radius:12px;padding:10px;margin-bottom:10px}
 #vdeal .lf input,#vdeal .lf textarea,#vdeal .fld input,#vdeal .fld select,#vdeal .fld textarea{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px;font-size:14.5px;width:100%;min-width:0;color:var(--ink)}
 #vdeal .lf textarea{min-height:64px;resize:vertical;font-size:13px}
 #vdeal .lf .row button{border:0;background:var(--deep);color:var(--on-main);border-radius:9px;padding:8px 14px;font-weight:700}
 #vdeal .lf .row .q{background:transparent;color:var(--sub)}
-#vdeal .sec{font-size:12.5px;font-weight:700;color:var(--sub);margin:14px 0 6px}
+#vdeal .sec{font-size:13px;font-weight:700;color:var(--sub);margin:14px 0 6px}
 #vdeal .chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-#vdeal .chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
+#vdeal .chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
 #vdeal .chips button[aria-pressed=true]{border-color:var(--green);background:var(--tint);color:var(--ink)}
-#vdeal .chips input[type=date],#vdeal .chips input[type=time]{border:1px solid var(--line);border-radius:8px;padding:3px 6px;font-size:12.5px;background:var(--card)}
+#vdeal .chips input[type=date],#vdeal .chips input[type=time]{border:1px solid var(--line);border-radius:8px;padding:3px 6px;font-size:13px;background:var(--card)}
 #vdeal .nxin{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;font-size:14px;width:100%;margin-top:6px}
 #vdeal .tlx{list-style:none;margin:0;padding:0;border-left:2px solid var(--line);margin-left:8px}
 #vdeal .tlx li{position:relative;padding:0 0 12px 16px;font-size:13.5px}
@@ -131,13 +131,13 @@ html[data-bright=dark] #vdeal{--us:#7FB0F2;--us-bg:#1A2B42;--them:#B49CF4;--them
 #vdeal .tlx li.in::before{box-shadow:inset 0 0 0 2px var(--us)}
 #vdeal .tlx li.out::before{box-shadow:inset 0 0 0 2px var(--them)}
 #vdeal .tlx li.meet::before{background:var(--green);box-shadow:none}
-#vdeal .tlx .h{font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+#vdeal .tlx .h{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
 #vdeal .tlx .h b{color:var(--sub)}
 #vdeal .ends{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
 #vdeal .ends button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px;font-weight:700;font-size:13px}
-#vdeal .fld{display:grid;gap:5px;margin-top:12px;font-size:12.5px;font-weight:600;color:var(--sub)}
+#vdeal .fld{display:grid;gap:5px;margin-top:12px;font-size:13px;font-weight:600;color:var(--sub)}
 #vdeal .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#vdeal .wn{font-size:12.5px;font-weight:600;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:5px 9px;margin-top:6px}
+#vdeal .wn{font-size:13px;font-weight:600;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:5px 9px;margin-top:6px}
 #vdeal .sacts{display:flex;gap:8px;margin-top:16px}
 #vdeal .sacts button{flex:1;height:46px;border-radius:12px;font-weight:700;border:1px solid var(--line);background:var(--card)}
 #vdeal .sacts .main{background:var(--deep);border-color:var(--deep);color:var(--on-main);flex:2}
@@ -504,7 +504,7 @@ export async function openDeals(host = {}) {
   $('[data-q]').oninput = (e) => { q = e.target.value.trim(); render() }
   $('[data-new]').onclick = () => openNew()
   $('[data-mail]').onclick = () => openMailHelp()
-  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[deal] load', e); $('[data-err]').innerHTML = `<div class="st-err">거래처를 불러오지 못했어요 — ${esc(e.message || e)}. 잠시 뒤 다시 열어 주세요</div>` }
+  try { await load(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[deal] load', e); $('[data-err]').innerHTML = `<div class="st-err">거래처를 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))}. 잠시 뒤 다시 열어 주세요</div>` }
   render()
   if (host.dealId) { const d = deals.find((x) => x.id === host.dealId); if (d) openDeal(d) }
   return { close }

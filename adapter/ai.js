@@ -30,8 +30,8 @@ const CSS = `
 @keyframes vai-look{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
 @keyframes vai-hop{0%{transform:translateY(0)}40%{transform:translateY(-6px) scale(.95,1.06)}100%{transform:translateY(0)}}
 #vai .hd b{font-size:15.5px}
-#vai .hd small{display:block;font-size:11.5px;opacity:.7;font-weight:500}
-#vai .hd .x{margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+#vai .hd small{display:block;font-size:13px;opacity:.7;font-weight:500}
+#vai .hd .x{margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 #vai .bd{flex:1;overflow:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:10px}
 #vai .intro{font-size:13px;color:var(--text-sub);line-height:1.6;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
 #vai .intro b{color:var(--text)}
@@ -45,15 +45,15 @@ const CSS = `
 #vai .an .go{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 #vai .an .go button{border:1px solid var(--navy);background:transparent;color:var(--navy);border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 html[data-bright=dark] #vai .an .go button{border-color:var(--text-sub);color:var(--text)}
-#vai .an .src{margin-top:8px;font-size:12px;color:var(--text-mute)}
+#vai .an .src{margin-top:8px;font-size:13px;color:var(--text-mute)}
 #vai .an .t .l1{font-weight:800;color:var(--text)}
 #vai .an .nx{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-#vai .an .nx button{border:1px dashed var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer;text-align:left}
+#vai .an .nx button{border:1px dashed var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer;text-align:left}
 #vai .an .nx button:hover{border-style:solid;border-color:var(--text-mute)}
 #vai .an .t .cur{display:inline-block;width:7px;height:1em;vertical-align:-2px;background:var(--text-mute);margin-left:1px;animation:vai-cur .8s steps(2) infinite}
 @keyframes vai-cur{50%{opacity:0}}
-#vai .an .fb{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:12px;color:var(--text-mute)}
-#vai .an .fb button{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:8px;padding:4px 9px;font:inherit;font-size:12px;cursor:pointer}
+#vai .an .fb{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--text-mute)}
+#vai .an .fb button{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--card);color:var(--text-sub);border-radius:8px;padding:4px 9px;font:inherit;font-size:13px;cursor:pointer}
 #vai .an .fb button svg{width:13px;height:13px}
 #vai .an .fb button[aria-pressed=true]{border-color:var(--green);color:var(--green)}
 #vai .an .fb button.no[aria-pressed=true]{border-color:var(--orange);color:var(--orange)}
@@ -68,7 +68,7 @@ html[data-bright=dark] #vai .an .go button{border-color:var(--text-sub);color:va
 #vai .ft .snd{width:44px;height:42px;border:0;border-radius:12px;background:var(--gold);color:#1b1b1b;display:grid;place-items:center;cursor:pointer;flex:none}
 #vai .ft .snd svg{width:18px;height:18px}
 #vai .ft .snd:disabled{opacity:.45;cursor:default}
-#vai .note{font-size:11px;color:var(--text-mute);padding:0 14px 6px;background:var(--card)}
+#vai .note{font-size:13px;color:var(--text-mute);padding:0 14px 6px;background:var(--card)}
 @media(max-width:1023px){#vai{align-items:flex-end;background:rgba(23,34,51,.5)}#vai .pn{max-width:none;height:88vh;border-radius:18px 18px 0 0;overflow:hidden;animation:vai-up .24s cubic-bezier(.2,.8,.2,1)}}
 @keyframes vai-f{from{opacity:0}}
 @keyframes vai-in{from{transform:translateX(40px);opacity:0}}
@@ -232,7 +232,7 @@ const CSS2 = `
 #vain .wrap{max-width:900px;margin:0 auto;padding:14px 16px 60px}
 #vain .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 #vain h2{font-size:15px;margin:0 0 4px}
-#vain .hint{font-size:12.5px;color:var(--text-sub);line-height:1.6}
+#vain .hint{font-size:13px;color:var(--text-sub);line-height:1.6}
 #vain .add{display:flex;gap:8px;margin-top:10px}
 #vain .add input{flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font:inherit;font-size:14px;background:var(--bg);color:var(--text)}
 #vain .btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:0 14px;height:42px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -241,18 +241,18 @@ const CSS2 = `
 #vain .row{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--border);padding:10px 0}
 #vain .row:first-child{border-top:0}
 #vain .row .b{flex:1;font-size:14px;line-height:1.55;word-break:keep-all}
-#vain .row .b small{display:block;font-size:12px;color:var(--text-mute);margin-top:2px}
-#vain .row .off{border:1px solid var(--border);background:transparent;color:var(--text-sub);border-radius:8px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+#vain .row .b small{display:block;font-size:13px;color:var(--text-mute);margin-top:2px}
+#vain .row .off{border:1px solid var(--border);background:transparent;color:var(--text-sub);border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
 #vain .empty{font-size:13px;color:var(--text-mute);padding:8px 0}
 #vain .q{border-top:1px solid var(--border);padding:10px 0;font-size:13.5px}
 #vain .q:first-child{border-top:0}
-#vain .q .a{color:var(--text-sub);font-size:12.5px;margin-top:3px;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-#vain .q .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:6px;background:var(--soft);color:var(--text-sub)}
+#vain .q .a{color:var(--text-sub);font-size:13px;margin-top:3px;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#vain .q .tag{display:inline-block;font-size:13px;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:6px;background:var(--soft);color:var(--text-sub)}
 #vain .q .tag.no{background:var(--orange-light);color:var(--orange)}
 #vain .q .tag.ok{background:var(--green-light);color:var(--green)}
-#vain .q .fx{margin-top:4px;font-size:12.5px;color:var(--orange)}
+#vain .q .fx{margin-top:4px;font-size:13px;color:var(--orange)}
 #vain .stat{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-#vain .stat div{flex:1;min-width:120px;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--text-sub)}
+#vain .stat div{flex:1;min-width:120px;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text-sub)}
 #vain .stat b{display:block;font-size:20px;color:var(--text)}
 `
 export async function openAiNotes(host = {}) {
@@ -283,7 +283,7 @@ export async function openAiNotes(host = {}) {
 
   async function loadNotes() {
     const { data, error } = await sb.from('ai_notes').select('id,kind,body,created_at').eq('tenant_id', T).eq('active', true).order('created_at', { ascending: true }).limit(100)
-    if (error) { $('[data-rules]').innerHTML = `<div class="empty">불러오지 못했어요 — SQL_v619 를 먼저 RUN 해 주세요</div>`; return }
+    if (error) { $('[data-rules]').innerHTML = `<div class="empty">불러오지 못했어요 — 잠시 뒤 다시 열어 주세요</div>`; return }
     const row = (n) => `<div class="row"><div class="b">${esc(n.body)}<small>${n.kind === 'rule' ? '적은 날' : '배운 날'} ${esc(mdOf(n.created_at))}</small></div><button type="button" class="off" data-off="${n.id}">끄기</button></div>`
     const rules = (data || []).filter((n) => n.kind === 'rule'), learned = (data || []).filter((n) => n.kind === 'learned')
     $('[data-rules]').innerHTML = rules.map(row).join('') || '<div class="empty">아직 없어요</div>'

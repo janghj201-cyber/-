@@ -12,7 +12,7 @@
   <main class="shell narrow">
     <a class="brand" href="/intro"><img src="icons/dutyvo-mark.svg" alt="">Dutyvo</a>
     <section class="card">
-      <h1>초대를 받았습니다</h1>
+      <h1 id="ttl">초대를 받았습니다</h1>
       <p class="sub" id="sub">초대받은 이메일로 비밀번호만 정하면 바로 팀에 합류합니다.</p>
       <form id="form">
         <label class="f">이메일<input type="email" id="email" required placeholder="초대받은 이메일" autocomplete="email" /></label>
@@ -20,7 +20,9 @@
         <div id="inv-consent"></div>
         <p class="err" id="error" hidden></p>
         <div class="acts"><button type="submit" class="btn main" id="btn" disabled>가입하고 합류하기</button></div>
+        <p id="why" style="font-size:13px;color:var(--sub);text-align:center;margin:8px 0 0">필수 동의에 체크하면 버튼이 눌립니다</p>
       </form>
+      <div class="acts" id="bad-acts" hidden><a class="btn main" href="login.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none">로그인 화면으로</a></div>
       <span class="link" id="toggle-wrap">이미 계정이 있으면 <a href="#" id="toggle">로그인으로 합류</a></span>
     </section>
   </main>
@@ -29,9 +31,10 @@
     import { supabase } from './adapter/supabase-client.js'
     import { renderConsentBox, saveConsents, STAFF_KEYS } from './consent.js'
     const $ = (id) => document.getElementById(id)
-    { const _b=$('btn'); window.__invConsent = renderConsentBox($('inv-consent'), STAFF_KEYS, (ok) => { _b.disabled = !ok }, { cls: true }) }
+    { const _b=$('btn'); window.__invConsent = renderConsentBox($('inv-consent'), STAFF_KEYS, (ok) => { _b.disabled = !ok; $('why').hidden = ok }, { cls: true }) }
     const inviteId = new URLSearchParams(location.search).get('id')
-    if (!inviteId) { $('sub').textContent='초대 링크가 올바르지 않아요. 관리자에게 링크를 다시 받아주세요.'; $('form').style.display='none'; $('toggle-wrap').style.display='none' }
+    // 링크가 깨졌을 때 제목은 「초대를 받았습니다」, 본문은 「올바르지 않아요」로 서로 어긋나고 다음 버튼도 없었다(v6.28)
+    if (!inviteId) { $('ttl').textContent='초대 링크를 열 수 없음'; $('sub').textContent='링크가 잘렸거나 바뀌었어요. 관리자에게 초대 링크를 다시 받아 주세요. 이미 가입했다면 로그인하면 됩니다.'; $('form').style.display='none'; $('toggle-wrap').style.display='none'; $('bad-acts').hidden=false }
 
     let mode = 'signup'
     $('toggle').onclick = (e) => {
