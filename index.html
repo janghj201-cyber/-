@@ -751,7 +751,12 @@ button.vf-pj{cursor:pointer;}
 .vf-lv{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:800;border-radius:999px;padding:2px 9px;margin-top:6px;}
 .vf-lv.green{background:var(--green-light);color:var(--green);}
 .vf-lv.orange{background:var(--blue-light);color:var(--blue);}
-.vf-lv.red{background:var(--red-light);color:var(--red);}
+.vf-lv.red{background:var(--gold-light);color:var(--orange);}
+.vf-cond-card .vh-ct{flex-wrap:wrap;row-gap:6px;}
+.vf-cond-card .vh-ct .vh-tiny{font-size:14px;color:var(--text-sub);}
+.vf-cond-card .vf-cond-n{color:var(--text);font-size:16px;}
+.vf-cond-why{margin-left:auto;font:inherit;font-size:14px;font-weight:700;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 14px;min-height:40px;cursor:pointer;}
+.vf-cond-fold{margin-top:10px;} /* 기준선 아래 = 사실 표시. 빨강은 회사 화면의 「긴급」에만 */
 .vf-cond-sub{font-size:13px;color:var(--text-sub);margin-top:8px;line-height:1.5;}
 .vf-cond-sub b.up{color:var(--green);}.vf-cond-sub b.dn{color:var(--red);}
 .vf-brk{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
@@ -768,7 +773,8 @@ button.vf-pj{cursor:pointer;}
 .vf-cond-empty{font-size:14px;color:var(--text-sub);line-height:1.55;padding:6px 0 2px;}
 .vf-condrow .nm{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .vf-condrow .nm i{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
-.vf-condrow .nm i.green{background:var(--green);}.vf-condrow .nm i.orange{background:var(--blue);}.vf-condrow .nm i.red{background:var(--red);}
+.vf-condrow .nm i.green{background:var(--green);}.vf-condrow .nm i.orange{background:var(--orange);}.vf-condrow .nm i.red{background:var(--red);}
+.vf-condrow .nm .lvt{font-style:normal;font-size:12px;font-weight:800;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--gold-light);color:var(--orange);white-space:nowrap;}.vf-condrow .nm .lvt.urgent{background:var(--red-light);color:var(--red);}
 .vf-condhead{display:grid;grid-template-columns:minmax(0,1fr) 52px 58px 60px 14px;gap:6px;font-size:13px;color:var(--text-mute);font-weight:700;padding:4px 0;}
 .vf-condhead span{text-align:right;}.vf-condhead span:first-child{text-align:left;}
 .vf-condrow .br,.vf-condhead .br{display:none;}
@@ -873,6 +879,30 @@ button.vf-pj{cursor:pointer;}
 .vf-hours .all{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--bg);border-radius:10px;margin-bottom:4px;font-size:13px;font-weight:700;}
 .vf-hours .all .vh-btn{padding:6px 12px;font-size:13px;}
 .vf-hours .h{font-size:13px;color:var(--text-mute);font-weight:700;}
+/* v6.30 설정 매장 — 한 줄씩, 누르면 서랍 */
+.st-allh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:14px;font-weight:700;}
+.st-allh input,.st-time input,.st-add input{border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;min-height:44px;background:var(--card);color:var(--text);box-sizing:border-box;}
+.st-stores{display:flex;flex-direction:column;margin-top:6px;}
+.st-store{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:10px 4px;border:0;border-bottom:1px solid var(--border);background:none;font:inherit;color:var(--text);text-align:left;cursor:pointer;}
+.st-store .ic{font-size:22px;width:28px;text-align:center;}
+.st-store .t{flex:1;min-width:0;}.st-store .t b{display:block;font-size:15px;}.st-store .t small{display:block;font-size:13px;color:var(--text-sub);margin-top:1px;}
+.st-store .ar{color:var(--text-mute);font-size:18px;}
+.st-add{display:flex;gap:8px;margin-top:12px;}.st-add input{flex:1;min-width:0;}
+.st-sheet{max-height:88vh;max-height:88dvh;overflow-y:auto;}
+.st-sheet h3{display:flex;align-items:center;gap:8px;}
+.st-lbl{font-size:14px;font-weight:800;margin:16px 0 8px;}.st-lbl small{display:block;font-size:13px;font-weight:600;color:var(--text-sub);margin-top:2px;}
+.st-time{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.st-time label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--text-sub);font-weight:700;}
+.st-off{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.st-off button{min-height:44px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);font:inherit;font-size:15px;font-weight:800;color:var(--text-sub);cursor:pointer;}
+.st-off button[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff;}
+.st-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;padding:2px;}
+.st-icons [hidden]{display:none;}
+.st-icmore{width:100%;margin-top:8px;min-height:44px;}
+.st-icons button{min-height:44px;font-size:22px;border:2px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;}
+.st-icons button[aria-pressed=true]{border-color:var(--gold);}
+.st-msg{min-height:18px;font-size:13px;margin-top:10px;}
+.st-sheet .vh-sheet-acts{display:flex;margin-top:12px;}.st-sheet .vh-sheet-acts .vh-btn{flex:1;min-height:48px;font-size:15px;}
+.st-close-store{display:block;width:100%;margin-top:18px;min-height:44px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--red);font:inherit;font-size:14px;font-weight:700;cursor:pointer;}
 .vh-sub .vf-other{color:var(--navy);font-weight:700;margin-left:6px;cursor:pointer;text-decoration:none;}
 .vh-sub .vf-other:hover{text-decoration:underline;}
 /* 직원 이력 */
@@ -1150,7 +1180,7 @@ body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
 .rm-grid{display:flex;flex-direction:column;gap:10px;}
 .rm-col{display:contents;}
 /* 폰 순서: 오늘 이 매장 → 인수인계 → 요청 → 프로젝트 → 고정 정보 → 월간. 데스크탑은 2열이라 order 무시 */
-.rm-today{order:1;}.rm-ho{order:2;}.rm-wr{order:3;}.rm-proj{order:4;}.rm-info{order:5;}.rm-mo{order:6;}
+.rm-ho{order:1;}.rm-today{order:2;}.rm-cond{order:3;}.rm-wr{order:4;}.rm-proj{order:5;}.rm-info{order:6;}.rm-mo{order:7;} /* v6.30 인수인계가 맨 위 */
 .rm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .rm-chip{font-size:13px;font-weight:800;border-radius:8px;padding:4px 9px;background:var(--soft);color:var(--text-sub);}
 .rm-chip.clean{background:var(--green-light);color:var(--green);}
@@ -1188,7 +1218,7 @@ body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
   .rm-body{padding:22px 26px 40px;}
   .rm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;}
   .rm-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
-  .rm-today,.rm-ho,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
+  .rm-today,.rm-ho,.rm-cond,.rm-wr,.rm-proj,.rm-info,.rm-mo{order:0;}
   #room-overlay,#board-overlay{left:var(--side-w,184px)!important;}
   /* 캘린더 · 보관기한 · 거래처 · 고객 예약도 왼쪽 메뉴를 남긴다(v6.28) — 같은 메뉴인데 어떤 건 메뉴까지 덮던 것 */
   #vcal,#vexp,#vdeal,#vbook{left:var(--side-w,184px)!important;} /* 사이드바 옆에서 시작 — 폭은 --side-w 하나로(접으면 60) */
@@ -1258,6 +1288,13 @@ body.vf-has-orb .vf-toast{bottom:calc(96px + var(--safe-bot));}
   #vf-side .vs-item{padding:9px 10px;border-radius:9px;font-size:13px;color:var(--text-sub);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:inherit;background:none;border:none;text-align:left;width:100%;}
   /* 사이드바 메뉴 호버 애니메이션 — 배경은 은은하게, 아이콘·글자는 오른쪽으로 3px, 220ms */
 #vf-side .vs-item{transition:background .22s ease,color .22s ease;}
+#vf-side .vs-sec{font-size:12px;font-weight:800;color:var(--text-mute);padding:10px 10px 3px;letter-spacing:.2px;line-height:16px;}
+#vf-side .vs-sec-btn{display:block;width:100%;text-align:left;background:none;border:0;font-family:inherit;cursor:pointer;border-radius:8px;}#vf-side .vs-sec-btn:hover{color:var(--text);}
+#vf-side .vs-sec.line{padding:0;margin:8px 10px;border-top:1px solid var(--border);height:0;}
+body.vf-rail #vf-side .vs-sec{font-size:0;padding:6px 0;margin:4px 8px;border-top:1px solid var(--border);}
+.vc-daylink{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;font:inherit;color:var(--text);text-align:left;cursor:pointer;margin-top:12px;min-height:56px;}
+.vc-daylink small{display:block;font-size:13px;color:var(--text-sub);}
+.vc-gaps{margin-top:12px;}
 #vf-side .vs-item>span{display:inline-flex;align-items:center;transition:transform .22s ease;}
 #vf-side .vs-item:hover{background:var(--bg);color:var(--text);}
 #vf-side .vs-item:hover>span{transform:translateX(3px);}
@@ -1535,6 +1572,19 @@ button:disabled, [aria-disabled="true"] { opacity: .44; cursor: not-allowed; }
 .vh-sheet-bg .vh-sheet{animation:vf-up .24s cubic-bezier(.2,.8,.2,1);}
 .vh-sheet-bg.vf-closing{animation:vf-fade .2s ease reverse forwards;}
 .vh-sheet-bg.vf-closing .vh-sheet{animation:vf-up .2s ease reverse forwards;}
+/* v6.30 컴퓨터의 시트는 오른쪽 서랍 하나로 — 아래 시트(손잡이) · 가운데 창 · 오른쪽 서랍이 섞여 있던 것. 메모 서랍과 같은 모양.
+   뒤 화면이 왼쪽에 보이고, 닫으면 제자리(원칙 1 · 2). 확인 창(지우기 · 로그아웃 등)은 짧은 질문이라 가운데 작은 창 그대로 */
+@media(min-width:1024px){
+  .vh-sheet-bg:not(.vf-dlg-bg){justify-content:flex-end;align-items:stretch;background:rgba(23,34,51,.28);}
+  .vh-sheet-bg:not(.vf-dlg-bg) .vh-sheet{max-width:460px;width:460px;height:100%;max-height:100%;border-radius:0;overflow-y:auto;padding:22px 22px 18px;box-shadow:-12px 0 32px rgba(23,34,51,.12);animation:vf-memo-in .22s cubic-bezier(.2,.8,.2,1);box-sizing:border-box;}
+  .vh-sheet-bg:not(.vf-dlg-bg).vf-closing .vh-sheet{animation:vf-memo-in .18s ease reverse forwards;}
+  .vh-sheet-bg:not(.vf-dlg-bg) .vh-sheet-handle{display:none;}
+  .vh-sheet-bg:not(.vf-dlg-bg) .vh-sheet .vh-sheet-acts{position:sticky;bottom:-18px;background:var(--card);padding:12px 0 18px;margin-bottom:-18px;}
+  .vh-sheet-bg.vf-dlg-bg{align-items:center;}
+  .vh-sheet-bg.vf-dlg-bg .vh-sheet{max-width:440px;border-radius:18px;}
+  body .board-write-modal-bg{justify-content:flex-end;align-items:stretch;background:rgba(23,34,51,.28);} /* 기본 규칙이 아래에 있어 body 로 한 단계 올림 */
+  body .board-write-modal{max-width:460px;height:100%;max-height:100%;border-radius:0;box-shadow:-12px 0 32px rgba(23,34,51,.12);animation:vf-memo-in .22s cubic-bezier(.2,.8,.2,1);}
+}
 /* 6. 방금 한 일이 어디 갔는지 — 한 번 켜졌다 꺼짐 (골드는 주요 행동의 결과에만) */
 .vf-flash{animation:vf-flash 1.1s ease-out;border-radius:8px;}
 @media(prefers-reduced-motion:reduce){
@@ -1905,7 +1955,7 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
   .vf-condhead .br{text-align:left!important;}
   .vf-condrow .br{position:relative;height:8px;border-radius:4px;background:var(--soft);}
   .vf-condrow .br i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--green);opacity:.85;}
-  .vf-condrow .br i.orange{background:var(--blue);}.vf-condrow .br i.red{background:var(--red);}
+  .vf-condrow .br i.orange{background:var(--blue);}.vf-condrow .br i.red{background:var(--orange);}
   .vf-condrow .br u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--text-sub);border-radius:1px;}
   .vh-priority .vh-item:has(>.vh-btn){flex-wrap:nowrap;align-items:center;}
   .vh-priority .vh-item:has(>.vh-btn)>.vh-dot{margin-top:0;}
@@ -3819,7 +3869,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.29';
+const GUIDE_VERSION = 'v6.30';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3839,7 +3889,7 @@ const GUIDE_START = {
     '③ 관리자를 정합니다 — 직원 근무지 설정에서 이름 옆 칸을 매니저로 바꾸면 그 사람도 관리자 화면을 볼 수 있습니다. 이름 오타도 이름을 눌러 고칩니다',
     '④ 우리 매장에 맞게 고칩니다 — 고정업무 탭에서 매달 반복되는 발주·재고·마감 규칙을, 그 아래 청소 항목 편집에서 매일 체크할 청소 목록을 바꿉니다',
     '⑤ 다 같이 앱으로 깝니다 — 첫 화면 앱으로 설치. 직원들에게도 알려주세요. 매번 주소를 치지 않아도 됩니다',
-    '⑥ 매일 이것만 봅니다 — 관리자 화면의 오늘 현황. 빠진 것만 위에 모아서 보여줍니다. 다 정상이면 볼 게 없는 게 정상입니다',
+    '⑥ 매일 이것만 봅니다 — 관리자 → 「현황」. 확인이 필요한 매장 · 지금 확인할 것만 위에 모아서 보여줍니다. 다 정상이면 볼 게 없는 게 정상입니다',
     '⑦ 주에 한 번 주간 리포트 — 매장별·직원별로 무엇이 쌓였는지 자동으로 정리됩니다',
     '⑧ 업종에 맞춰 켜 둔 기능 — 캘린더 · 보관기한 · 고객 예약 · 거래처는 왼쪽 메뉴(폰은 홈 바로가기)에 있습니다. 각 화면을 처음 열면 무엇부터 넣을지 안내가 나옵니다. 켜고 끄기는 관리자 → 설정 → 기능 켜기 / 끄기',
     '⑨ 막히면 내 계정 → 「Dutyvo에 문의」 — 운영팀이 답하고 폰으로 알려 드립니다',
@@ -3941,6 +3991,19 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.30 — 판정 하나 · 메뉴 묶음 · 매장 방 · 설정 매장 · 컴퓨터 서랍',
+    items: [
+      '「확인할 매장」 판정은 하나 — 관리자 「현황」의 긴급 · 확인 필요 · 정상. 매장 컨디션 표의 점 · 순서와 홈 전체 현황 줄(「긴급 1 · 확인 필요 3」)도 같은 판정',
+      '점수는 사실만 — 「손볼 곳」 대신 「기준선 아래」. 빨간색은 「긴급」에만',
+      '대표 관리자: 「회사」와 「현황·보고」를 「현황」 하나로(확인 필요 매장 · 지금 확인할 것 · 매장 컨디션). 매장별 타일 · 지난 날짜는 기록 → 「매장별 하루」, 현황 맨 아래에도 바로 가는 줄. 매니저는 그대로',
+      '컴퓨터 왼쪽 메뉴: 위는 매일 쓰는 것(브리핑 · 게시판 포함), 「도구」 아래 캘린더 · 보관기한 · 거래처 · 고객 예약. 관리자 화면에서는 「도구 ▾」로 접힘',
+      '내 계정 메뉴에서 캘린더 · 월간 스케줄은 뺌 — 메뉴 · 홈 바로가기 · 매장 방 맨 아래에 있음',
+      '매장 방(폰): 인수인계가 맨 위. 컨디션은 「79점 · 7일 평균 75 · 기준선 80」 한 줄, 「왜 79점?」을 누르면 그래프 · 계산',
+      '설정 → 회사·매장: 「매장 · 운영 시간」 하나에 매장마다 한 줄. 누르면 그 매장 서랍 — 여는 · 닫는 시각, 정기 휴무, 아이콘, 폐업 처리. 새 매장은 목록 맨 아래',
+      '컴퓨터의 남기기 · 요청 · 게시판 글쓰기 같은 창은 메모처럼 오른쪽 서랍. 확인 창(지울까요? 등)은 가운데 작은 창, 폰은 그대로 아래에서',
+    ]
+  },
   {
     title: 'v6.29 — 홈 첫 화면: 한 줄 머리 · 숫자 하나 · 브리핑 팝업 없음',
     items: [
@@ -6096,12 +6159,11 @@ window.openAppMenu=function(){
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="m9 11 3 3 3-3"/></svg>`,'앱으로 설치','바탕화면·홈 화면에 추가해서 앱처럼 쓰기',()=>{try{openInstallModal();}catch(e){}});
   if(pcOS()!=='other')mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>`,'매장 컴퓨터',vfIsStorePC()?'매장 PC · 켜면 Dutyvo 먼저':(pcOS()==='mac'?'컴퓨터 켜면 Dutyvo 먼저 · 터미널 한 줄':'컴퓨터 켜면 Dutyvo 먼저 · 설치 파일'),()=>{try{openPcSheet();}catch(e){}});
   mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>`,'직원 목록 · 다른 직원 업무 보기','내 업무 화면에서 ← 직원 선택과 같아요',()=>switchTab('my'));
-  if(featOn('calendar'))mk(VF_ICONS.cal,'캘린더','예약 · 미팅 · 보관기한 · 고정업무 · 휴무',()=>vfOpenCalendar());
+  // v6.30 캘린더 · 월간 스케줄은 내 계정에서 뺌 — 메뉴(폰은 홈 바로가기) · 매장 방 맨 아래에 이미 있다. 같은 곳으로 가는 문은 하나
   // Dutyvo 에 묻기(v6.14) — 회사 게시판 「건의/문의」는 회사 안, 이건 Dutyvo 운영팀으로
   if((vp.role==='owner'||vp.role==='manager')&&featOn('ai'))mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>`,'AI가 배운 것','우리 회사 규칙 적기 · 배운 것 · 최근 질문',()=>vfOpenAiNotes());
   if(vp.role==='owner'||vp.role==='manager')mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5"/><path d="M12 15h.01"/></svg>`,'Dutyvo에 문의','막힌 곳 · 불편한 점 · 기능 제안 — 운영팀이 답해요',()=>vfOpenAsk());
   if(vp.isPlatform)mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>`,'Dutyvo 운영','가입한 회사 · 문의 — 운영자만',()=>vfOpenOps());
-  mk(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>`,'월간 스케줄 · 휴무 설정','달력 · 날짜별 기록',()=>switchTab('monthly'));
   // 홈 좌우 반전 — 오늘 할 일을 왼쪽에 두고 싶은 사람용. 이 기기에만 저장, 컴퓨터 화면(2열)에서만 의미가 있다
   sec('이 기기');
   let _flip=false;try{_flip=localStorage.getItem('vflow_home_flip')==='1';}catch(e){}
@@ -6490,7 +6552,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   // v6.29 대표 · 매니저 폰은 접힌 한 줄이 기본(새 키로 다시 시작). 직원 · 컴퓨터는 예전에 고른 상태를 그대로 이어 쓴다
   const _adPhone=isAdmin&&window.innerWidth<1024;
   let allOpen=isAdmin&&!_adPhone;try{const v=localStorage.getItem('vflow_home_all2')??(_adPhone?null:localStorage.getItem('vflow_home_all'));if(v==='1'||v==='0')allOpen=v==='1';}catch(e){}
-  const allN={};const paintAllN=()=>{const t=[allN.gaps?`급한 것 ${allN.gaps}`:'',allN.red?`손볼 곳 ${allN.red}`:'',allN.other?`다른 사람 앞 ${allN.other}`:''].filter(Boolean).join(' · ');const n=allHead.querySelector('[data-alln]');n.textContent=t;n.classList.toggle('warn',!!t);};
+  const allN={};const paintAllN=()=>{const t=[allN.urg?`긴급 ${allN.urg}`:'',allN.chk?`확인 필요 ${allN.chk}`:'',allN.other?`다른 사람 앞 ${allN.other}`:''].filter(Boolean).join(' · ');const n=allHead.querySelector('[data-alln]');n.textContent=t;n.classList.toggle('warn',!!t);};
   const paintAll=()=>{allZone.classList.toggle('open',allOpen);allHead.setAttribute('aria-expanded',allOpen?'true':'false');allHead.querySelector('.c').textContent=allOpen?'접기 ▴':'펼치기 ▾';allGrid.hidden=!allOpen;};
   allHead.onclick=()=>{allOpen=!allOpen;try{localStorage.setItem('vflow_home_all2',allOpen?'1':'0');}catch(e){}vfUse(allOpen?'home_all_open':'home_all_close');paintAll();};
   paintAll();
@@ -6523,7 +6585,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
   let condHold=null;
   // 매장 컨디션 — 직원은 내 매장 한 줄(누르면 매장 방), 관리자는 전 매장 한 장
   if(featOn('cleaning')!==false&&!_vp.monitorOnly){
-    if(isAdmin){const cc=el('div','vh-card vf-condall');cc.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">계산 중</span></div>`;condHold=cc;vfCondAllInto(cc).then(()=>{try{const C=window.__vfCondLast||{};allN.red=Object.keys(C).filter(k=>C[k]&&C[k].level==='red').length;paintAllN();}catch(e){}}).catch(e=>{console.warn('[cond all]',e);cc.remove();});}
+    if(isAdmin){const cc=el('div','vh-card vf-condall');cc.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">계산 중</span></div>`;condHold=cc;vfCondAllInto(cc).then(()=>{vfCompanyLevels().then(LV=>{const v=Object.values(LV||{});allN.urg=v.filter(x=>x==='urgent').length;allN.chk=v.filter(x=>x==='check').length;paintAllN();}).catch(()=>{});}).catch(e=>{console.warn('[cond all]',e);cc.remove();});}
     else if(entry){const ph=el('div','vf-condwrap');condHold=ph;vfCondLineInto(ph,entry);}
   }
 
@@ -6543,7 +6605,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
       let gapOpen=false;try{gapOpen=localStorage.getItem('vflow_fold_gaps')==='1';}catch(e){}
       const urgent=items.filter(o=>o.dot==='danger').length;
       sc.querySelector('.vh-tiny').textContent=`급한 것 ${urgent} · 전체 ${items.length}`;
-      allN.gaps=urgent;paintAllN();
+      paintAllN();
       items.forEach((o,i)=>{const r=el('div','vh-item'+(o.fn?' link':'')+(o.dot!=='danger'&&!gapOpen?' vh-gapfold':'')+(o.dot==='danger'&&i>=MAX_M?' vh-hide-m':''),`<span class="vh-dot ${o.dot}"></span><div class="vh-main">${o.text}<small>${o.sub}</small></div>${o.fn?'<span class="vh-arrow" aria-hidden="true">›</span>':''}`);if(o.fn)r.onclick=o.fn;sl.appendChild(r);});
       const rest=items.length-urgent;
       const paintMore=()=>{if(rest<=0&&urgent<=MAX_M){smore.style.display='none';return;}smore.style.display='';smore.textContent=gapOpen?'접기 ▴':`나머지 ${Math.max(rest,0)+Math.max(0,urgent-MAX_M)}건 ▾`;};
@@ -7224,19 +7286,28 @@ function renderSideNav(active){
     ...(featOn('memo')?[{k:'memo',lb:'메모',ic:IC.memo,fn:()=>vfOpenMemo()}]:[]), // 어느 화면에서든 한 번에 — 홈 카드를 찾으러 가지 않는다
     {k:'room',lb:entry?`${storeShort(entry.name)} 방`:`${T('store')} 방`,ic:IC.store,fn:()=>{if(entry)openStoreRoom(entry);else openStoreSelect();}},
   ]; // 월간 스케줄은 매장 방 맨 아래 한 줄로만 (앞날 볼 때만 쓰는 화면이라 메뉴에서 내림)
+  // v6.30 묶음 — 14~26줄이 한 덩어리라 찾기 어려웠다. 위는 매일 쓰는 것(브리핑 · 게시판을 여기로 올림), 「도구」 제목 아래 가끔 여는 것, 선 아래 관리자
+  // 매일 보는 것(브리핑 · 게시판)을 「오늘」 안으로, 가끔 여는 도구는 아래 「도구」로
+  items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
+  if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
+  if(['calendar','expiry','clients','booking'].some(k=>featOn(k)))items.push({sec:'도구',tools:true});
   if(featOn('calendar'))items.push({k:'cal',lb:'캘린더',ic:IC.cal,fn:()=>vfOpenCalendar()});
   if(featOn('expiry'))items.push({k:'exp',lb:'보관기한',ic:IC.clock,fn:()=>vfOpenExpiry()});
   if(featOn('clients'))items.push({k:'deal',lb:'거래처',ic:IC.users,fn:()=>vfOpenDeals()});
   if(featOn('booking'))items.push({k:'rsv',lb:'고객 예약',ic:IC.rsv,fn:()=>vfOpenBooking()});
-  // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다
-  items.push({k:'brief',lb:'오늘의 브리핑',ic:IC.brief,fn:()=>openBriefingNow()});
-  if(featOn('board'))items.push({k:'board',lb:'게시판',ic:IC.board,fn:()=>openBoardOverlay(),badge:'board'});
-  if(isAdm)items.push({k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()}); // 오늘 현황은 관리자 현황·보고에 흡수
+  // 데스크탑은 홈의 「바로가기」 카드를 숨기므로 거기 있던 브리핑·게시판 문이 여기 있어야 한다(위 「오늘」 안)
+  if(isAdm){items.push({sec:'',line:true});items.push({k:'admin',lb:'관리자',ic:IC.admin,fn:()=>openPwModal()});} // 오늘 현황은 관리자 현황·보고에 흡수
   side.innerHTML=`<div class="vs-brand"><img class="vs-mark" src="icons/dutyvo-mark.svg" alt="" width="26" height="26"><span class="vs-bt">Dutyvo</span><button type="button" class="vs-fold" data-fold title="메뉴 접기 · 펴기" aria-label="메뉴 접기 · 펴기">${document.body.classList.contains('vf-rail')?'»':'«'}</button></div><div class="vs-prof"><strong>${me}</strong><span>${entry?entry.name:''}${vp.overrideActive?' · 예외출근':''}</span></div>`;
   side.querySelector('[data-fold]').onclick=()=>{const on=!document.body.classList.contains('vf-rail');document.body.classList.toggle('vf-rail',on);try{localStorage.setItem('vflow_rail',on?'1':'0');}catch(e){}renderSideNav(active);};
   // 위는 스크롤, 아래(설정·가이드·내 계정)는 항상 보이게 — 항목이 화면보다 길어도 문이 안 사라진다
-  const scroll=document.createElement('div');scroll.className='vs-scroll';side.appendChild(scroll);
+  const scroll=document.createElement('div');scroll.className='vs-scroll';side.appendChild(scroll);let toolsHidden=false;
   items.forEach(it=>{
+    if(it.sec!=null){
+      // 관리자 화면에서는 「도구」를 접어 둔다 — 아래 관리자 메뉴(현황 · 진행 중 · 휴무 · 기록)가 화면 밖으로 밀리지 않게. 누르면 펼침(기록 ▾ 와 같은 방식)
+      if(it.tools&&active==='admin'&&!document.body.classList.contains('vf-rail')){const open=!!window.__sideToolsOpen;const h=document.createElement('button');h.type='button';h.className='vs-sec vs-sec-btn';h.setAttribute('aria-expanded',String(open));h.textContent=`도구 ${open?'▴':'▾'}`;h.onclick=()=>{window.__sideToolsOpen=!open;renderSideNav(active);};scroll.appendChild(h);if(!open)toolsHidden=true;return;}
+      toolsHidden=false;
+      const h=document.createElement('div');h.className='vs-sec'+(it.line?' line':'');h.textContent=it.sec;h.setAttribute('aria-hidden','true');scroll.appendChild(h);return;}
+    if(toolsHidden&&['cal','exp','deal','rsv'].includes(it.k))return;
     const b=document.createElement('button');b.className='vs-item'+(it.k===active?' active':'');b.title=it.lb;
     b.innerHTML=`<span>${it.ic||''}${it.lb}</span>`;
     b.onclick=()=>{
@@ -8078,6 +8149,13 @@ const VF_ESC_LABEL={hoDays:['인수인계 미확인','','일째','→ 대표'],o
 function vfEsc(){const e=(appSettings||{}).esc||{};const o={};for(const k in VF_ESC_DEFAULT){const v=Number(e[k]);o[k]=(Number.isFinite(v)&&v>0)?v:VF_ESC_DEFAULT[k];}return o;}
 const _hm2min=(hm)=>{const [h,m]=String(hm||'0:0').split(':').map(Number);return (h||0)*60+(m||0);};
 // 회사 상태 — 매장마다 「밑에서 해결 안 되는 것」만 센다. 있는 표만 읽는다(work_sessions · handover 문서 · daily_tasks · profiles)
+// v6.30 「확인할 매장」 판정은 하나 — 회사 화면(올라오는 기준)이 원본. 컨디션 표 · 홈 전체 현황은 이 판정을 그대로 표시만
+async function vfCompanyLevels(){
+  const _c=vfCompanyLevels._c;if(_c&&Date.now()-_c.at<60000)return _c.v; // 1분 캐시(홈 · 현황 · 컨디션이 같이 쓴다)
+  const C=await loadCompanyStatus();const v={};
+  C.stores.forEach(x=>{v[x.store.id]=x.issues.some(f=>f.level==='urgent')?'urgent':x.issues.length?'check':'ok';});
+  vfCompanyLevels._c={at:Date.now(),v};return v;
+}
 async function loadCompanyStatus(){
   const esc=vfEsc();const tKey=todayKey();const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
   const dAgo=(n)=>{const d=new Date(today);d.setDate(d.getDate()-n);return dk(d.getFullYear(),d.getMonth(),d.getDate());};
@@ -8376,7 +8454,7 @@ function vfClockFace(el,style,still){
 }
 // ── 매장 컨디션 — 매장 점수(설정의 점수 규칙 그대로)를 날짜별로. 7일 평균 · 그 전 7일 · 회사 평균 ──
 // 사람별 점수·순위는 만들지 않는다. 매장 전체가 같이 올리는 숫자
-const VF_LV_L={green:'좋음',orange:'보통',red:'손볼 곳'};
+const VF_LV_L={green:'좋음',orange:'기준선 위',red:'기준선 아래'}; // v6.30 「손볼 곳」은 회사 화면 판정과 어긋나 뺌 — 점수는 사실만
 async function vfConditions(storeIds){
   const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
   const f=new Date(t0);f.setDate(f.getDate()-14);
@@ -8419,7 +8497,7 @@ function vfCondBars(c,company){
     else{const top=y(x.score);g+=`<path d="M${cx-bw/2} ${TP+ih} V${top+4} Q${cx-bw/2} ${top} ${cx-bw/2+4} ${top} H${cx+bw/2-4} Q${cx+bw/2} ${top} ${cx+bw/2} ${top+4} V${TP+ih} Z" fill="var(--navy)" opacity="${last?1:.35}"><title>${x.d.getMonth()+1}/${x.d.getDate()} ${x.score}점 · ${T('clean')} ${x.base} · 업무 +${x.bonus}${x.penalty?` · ${T('handover')} −${x.penalty}`:''}</title></path><text x="${cx}" y="${top-5}" text-anchor="middle" font-size="13" font-weight="${last?800:600}" fill="var(--text)">${x.score}</text>`;}
     g+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="13" fill="var(--text-mute)">${last?'오늘':DW[x.d.getDay()]}</text>`;});
   // 기준선(목표)과 평균선 — 둘 다 가는 선, 라벨은 오른쪽 바깥. 겹치면 라벨만 비켜 둔다
-  const yb=y(r.baseline),ya=avgV!=null?y(avgV):null;let lb=yb+4,la=ya!=null?ya+4:null;if(la!=null&&Math.abs(lb-la)<12){if(la<lb)la=lb-12;else la=lb+12;}
+  const yb=y(r.baseline),ya=avgV!=null?y(avgV):null;let lb=yb+4,la=ya!=null?ya+4:null;if(la!=null&&Math.abs(lb-la)<17){if(la<lb)la=lb-17;else la=lb+17;} // 폰에서 그림이 줄면 12로는 글자가 겹쳤다(v6.30)
   g+=`<line x1="${L}" x2="${W-R}" y1="${yb}" y2="${yb}" stroke="var(--green)" stroke-width="1"/><text x="${W-R+6}" y="${lb}" font-size="12.5" fill="var(--text-sub)" font-weight="700">기준선 ${r.baseline}</text>`;
   if(ya!=null)g+=`<line x1="${L}" x2="${W-R}" y1="${ya}" y2="${ya}" stroke="var(--text-sub)" stroke-width="1"/><text x="${W-R+6}" y="${la}" font-size="12.5" fill="var(--text-sub)" font-weight="700">${avgL} ${avgV}</text>`;
   g+=`<line x1="${L}" x2="${W-R}" y1="${TP+ih}" y2="${TP+ih}" stroke="var(--border)" stroke-width="1"/></svg>`;return g;
@@ -8433,7 +8511,7 @@ function vfCondGood(c){
   return out.join(' · ');
 }
 // 매장 방 맨 위 · 직원 홈 한 줄 · 관리자 전 매장
-async function vfCondCardInto(host,store){
+async function vfCondCardInto(host,store,opt){
   try{
     const ids=isAdmin?STORES.map(s2=>s2.id):[store.id];
     const C=await vfConditions(ids);const c=C[store.id];if(!c||!c.today)return;
@@ -8442,6 +8520,16 @@ async function vfCondCardInto(host,store){
       <div class="vf-cond"><div>${t.closed?'<div class="big" style="font-size:20px;">오늘 휴무</div>':`<div class="big">${t.score}<small>점</small></div><span class="vf-lv ${t.level}">${VF_LV_L[t.level]}</span>`}</div><div>${vfCondBars(c,C.__company)}</div></div>
       <div class="vf-cond-sub">7일 평균 <b>${c.avg7??'—'}</b> · 기준선 ${scoreRule().baseline}${C.__company!=null?` · 회사 평균 ${C.__company}`:''}${vfCondGood(c)?`<br>${vfCondGood(c)}`:''}</div>
       ${t.closed?'':`<div class="vf-brk"><span>${T('clean')} 체크 <b>${t.checked}/${t.total}</b></span><span>사진 <b>${t.photos}</b></span><span>= ${T('clean')} <b>${t.base}</b></span><span>업무 ${t.tasks}건 <b>+${t.bonus}</b></span>${t.penalty?`<span>하루 넘긴 ${T('handover')} ${t.overdue} <b>−${t.penalty}</b></span>`:''}<span>오늘 <b>${t.score}</b></span></div>`}`;
+    // v6.30 매장 방은 한 줄로 접어 둔다 — 점수 그래프 · 계산 칩이 첫 화면을 차지해 인수인계가 두 번째 화면으로 밀렸다. 「왜 N점?」을 누를 때만
+    if(opt&&opt.fold){
+      const ct=card.querySelector('.vh-ct');const rest=[...card.children].filter(x=>x!==ct);
+      const fold=document.createElement('div');fold.className='vf-cond-fold';rest.forEach(x=>fold.appendChild(x));fold.hidden=true;card.appendChild(fold);
+      ct.querySelector('.vh-tiny').innerHTML=t.closed?'오늘 휴무':`<b class="vf-cond-n">${t.score??'—'}점</b> · 7일 평균 ${c.avg7??'—'} · 기준선 ${scoreRule().baseline}`;
+      const wb=document.createElement('button');wb.type='button';wb.className='vf-cond-why';wb.setAttribute('aria-expanded','false');
+      const lab=()=>wb.textContent=fold.hidden?(t.closed?'최근 7일 ▾':`왜 ${t.score??'—'}점? ▾`):'접기 ▴';lab();
+      wb.onclick=()=>{fold.hidden=!fold.hidden;wb.setAttribute('aria-expanded',String(!fold.hidden));lab();vfUse(fold.hidden?'room_cond_close':'room_cond_open');};
+      card.classList.add('vf-cond-card');ct.appendChild(wb);
+    }
     host.innerHTML='';host.appendChild(card);
   }catch(e){console.warn('[cond]',e);}
 }
@@ -8457,23 +8545,26 @@ async function vfCondLineInto(host,store){
 async function vfCondAllInto(card){
   const ids=STORES.map(s2=>s2.id);
   const C=await vfConditions(ids);
-  const rows=STORES.map(st=>({st,c:C[st.id]})).filter(x=>x.c);
-  // 손볼 곳(빨강) → 오늘 점수 낮은 곳 → 7일 평균 낮은 곳. 다섯 줄만 보일 때 급한 곳이 빠지지 않게
-  const _lv={red:0,orange:1,green:2};const _td=(c)=>c.today&&!c.today.closed&&c.today.score!=null?c.today.score:999;
-  rows.sort((a,b)=>(_lv[a.c.level]??3)-(_lv[b.c.level]??3)||_td(a.c)-_td(b.c)||(a.c.avg7??999)-(b.c.avg7??999));
-  const warn=rows.filter(x=>x.c.level==='red').length;
+  // 판정(회사 화면)은 무거운 표 넷을 읽어 늦게 온다 — 점수 표를 먼저 그리고, 오면 점 · 순서만 다시
+  const rows=STORES.map(st=>({st,c:C[st.id],lv:'ok'})).filter(x=>x.c);
+  const _cv={urgent:0,check:1,ok:2},_dot={urgent:'red',check:'orange',ok:'green'},_dl={urgent:'긴급',check:'확인 필요',ok:'정상'};
+  // 회사 판정(긴급 → 확인 필요 → 정상) → 오늘 점수 낮은 곳 → 7일 평균 낮은 곳. 다섯 줄만 보일 때 급한 곳이 빠지지 않게
+  const _td=(c)=>c.today&&!c.today.closed&&c.today.score!=null?c.today.score:999;
+  const sortRows=()=>rows.sort((a,b)=>_cv[a.lv]-_cv[b.lv]||_td(a.c)-_td(b.c)||(a.c.avg7??999)-(b.c.avg7??999));sortRows();
+  const below=rows.filter(x=>x.c.level==='red').length;
   if(rows.length&&rows.every(x=>x.c.empty)){card.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong></div><div class="vf-cond-empty">아직 기록이 없어 점수가 없어요 — 청소 체크 · 할 일이 쌓이면 ${T('store')}별로 여기에 보여요</div>`;return;}
   // 컴퓨터 — 이름과 숫자 사이 빈 칸에 7일 평균 막대 + 기준선 눈금. 폰은 숨김(칸이 좁다)
   const _bl=scoreRule().baseline;const _cbar=(c)=>`<span class="br" aria-hidden="true"><i class="${c.level}" style="width:${Math.max(0,Math.min(100,c.avg7??0))}%"></i><u style="left:${_bl}%"></u></span>`;
   let folded=false;try{folded=localStorage.getItem('vflow_fold_cond')==='1';}catch(e){}
   const paint=()=>{
-    card.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">전 ${T('store')} 평균 ${C.__company??'—'} · 기준선 ${scoreRule().baseline}${warn?` · <b style="color:var(--red)">손볼 곳 ${warn}</b>`:''}</span><button type="button" class="vh-fold" data-fold>${folded?'펼치기':'접기'}</button></div>`+
-      (folded?'':`<div class="vf-condhead"><span>${T('store')}</span><span class="br">7일 평균 · 기준선</span><span>오늘</span><span>7일 평균</span><span>평균 변화</span><span></span></div>`+(rows.length>6&&!card.__all?rows.slice(0,5):rows).map(({st,c})=>`<button type="button" class="vf-condrow" data-sid="${st.id}"><span class="nm"><i class="${c.level}"></i>${_wrEsc(storeShort(st.name))}</span>${_cbar(c)}<span class="n">${c.today.closed?'<span class="m">휴무</span>':(c.today.score??'<span class="m">기록 없음</span>')}</span><span class="m">${c.avg7??'—'}</span><span class="d ${c.prev7!=null&&c.avg7-c.prev7>0?'up':c.prev7!=null&&c.avg7-c.prev7<0?'dn':''}">${c.prev7==null?'':c.avg7-c.prev7>0?'▲'+(c.avg7-c.prev7):c.avg7-c.prev7<0?'▼'+(c.prev7-c.avg7):'—'}</span><span class="vh-arrow" aria-hidden="true">›</span></button>`).join(''));
-        if(!folded&&rows.length>6){const mb=document.createElement('button');mb.type='button';mb.className='vf-condmore';const rest=rows.slice(5);const bad=rest.filter(x=>x.c.level==='red').length;mb.textContent=card.__all?'접기':`나머지 ${rest.length}곳${bad?` · 손볼 곳 ${bad}`:' · 모두 기준선 위'}`;mb.onclick=()=>{card.__all=!card.__all;paint();};card.appendChild(mb);}
+    card.innerHTML=`<div class="vh-ct"><strong>${T('store')} 컨디션</strong><span class="vh-tiny">전 ${T('store')} 평균 ${C.__company??'—'} · 기준선 ${scoreRule().baseline}${below?` · 기준선 아래 ${below}`:''}</span><button type="button" class="vh-fold" data-fold>${folded?'펼치기':'접기'}</button></div>`+
+      (folded?'':`<div class="vf-condhead"><span>${T('store')}</span><span class="br">7일 평균 · 기준선</span><span>오늘</span><span>7일 평균</span><span>평균 변화</span><span></span></div>`+(rows.length>6&&!card.__all?rows.slice(0,5):rows).map(({st,c,lv})=>`<button type="button" class="vf-condrow" data-sid="${st.id}"><span class="nm"><i class="${_dot[lv]}" title="회사 화면 판정 · ${_dl[lv]}"></i>${_wrEsc(storeShort(st.name))}${lv!=='ok'?`<em class="lvt ${lv}">${_dl[lv]}</em>`:''}</span>${_cbar(c)}<span class="n">${c.today.closed?'<span class="m">휴무</span>':(c.today.score??'<span class="m">기록 없음</span>')}</span><span class="m">${c.avg7??'—'}</span><span class="d ${c.prev7!=null&&c.avg7-c.prev7>0?'up':c.prev7!=null&&c.avg7-c.prev7<0?'dn':''}">${c.prev7==null?'':c.avg7-c.prev7>0?'▲'+(c.avg7-c.prev7):c.avg7-c.prev7<0?'▼'+(c.prev7-c.avg7):'—'}</span><span class="vh-arrow" aria-hidden="true">›</span></button>`).join(''));
+        if(!folded&&rows.length>6){const mb=document.createElement('button');mb.type='button';mb.className='vf-condmore';const rest=rows.slice(5);const bad=rest.filter(x=>x.lv!=='ok').length;mb.textContent=card.__all?'접기':`나머지 ${rest.length}곳${bad?` · 확인 필요 ${bad}`:' · 모두 정상'}`;mb.onclick=()=>{card.__all=!card.__all;paint();};card.appendChild(mb);}
 card.querySelector('[data-fold]').onclick=()=>{folded=!folded;try{localStorage.setItem('vflow_fold_cond',folded?'1':'0');}catch(e){}paint();};
     card.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{const st=STORES.find(x=>x.id===b.dataset.sid);if(st)openStoreRoom(st);});
   };
   paint();
+  vfCompanyLevels().then(LV=>{rows.forEach(x=>{x.lv=LV[x.st.id]||'ok';});sortRows();if(card.isConnected)paint();}).catch(()=>{});
 }
 function vfOpenAdmin(tab){try{openPwModal();if(tab)goDashTab(tab);}catch(e){}}
 // 밝기 — 이 기기만. 회사 색(설정 → 화면·말 → 색)과 따로
@@ -9520,7 +9611,7 @@ function openStoreRoom(store){
   }
   tl.appendChild(wRow);
   todayCard.appendChild(tl);
-  if(featOn('cleaning')!==false){const cw=el('div','');col1.appendChild(cw);vfCondCardInto(cw,store);}
+  if(featOn('cleaning')!==false){const cw=el('div','rm-cond');col1.appendChild(cw);vfCondCardInto(cw,store,{fold:true});}
   col1.appendChild(todayCard);
 
   // ── 인수인계 (이 매장 · 오늘 문서 = 미확인 이월분 포함) ──
@@ -11468,8 +11559,9 @@ function buildCL(mode,secIdx,dateKey){
 function adminTabDefs(){
   const IC=VF_ICONS;
   return [
-    ...(window.__vflowProfile?.role==='owner'?[{id:'company',label:'회사',short:'회사',group:'main',ic:IC.status,desc:`${STORES.length}개 ${T('store')} 중 확인 필요한 곳만`}]:[]),
-    {id:'today',label:'현황·보고',short:'현황',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
+    // v6.30 대표: 「회사」와 「현황·보고」가 둘 다 「확인할 것」이라 하나로 — 「현황」(판정 · 지금 확인할 것 · 컨디션). 매장별 타일 · 지난 날짜는 기록으로
+    ...(window.__vflowProfile?.role==='owner'?[{id:'company',label:'현황',short:'현황',group:'main',ic:IC.status,desc:`${STORES.length}개 ${T('store')} 중 확인 필요한 곳 · 지금 확인할 것`}]:[]),
+    window.__vflowProfile?.role==='owner'?{id:'today',label:`${T('store')}별 하루`,group:'records',ic:IC.status,desc:`${T('store')} 타일 · 지난 날짜`}:{id:'today',label:'현황·보고',short:'현황',group:'main',ic:IC.status,desc:`오늘 ${T('store')} 타일 · 지난 날짜`},
     {id:'report',label:'주간 리포트',group:'records',ic:IC.brief,desc:'매주 월요일 자동 생성 — 지난주 요약'},
     {id:'activity',label:'직원 활동',group:'records',ic:IC.activity,desc:'직원별 주간 활동 원문'},
     {id:'monthly',label:'월간 통계',group:'records',ic:IC.chart,desc:`이번 달 ${T('store')}별 누적`},
@@ -11626,7 +11718,7 @@ async function renderTodayTab(content,opts={}){
   dateEl.textContent=cleanEv?`${dayLabel}은 대청소 ${cleanEv.sec}구역 날입니다`:`${dayLabel}은 기본 청소만 진행하는 날입니다`;
   if(!featOn('cleaning')||opts.noNav)dateEl.style.display='none';
   content.appendChild(dateEl);
-  if(isToday&&!opts.noNav)renderTodayGaps(content); // 오늘만 — 지난 날짜는 타일·상세만
+  if(isToday&&!opts.noNav&&window.__vflowProfile?.role!=='owner')renderTodayGaps(content); // 오늘만 — 지난 날짜는 타일·상세만. 대표는 「현황」에 있다(v6.30)
 
   // 매장은 타일(격자)로, 누르면 오른쪽(폰은 아래 시트)에 그 매장 상세.
   // 예전엔 매장마다 긴 카드가 세로로 이어져 6개면 화면 몇 장이었다.
@@ -13087,15 +13179,90 @@ async function renderSettingsTab(content){
     }catch(e){}
   })();
 
+  // ── v6.30 매장 · 운영 시간 — 매장마다 한 줄, 누르면 그 매장 서랍(시간 · 휴무 · 아이콘 · 폐업) ──
+  // 예전엔 「운영 시간」「매장 아이콘」「매장 추가·폐업」 세 카드에 매장 목록이 세 번, 빨간 「폐업 처리」가 매장 수만큼 늘 보였다(폰 한 탭 약 5,800px)
+  {
+    const S=T('store');const DW=['일','월','화','수','목','금','토'];
+    const card=document.createElement('div');card.className='dash-card';card.style.marginBottom='12px';
+    card.innerHTML=`<div class="dash-store-name">${S} · 운영 시간</div><div style="font-size:13px;color:var(--text-sub);margin:4px 0 10px;line-height:1.6;">${S}을 누르면 여는 · 닫는 시각, 정기 휴무, 아이콘, 폐업. 닫는 시각 30분 전에 ${S} 컴퓨터가 「남은 것」을 알린다. 비우면 10:00~22:00</div>`;
+    const msg=document.createElement('div');msg.className='feedback-saved';msg.style.cssText='margin:6px 0 0;min-height:16px;';
+    const say=(t,c)=>{msg.textContent=t;msg.style.color=c||'var(--text-sub)';};
+    const hoursOf=(st)=>((appSettings.hours||{})[st.id])||{};
+    const sumOf=(st)=>{const h=hoursOf(st);const off=Array.isArray(h.off)&&h.off.length?` · 휴무 ${h.off.map(i=>DW[i]).join('')}`:'';return `${h.open||'10:00'}~${h.close||'22:00'}${off}`;};
+    // 전 매장 같게 — 예전 그대로(한 번에 넣고 「적용」)
+    const all=document.createElement('div');all.className='st-allh';
+    all.innerHTML=`<span>전 ${S} 같게</span><input type="time" data-o value="10:00" aria-label="여는 시각"><span>~</span><input type="time" data-c value="22:00" aria-label="닫는 시각"><button type="button" class="vh-btn" data-go>적용</button>`;
+    const list=document.createElement('div');list.className='st-stores';
+    const paintList=()=>{list.innerHTML='';STORES.forEach(st=>{const b=document.createElement('button');b.type='button';b.className='st-store';b.innerHTML=`<span class="ic">${st.icon||'🏪'}</span><span class="t"><b>${_wrEsc(st.name)}</b><small>${sumOf(st)}</small></span><span class="ar" aria-hidden="true">›</span>`;b.onclick=()=>openStore(st);list.appendChild(b);});};
+    all.querySelector('[data-go]').onclick=async()=>{
+      const o=all.querySelector('[data-o]').value,c=all.querySelector('[data-c]').value;if(!o||!c)return;
+      if(!await vfConfirm(`전 ${S} 여는 시각 ${o} · 닫는 시각 ${c}로 맞출까요?\n정기 휴무는 그대로`,{ok:'맞추기'}))return;
+      const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));const next={};STORES.forEach(st=>{const keep=(prev[st.id]||{}).off;next[st.id]={open:o,close:c,...(Array.isArray(keep)&&keep.length?{off:keep}:{})};});
+      appSettings.hours=next;say('저장 중');
+      try{await saveSettings();say('저장됨');paintList();}catch(err){appSettings.hours=prev;say('저장 실패 · '+vfErrText(err),'var(--red)');}
+    };
+    const openStore=(st)=>{
+      const ov=document.createElement('div');ov.className='vh-sheet-bg';const sh=document.createElement('div');sh.className='vh-sheet st-sheet';sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-label',st.name);
+      const h=hoursOf(st);const off=new Set(Array.isArray(h.off)?h.off:[]);
+      sh.innerHTML=`<div class="vh-sheet-handle" aria-hidden="true"></div><h3><span data-cur>${st.icon||'🏪'}</span> ${_wrEsc(st.name)}</h3>
+        <div class="st-lbl">운영 시간</div><div class="st-time"><label>여는 시각<input type="time" data-o value="${h.open||''}"></label><label>닫는 시각<input type="time" data-c value="${h.close||''}"></label></div>
+        <div class="st-lbl">정기 휴무<small>그날은 출근 없음 · 청소 · 이월을 안 센다</small></div><div class="st-off">${DW.map((d,i)=>`<button type="button" data-d="${i}" aria-pressed="${off.has(i)}">${d}</button>`).join('')}</div>
+        <div class="st-lbl">아이콘</div><div class="st-icons">${ICON_GROUPS.map(g=>g.icons.map(ic=>`<button type="button" data-ic="${ic}" aria-pressed="${st.icon===ic}">${ic}</button>`).join('')).join('')}</div>
+        <div class="st-msg" aria-live="polite"></div>
+        <button type="button" class="st-close-store">이 ${S} 폐업 처리</button>
+        <div class="vh-sheet-acts"><button type="button" class="vh-btn primary" data-cancel>닫기</button></div>`;
+      // 아이콘 72개를 한 번에 펼치지 않는다 — 12개 먼저, 지금 고른 것이 뒤쪽이면 처음부터 다
+      {const ib=[...sh.querySelectorAll('[data-ic]')];const rest=ib.slice(12);if(rest.length&&!rest.some(b=>b.dataset.ic===st.icon)){rest.forEach(b=>b.hidden=true);const mb=document.createElement('button');mb.type='button';mb.className='vh-btn st-icmore';mb.textContent=`아이콘 ${rest.length}개 더 보기`;mb.onclick=()=>{rest.forEach(b=>b.hidden=false);mb.remove();};sh.querySelector('.st-icons').after(mb);}}
+      const m=sh.querySelector('.st-msg');const sm=(t,c)=>{m.textContent=t;m.style.color=c||'var(--text-sub)';};
+      const saveH=async()=>{
+        const o=sh.querySelector('[data-o]').value,c=sh.querySelector('[data-c]').value;
+        const prev=JSON.parse(JSON.stringify(appSettings.hours||{}));const next={...(appSettings.hours||{})};const v={};if(o)v.open=o;if(c)v.close=c;if(off.size)v.off=[...off].sort();
+        if(Object.keys(v).length)next[st.id]=v;else delete next[st.id];
+        appSettings.hours=next;sm('저장 중');
+        try{await saveSettings();sm('저장됨');paintList();}catch(err){appSettings.hours=prev;sm('저장 실패 · '+vfErrText(err),'var(--red)');}
+      };
+      sh.querySelector('[data-o]').onchange=saveH;sh.querySelector('[data-c]').onchange=saveH;
+      sh.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const i=+b.dataset.d;if(off.has(i))off.delete(i);else off.add(i);b.setAttribute('aria-pressed',String(off.has(i)));saveH();});
+      sh.querySelectorAll('[data-ic]').forEach(b=>b.onclick=async()=>{
+        const prev=st.icon;st.icon=b.dataset.ic;sm('저장 중');
+        try{await setDoc(doc(db,'config/stores'),{list:STORES});sm('저장됨');sh.querySelector('[data-cur]').textContent=st.icon;sh.querySelectorAll('[data-ic]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));paintList();try{renderDashboard();}catch(e){}}
+        catch(err){st.icon=prev;sm('저장 실패 · '+vfErrText(err),'var(--red)');}
+      });
+      sh.querySelector('.st-close-store').onclick=async(ev)=>{
+        if(!await vfConfirm(`${st.name} 폐업 처리할까요?\n매장 목록에서 빠지고, 업무 · 인수인계 · 청소 기록은 남습니다`,{ok:'폐업 처리'}))return;
+        sm('처리 중');
+        try{const {sb}=await wrApi();const {error,count}=await sb.from('stores').update({active:false},{count:'exact'}).eq('id',st.id);if(error)throw error;if(!count)throw new Error('권한이 없거나 이미 처리됨');
+          sm('폐업 처리됨 · 새로고침하면 목록에서 빠짐','var(--green)');ev.target.disabled=true;ev.target.textContent='폐업됨';}
+        catch(e){sm('실패 · '+vfErrText(e),'var(--red)');}
+      };
+      const close=()=>vfSheetClose(ov);sh.querySelector('[data-cancel]').onclick=close;ov.onclick=(e)=>{if(e.target===ov)close();};
+      ov.appendChild(sh);document.body.appendChild(ov);
+    };
+    // 새 매장 — 목록 맨 아래 한 줄
+    const add=document.createElement('div');add.className='st-add';
+    add.innerHTML=`<input type="text" placeholder="새 ${S} 이름 (예: 인천 검단점)" aria-label="새 ${S} 이름"><button type="button" class="vh-btn">추가</button>`;
+    add.querySelector('button').onclick=async()=>{
+      const nameIn=add.querySelector('input');const name=nameIn.value.trim();
+      if(!name){say(`${S} 이름을 적어 주세요`,'var(--red)');nameIn.focus();return;}
+      if(STORES.some(s=>s.name===name)){say(`같은 이름의 ${S}이 이미 있음`,'var(--red)');return;}
+      if(!await vfConfirm(`새 ${S} 「${name}」 추가할까요?\n전 직원 화면에는 새로고침 후 보입니다`,{ok:'추가'}))return;
+      say('추가 중');
+      try{const {sb,ctx}=await wrApi();const {error}=await sb.from('stores').insert({tenant_id:ctx.tenantId,name});if(error)throw error;nameIn.value='';say('추가됨 · 새로고침하면 목록에 나타남','var(--green)');}
+      catch(e){say('추가 실패 · '+vfErrText(e),'var(--red)');}
+    };
+    paintList();
+    card.appendChild(all);card.appendChild(list);card.appendChild(add);card.appendChild(msg);
+    content.appendChild(card);
+  }
   content.appendChild(savedEl);
 
   // ── 네 묶음 — 회사·매장 / 사람 / 일하는 규칙 / 화면·말. 카드 만드는 코드는 그대로 두고, 다 만든 뒤 제목으로 분류·이름 정리 ──
   // 내 계정·내 동의는 오른쪽 위 내 계정 메뉴에만 (같은 곳으로 가는 문은 하나)
-  [...content.querySelectorAll(':scope > .dash-card')].forEach(card=>{const t=((card.querySelector('.dash-store-name')||{}).textContent||'').trim();if(t==='내 계정'||t.startsWith('내 동의 관리'))card.remove();});
+  [...content.querySelectorAll(':scope > .dash-card')].forEach(card=>{const t=((card.querySelector('.dash-store-name')||{}).textContent||'').trim();if(t==='내 계정'||t.startsWith('내 동의 관리')||t==='운영 시간'||t==='매장 아이콘'||t==='매장 관리')card.remove();});
   // 사람이 찾는 말로 — 명칭 점검표(샘플 ⑧)의 어긋남·찾기 어려움
   const RENAME={'청소 항목 편집':'청소 항목','매장 점수 규칙':'점수 규칙','컬러테마':'색','매장 관리':`${T('store')} 추가·폐업`,'직원 근무지 설정':'근무지·직함','퇴사자 관리':'퇴사','고정업무':'고정 업무','기능 켜기 / 끄기':'기능 켜기/끄기'};
   const GROUPS=[
-    ['company','회사·매장',['회사 이름','운영 시간',`${T('store')} 추가·폐업`,'매장 아이콘','가맹 초대 코드'],'이름 · 매장 · 운영 시간'],
+    ['company','회사·매장',['회사 이름',`${T('store')} · 운영 시간`,'가맹 초대 코드'],'이름 · 매장 · 운영 시간'],
     ['people','사람',['직원 초대','근무지·직함','퇴사','휴무 가져오기','주간 1:1 상담'],'초대 · 근무지 · 퇴사 · 1:1'],
     ['work','일하는 규칙',['청소 항목','대청소 규칙','청소 사진 보관','고정 업무','인수인계 규칙','점수 규칙','올라오는 기준'],'청소 · 고정 업무 · 인수인계 · 점수'],
     ['screen','화면·말',['기능 켜기/끄기','우리 회사 말','색'],'기능 · 우리 회사 말 · 색'],
@@ -13442,9 +13609,12 @@ async function renderCompanyTab(content){
   const ft=document.createElement('div');ft.className='vh-tiny vc-ft';
   ft.innerHTML=`올라오는 기준: ${T('handover')} ${C.esc.hoDays}일 · 출근 없음 +${C.esc.openGrace}분 · 지각 30일 ${C.esc.repeatN}회 · 이월 ${C.esc.carryDays}일 연속 — 설정에서 바꿈`;
   wrap.appendChild(ft);
+  // v6.30 지금 확인할 것 · 직원 오늘 — 예전 「현황·보고」 맨 위에 있던 것. 확인할 곳은 이 화면 하나
+  const gw=document.createElement('div');gw.className='vc-gaps';wrap.appendChild(gw);renderTodayGaps(gw).catch(()=>{});
   // 매장 컨디션 — 관리자 홈과 같은 한 장(점수 규칙 그대로). 확인 필요 아래에
   const cc=document.createElement('div');cc.className='vh-card vc-cc';wrap.appendChild(cc);
   vfCondAllInto(cc).catch(()=>cc.remove());
+  const day=document.createElement('button');day.type='button';day.className='vh-card vc-daylink';day.innerHTML=`<span><b>${T('store')}별 하루</b><small>${T('store')} 타일 · 지난 날짜 기록</small></span><span class="vh-arrow" aria-hidden="true">›</span>`;day.onclick=()=>goDashTab('today');wrap.appendChild(day);
 }
 // 누르면 — 무슨 문제 · 언제부터 · 담당 · 지금. 행동은 매장 방 열기 · 매니저에게 묻기 둘뿐(직원에게 직접 가지 않는다)
 function openCompanyDetail(x,C){
@@ -13634,7 +13804,7 @@ window.openPwModal=function(){
   if(role==null){alert('로그인 정보를 불러오는 중입니다. 잠시 후 다시 시도하세요.');return;}
   if(role==='owner'||role==='manager'){
     isAdmin=true;
-    dashTab='today';
+    dashTab=role==='owner'?'company':'today'; // v6.30 대표의 첫 화면은 「현황」(예전 회사)
     dashViewDate=null;
     showScreen('screen-admin');
     renderDashboard();
