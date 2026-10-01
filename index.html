@@ -3869,7 +3869,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.30';
+const GUIDE_VERSION = 'v6.31';
 const BUILD_DATE = '2026-10-01'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -3991,6 +3991,14 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.31 — AI도 앱과 같은 판정',
+    items: [
+      'AI 아침 요약이 매장을 말할 때 앱 「현황」과 같은 판정(긴급 · 확인 필요 · 정상)만 씁니다. 「손볼 곳」처럼 AI가 따로 고른 말은 쓰지 않습니다',
+      '긴급 매장이 있으면 아침 요약 첫 줄에 「검단점 긴급 — 클레임 미확인」처럼 이유와 함께. 판정이 정상인 매장의 어제 일은 「알아 둘 것」으로 사실만',
+      'AI 도우미(듀티)도 같은 판정을 받아 답합니다. 점수가 낮은 것은 「기준선 아래」라고 사실로만',
+    ]
+  },
   {
     title: 'v6.30 — 판정 하나 · 메뉴 묶음 · 매장 방 · 설정 매장 · 컴퓨터 서랍',
     items: [
@@ -7610,6 +7618,9 @@ async function vfAiFacts(){
     ids.forEach(id=>{const c=C[id];if(!c)return;const st=STORES.find(x=>x.id===id);const d7=c.days.slice(-8,-1).filter(x=>!x.closed);const sum=k=>d7.reduce((a,x)=>a+(x[k]||0),0);
       L.push(`- ${st?st.name:id}: 오늘 ${c.today.closed?'휴무':(c.today.score??'기록 없음')} · 7일 평균 ${c.avg7??'—'} · 그 전 7일 ${c.prev7??'—'} · 기준선 위 ${c.streak}일째 · 최근 7일 ${d7.map(x=>`${x.d.getMonth()+1}/${x.d.getDate()} ${x.score}`).join(', ')} · 7일 합계 청소 ${sum('checked')}/${sum('total')} 사진 ${sum('photos')} 업무 ${sum('tasks')}건 하루 넘긴 미확인 ${sum('overdue')}건`);});
     if(adm&&C.__company!=null)L.push(`회사 평균(7일) ${C.__company}`);
+    // v6.31 앱 판정 — 현황 화면과 같은 긴급 · 확인 필요 · 정상(점수와 따로). AI 가 「손볼 곳」 같은 판정을 새로 만들지 않게
+    if(adm){try{const LV=await vfCompanyLevels();const W=vfCompanyLevels._why||{};const lab={urgent:'긴급',check:'확인 필요',ok:'정상'};
+      L.push('앱 판정(현황 화면 · 일 기준: 출근 · 인수인계 · 이월 · 지각): '+ids.map(id=>{const st=STORES.find(x=>x.id===id);const w=(W[id]||[]).join(' · ');return `${st?st.name:id} ${lab[LV[id]||'ok']}${w?`(${w})`:''}`;}).join(', '));}catch(e){}}
     return L.join('\n');
   }catch(e){return '';}
 }
@@ -7674,7 +7685,7 @@ function vfSayLines(){
   const rows=C?Object.keys(C).filter(k=>k!=='__company'&&C[k]&&C[k].avg7!=null).map(id=>({id,c:C[id]})):[];
   if(adm&&rows.length>1){
     const worst=rows.slice().sort((a,b)=>a.c.avg7-b.c.avg7)[0],best=rows.slice().sort((a,b)=>b.c.avg7-a.c.avg7)[0];
-    if(worst.c.avg7<bl)out.push({t:`${nm(worst.id)} 7일 평균 ${worst.c.avg7}점 — 기준선 ${bl} 아래예요`,sub:'이유 · 손볼 것 묻기',q:`${nm(worst.id)}이 기준선 아래인 이유와 먼저 손볼 것 알려 줘`});
+    if(worst.c.avg7<bl)out.push({t:`${nm(worst.id)} 7일 평균 ${worst.c.avg7}점 — 기준선 ${bl} 아래예요`,sub:'이유 · 먼저 할 것 묻기',q:`${nm(worst.id)}이 기준선 아래인 이유와 먼저 할 것 알려 줘`});
     out.push({t:`요즘 가장 잘 도는 곳은 ${nm(best.id)} — 7일 평균 ${best.c.avg7}점`,sub:'다른 매장과 비교하기',q:'가장 잘 운영되는 매장은 어디야? 다른 매장과 무엇이 다른지도'});
     const up=rows.filter(x=>x.c.prev7!=null).sort((a,b)=>(b.c.avg7-b.c.prev7)-(a.c.avg7-a.c.prev7))[0];
     if(up&&up.c.avg7-up.c.prev7>=5)out.push({t:`${nm(up.id)} 지난주보다 ${up.c.avg7-up.c.prev7}점 올랐어요`,sub:'무엇이 좋아졌는지 묻기',q:`${nm(up.id)}이 지난주보다 좋아진 이유 알려 줘`});
@@ -7684,7 +7695,7 @@ function vfSayLines(){
   }
   const pri=window.__vfPri||0;
   if(pri>0)out.push({t:`확인할 것이 ${pri}건 남아 있어요`,sub:'급한 순서로 정리하기',q:adm?'지금 확인할 것 급한 순서로 정리해 줘':'오늘 내가 할 일 정리해 줘'});
-  out.push(adm?{t:'「이번 주 손볼 매장 어디야?」처럼 물어보세요',sub:'바로 물어보기',q:'이번 주 손볼 매장 어디야? 이유와 할 일까지'}:{t:'「인수인계 남기는 법」처럼 물어보세요',sub:'바로 물어보기',q:'인수인계 남기는 법 알려 줘'});
+  out.push(adm?{t:'「이번 주 확인 필요한 매장 어디야?」처럼 물어보세요',sub:'바로 물어보기',q:'이번 주 확인 필요한 매장 어디야? 이유와 할 일까지'}:{t:'「인수인계 남기는 법」처럼 물어보세요',sub:'바로 물어보기',q:'인수인계 남기는 법 알려 줘'});
   out.push({t:'인수인계는 말로 남기고 「AI로 다듬기」를 눌러 보세요',sub:'어떻게 하는지 보기',q:'인수인계 AI로 다듬기는 어떻게 써?'});
   return out;
 }
@@ -8152,9 +8163,9 @@ const _hm2min=(hm)=>{const [h,m]=String(hm||'0:0').split(':').map(Number);return
 // v6.30 「확인할 매장」 판정은 하나 — 회사 화면(올라오는 기준)이 원본. 컨디션 표 · 홈 전체 현황은 이 판정을 그대로 표시만
 async function vfCompanyLevels(){
   const _c=vfCompanyLevels._c;if(_c&&Date.now()-_c.at<60000)return _c.v; // 1분 캐시(홈 · 현황 · 컨디션이 같이 쓴다)
-  const C=await loadCompanyStatus();const v={};
-  C.stores.forEach(x=>{v[x.store.id]=x.issues.some(f=>f.level==='urgent')?'urgent':x.issues.length?'check':'ok';});
-  vfCompanyLevels._c={at:Date.now(),v};return v;
+  const C=await loadCompanyStatus();const v={},why={};
+  C.stores.forEach(x=>{v[x.store.id]=x.issues.some(f=>f.level==='urgent')?'urgent':x.issues.length?'check':'ok';why[x.store.id]=[...new Set(x.issues.map(f=>f.text.split(' · ')[0]))];});
+  vfCompanyLevels._c={at:Date.now(),v};vfCompanyLevels._why=why;return v; // 이유(_why)는 AI 도우미 「앱 판정」 줄이 쓴다(사람 이름 없이)
 }
 async function loadCompanyStatus(){
   const esc=vfEsc();const tKey=todayKey();const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
@@ -8541,7 +8552,7 @@ async function vfCondLineInto(host,store){
     b.onclick=()=>openStoreRoom(store);host.replaceWith(b);
   }catch(e){host.remove();}
 }
-// 관리자 — 전 매장 한 장. 낮은 매장부터(손볼 곳이 위로). 접으면 한 줄
+// 관리자 — 전 매장 한 장. 판정(긴급 · 확인 필요)부터 위로. 접으면 한 줄
 async function vfCondAllInto(card){
   const ids=STORES.map(s2=>s2.id);
   const C=await vfConditions(ids);

@@ -4,6 +4,7 @@
 // 손님 이름 · 전화는 읽지 않고, 인수인계 글 속 전화 · 이메일 모양은 가린 뒤 보낸다.
 // 필요 env: ANTHROPIC_API_KEY, SUPABASE_SERVICE_ROLE_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, (권장) CRON_SECRET
 const { MODEL_SMART, svc, mask, kstDate, claude, pickJson, aiOn, notesOf, notesText } = require('./_ai');
+const { judgeStores } = require('./_judge');
 
 const PROMPT = `너는 매장 운영 앱 Dutyvo 가 대표 · 매니저에게 아침마다 보내는 요약을 쓴다.
 아래 「어제 기록」만 보고, 사장님이 오늘 아침 확인해야 할 것을 먼저 쓴다.
@@ -12,11 +13,14 @@ const PROMPT = `너는 매장 운영 앱 Dutyvo 가 대표 · 매니저에게 �
 - stores: 매장마다 한 줄(없으면 빈 배열). 확인할 것이 있는 매장만.
 - 기록에 없는 숫자 · 이름 · 원인을 지어내지 않는다. 사람을 탓하는 말투 금지. 이모지 없이.
 - 「우리 회사 규칙」이 있으면 그 말과 기준을 따른다.
+- 매장 판정은 각 매장의 「앱 판정」 줄만 따른다(긴급 · 확인 필요 · 정상 — 앱 「현황」 화면과 같은 판정). 판정이 정상인 매장을 문제 매장처럼 쓰지 않고, 판정을 새로 만들지 않는다.
+- 「손볼 곳」 「문제 매장」 「위험」 같은 다른 판정 말은 쓰지 않는다. 긴급 · 확인 필요인 매장은 그 말을 그대로 쓰고 이유를 짧게 붙인다(예: "검단점 긴급 — 클레임 미확인").
+- 긴급이 있으면 그 매장이 첫 줄. 판정이 정상이어도 어제 기록에 볼 것이 있으면 "알아 둘 것"으로 사실만 쓴다.
 JSON 하나만: {"lines":["..."],"stores":[{"store":"매장","text":"..."}]}`;
 
 const short = (n) => String(n || '').replace(/^(인천|부천|구월)\s+/, '');
 
-async function collect(sb, T) {
+async function collect(sb, T, J) {
   const y = kstDate(-1), t = kstDate(0);
   const yS = new Date(`${y}T00:00:00+09:00`).toISOString(), tS = new Date(`${t}T00:00:00+09:00`).toISOString(), d3 = new Date(Date.now() - 3 * 86400e3).toISOString();
   const safe = (p) => p.catch(() => []);
@@ -47,6 +51,8 @@ async function collect(sb, T) {
     const w = ws.filter((x) => x.store_id === id); L.push(w.length ? `출근 ${new Set(w.map((x) => x.profile_id)).size}명 · 마감 누른 사람 ${w.filter((x) => x.ended_at).length}` : '출근 기록 없음(쉬는 날일 수 있음)');
     const lt = lots.filter((x) => x.store_id === id); if (lt.length) L.push(`보관기한 오늘까지 · 지난 것 ${lt.length}건`);
     const ap = appts.filter((x) => x.store_id === id && x.status !== 'cancelled'); if (ap.length) L.push(`오늘 예약 · 미팅 ${ap.length}건`);
+    const j = J && J.byStore[id];
+    if (j) L.unshift(`앱 판정: ${j.label}${j.reasons.length ? ` — ${j.reasons.join(' · ')}` : ''}`);
     return `## ${sN.get(id)}\n- ${L.join('\n- ')}`;
   });
   if (deals.length) lines.push(`## 거래처\n- 오늘까지 우리 차례인 건 ${deals.length}건`);
@@ -60,7 +66,8 @@ async function runTenant(T, { push = true } = {}) {
   const today = kstDate(0);
   const had = await sb.get(`ai_briefs?select=brief_date&tenant_id=eq.${T}&brief_date=eq.${today}`).catch(() => []);
   if (had.length) return { skip: 'done' };
-  const c = await collect(sb, T);
+  const J = await judgeStores(sb, T).catch(() => null); // 판정을 못 읽으면 판정 줄 없이(예전처럼)
+  const c = await collect(sb, T, J);
   if (!c.act) return { skip: 'quiet' };
   if (!c.managers.length) return { skip: 'nomanager' };
   const notes = await notesOf(sb, T);
