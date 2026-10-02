@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>티보 — 함께 챙기는 동료 · Dutyvo AI 도우미</title>
+<meta name="description" content="Dutyvo AI 도우미 티보. 꼼꼼한 티는 먼저 볼 것을, 행동파 보는 바로 할 일을 알려 드립니다. 아침 8시 요약부터 퇴근까지 매장 기록을 같이 읽는 둘을 소개합니다.">
+<link rel="canonical" href="https://www.dutyvo.kr/tibo">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Dutyvo">
+<meta property="og:title" content="티보 — 함께 챙기는 동료, Dutyvo AI 도우미">
+<meta property="og:description" content="꼼꼼한 티와 행동파 보. 매장 기록을 같이 읽고, 먼저 볼 것과 바로 할 일을 알려 드립니다.">
+<meta property="og:url" content="https://www.dutyvo.kr/tibo">
+<meta name="theme-color" content="#0B1B14">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/dutyvo-32.png">
+<link rel="preload" href="/fonts/NanumSquareRoundR.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/NanumSquareRoundB.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+@font-face{font-family:"Dutyvo Round";font-weight:400 500;font-display:swap;src:url(/fonts/NanumSquareRoundR.woff2) format("woff2")}
+@font-face{font-family:"Dutyvo Round";font-weight:600 700;font-display:swap;src:url(/fonts/NanumSquareRoundB.woff2) format("woff2")}
+@font-face{font-family:"Dutyvo Round";font-weight:800 900;font-display:swap;src:url(/fonts/NanumSquareRoundEB.woff2) format("woff2")}
+:root{
+  --night:#0B1B14;--night2:#0F2419;--forest:#174C38;--green:#238B65;--signal:#59BA8B;--mint:#E6F4EC;--mintline:#C6E3D2;
+  --paper:#F3F5F1;--card:#FFFFFF;--ink:#111A15;--sub:#4E5D55;--mute:#7F8C85;--line:#DCE3DD;
+  --gold:#D6A246;--gold-ink:#2A1E07;--on-night:#EEF4EF;--on-night-sub:#A9BDB1;--night-line:rgba(233,244,236,.12);
+  --body:"Dutyvo Round","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",Menlo,Consolas,monospace;
+  --gut:clamp(16px,4vw,48px);color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased;word-break:keep-all}
+img{max-width:100%;height:auto;display:block}
+h1,h2,h3{margin:0;letter-spacing:-.02em;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:var(--gut)}
+.eyebrow{font-size:16px;font-weight:800;letter-spacing:.02em;color:var(--green)}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:6px}
+svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 24px;border-radius:12px;font:700 16px/1 var(--body);text-decoration:none;border:1px solid transparent;transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-gold{background:var(--gold);color:var(--gold-ink);box-shadow:0 10px 30px -12px rgba(214,162,70,.7)}
+.btn-line{background:#fff;color:var(--ink);border-color:var(--line)}
+/* 동그라미 바탕 위 캐릭터 — 캐릭터 시트 규칙 */
+.ch{position:relative;border-radius:50%;background:radial-gradient(circle at 50% 42%,#FFFFFF 0%,var(--mint) 70%);display:grid;place-items:center;aspect-ratio:1}
+.ch img{width:78%;height:78%;object-fit:contain}
+.bub{position:absolute;white-space:nowrap;background:#fff;color:var(--ink);font:800 14px/1 var(--body);padding:9px 12px;border-radius:999px;box-shadow:0 12px 26px -12px rgba(17,26,21,.45),0 0 0 1px var(--line)}
+.bub::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:2px;box-shadow:1px 1px 0 var(--line)}
+
+/* 상단 */
+.nav{position:sticky;top:0;z-index:50;background:rgba(243,245,241,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 19px/1 var(--body);color:var(--forest)}
+.logo img{width:30px;height:30px}
+.nav .back{margin-left:auto;color:var(--sub);text-decoration:none;font-size:14.5px;display:inline-flex;gap:6px;align-items:center}
+.nav .btn{height:40px;padding:0 16px;font-size:14.5px;border-radius:10px}
+
+/* 첫 화면 */
+.hero{padding-block:72px 90px;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+.hero h1{font-size:clamp(40px,5.6vw,68px);line-height:1.12;font-weight:800;margin:18px 0 22px}
+.hero h1 .nm{color:var(--forest)}
+.hero .lede{font-size:clamp(16px,1.6vw,18px);color:var(--sub);max-width:27em}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.hero .note{margin-top:14px;font-size:13px;color:var(--mute)}
+.h-art{position:relative;width:min(480px,100%);margin-inline:auto}
+.h-art .ch{width:100%}
+.h-art .ch img{width:86%;height:86%;animation:bob 4s ease-in-out infinite}
+.h-art .bub.b1{left:4%;top:12%;animation:bubin .6s cubic-bezier(.2,.9,.25,1.2) .6s both}
+.h-art .bub.b2{right:2%;top:24%;animation:bubin .6s cubic-bezier(.2,.9,.25,1.2) 1.1s both}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes bubin{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:none}}
+
+/* 어디서 왔나 */
+.origin{padding-block:90px;background:#fff;box-shadow:0 -1px 0 var(--line),0 1px 0 var(--line)}
+.origin .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:48px;align-items:center}
+.o-anim{display:flex;align-items:center;justify-content:center;gap:clamp(14px,3vw,34px)}
+.o-mark{width:clamp(96px,14vw,150px);height:auto;transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.o-arrow{color:var(--gold)}
+.o-arrow svg{width:40px;height:40px}
+.o-two{display:flex;gap:14px}
+.o-two .ch{width:clamp(96px,13vw,140px);opacity:0;transform:translateY(16px) scale(.9);transition:opacity .6s,transform .8s cubic-bezier(.2,.9,.25,1.2)}
+.o-two .ch:nth-child(2){transition-delay:.25s}
+.origin.on .o-two .ch{opacity:1;transform:none}
+.origin.on .o-mark{transform:rotate(-12deg) scale(.92)}
+.o-two .ch small{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font:800 14px/1 var(--body);color:var(--forest)}
+.o-says{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.o-says span{font:800 13.5px/1 var(--body);background:var(--paper);border-radius:999px;padding:8px 12px;color:var(--forest)}
+.sec-head h2{font-size:clamp(28px,3.4vw,42px);line-height:1.25;font-weight:800;margin-top:14px}
+.sec-head p{margin-top:14px;font-size:17px;color:var(--sub)}
+
+/* 둘 소개 */
+.duo{padding-block:110px}
+.duo-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+.who{position:relative;border-radius:28px;background:#fff;box-shadow:0 0 0 1px var(--line),0 40px 80px -60px rgba(17,26,21,.5);padding:32px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:26px;align-items:start;overflow:hidden}
+.who .ch{width:150px}
+.who .ch .bub{left:50%;top:-6px;transform:translateX(-50%);font-size:13px}
+.who .role{font:800 13px/1 var(--body);color:var(--green);letter-spacing:.04em}
+.who h3{font-size:30px;font-weight:800;margin:8px 0 6px}
+.who .one{color:var(--sub);font-size:16px}
+.who ul{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:10px}
+.who li{display:grid;grid-template-columns:26px 1fr;gap:10px;font-size:15.5px}
+.who li i{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--mint);color:var(--green);font-style:normal}
+.who li i svg{width:15px;height:15px}
+.who li small{display:block;color:var(--mute);font-size:13px}
+.who .says{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.who .says span{font:800 13px/1 var(--body);background:var(--paper);border-radius:999px;padding:7px 11px;color:var(--forest)}
+.who.bo{background:linear-gradient(160deg,#fff 0%,#FBF6EA 100%)}
+.who.bo .role{color:#9A6512}
+.who.bo .ch{background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%)}
+
+/* 하루 */
+.day{padding-block:100px;background:linear-gradient(180deg,#fff,var(--paper));box-shadow:0 -1px 0 var(--line)}
+.tl{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:44px;position:relative}
+.tl::before{content:"";position:absolute;left:4%;right:4%;top:120px;height:2px;background:repeating-linear-gradient(90deg,var(--mintline) 0 8px,transparent 8px 14px)}
+.tc{position:relative;text-align:center;opacity:0;transform:translateY(16px);transition:opacity .5s,transform .7s cubic-bezier(.2,.8,.2,1)}
+.day.on .tc{opacity:1;transform:none}
+.day.on .tc:nth-child(2){transition-delay:.12s}.day.on .tc:nth-child(3){transition-delay:.24s}.day.on .tc:nth-child(4){transition-delay:.36s}.day.on .tc:nth-child(5){transition-delay:.48s}.day.on .tc:nth-child(6){transition-delay:.6s}
+.tc .t{font:600 15px/1 var(--mono);color:var(--green)}
+.tc .ch{width:min(120px,100%);margin:42px auto 0;background:radial-gradient(circle at 50% 42%,#fff 0%,var(--mint) 70%);box-shadow:0 0 0 6px var(--paper)}
+.tc .bub{left:50%;top:-34px;transform:translateX(-50%);font-size:12.5px;padding:7px 10px}
+.tc b{display:block;margin-top:16px;font-size:16px}
+.tc p{font-size:14px;color:var(--sub);margin-top:6px;line-height:1.55}
+
+/* 물어보기 */
+.ask{background:radial-gradient(90% 80% at 80% 20%,#1B5A42 0%,#123826 35%,var(--night) 80%);color:var(--on-night);padding-block:110px}
+.ask .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:56px;align-items:center}
+.ask .eyebrow{color:#9FE0BB}
+.ask .sec-head p{color:#CFE3D6}
+.ask .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.ask .chips button{font:600 14px/1 var(--body);border:1px solid rgba(255,255,255,.18);background:transparent;color:#CFE3D6;border-radius:999px;padding:9px 14px;cursor:pointer}
+.ask .chips button.on{background:#fff;color:var(--ink);border-color:#fff}
+.chat{border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:22px;min-height:420px;display:flex;flex-direction:column;gap:14px;backdrop-filter:blur(4px)}
+.chat .hd{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--night-line);font-weight:800}
+.chat .hd .ch{width:40px}
+.chat .hd small{display:block;font-weight:500;font-size:12.5px;color:var(--on-night-sub)}
+.m{max-width:86%;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .5s}
+.m.on{opacity:1;transform:none}
+.m.me{align-self:flex-end;background:var(--gold);color:var(--gold-ink);border-radius:16px 16px 4px 16px;padding:11px 14px;font-weight:700}
+.m.ai{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:start}
+.m.ai .ch{width:42px}
+.m.ai .tx{background:#fff;color:var(--ink);border-radius:4px 16px 16px 16px;padding:12px 14px;font-size:15px;line-height:1.55;min-height:46px}
+.m.ai .tx small{display:block;font:800 12px/1 var(--body);color:var(--green);margin-bottom:6px}
+.m.ai .tx a{color:var(--green);font-weight:700;text-decoration:none}
+.chat .ex{margin-top:auto;font-size:12.5px;color:var(--on-night-sub)}
+
+/* 약속 */
+.promise{padding-block:110px}
+.pr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:44px}
+.pr{border-radius:22px;background:#fff;box-shadow:0 0 0 1px var(--line);padding:24px;position:relative}
+.pr .ic2{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--mint);color:var(--green);margin-bottom:16px}
+.pr h3{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.pr p{font-size:14.5px;color:var(--sub);margin-top:8px}
+.pr.oops{background:linear-gradient(160deg,#fff,#FBF6EA)}
+.pr.oops .ch{position:absolute;right:14px;top:-34px;width:84px;background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%);box-shadow:0 10px 24px -14px rgba(0,0,0,.4)}
+.pr.oops .ch .bub{left:-38px;top:20px;font-size:12px;padding:6px 9px}
+.pr.oops .ch .bub::after{left:auto;right:-4px;bottom:auto;top:50%;transform:translateY(-50%) rotate(45deg)}
+
+/* 끝 */
+.end{padding-block:40px 110px}
+.end-box{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:32px;align-items:center;border-radius:28px;background:var(--mint);box-shadow:0 0 0 1px var(--mintline);padding:36px 40px}
+.end-box .ch{width:150px;background:radial-gradient(circle at 50% 42%,#fff 0%,#D6EEDF 70%)}
+.end-box h2{font-size:clamp(26px,3vw,36px);font-weight:800}
+.end-box p{color:var(--sub);margin-top:8px}
+.end-box .ctas{display:flex;flex-direction:column;gap:10px}
+footer{background:var(--night);color:#6F867A;font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:26px}
+footer a{color:var(--on-night-sub);text-decoration:none;margin-left:16px}
+.sample-note{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:rgba(17,26,21,.88);color:#E7EFE9;font-size:12.5px;padding:8px 14px;border-radius:999px;white-space:nowrap}
+
+@media (max-width:1100px){
+  .tl{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:40px}
+  .tl::before{display:none}
+  .pr-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:44px}
+}
+@media (max-width:900px){
+  .hero .wrap,.origin .wrap,.ask .wrap{grid-template-columns:1fr}
+  .h-art{width:min(360px,86%);order:-1}
+  .duo-grid{grid-template-columns:1fr}
+  .who{grid-template-columns:110px minmax(0,1fr);padding:24px;gap:18px}
+  .who .ch{width:110px}
+  .end-box{grid-template-columns:1fr;text-align:left;padding:28px 24px}
+  .end-box .ch{width:110px}
+  .end-box .ctas{flex-direction:row;flex-wrap:wrap}
+  .nav .back span{display:none}
+}
+@media (max-width:560px){
+  .tl{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pr-grid{grid-template-columns:1fr}
+  .who{grid-template-columns:1fr}
+  .who .ch{width:120px;margin-top:20px}
+  .chat{min-height:400px;padding:16px}
+  .sample-note{font-size:11.5px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.tc,.o-two .ch,.m{opacity:1!important;transform:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></symbol>
+</svg>
+
+<header class="nav"><div class="wrap">
+  <a class="logo" href="/intro"><img src="/icons/dutyvo-mark.svg" alt="" width="30" height="30">Dutyvo</a>
+  <a class="back" href="/intro"><svg class="ic"><use href="#i-back"/></svg><span>소개 페이지로</span></a>
+  <a class="btn btn-gold" href="/onboarding.html">무료로 시작</a>
+</div></header>
+
+<main>
+<section class="hero" aria-labelledby="h1"><div class="wrap">
+  <div>
+    <div class="eyebrow">Dutyvo AI 도우미</div>
+    <h1 id="h1">함께 챙기는<br>동료, <span class="nm">티보</span></h1>
+    <p class="lede">매장이 보이면, 할 일이 보입니다. 티보는 그 사이에서 함께합니다. 티는 남겨진 기록을 살펴보고, 보는 다음에 할 일을 함께 찾습니다.</p>
+    <div class="ctas"><a class="btn btn-gold" href="/onboarding.html">무료로 시작 <svg class="ic"><use href="#i-arrow"/></svg></a><a class="btn btn-line" href="#ask">물어보는 모습 보기</a></div>
+    <p class="note">티보는 Dutyvo 안의 AI 도우미입니다. 따로 깔 것은 없습니다.</p>
+  </div>
+  <div class="h-art" aria-hidden="true"><div class="ch"><img src="/lp/tibo_both.webp" alt="" width="420" height="302"></div><span class="bub b1">함께라서 든든해</span><span class="bub b2">일단 내가 할게!</span></div>
+</div></section>
+
+
+
+<section class="duo" aria-labelledby="duo-h"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">둘을 소개합니다</div><h2 id="duo-h">확인은 티가, 실행은 보가</h2></div>
+  <div class="duo-grid">
+    <article class="who ti">
+      <div class="ch"><img src="/lp/tibo_ti.webp" alt="티" width="357" height="333"><span class="bub">한 번 더 확인!</span></div>
+      <div>
+        <div class="role">꼼꼼한 확인</div><h3>티</h3>
+        <p class="one">어제 기록을 차근차근 확인하고, 아침에 먼저 볼 매장을 짚어줍니다.</p>
+        <ul>
+          <li><i><svg class="ic"><use href="#i-eye"/></svg></i><div>아침 요약<small>어제 기록으로 먼저 볼 매장 세 줄</small></div></li>
+          <li><i><svg class="ic"><use href="#i-eye"/></svg></i><div>먼저 볼 매장<small>긴급 · 확인 필요가 왜 떴는지</small></div></li>
+          <li><i><svg class="ic"><use href="#i-eye"/></svg></i><div>남은 일<small>퇴근 전 · 며칠째 그대로인 것</small></div></li>
+        </ul>
+        <div class="says"><span>잠깐!</span><span>확인 끝</span><span>한 번 더 확인!</span></div>
+      </div>
+    </article>
+    <article class="who bo">
+      <div class="ch"><img src="/lp/tibo_bo.webp" alt="보" width="378" height="311"><span class="bub">일단 내가 할게!</span></div>
+      <div>
+        <div class="role">행동파 실행</div><h3>보</h3>
+        <p class="one">궁금한 내용의 답을 찾아오고, 지금 할 일을 알려줍니다.</p>
+        <ul>
+          <li><i style="background:#FBEFD6;color:#9A6512"><svg class="ic"><use href="#i-bolt"/></svg></i><div>물으면 찾아오기<small>「이번 주 지각 많은 곳은?」</small></div></li>
+          <li><i style="background:#FBEFD6;color:#9A6512"><svg class="ic"><use href="#i-bolt"/></svg></i><div>바로 할 일<small>지금 손볼 매장 · 기록부터</small></div></li>
+          <li><i style="background:#FBEFD6;color:#9A6512"><svg class="ic"><use href="#i-bolt"/></svg></i><div>다음 한 걸음 제안<small>「매니저에게 물어볼까요?」처럼 한 줄로</small></div></li>
+        </ul>
+        <div class="says"><span style="color:#9A6512">맡겨!</span><span style="color:#9A6512">일단 내가 할게!</span><span style="color:#9A6512">앗…</span></div>
+      </div>
+    </article>
+  </div>
+</div></section>
+
+<section class="origin" id="origin" aria-labelledby="o-h"><div class="wrap">
+  <div class="o-anim" aria-hidden="true">
+    <img class="o-mark" src="/icons/dutyvo-mark.svg" alt="" width="150" height="150">
+    <span class="o-arrow"><svg class="ic"><use href="#i-arrow"/></svg></span>
+    <div class="o-two"><div class="ch"><img src="/lp/tibo_ti.webp" alt="" width="357" height="333"><small>티</small></div><div class="ch" style="background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%)"><img src="/lp/tibo_bo.webp" alt="" width="378" height="311"><small style="color:#9A6512">보</small></div></div>
+  </div>
+  <div class="sec-head">
+    <div class="eyebrow">둘이 만나, 티보</div>
+    <h2 id="o-h">로고의 두 고리에서 나온 친구들</h2>
+    <p>한 번 더 살피는 티와 먼저 나서는 보. 서로 다른 둘이 함께, 매장의 하루를 챙깁니다. AI 도우미 창과 아침 요약에서 만납니다.</p>
+    <div class="o-says"><span>함께라서 든든해</span><span>해냈다!</span></div>
+  </div>
+</div></section>
+
+<section class="day" id="tday" aria-labelledby="day-h"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">티보의 하루</div><h2 id="day-h">대표님보다 먼저 와서, 마지막까지</h2></div>
+  <div class="tl">
+    <div class="tc"><span class="t">08:00</span><div class="ch"><img src="/lp/tibo_ti.webp" alt="" width="357" height="333"><span class="bub">한 번 더 확인!</span></div><b>아침 요약</b><p>어제 기록으로 먼저 볼 매장 세 줄</p></div>
+    <div class="tc"><span class="t">11:40</span><div class="ch"><img src="/lp/tibo_ti_ok.webp" alt="" width="232" height="214"><span class="bub">확인 끝</span></div><b>인수인계 확인</b><p>남긴 것을 누가 봤는지까지</p></div>
+    <div class="tc"><span class="t">14:00</span><div class="ch" style="background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%)"><img src="/lp/tibo_bo_go.webp" alt="" width="246" height="204"><span class="bub">맡겨!</span></div><b>물으면 답</b><p>「시청점 클레임 누가 봤어?」</p></div>
+    <div class="tc"><span class="t">21:48</span><div class="ch"><img src="/lp/tibo_ti_wait.webp" alt="" width="219" height="210"><span class="bub">잠깐!</span></div><b>퇴근 전</b><p>남은 할 일 · 인수인계 한 장으로</p></div>
+    <div class="tc"><span class="t">22:01</span><div class="ch" style="background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%)"><img src="/lp/tibo_off.webp" alt="" width="285" height="211"><span class="bub">퇴근</span></div><b>퇴근</b><p>마감했는지 · 남은 것은 내일로</p></div>
+    <div class="tc"><span class="t">다음 날</span><div class="ch"><img src="/lp/tibo_done.webp" alt="" width="343" height="215"><span class="bub">해냈다!</span></div><b>또 아침</b><p>어제가 오늘 요약이 됩니다</p></div>
+  </div>
+</div></section>
+
+<section class="ask" id="ask" aria-labelledby="ask-h"><div class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">이렇게 물어보세요</div>
+    <h2 id="ask-h">매장에 전화하는 대신,<br>티보에게 한 줄</h2>
+    <p>앱 「현황」과 같은 기록 · 같은 기준으로 답합니다. 그래서 화면과 말이 서로 다르지 않습니다.</p>
+    <div class="chips" id="qs">
+      <button type="button" class="on" data-q="0">어제 마감 안 된 매장 있어?</button>
+      <button type="button" data-q="1">이번 주 지각 많은 곳은?</button>
+      <button type="button" data-q="2">시청점 클레임 누가 확인했어?</button>
+    </div>
+  </div>
+  <div class="chat" aria-live="polite">
+    <div class="hd"><div class="ch"><img src="/lp/tibo_both.webp" alt="" width="420" height="302"></div><div>티보<small>Dutyvo AI 도우미</small></div></div>
+    <div id="log" style="display:flex;flex-direction:column;gap:14px"></div>
+    <p class="ex">화면 속 매장 · 사람 · 숫자는 예시입니다.</p>
+  </div>
+</div></section>
+
+<section class="promise" aria-labelledby="pr-h"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">티보가 하지 않는 것</div><h2 id="pr-h">돕는 데까지만, 정직하게</h2></div>
+  <div class="pr-grid">
+    <div class="pr"><span class="ic2"><svg class="ic"><use href="#i-user"/></svg></span><h3>직원을 점수로 평가하지 않습니다</h3><p>티보가 보는 것은 매장입니다. 직원별 점수나 순위는 만들지 않습니다.</p></div>
+    <div class="pr oops"><div class="ch" style="background:radial-gradient(circle at 50% 42%,#fff 0%,var(--mint) 70%)"><img src="/lp/tibo_ti_wait.webp" alt="" width="219" height="210"><span class="bub">잠깐!</span></div><span class="ic2"><svg class="ic"><use href="#i-check"/></svg></span><h3>기록만으로 모든 사정을 단정하지 않습니다</h3><p>기록에 없는 사정도 있습니다. 「이렇게 보입니다」까지만 말하고, 판단은 사람에게 맡깁니다.</p></div>
+    <div class="pr"><span class="ic2"><svg class="ic"><use href="#i-book"/></svg></span><h3>사람의 확인과 결정을 대신하지 않습니다</h3><p>확인 · 처리 · 피드백은 사람이 직접 누릅니다. 티보는 기록을 바꾸지 않습니다.</p></div>
+    <div class="pr"><span class="ic2"><svg class="ic"><use href="#i-lock"/></svg></span><h3>우리 회사 기록만 봅니다</h3><p>다른 회사의 기록은 읽지도, 섞지도 않습니다.</p></div>
+  </div>
+</div></section>
+
+<section class="end"><div class="wrap">
+  <div class="end-box">
+    <div class="ch"><img src="/lp/tibo_done.webp" alt="" width="343" height="215"></div>
+    <div><h2>오늘부터 티보와 같이</h2><p>초기 도입 매장은 지금 무료입니다. 카드 등록이 없고, 티보는 가입하면 바로 만납니다.</p></div>
+    <div class="ctas"><a class="btn btn-gold" href="/onboarding.html">무료로 시작 <svg class="ic"><use href="#i-arrow"/></svg></a><a class="btn btn-line" href="/intro">소개 페이지로</a></div>
+  </div>
+</div></section>
+</main>
+<footer><div class="wrap"><span>Dutyvo · 매장 운영 시스템</span><span><a href="/legal.html#terms">이용약관</a><a href="/legal.html#privacy">개인정보처리방침</a></span></div></footer>
+
+<script>
+(function(){
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const once=(el,fn,th)=>{if(!el)return;if(reduce||!('IntersectionObserver' in window)){fn();return;}const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){io.disconnect();fn();}},{threshold:th||.35});io.observe(el);};
+once(document.getElementById('origin'),()=>document.getElementById('origin').classList.add('on'),.4);
+once(document.getElementById('tday'),()=>document.getElementById('tday').classList.add('on'),.25);
+
+/* 물어보기 — 질문을 누르면 티보가 답(예시) */
+const IMG={ti:'/lp/tibo_ti.webp',bo:'/lp/tibo_bo_go.webp'};
+const QA=[
+  {q:'어제 마감 안 된 매장 있어?',who:'ti',name:'티 · 확인',a:'어제는 9곳 중 8곳이 마감했습니다. <b>터미널점</b>만 마감 없이 22:10에 컴퓨터가 꺼졌습니다. 남은 할 일 2개는 오늘로 넘어왔습니다.',link:'터미널점 어제 기록 보기 ›'},
+  {q:'이번 주 지각 많은 곳은?',who:'bo',name:'보 · 찾아옴',a:'<b>역앞점</b>이 3번으로 가장 많습니다. 모두 오픈조이고, 평균 12분 늦었습니다. 오픈 시간을 다시 알릴지 매니저에게 물어볼까요?',link:'출근 기록 보기 ›'},
+  {q:'시청점 클레임 누가 확인했어?',who:'ti',name:'티 · 확인',a:'아직 아무도 확인하지 않았습니다. 어제 18:20에 남겨졌고, 받는 사람은 <b>매니저 박태민</b>입니다. 24시간이 지나 시청점이 「긴급」으로 올라와 있습니다.',link:'그 인수인계로 가기 ›'}
+];
+const log=document.getElementById('log');const qs=[...document.querySelectorAll('#qs button')];let T=[],cur=0,auto=true,on=false;
+const at=(ms,f)=>T.push(setTimeout(f,reduce?0:ms));
+function show(i){T.forEach(clearTimeout);T=[];cur=i;qs.forEach((b,k)=>b.classList.toggle('on',k===i));const d=QA[i];log.innerHTML='';
+  const me=document.createElement('div');me.className='m me';me.textContent=d.q;log.appendChild(me);at(60,()=>me.classList.add('on'));
+  const ai=document.createElement('div');ai.className='m ai';ai.innerHTML=`<div class="ch"${d.who==='bo'?' style="background:radial-gradient(circle at 50% 42%,#fff 0%,#FBEFD6 70%)"':''}><img src="${IMG[d.who]}" alt=""></div><div class="tx"><small${d.who==='bo'?' style="color:#9A6512"':''}>${d.name}</small><span class="ans">…</span></div>`;log.appendChild(ai);
+  at(700,()=>ai.classList.add('on'));
+  at(1400,()=>{const sp=ai.querySelector('.ans');const plain=d.a;if(reduce){sp.innerHTML=plain;return;}let k=0;const txt=plain.replace(/<[^>]+>/g,'');const it=setInterval(()=>{k+=2;sp.textContent=txt.slice(0,k);if(k>=txt.length){clearInterval(it);sp.innerHTML=plain;}},28);T.push(it);});
+  if(auto)at(9000,()=>show((cur+1)%QA.length));}
+qs.forEach((b,k)=>b.addEventListener('click',()=>{auto=false;show(k);}));
+const ask=document.getElementById('ask');
+if('IntersectionObserver' in window)new IntersectionObserver(es=>{const v=es[0].isIntersecting;if(v&&!on){on=true;show(cur);}else if(!v){on=false;T.forEach(clearTimeout);}},{threshold:.35}).observe(ask);else show(0);
+})();
+</script>
+</body>
+</html>

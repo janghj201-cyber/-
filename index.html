@@ -2120,6 +2120,22 @@ body.feat-off-cleaning [id^="badge-"]{display:none!important}
 .vh-ct:has(>button)>button:not(:last-of-type){grid-column:3;}
 @media(max-width:640px){.vh-ct:has(>button)>:not(button):not(strong){grid-column:1/-1;grid-row:2;}}
 .vh-ct .vh-btn,.vh-ct .vh-btn.primary,.vh-ct .vh-btn.gold{min-height:var(--b-m);}
+
+/* ── v6.36 홈 카드 세 단계 명암 (화면 기준 7) — 카드가 열 장을 넘어도 어디부터 볼지 보이게 ──
+   ① 먼저 볼 것: 우선 확인(항목이 있을 때) — 진한 테두리 · 그림자  ② 오늘 할 일: 흰 카드 · 테두리만  ③ 참고(전체 현황 안): 바탕에 가까운 옅은 카드
+   전체 현황 안이라도 긴급 매장이 있는 「매장 확인할 것」은 ②로 올린다 */
+:root{--t1-bd:#cdc6b4;--t1-sh:0 1px 0 rgba(23,34,51,.04),0 10px 24px -14px rgba(23,34,51,.42);--t3-bg:#faf9f5;--home-bg:#efece4;}
+html[data-bright=dark]{--t1-bd:#46505e;--t1-sh:0 10px 24px -14px rgba(0,0,0,.8);--t3-bg:#141920;--home-bg:#0c0f13;}
+body.home-quick #screen-dashboard{background:var(--home-bg);}
+#screen-dashboard .vh-card{box-shadow:none;}
+#screen-dashboard .vh-card.vh-priority:not(.vh-storegaps):has(.vh-item){border-color:var(--t1-bd);box-shadow:var(--t1-sh);}
+#screen-dashboard .vh-allzone .vh-card,#screen-dashboard .vh-allzone .vf-condline,#screen-dashboard .vh-allzone .vh-pline{background:var(--t3-bg);border-color:transparent;box-shadow:none;}
+#screen-dashboard .vh-allzone .vh-card.vh-storegaps:has(.vh-dot.danger){background:var(--card);border-color:var(--border);}
+#screen-dashboard .vh-quick{box-shadow:none;}
+
+/* v6.37 월간 스케줄 → 캘린더 하나로. 캘린더 「그날 업무 · 인수인계 기록」으로 들어오면 그날 기록만 */
+#screen-monthly.mo-day .cal-wrap,#screen-monthly.mo-day #monthly-staff-selector,#screen-monthly.mo-day #view-store-btn,#screen-monthly.mo-day #view-staff-btn,#screen-monthly.mo-day #monthly-store-selector,#screen-monthly.mo-day .nav-btns>.nav-btn:not(:first-child),#screen-monthly.mo-day #cal-legend,#screen-monthly.mo-day .legend{display:none!important;}
+#screen-monthly.mo-day .detail{display:block!important;}
 </style>
 <style id="vf-dark">/* vf-dark: gen_dark.py가 만든 것 — 손으로 고치지 않는다 */
 html[data-bright=dark]{--bg:#0f1318;--card:#181d25;--soft:#1d232c;--border:#2b323d;--text:#e7eaef;--text-sub:#a0aab7;--text-mute:#8d98a6;--navy:#2c3b52;--navy-mid:#34455e;--navy-light:#3d4f6a;--gold:#d6a246;--gold-light:#3a2f1a;--green:#4fb08c;--green-light:#15302a;--blue:#6c9bd6;--blue-light:#182536;--orange:#e0a050;--orange-light:#362818;--purple:#a58ad6;--purple-light:#261e36;--red:#e0766d;--red-light:#3a1f1d;--pink:#d672a3;--pink-light:#341a2a;--teal:#5fb3c6;--teal-light:#14292e;--shadow-card:none;color-scheme:dark;}
@@ -3913,7 +3929,7 @@ window.addMyHandover=async function(){
 };
 function addMyHandover(){window.addMyHandover();}
 
-const GUIDE_VERSION = 'v6.35';
+const GUIDE_VERSION = 'v6.37';
 const BUILD_DATE = '2026-10-02'; // 배포 시 함께 갱신 — 직원이 "내가 최신 버전인지" 확인하는 기준
 // 앱 내 버전 표시 — 가이드 버전이 곧 배포 버전 (기능 배포 시 가이드 버전만 올리면 함께 갱신됨)
 // 발자국(V-Flow · 회사 이름 · 제작자)은 홈에만 있었다 — 모든 화면과 방 아래에 같은 것을 붙인다
@@ -4035,6 +4051,23 @@ const GUIDE_TOPICS = [
   ]},
 ];
 const GUIDE_SECTIONS = [
+  {
+    title: 'v6.37 — 달력 하나로(월간 스케줄 → 캘린더)',
+    items: [
+      '매장 방 맨 아래 「이 매장 달력」을 누르면 그 매장이 골라진 캘린더가 열립니다(일정 이름까지 보이게). 예전 월간 스케줄과 캘린더가 같은 고정업무 · 휴무를 다른 모양으로 보여 주던 것을 하나로',
+      '캘린더에 대청소가 들어오고, 매장을 고르면 지난 날 · 오늘 칸에 「업무 3/5 · 3명」(그날 업무 끝낸 수 · 근무 인원). 폰은 날짜를 누르면 아래 칸 첫 줄에',
+      '직원별로 보려면 「모든 담당자」에서 사람을 고릅니다. 날짜를 누르고 「그날 업무 · 인수인계 기록」을 누르면 그날 기록 화면',
+      '캘린더 기능을 끈 회사는 예전처럼 월간 스케줄',
+    ]
+  },
+  {
+    title: 'v6.36 — 홈: 먼저 볼 것이 눈에 들어오게',
+    items: [
+      '홈 카드를 세 단계로 — 「우선 확인」은 진한 테두리 · 그림자(먼저 볼 것), 할 일 · 보낸 요청은 흰 카드, 「전체 현황」 안(아침 요약 · 컨디션 · 진행 중)은 바탕에 가까운 옅은 카드',
+      '「전체 현황」 안이라도 긴급 매장이 있는 「매장 확인할 것」은 흰 카드로 올라옵니다',
+      '「다른 사람 앞 인수인계」 · 「내가 보낸 요청」은 3건까지 보이고 「나머지 N건 보기」 — 건수가 많아도 홈이 길어지지 않게',
+    ]
+  },
   {
     title: 'v6.35 — 화면 정리: 바닥 띠 한 줄 · 버튼 크기 · 내 업무 메모',
     items: [
@@ -5937,7 +5970,7 @@ window.switchTab = function(tab){
   } else if(tab==='monthly'){
     showScreen('screen-monthly');
     if(!curStore)curStore=STORES[0];
-    document.getElementById('monthly-store-title').textContent=`${curStore.icon} ${curStore.name}`;
+    document.getElementById('monthly-store-title').textContent=`${curStore.icon?curStore.icon+' ':''}${curStore.name}`;
     renderCal();
     document.getElementById('detail').style.display='none';
   } else if(tab==='my'){
@@ -7091,7 +7124,7 @@ function renderHomeQuick(wrap,tKey,todosByName,hoByStore){
     const oc=el('div','vh-card vh-otherho');
     oc.innerHTML=`<div class="vh-ct"><strong>다른 사람 앞 ${T('handover')}</strong><span class="vh-tiny">받는 사람이 며칠째 확인 안 해 누구나 확인 가능 · ${otherHo.length}건</span></div>`;
     otherHo.forEach(({store,it})=>{const r=el('button','vh-item link',`<span class="vh-dot warn"></span><div class="vh-main">${_wrEsc(it.text)}<small>${_wrEsc(it.recipient||'')} 앞 · ${hoAgeDays(it,tKey)}일째 미확인 · ${_wrEsc(shortStore(store.name))} · ${fmtD(it.fromDate||tKey)}</small></div><span class="vh-arrow" aria-hidden="true">›</span>`);r.type='button';r.onclick=()=>openStoreRoom(store);oc.appendChild(r);});
-    ac1.appendChild(oc);allN.other=otherHo.length;
+    vfFoldRows(oc,'.vh-item',3);ac1.appendChild(oc);allN.other=otherHo.length;
   }
   paintAllN();
   // 전체 현황이 비면(기능 꺼짐 등) 칸째 숨김
@@ -7514,7 +7547,8 @@ function openBoardOverlay(){
 window.openBoardOverlay=openBoardOverlay;
 // 새 캘린더(v6.9) — 예약 · 미팅 · 보관기한 · 고정업무 · 휴무를 한 달력에. 모듈은 처음 열 때만 받는다(첫 화면 속도 그대로)
 // 고정업무 · 영업시간 · 기능 켜기는 여기 값을 그대로 넘긴다 — 규칙은 한 곳에만
-async function vfOpenCalendar(){
+async function vfOpenCalendar(opt){
+  opt=opt&&typeof opt==='object'&&!opt.target?opt:{};
   vfUse('cal_open');
   try{
     const {openCalendar}=await import('./adapter/calendar.js');
@@ -7523,10 +7557,25 @@ async function vfOpenCalendar(){
       co:(window.__vflowTenant||{}).name||'',
       features:appSettings.features||{},
       rulesFor:(y,m,d)=>rulesForDate(y,m,d).filter(r=>r.show!==false).map(r=>r.task),
+      // v6.37 월간 스케줄을 캘린더 하나로 — 대청소 · 지난 날 업무 · 근무 인원(매장을 골랐을 때, 한 달 한 번에 읽기)
+      cleanFor:(y,m,d)=>featOn('cleaning')?getEvs(y,m,d).filter(e=>e.t==='clean').map(e=>`대청소 ${e.sec}`):[],
+      dayStats:async(storeId,from,to)=>{
+        const {sb}=await wrApi();
+        const [t,w]=await Promise.all([
+          sb.from('daily_tasks').select('task_date,status').eq('store_id',storeId).gte('task_date',from).lte('task_date',to).neq('status','carried_over').limit(20000),
+          sb.from('work_sessions').select('work_date,profile_id').eq('store_id',storeId).gte('work_date',from).lte('work_date',to).limit(20000),
+        ]);
+        const o={};const at=(k)=>(o[k]=o[k]||{done:0,total:0,workers:0,_p:new Set()});
+        (t.data||[]).forEach(r=>{const x=at(r.task_date);x.total++;if(r.status==='done')x.done++;});
+        (w.data||[]).forEach(r=>{at(r.work_date)._p.add(r.profile_id);});
+        Object.values(o).forEach(x=>{x.workers=x._p.size;delete x._p;});
+        return o;
+      },
+      store:opt.store||null,dense:opt.dense||null,
       hours:vfHours,
       saveFeatures:async(f)=>{appSettings.features={...(appSettings.features||{}),...f};await saveSettings();},
       openFixSettings:isAdmin?()=>vfJumpSetting('work','고정 업무'):null,
-      openDayRecord:(k)=>{const d=new Date(k+'T00:00');cy=d.getFullYear();cm=d.getMonth();if(!curStore){const vp=window.__vflowProfile||{};curStore=STORES.find(s=>s.id===vp.storeId)||STORES[0]||null;}switchTab('monthly');setTimeout(()=>{try{showDetail(cy,cm,d.getDate());}catch(e){}},450);},
+      openDayRecord:(k)=>{document.getElementById('screen-monthly')?.classList.add('mo-day');const d=new Date(k+'T00:00');cy=d.getFullYear();cm=d.getMonth();if(!curStore){const vp=window.__vflowProfile||{};curStore=STORES.find(s=>s.id===vp.storeId)||STORES[0]||null;}switchTab('monthly');setTimeout(()=>{try{showDetail(cy,cm,d.getDate());}catch(e){}},450);},
     });
   }catch(e){alert('캘린더를 열지 못했습니다. '+vfErrText(e,''));}
 }
@@ -9468,6 +9517,13 @@ function buildHandoverHistorySection(store){
 // 홈: 나에게 온 업무 요청 카드 (비동기 — 완료되면 개인 섹션에 삽입)
 // 나에게 온 대기 중 요청 — 나에게 지정된 것 + 오늘 매장의 공용 요청 (내가 낸 것 제외)
 // 내가 보낸 요청 카드 — 최근 30일 · 거절 빼고 · 끝나고 7일 지난 것 빼고. 다섯 줄 넘으면 「더 보기」
+// 목록 접기 — n줄만 보이고 「나머지 N건 ▾」. 화면 기준 1(데이터가 많아도 카드가 한 화면을 넘지 않게)
+function vfFoldRows(card,sel,n){
+  const rows=[...card.querySelectorAll(sel)];if(rows.length<=n)return;
+  let open=false;const b=document.createElement('button');b.type='button';b.className='vh-more';
+  const paint=()=>{rows.forEach((r,i)=>{r.style.display=open||i<n?'':'none';});b.textContent=open?'접기 ▴':`나머지 ${rows.length-n}건 보기 ▾`;b.setAttribute('aria-expanded',String(open));};
+  b.onclick=()=>{open=!open;paint();};card.appendChild(b);paint();
+}
 async function vfSentReqInto(card){
   const {sb,ctx}=await wrApi();
   const since30=new Date(Date.now()-30*86400000).toISOString();
@@ -9480,7 +9536,7 @@ async function vfSentReqInto(card){
   const declined=(q.data||[]).filter(r=>r.status==='declined'&&days(r.responded_at||r.created_at)<=7);
   if(!rows.length&&!declined.length){card.remove();return;}
   const open=rows.filter(r=>!r.done_at).length;
-  const MAX=5;let all=false;
+  const MAX=3;let all=false;
   const line=(r)=>{const dn=!!r.done_at,acc=r.status==='accepted';const step=dn?3:acc?1:0;const who=r.recipient?.name||r.responder?.name||'누구나';const d=days(r.created_at);
     return `<div class="vf-pj"><span class="t">${_wrEsc(r.content)}<small>${_wrEsc(who)}에게 · ${fmtD(String(r.created_at).slice(0,10))}${!dn&&d>=3?` · <b style="color:var(--orange)">${d}일째</b>`:''}</small></span>${vfSt3(step)}</div>`;};
   const paint=()=>{
@@ -9897,9 +9953,9 @@ function openStoreRoom(store){
   }
 
   // ── 월간 스케줄로 ──
-  const mo=el('button','menu-row',`<span class="mr-ic">${VF_ICONS.cal}</span><span class="mr-main"><b>월간 스케줄</b><small>이 매장의 달력 · 지난 날짜 기록</small></span><span class="vh-arrow" aria-hidden="true">›</span>`);
+  const mo=el('button','menu-row',`<span class="mr-ic">${VF_ICONS.cal}</span><span class="mr-main"><b>${featOn('calendar')?'이 매장 달력':'월간 스케줄'}</b><small>고정업무 · 대청소 · 휴무 · 지난 날 업무</small></span><span class="vh-arrow" aria-hidden="true">›</span>`);
   mo.type='button';mo.classList.add('rm-mo');mo.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:var(--radius-card);padding:10px 14px;';
-  mo.onclick=()=>{window.closeStoreRoom();switchTab('monthly');};
+  mo.onclick=()=>{window.closeStoreRoom();document.getElementById('screen-monthly')?.classList.remove('mo-day');if(featOn('calendar'))vfOpenCalendar({store:store.id,dense:'full'});else switchTab('monthly');};
   colSide.appendChild(mo);
 
   ov.style.display='flex';
@@ -10562,7 +10618,7 @@ function renderDailyScreen(){
   const isToday=(ty===today.getFullYear()&&tm===today.getMonth()&&td===today.getDate());
 
   // 헤더
-  document.getElementById('daily-store-title').textContent=`${curStore.icon} ${curStore.name}`;
+  document.getElementById('daily-store-title').textContent=`${curStore.icon?curStore.icon+' ':''}${curStore.name}`;
   document.getElementById('daily-date-sub').textContent=
     `${ty}년 ${mns[tm]} ${td}일 (${dows[new Date(ty,tm,td).getDay()]})${isToday?' · 오늘':''}`;
 
@@ -10662,7 +10718,7 @@ function goToDailyFromCal(y,m,d){window.goToDailyFromCal(y,m,d);}
 window.chgMonthlyStore = function(dir){
   const idx=STORES.findIndex(s=>s.id===(curStore||STORES[0]).id);
   curStore=STORES[(idx+dir+STORES.length)%STORES.length];
-  document.getElementById('monthly-store-title').textContent=`${curStore.icon} ${curStore.name}`;
+  document.getElementById('monthly-store-title').textContent=`${curStore.icon?curStore.icon+' ':''}${curStore.name}`;
   renderCal();
   document.getElementById('detail').style.display='none';
 }

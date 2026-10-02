@@ -18,6 +18,7 @@
   ],
   "rewrites": [
     { "source": "/intro", "destination": "/landing.html" },
+    { "source": "/tibo", "destination": "/lp/tibo.html" },
     { "source": "/r/:slug", "destination": "/lp/book.html" },
     { "source": "/b/:token", "destination": "/lp/book.html" }
   ]

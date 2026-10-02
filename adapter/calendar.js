@@ -105,6 +105,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .tag.k-fix{color:var(--fix)}
 #vcal .tag.k-off{color:var(--off)}
 #vcal .more{font-size:13px;color:var(--sub);font-weight:600;padding-left:4px}
+#vcal .cell .drec{margin-top:auto;font-size:12px;color:var(--sub);padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0}#vcal .cell .drec b{color:var(--text)}
 @media(min-width:721px){
 #vcal [data-dense=sum] .cell{min-height:92px}
 }
@@ -354,7 +355,7 @@ html[data-bright=dark] #vcal{--rsv:#7FB0F2;--rsv-bg:#1A2B42;--mtg:#B49CF4;--mtg-
 #vcal .top h1{font-size:19px}
 #vcal .cell{min-height:58px;padding:4px 2px;align-items:center}
 #vcal .dh{justify-content:center}
-#vcal .hn,#vcal .cell .chip,#vcal .cell .more,#vcal .cell .sums{display:none}
+#vcal .hn,#vcal .cell .chip,#vcal .cell .more,#vcal .cell .sums,#vcal .cell .drec{display:none}
 #vcal .dots{display:flex}
 #vcal .cell .dh{flex-direction:column;gap:1px;min-height:0}
 #vcal .cell .stk{font-size:0;padding:0;box-shadow:none;background:none;gap:0;max-width:none}
@@ -419,7 +420,9 @@ export async function openCalendar(host = {}) {
   const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0)
   let view = LS.get('dv_cal_view', 'month'), cur = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), sel = new Date(TODAY)
   const on = { rsv: 1, mtg: 1, exp: 1, fix: 1, off: 1 }
-  let fStore = 'all', fWho = 'all', stripOpen = false, loadSeq = 0, loadedRange = null
+  // v6.37 매장 방 「월간 스케줄」에서 열면 그 매장이 골라진 채(host.store) — 월간 스케줄과 캘린더를 하나로
+  let fStore = host.store && STORES.some((s) => s.id === host.store) ? host.store : 'all', fWho = 'all', stripOpen = false, loadSeq = 0, loadedRange = null
+  let stats = {}, statsKey = ''
   const feat = {}
   const featFrom = (f) => { Object.entries(FK).forEach(([k, key]) => { feat[k] = (f || {})[key] === false ? 0 : 1 }) }
   featFrom(host.features)
@@ -555,6 +558,9 @@ export async function openCalendar(host = {}) {
       while (d <= end) {
         let list = []; try { list = host.rulesFor(d.getFullYear(), d.getMonth(), d.getDate()) || [] } catch (e) {}
         list.forEach((title) => events.push({ id: `f${dk(d)}-${i++}`, k: 'fix', date: dk(d), t: null, title, storeId: null, store: '전 매장', whoId: null, who: '', rm: 'none', st: 'plan' }))
+        // v6.37 대청소(청소 기능을 켠 회사) — 예전 월간 스케줄에만 있던 것
+        let cl = []; try { cl = host.cleanFor ? host.cleanFor(d.getFullYear(), d.getMonth(), d.getDate()) || [] : [] } catch (e) {}
+        cl.forEach((title) => events.push({ id: `c${dk(d)}-${i++}`, k: 'fix', date: dk(d), t: null, title, storeId: null, store: '전 매장', whoId: null, who: '', rm: 'none', st: 'plan', clean: 1 }))
         d.setDate(d.getDate() + 1)
       }
     }
@@ -605,6 +611,7 @@ export async function openCalendar(host = {}) {
 
   // 달력 칸 — 약식(종류별 개수, 기본) · 자세히(제목까지). 자세한 내용은 날짜를 누르면 오른쪽 「그날」에. 이 기기에만 저장
   let dense = LS.get('dv_cal_dense', 'sum')
+  if (host.dense) dense = host.dense
   const SHORT = { rsv: '예약', mtg: '미팅', exp: '기한', fix: '고정', off: '휴무' }
   const shortOf = (k) => (KN[k] !== KN0[k] ? KN[k] : SHORT[k])
   function sumOf(list) {
@@ -636,6 +643,7 @@ export async function openCalendar(host = {}) {
         const wk = closedWeekly(d) ? '정기 휴무' : ''
         h += `<button class="${cls}" data-d="${k}" aria-label="${d.getMonth() + 1}월 ${d.getDate()}일 일정 ${list.length}개"><div class="dh"><span class="dn">${d.getDate()}</span>${st && !out ? stk(st.sticker, st.label) : hol[k] ? `<span class="hn">${esc(hol[k])}</span>` : wk ? `<span class="hn" style="color:var(--mute)">${wk}</span>` : ''}</div>` +
           (dense === 'sum' ? sumOf(list) : list.slice(0, 3).map(chip).join('') + (list.length > 3 ? `<div class="more">+${list.length - 3}개 더</div>` : '')) +
+          (stats[k] && !out ? `<div class="drec">${stats[k].total ? `업무 <b>${stats[k].done}/${stats[k].total}</b>` : ''}${stats[k].workers ? `${stats[k].total ? ' · ' : ''}${stats[k].workers}명` : ''}</div>` : '') +
           `<div class="dots">${list.slice(0, 4).map((e) => `<i class="k-${e.k}"></i>`).join('')}</div></button>`
       }
       B.innerHTML = `<div class="grid">${h}</div>`
@@ -734,7 +742,7 @@ export async function openCalendar(host = {}) {
       return
     }
     D.innerHTML = `<div class="ph"><h2>${sel.getMonth() + 1}월 ${sel.getDate()}일 ${DOW[sel.getDay()]}요일</h2>${isT ? '<span class="pill">오늘</span>' : ''}${placeB() ? '<button class="tbtn" data-fold>접기</button>' : ''}</div>
-      <div class="psub">${hol[k] ? esc(hol[k]) + ' · ' : ''}일정 ${list.length}개</div>
+      <div class="psub">${hol[k] ? esc(hol[k]) + ' · ' : ''}일정 ${list.length}개${stats[k] && stats[k].total ? ` · 업무 ${stats[k].done}/${stats[k].total}` : ''}${stats[k] && stats[k].workers ? ` · 근무 ${stats[k].workers}명` : ''}</div>
       ${feat.stk && (st || isAdmin) ? `<div class="dayst">${st ? stk(st.sticker, st.label) : ''}${isAdmin ? `<button class="stbtn" data-stbtn>${st ? '표시 바꾸기' : '+ 중요한 날 표시'}</button>` : ''}</div>` : ''}
       ${exp.length ? `<div class="alerts">${exp.map((e) => `<div class="al${e.st === 'done' ? ' done' : ''}">${IC.exp}<b>${isT ? '오늘까지' : `${sel.getMonth() + 1}/${sel.getDate()}까지`} · ${esc(e.title)}</b><small>${esc(KN.exp)} · ${esc(e.store)}</small><button data-ex="${e.id}">${e.st === 'done' ? '되돌리기' : '다 씀'}</button></div>`).join('')}</div>` : ''}
       <div class="tl">${rest.filter((e) => !(e.k === 'off' && e.whoId)).map(evRow).join('')}${offG(rest.filter((e) => e.k === 'off' && e.whoId))}${rest.length || exp.length || loadFailed ? '' : '<div class="empty">이 날은 일정 없음</div>'}</div>
@@ -1066,16 +1074,22 @@ export async function openCalendar(host = {}) {
 
   // ── 움직이기 ──
   let loadFailed = false
+  async function loadStats() {
+    if (fStore === 'all' || !host.dayStats || !loadedRange) { stats = {}; statsKey = ''; return }
+    const to = loadedRange[1] < dk(TODAY) ? loadedRange[1] : dk(TODAY), k = `${fStore}|${loadedRange[0]}|${to}`
+    if (k === statsKey) return
+    try { stats = (await host.dayStats(fStore, loadedRange[0], to)) || {}; statsKey = k } catch (e) { console.warn('[cal] stats', e); stats = {} }
+  }
   async function refresh(force) {
     loadFailed = false
-    try { await loadRange(force); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[cal] load', e); loadFailed = true; $('[data-err]').innerHTML = `<div class="st-err">일정을 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))} <button type="button" class="st-retry" data-retry>다시 불러오기</button></div>`; const rb = $('[data-retry]'); if (rb) rb.onclick = () => refresh(true) }
+    try { await loadRange(force); await loadStats(); $('[data-err]').innerHTML = '' } catch (e) { console.warn('[cal] load', e); loadFailed = true; $('[data-err]').innerHTML = `<div class="st-err">일정을 불러오지 못했어요 — ${esc(window.vfErrText ? window.vfErrText(e) : (e.message || e))} <button type="button" class="st-retry" data-retry>다시 불러오기</button></div>`; const rb = $('[data-retry]'); if (rb) rb.onclick = () => refresh(true) }
     build(); render()
   }
   $('[data-prev]').onclick = () => { if (view === 'week') { sel.setDate(sel.getDate() - 7); cur = new Date(sel.getFullYear(), sel.getMonth(), 1) } else cur = new Date(cur.getFullYear(), cur.getMonth() - 1, 1); refresh() }
   $('[data-next]').onclick = () => { if (view === 'week') { sel.setDate(sel.getDate() + 7); cur = new Date(sel.getFullYear(), sel.getMonth(), 1) } else cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1); refresh() }
   $('[data-today]').onclick = () => { sel = new Date(TODAY); cur = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); refresh() }
   $$('[data-view] button').forEach((b) => b.onclick = () => { view = b.dataset.v; LS.set('dv_cal_view', view); refresh() })
-  $('[data-fstore]').onchange = (e) => { fStore = e.target.value; render() }
+  $('[data-fstore]').onchange = async (e) => { fStore = e.target.value; render(); await loadStats(); render() }
   $('[data-fwho]').onchange = (e) => { fWho = e.target.value; render() }
   $('[data-add]').onclick = () => openAdd()
   $('[data-vbtn]').onclick = (e) => { e.stopPropagation(); const p = $('[data-pop]'); p.hidden = !p.hidden; $('[data-vbtn]').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) renderPop() }
