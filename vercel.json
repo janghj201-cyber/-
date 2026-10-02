@@ -13,6 +13,9 @@
   "functions": {
     "api/ai.js": { "maxDuration": 60 }
   },
+  "redirects": [
+    { "source": "/t/:code", "destination": "/index.html?tag=:code", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/intro", "destination": "/landing.html" },
     { "source": "/r/:slug", "destination": "/lp/book.html" },

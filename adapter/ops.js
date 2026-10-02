@@ -2,6 +2,7 @@
 // 표: support_tickets(문의 · 답) · 서버 함수 vf_ops_companies · vf_ops_tickets(운영자만). 알림은 api/remind-now(매분)가 보낸다.
 // 고객사 쪽: 대표 · 매니저가 묻고, 답이 오면 폰 알림. 회사 정리 · 데이터 받기 요청은 대표만(약관 7조).
 // 운영자 쪽: 가입한 회사 숫자(매장 · 직원 · 7일 사용자 · 마지막 사용)만 본다 — 회사 업무 내용은 안 본다.
+// v6.34 NFC 요청(kind 'nfc')은 고객사 설정 → NFC 출퇴근에서 온다. 운영자 「NFC 태그」 칸에서 번호를 만들어 태그에 넣고, 송장은 문의 답으로.
 import { supabase as sb } from './supabase-client.js'
 import { getContext } from './context.js'
 
@@ -43,7 +44,7 @@ ${S} .empty{font-size:13px;color:var(--text-mute);padding:14px 0}
 ${S} .err{background:var(--red-light);color:var(--red);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px}
 `
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
-const KIND = { ask: '질문', bug: '불편한 점', idea: '기능 제안', close: '회사 정리 요청', export: '데이터 받기 요청' }
+const KIND = { ask: '질문', bug: '불편한 점', idea: '기능 제안', close: '회사 정리 요청', export: '데이터 받기 요청', nfc: 'NFC 요청' }
 const KIND_HINT = {
   close: '약관 7조대로 처리해요 — 요청을 받으면 운영팀이 먼저 확인 연락을 드리고, 정리 뒤 30일 보관 후 삭제됩니다. 그 사이 데이터가 필요하면 「데이터 받기」도 같이 보내 주세요',
   export: '업무 · 인수인계 · 청소 · 예약 기록을 파일로 보내 드려요. 받을 메일 주소를 적어 주세요',
@@ -74,7 +75,7 @@ export async function openAsk(host = {}) {
   const { body, close, toast } = shell('Dutyvo에 문의', '운영팀이 봅니다 · 답이 오면 알림', host.onClose)
   if (!['owner', 'manager'].includes(role)) { body.innerHTML = '<div class="card"><h2>대표 · 매니저가 보내는 곳이에요</h2><div class="hint">매장 일은 게시판 「건의/문의」로 회사 관리자에게 남겨 주세요.</div></div>'; return { close } }
   let kind = host.kind && KIND[host.kind] ? host.kind : 'ask', list = []
-  const kinds = Object.keys(KIND).filter((k) => role === 'owner' || !['close', 'export'].includes(k))
+  const kinds = Object.keys(KIND).filter((k) => k !== 'nfc' && (role === 'owner' || !['close', 'export'].includes(k)))
   async function load() {
     const { data, error } = await sb.from('support_tickets').select('id,kind,body,status,answer,answered_at,created_at,profile_id').eq('tenant_id', ctx.tenantId).order('created_at', { ascending: false }).limit(100)
     if (error) throw error
@@ -105,7 +106,7 @@ export async function openAsk(host = {}) {
 // ── 운영자: 가입한 회사 · 문의 ──
 export async function openOps(host = {}) {
   const { body, close, toast } = shell('Dutyvo 운영', '가입한 회사 · 문의 — 운영자만', host.onClose)
-  let tab = host.tab === 'tickets' ? 'tickets' : 'companies', flt = 'all', cos = [], tks = []
+  let tab = ['tickets', 'nfc'].includes(host.tab) ? host.tab : 'companies', flt = 'all', cos = [], tks = [], nfcCo = '', nfcList = [], nfcMade = []
   async function load() {
     const [a, b] = await Promise.all([sb.rpc('vf_ops_companies'), sb.rpc('vf_ops_tickets')])
     if (a.error) throw a.error
@@ -121,18 +122,43 @@ export async function openOps(host = {}) {
   }
   function paint(err) {
     const open = tks.filter((k) => k.status === 'open').length
-    let html = `${err ? `<div class="err">${esc(err)}</div>` : ''}<div class="seg"><button data-tab="companies" aria-pressed="${tab === 'companies'}">회사 ${cos.length}</button><button data-tab="tickets" aria-pressed="${tab === 'tickets'}">문의${open ? ` · 답 기다림 ${open}` : ''}</button></div>`
+    let html = `${err ? `<div class="err">${esc(err)}</div>` : ''}<div class="seg"><button data-tab="companies" aria-pressed="${tab === 'companies'}">회사 ${cos.length}</button><button data-tab="tickets" aria-pressed="${tab === 'tickets'}">문의${open ? ` · 답 기다림 ${open}` : ''}</button><button data-tab="nfc" aria-pressed="${tab === 'nfc'}">NFC 태그</button></div>`
     if (tab === 'companies') {
       const L = cos.filter(FL[flt][1])
       html += `<div class="card"><div class="chips" style="margin-top:0">${Object.keys(FL).map((k) => `<button type="button" data-f="${k}" aria-pressed="${k === flt}">${FL[k][0]} ${cos.filter(FL[k][1]).length}</button>`).join('')}</div>
         ${L.map((c) => { const quiet = !c.last_used || now - new Date(c.last_used) > 7 * DAY; return `<div class="co"><div><b>${esc(c.name)}</b> <span class="tag">${IND[c.industry] || esc(c.industry)}</span>${c.open_tickets ? ` <span class="tag open">문의 ${c.open_tickets}</span>` : ''}</div><div class="r">가입 ${when(c.created_at)}</div>
           <div class="n"><span>매장 <em>${c.stores}</em></span><span>직원 <em>${c.staff}</em></span><span>7일 쓴 사람 <em>${c.used_7d}</em></span><span class="${quiet ? 'warn' : ''}">마지막 사용 ${when(c.last_used)}</span><span>대표 ${esc(c.owner_name || '-')}${c.owner_email ? ` · <a href="mailto:${esc(c.owner_email)}" style="color:var(--blue)">${esc(c.owner_email)}</a>` : ''}</span></div></div>` }).join('') || '<div class="empty">해당하는 회사가 없어요</div>'}</div>`
+    } else if (tab === 'nfc') {
+      const req = tks.filter((k) => k.kind === 'nfc' && k.status === 'open')
+      const live = nfcList.filter((t) => t.active)
+      const url = (c) => `https://www.dutyvo.kr/t/${c}`
+      html += `<div class="card"><h2>NFC 요청 ${req.length ? `<span class="tag open">답 기다림 ${req.length}</span>` : ''}</h2>${req.map((k) => `<div class="tk"><div class="top"><b style="color:var(--text)">${esc(k.tenant_name)}</b><span>${esc(k.who || '')} · ${when(k.created_at)}</span><button class="btn" data-pick="${k.tenant_id}" style="margin-left:auto;height:30px">이 회사 태그</button></div><div class="b">${esc(k.body)}</div></div>`).join('') || '<div class="empty">기다리는 요청이 없어요 — 송장은 「문의」 칸에서 답으로 보냅니다</div>'}</div>
+        <div class="card"><h2>태그 번호</h2><div class="hint">번호를 만들어 무료 앱 「NFC Tools」 → 쓰기 → URL 로 태그마다 한 줄씩 넣습니다. 어느 매장 태그인지는 그 회사 관리자가 처음 찍을 때 정합니다</div>
+        <div class="row"><select data-co style="flex:1;min-width:180px;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 10px;font:inherit;background:var(--card);color:var(--text)"><option value="">회사 고르기</option>${cos.map((c) => `<option value="${c.id}" ${c.id === nfcCo ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+        <input data-n type="number" min="1" max="50" value="4" style="width:70px;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 10px;font:inherit;background:var(--card);color:var(--text)"><button class="btn main" data-make ${nfcCo ? '' : 'disabled'}>번호 만들기</button></div>
+        ${nfcMade.length ? `<div class="ans" style="margin-top:10px"><small>방금 만든 번호 ${nfcMade.length}</small>${nfcMade.map((c) => esc(url(c))).join('\n')}</div><div class="row"><span></span><button class="btn" data-copy="made">목록 복사(NFC Tools용)</button></div>` : ''}
+        ${nfcCo ? `<div style="margin-top:10px">${live.map((t) => `<div class="co"><div><b>${esc(t.code)}</b> ${t.store_name ? `<span class="tag done">${esc(t.store_name)}${t.label ? ` · ${esc(t.label)}` : ''}</span>` : '<span class="tag">연결 전</span>'}</div><div class="r">${when(t.created_at)}</div></div>`).join('') || '<div class="empty">이 회사 태그 번호가 없어요</div>'}${live.length ? `<div class="row"><span class="hint">쓰는 중 ${live.length} · 연결 전 ${live.filter((t) => !t.store_name).length}</span><button class="btn" data-copy="all">전체 목록 복사</button></div>` : ''}</div>` : ''}</div>`
     } else {
       html += `<div class="card">${tks.map((k) => tkHTML(k, { co: true, extra: k.status === 'open' ? `<textarea data-a="${k.id}" style="min-height:70px;margin-top:8px" placeholder="답 — 보내면 물어본 사람 폰으로 알림"></textarea><div class="row"><span></span><span style="display:flex;gap:6px"><button class="btn" data-end="${k.id}">답 없이 끝</button><button class="btn main" data-ans="${k.id}">답 보내기</button></span></div>` : k.status === 'answered' ? `<div class="row"><span></span><button class="btn" data-end="${k.id}">끝</button></div>` : '' })).join('') || '<div class="empty">문의가 없어요</div>'}</div>`
     }
     body.innerHTML = html
     body.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => { tab = b.dataset.tab; paint() })
     body.querySelectorAll('[data-f]').forEach((b) => b.onclick = () => { flt = b.dataset.f; paint() })
+    const pickCo = async (id) => { nfcCo = id; nfcMade = []; nfcList = []; if (id) { const r = await sb.rpc('vf_ops_nfc_list', { p_tenant: id }); if (r.error) { toast('불러오지 못했어요 — ' + (r.error.message || '')); } else nfcList = r.data || [] } paint() }
+    const co = body.querySelector('[data-co]'); if (co) co.onchange = () => pickCo(co.value)
+    body.querySelectorAll('[data-pick]').forEach((b) => b.onclick = () => pickCo(b.dataset.pick))
+    const mk = body.querySelector('[data-make]')
+    if (mk) mk.onclick = async () => {
+      const n = Math.max(1, Math.min(50, Number(body.querySelector('[data-n]').value) || 0)); mk.disabled = true
+      const r = await sb.rpc('vf_ops_nfc_make', { p_tenant: nfcCo, p_n: n })
+      if (r.error) { mk.disabled = false; toast('만들지 못했어요 — ' + (r.error.message || '')); return }
+      const made = (r.data || []).map((x) => (typeof x === 'string' ? x : x.vf_ops_nfc_make || Object.values(x)[0]))
+      const keep = nfcCo; await pickCo(keep); nfcMade = made; paint()
+    }
+    body.querySelectorAll('[data-copy]').forEach((b) => b.onclick = async () => {
+      const L = b.dataset.copy === 'made' ? nfcMade : nfcList.filter((t) => t.active).map((t) => t.code)
+      try { await navigator.clipboard.writeText(L.map((c) => `https://www.dutyvo.kr/t/${c}`).join('\n')); toast(`${L.length}줄 복사했어요`) } catch (e) { toast('복사하지 못했어요 — 목록을 직접 골라 복사해 주세요') }
+    })
     body.querySelectorAll('[data-ans]').forEach((b) => b.onclick = async () => {
       const t = body.querySelector(`[data-a="${b.dataset.ans}"]`), v = t.value.trim(); if (!v) { t.focus(); return }
       b.disabled = true
