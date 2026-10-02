@@ -143,6 +143,24 @@ module.exports = async (req, res) => {
         for (const k of ans2) if (k.profile_id) sent += await push2(k.profile_id, { title: 'Dutyvo 답변이 왔어요', body: String(k.answer).slice(0, 100), url: '/?ask=1' });
       }
     } catch (e) { ops = { cos: [], tks: [], ans: [], skipped: String((e && e.message) || e).slice(0, 120) }; }
+    // ⑤ 홈페이지 보고(v6.38) — /intro · /tibo 「문제 · 의견 보내기」 → 운영자 폰. SQL_v638 전이면 표가 없어 조용히 건너뛴다
+    let sreps = [];
+    try {
+      sreps = await sb(`site_reports?select=id,kind,body,page&alerted_at=is.null&order=created_at&limit=50`);
+      if (sreps.length) {
+        const pa2 = await sb(`platform_admins?select=user_id`);
+        const ids2 = pa2.map((x) => x.user_id);
+        const subs5 = ids2.length ? await sb(`push_subscriptions?select=endpoint,p256dh,auth,profile_id&profile_id=${inList(ids2)}&limit=500`) : [];
+        const SK = { bug: '오류 · 고장', inconvenience: '불편한 점', idea: '이런 기능', etc: '기타' };
+        const pay = sreps.length === 1
+          ? { title: `홈페이지 보고 · ${SK[sreps[0].kind] || '기타'}`, body: String(sreps[0].body).slice(0, 90), url: '/ops' }
+          : { title: `홈페이지 보고 ${sreps.length}건`, body: sreps.slice(0, 3).map((x) => `${SK[x.kind] || '기타'} — ${String(x.body).slice(0, 40)}`).join('\n'), url: '/ops' };
+        if (!dry) for (const x of subs5) {
+          try { await webpush.sendNotification({ endpoint: x.endpoint, keys: { p256dh: x.p256dh, auth: x.auth } }, JSON.stringify(pay)); sent++; }
+          catch (e) { if (e.statusCode === 404 || e.statusCode === 410) await delSub(x.endpoint); }
+        }
+      }
+    } catch (e) { sreps = []; }
     // ④ 거래처 메일(v6.17) — 자동 기록된 「받은 메일」은 그 건 담당자에게(우리 차례), 못 찾은 메일은 관리자에게 「분류 필요」.
     //    SQL_v617 전이면 표가 없어 조용히 건너뛴다
     let mails = [];
@@ -164,6 +182,7 @@ module.exports = async (req, res) => {
     if (!dry) {
       const stamp = new Date().toISOString();
       if (mails.length) await patch(`mail_inbox?id=${inList(mails.map((m) => m.id))}`, { alerted_at: stamp });
+      if (sreps.length) await patch(`site_reports?id=${inList(sreps.map((x) => x.id))}`, { alerted_at: stamp });
       if (ops.cos.length) await patch(`tenants?id=${inList(ops.cos.map((x) => x.id))}`, { ops_alerted_at: stamp });
       if (ops.tks.length) await patch(`support_tickets?id=${inList(ops.tks.map((x) => x.id))}`, { alerted_at: stamp });
       if (ops.ans.length) await patch(`support_tickets?id=${inList(ops.ans.map((x) => x.id))}`, { answer_alerted_at: stamp });

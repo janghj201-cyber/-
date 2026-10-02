@@ -18,7 +18,13 @@ const CSS = `
 #vai .pn{background:var(--bg);width:100%;max-width:460px;display:flex;flex-direction:column;box-shadow:-12px 0 32px rgba(23,34,51,.14);animation:vai-in .22s cubic-bezier(.2,.8,.2,1);color:var(--text)}
 #vai .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--navy);color:#fff}
 #vai .mini{width:40px;height:40px;display:grid;place-items:center;flex:none}
-#vai .mini .mb{width:38px;height:38px;animation:vai-float 3.6s ease-in-out infinite}
+#vai .mini .mb{width:40px;height:40px;animation:vai-float 3.6s ease-in-out infinite;background:#EEF4EF;border-radius:50%;display:grid;place-items:center}
+#vai .mini .mb img{width:34px;height:34px;object-fit:contain}
+#vai .hello{display:flex;align-items:center;gap:12px;padding:4px 2px 2px}
+#vai .hello img{width:84px;height:auto;flex:none}
+#vai .hello span{position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:8px 12px;font-size:14px;font-weight:800;color:var(--text)}
+#vai .an .who{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--text-sub);margin-bottom:4px}
+#vai .an .who img{width:22px;height:22px;object-fit:contain}
 #vai .mini .vf-mascot .ta,#vai .mini .vf-mascot .tb{transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
 #vai .pn.think .mini .vf-mascot .ta{animation:vai-ta .9s ease-in-out infinite}
 #vai .pn.think .mini .vf-mascot .tb{animation:vai-tb .9s ease-in-out infinite}
@@ -110,7 +116,7 @@ export async function openAssistant(host = {}) {
   const role = (ctx.profile && ctx.profile.role) || 'staff'
   const root = document.createElement('div'); root.id = 'vai'
   root.innerHTML = `<div class="pn" role="dialog" aria-modal="true" aria-labelledby="vai-h">
-    <div class="hd"><span class="mini" data-mini aria-hidden="true"><span class="mb">${typeof window.vfMascotSVG === 'function' ? window.vfMascotSVG('vai') : ''}</span></span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
+    <div class="hd"><span class="mini" data-mini aria-hidden="true"><span class="mb"><img data-tb src="/lp/tibo_face.webp" alt="" width="256" height="256"></span></span><div><b id="vai-h">AI 도우미</b><small data-left>앱 쓰는 법 · 오늘 기록</small></div><button type="button" class="x" data-x>닫기</button></div>
     <div class="bd" data-bd aria-live="polite"></div>
     <div class="note">AI 답은 틀릴 수 있어요. 기록을 바꾸지 않고, 필요한 화면을 열어 드려요.</div>
     <div class="ft"><textarea data-q rows="1" placeholder="무엇이든 물어보세요" aria-label="질문"></textarea><button type="button" class="snd" data-send aria-label="보내기">${IC.send}</button></div>
@@ -126,7 +132,10 @@ export async function openAssistant(host = {}) {
   root.onclick = (e) => { if (e.target === root) close() }
 
   const scrollEnd = () => { bd.scrollTop = bd.scrollHeight }
+  // v6.38 티보 — 답 만드는 동안 보 「맡겨」, 못 가져오면 보 「앗」, 평소엔 둘이 함께
+  const face = (f) => { const im = root.querySelector('[data-tb]'); if (im) im.src = `/lp/tibo_${f}.webp` }
   const intro = () => {
+    const hi = document.createElement('div'); hi.className = 'hello'; hi.innerHTML = '<img src="/lp/tibo_bo.webp" alt="" width="378" height="311"><span>일단 내가 할게!</span>'; bd.appendChild(hi)
     const box = document.createElement('div'); box.className = 'intro'
     box.innerHTML = `<b>앱 쓰는 법</b>부터 <b>매장 비교 · 원인</b>까지 물어보세요. 최근 기록을 기간 · 매장 · 사람별로 찾아 숫자로 답하고, 할 일이 있으면 그 화면을 열어 드려요.`
     const sug = document.createElement('div'); sug.className = 'sug'
@@ -168,7 +177,7 @@ export async function openAssistant(host = {}) {
   const bubble = (m) => {
     const me = document.createElement('div'); me.className = 'me'; me.textContent = m.q; bd.appendChild(me)
     const an = document.createElement('div'); an.className = 'an' + (m.wait ? ' wait' : '') + (m.err ? ' err' : '')
-    an.innerHTML = `<div class="t">${m.wait ? esc(m.step || WAIT[0]) : m.err ? esc(m.a) : fmt(m.a)}</div>`
+    an.innerHTML = `${m.wait ? '<div class="who"><img src="/lp/tibo_bo_go.webp" alt="">보 · 맡겨!</div>' : m.err ? '<div class="who"><img src="/lp/tibo_bo_oops.webp" alt="">보 · 앗…</div>' : ''}<div class="t">${m.wait ? esc(m.step || WAIT[0]) : m.err ? esc(m.a) : fmt(m.a)}</div>`
     bd.appendChild(an)
     if (m.wait || m.err) return an
     // 방금 온 답은 말하듯 한 글자씩 — 끝나면 버튼 · 이어 묻기
@@ -195,7 +204,7 @@ export async function openAssistant(host = {}) {
   async function ask(text) {
     const t = String(text || q.value).trim(); if (!t || busy) return
     busy = true; sendB.disabled = true; q.value = ''; q.style.height = ''
-    const m = { q: t, wait: true, step: WAIT[0] }; chat.push(m); paint(); const pn = root.querySelector('.pn'); pn.classList.remove('happy'); pn.classList.add('think')
+    const m = { q: t, wait: true, step: WAIT[0] }; chat.push(m); paint(); const pn = root.querySelector('.pn'); pn.classList.remove('happy'); pn.classList.add('think'); face('bo_go')
     // 기다리는 동안 무엇을 하는지 한 줄씩(도구로 더 찾으면 10~20초 걸린다)
     let si = 0; const stepT = setInterval(() => { si = Math.min(WAIT.length - 1, si + 1); m.step = WAIT[si]; const w = bd.querySelector('.an.wait .t'); if (w) w.textContent = m.step }, 2600)
     try {
@@ -206,7 +215,7 @@ export async function openAssistant(host = {}) {
       Object.assign(m, { wait: false, fresh: true, a: r.answer, go: r.go || [], src: r.src || [], next: r.next || [], id: r.id }); left = r.left; paintLeft()
     } catch (e) { Object.assign(m, { wait: false, err: true, a: e.msg || '답을 받지 못했어요 — 다시 물어봐 주세요' }) }
     clearInterval(stepT)
-    busy = false; sendB.disabled = false; paint(); q.focus(); pn.classList.remove('think'); if (!m.err) { void pn.offsetWidth; pn.classList.add('happy') }
+    busy = false; sendB.disabled = false; paint(); q.focus(); pn.classList.remove('think'); face(m.err ? 'bo_oops' : 'face'); if (!m.err) { void pn.offsetWidth; pn.classList.add('happy') }
   }
   sendB.onclick = () => ask()
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask() } })
@@ -221,7 +230,7 @@ export async function briefCardInto(el, host = {}) {
   const b = data.body
   try { window.__vfBriefLines = b.lines } catch (e) {}
   // 「더 묻기」는 머리 오른쪽 — 버튼 한 줄이 카드 아래를 따로 먹지 않게
-  el.innerHTML = `<div class="vh-ct"><strong>아침 요약</strong><span class="vh-tiny">어제 ${esc(mdOf(b.day))} · AI</span><button type="button" class="vai-more" data-more>더 묻기 ›</button></div>
+  el.innerHTML = `<div class="vh-ct"><strong><img class="vai-bt" src="/lp/tibo_ti.webp" alt="" width="357" height="333">아침 요약</strong><span class="vh-tiny">어제 ${esc(mdOf(b.day))} · AI</span><button type="button" class="vai-more" data-more>더 묻기 ›</button></div>
     <ul class="vai-bl">${b.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
   el.querySelector('[data-more]').onclick = () => openAssistant({ ...host, q: '아침 요약에 나온 것 중 오늘 먼저 할 일 알려 줘' })
 }

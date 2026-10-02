@@ -163,7 +163,7 @@ svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;str
 .end-box p{color:var(--sub);margin-top:8px}
 .end-box .ctas{display:flex;flex-direction:column;gap:10px}
 footer{background:var(--night);color:#6F867A;font-size:13.5px}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:26px}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-block:26px}
 footer a{color:var(--on-night-sub);text-decoration:none;margin-left:16px}
 .sample-note{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:rgba(17,26,21,.88);color:#E7EFE9;font-size:12.5px;padding:8px 14px;border-radius:999px;white-space:nowrap}
 
@@ -320,7 +320,85 @@ footer a{color:var(--on-night-sub);text-decoration:none;margin-left:16px}
   </div>
 </div></section>
 </main>
-<footer><div class="wrap"><span>Dutyvo · 매장 운영 시스템</span><span><a href="/legal.html#terms">이용약관</a><a href="/legal.html#privacy">개인정보처리방침</a></span></div></footer>
+<footer><div class="wrap"><span>Dutyvo · 매장 운영 시스템</span><span><a href="/legal.html#terms">이용약관</a><a href="/legal.html#privacy">개인정보처리방침</a></span><button type="button" class="rep-open" data-rep-open>문제 · 의견 보내기</button></div></footer>
+<style>
+/* v6.38 문제 · 의견 보내기 — 맨 아래 띠 오른쪽 한 줄, 누르면 짧은 창 */
+.rep-open{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:transparent;color:#EEF4EF;border:1px solid rgba(233,244,236,.22);border-radius:999px;padding:7px 13px;font:600 13px/1 var(--body,inherit);cursor:pointer}
+.rep-open:hover{border-color:rgba(233,244,236,.45)}
+.rep-bg{position:fixed;inset:0;z-index:200;background:rgba(11,27,20,.5);display:grid;place-items:center;padding:16px}
+.rep-bg[hidden]{display:none}
+.rep{width:min(440px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;color:#111A15;border-radius:20px;padding:20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
+.rep h3{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.rep .s{color:#4E5D55;font-size:13.5px;margin:4px 0 14px}
+.rep .kinds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.rep .kinds button{border:1px solid #DCE3DD;border-radius:999px;padding:8px 12px;font:700 13.5px/1 var(--body,inherit);color:#4E5D55;background:#fff;cursor:pointer}
+.rep .kinds button[aria-pressed=true]{background:#174C38;border-color:#174C38;color:#fff}
+.rep textarea,.rep input{width:100%;font:15px/1.5 var(--body,inherit);color:#111A15;border:1px solid #DCE3DD;border-radius:12px;padding:11px 12px;background:#fff}
+.rep textarea{min-height:110px;resize:vertical}
+.rep textarea:focus,.rep input:focus{outline:none;border-color:#59BA8B;box-shadow:0 0 0 3px rgba(89,186,139,.18)}
+.rep label{display:block;font-size:13px;font-weight:700;color:#4E5D55;margin:10px 0 6px}
+.rep label small{font-weight:500;color:#7F8C85}
+.rep .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.rep .auto{font-size:12px;color:#7F8C85;margin-top:8px}
+.rep .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.rep .two button{height:46px;border-radius:12px;font:700 15px/1 var(--body,inherit);cursor:pointer;border:1px solid #DCE3DD;background:#fff;color:#111A15}
+.rep .two .go{background:#D6A246;border-color:#D6A246;color:#2A1E07}
+.rep .two .go:disabled{opacity:.6;cursor:default}
+.rep .msg{font-size:13px;color:#C2463E;margin-top:8px;min-height:0}
+.rep .done{text-align:center;padding:8px 4px 2px}
+.rep .done img{width:120px;height:auto;margin:0 auto 8px;display:block}
+.rep .done b{font-size:18px}
+.rep .done p{color:#4E5D55;font-size:14px;margin:6px 0 14px}
+@media (max-width:560px){.rep-open{margin-left:0}}
+</style>
+<div class="rep-bg" id="repBg" hidden>
+  <div class="rep" role="dialog" aria-modal="true" aria-labelledby="repH">
+    <form id="repForm" novalidate>
+      <h3 id="repH">문제 · 의견 보내기</h3>
+      <p class="s">Dutyvo 운영팀이 직접 읽습니다.</p>
+      <div class="kinds" role="group" aria-label="종류">
+        <button type="button" data-k="bug" aria-pressed="true">오류 · 고장</button>
+        <button type="button" data-k="inconvenience" aria-pressed="false">불편한 점</button>
+        <button type="button" data-k="idea" aria-pressed="false">이런 기능</button>
+        <button type="button" data-k="etc" aria-pressed="false">기타</button>
+      </div>
+      <textarea id="repBody" maxlength="2000" placeholder="어떤 화면에서 무엇이 어땠는지 적어 주세요" aria-label="내용"></textarea>
+      <label for="repContact">답 받을 곳 <small>· 선택 — 전화 또는 메일</small></label>
+      <input id="repContact" maxlength="120" autocomplete="email" placeholder="010-0000-0000 또는 메일">
+      <input class="hp" id="repHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <p class="auto">같이 보냄: 이 페이지 주소 · 화면 크기 · 브라우저</p>
+      <p class="msg" id="repMsg"></p>
+      <div class="two"><button type="button" data-close>닫기</button><button type="submit" class="go" id="repGo">보내기</button></div>
+    </form>
+    <div class="done" id="repDone" hidden>
+      <img src="/lp/tibo_bo.webp" alt="" width="378" height="311">
+      <b>받았습니다</b>
+      <p>답 받을 곳을 적으셨으면 그리로 답드려요. 가입한 분은 앱 「내 계정 › Dutyvo에 문의」로도 받습니다.</p>
+      <div class="two" style="grid-template-columns:1fr"><button type="button" data-close>닫기</button></div>
+    </div>
+  </div>
+</div>
+<script>
+/* v6.38 문제 · 의견 보내기 — api/site-report 로(서버가 저장 · 1분 1번) */
+(function(){
+  var bg=document.getElementById('repBg');if(!bg)return;var form=document.getElementById('repForm'),done=document.getElementById('repDone'),msg=document.getElementById('repMsg'),go=document.getElementById('repGo'),kind='bug',last=null;
+  function open(){last=document.activeElement;form.hidden=false;done.hidden=true;msg.textContent='';bg.hidden=false;document.documentElement.style.overflow='hidden';setTimeout(function(){document.getElementById('repBody').focus();},30);}
+  function close(){bg.hidden=true;document.documentElement.style.overflow='';if(last&&last.focus)last.focus();}
+  document.querySelectorAll('[data-rep-open]').forEach(function(b){b.addEventListener('click',open);});
+  bg.addEventListener('click',function(e){if(e.target===bg||e.target.hasAttribute('data-close'))close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!bg.hidden)close();});
+  bg.querySelectorAll('[data-k]').forEach(function(b){b.addEventListener('click',function(){kind=b.dataset.k;bg.querySelectorAll('[data-k]').forEach(function(x){x.setAttribute('aria-pressed',x===b);});});});
+  form.addEventListener('submit',function(e){e.preventDefault();var body=document.getElementById('repBody').value.trim();
+    if(body.length<2){msg.textContent='내용을 두 글자 이상 적어 주세요.';document.getElementById('repBody').focus();return;}
+    go.disabled=true;msg.textContent='';
+    fetch('/api/site-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:kind,body:body,contact:document.getElementById('repContact').value.trim(),hp:document.getElementById('repHp').value,page:location.pathname+location.search,screen:innerWidth+'x'+innerHeight})})
+      .then(function(r){return r.json().catch(function(){return {ok:false};}).then(function(j){return {s:r.status,j:j};});})
+      .then(function(x){go.disabled=false;if(x.j&&x.j.ok){form.reset&&form.reset();document.getElementById('repBody').value='';form.hidden=true;done.hidden=false;}else{msg.textContent=(x.j&&x.j.error)||'보내지 못했어요 — 잠시 뒤 다시 보내 주세요.';}})
+      .catch(function(){go.disabled=false;msg.textContent='보내지 못했어요 — 인터넷 연결을 확인해 주세요.';});
+  });
+})();
+</script>
+
 
 <script>
 (function(){
